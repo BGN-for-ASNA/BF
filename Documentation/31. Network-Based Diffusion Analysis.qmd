@@ -25,60 +25,56 @@ In principle NBDA can be consider as a survival analysis, so we have the same co
 
 ## Data
 
-The examples below use the NBDA dataset bundled with the **BF** package (adapted from the STbayes package, @STBayes). It contains acquisition events for 50 individuals across 1 trial and their undirected social network.
+The examples below read `nbda_data.json`: the example data of the STbayes package (@STBayes) prepared for **BF**, with the acquisition events of 50 individuals in 1 trial and their undirected social network. Download it from [Test/3.Documentation/data](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/data), where `make_nbda_data.R` shows how it is built.
 
 ::: {.panel-tabset group="language"}
 ## Python
 
 ```python
 from BayesForge import bf
-import pandas as pd
+import json
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 
-events_path  = m.load.NBDA_events(only_path=True)
-network_path = m.load.NBDA_network(only_path=True)
-events  = pd.read_csv(events_path)   # columns: id, time, t_end, trial
-network = pd.read_csv(network_path)  # columns: focal, other, trial, assoc
-# Build data_list following the STbayes-compatible structure — see R example below
+# STbayes example data (50 individuals, 1 trial, 1 network), prepared for BF in nbda_data.json:
+# A (network: trials x networks x time x P x P), Z (informed individuals), D (durations),
+# obs_end_time / is_event / valid_ind (time of acquisition or censoring of each individual)
+with open('nbda_data.json') as f:
+    data_list = {k: jnp.array(v) if isinstance(v, list) else v for k, v in json.load(f).items()}
+data_list['Zn'] = data_list['Z']  # informed individuals seen by the naive ones
 ```
 
 ## R
 
 ```r
 library(BayesForge)
-library(STbayes)
 m <- importBF(platform = "cpu")
 jnp <- reticulate::import("jax.numpy")
 
-to_jax <- function(x) {
-    if (is.list(x) || typeof(x) == "closure" || is.character(x)) return(x)
-    jnp$array(x)
-}
-
-events_path  <- m$load$NBDA_events(only_path = TRUE)
-network_path <- m$load$NBDA_network(only_path = TRUE)
-
-data_list <- lapply(
-    import_user_STb(read.csv(events_path), read.csv(network_path),
-                    network_type = "undirected"),
-    to_jax
-)
-m$data_on_model <- list(data = data_list)
+# STbayes example data (50 individuals, 1 trial, 1 network), prepared for BF in nbda_data.json:
+# A (network: trials x networks x time x P x P), Z (informed individuals), D (durations),
+# obs_end_time / is_event / valid_ind (time of acquisition or censoring of each individual)
+raw <- jsonlite::fromJSON("nbda_data.json")
+data_list <- lapply(raw, function(v) if (length(v) > 1 || is.array(v)) jnp$array(v) else v)
+data_list$Zn <- data_list$Z  # informed individuals seen by the naive ones
 ```
 
 ## Julia
 
 ```julia
 using PyBayesForge
-using DataFrames, CSV
-
+using PythonCall
 m = importBF(platform="cpu")
 
-events_path  = m.load.NBDA_events(only_path=true)
-network_path = m.load.NBDA_network(only_path=true)
-events  = CSV.read(events_path,  DataFrame)
-network = CSV.read(network_path, DataFrame)
+# STbayes example data (50 individuals, 1 trial, 1 network), prepared for BF in nbda_data.json:
+# A (network: trials x networks x time x P x P), Z (informed individuals), D (durations),
+# obs_end_time / is_event / valid_ind (time of acquisition or censoring of each individual)
+json = pyimport("json")
+raw = json.load(pybuiltins.open("nbda_data.json"))
+data_list = pydict(Dict(string(k) => (pyisinstance(v, pybuiltins.list) ? jnp.array(v) : v)
+                        for (k, v) in raw.items()))
+data_list["Zn"] = data_list["Z"]  # informed individuals seen by the naive ones
 ```
 :::
 
@@ -102,6 +98,7 @@ The cTADA model is used when the exact continuous times of behavioural acquisiti
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 m.data_on_model = {'data': data_list}
@@ -110,19 +107,27 @@ def model_cTADA(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
 
-    lambda_0 = m.jnp.exp(log_lambda_0_mean)
-    s_prime = m.jnp.exp(log_s_prime_mean)
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    A_sum = m.jnp.sum(data['A'], axis=0)
-    Z_exp = m.jnp.expand_dims(data['Z'], axis=-1)
-    A_Z = m.jnp.squeeze(m.jnp.matmul(A_sum, Z_exp), axis=-1)
+    # Informed connections of each individual at each time step
+    A_sum = jnp.sum(data['A'], axis=0)
+    Z_exp = jnp.expand_dims(data['Z'], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
     soc_term = s_prime * A_Z
 
-    D_exp = m.jnp.expand_dims(data['D'], axis=-1)
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
     lambda_all = (lambda_0 + soc_term) * D_exp
 
-    # Survival likelihood: accumulate negative hazard before event, log-hazard at event time
-    # m.dist.unit(log_factor=total_log_lik, name="cTADA_lik")
+    # Survival likelihood: hazard accumulated while naive, log-hazard at the acquisition time
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]          # (1, T_max, 1)
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)  # (K, 1, P)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="cTADA_lik")
 
 m.fit(model_cTADA)
 m.summary()
@@ -131,27 +136,34 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
 m$data_on_model <- list(data = data_list)
 
 model_cTADA <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean <- m$dist$normal(-4, 2, name="log_s_prime_mean")
-    
-    lambda_0 <- jnp$exp(log_lambda_0_mean)
-    s_prime <- jnp$exp(log_s_prime_mean)
-    
-    # Matrix multiplications to find connected, knowledgeable peers
-    A_sum <- jnp$sum(data$A, axis=0L)
-    Z_exp <- jnp$expand_dims(data$Z, axis=-1L)
-    A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis=-1L)
-    
-    soc_term <- s_prime * A_Z
-    D_exp <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- (lambda_0 + soc_term) * D_exp
-    
-    # ... Vectorized Unit Likelihood executed here ...
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+
+  lambda_0 <- jnp$exp(log_lambda_0_mean)
+  s_prime <- jnp$exp(log_s_prime_mean)
+
+  # Informed connections of each individual at each time step
+  A_sum <- jnp$sum(data$A, axis = 0L)
+  Z_exp <- jnp$expand_dims(data$Z, axis = -1L)
+  A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis = -1L)
+  soc_term <- s_prime * A_Z
+
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- (lambda_0 + soc_term) * D_exp
+
+  # Survival likelihood: hazard accumulated while naive, log-hazard at the acquisition time
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "cTADA_lik")
 }
 
 m$fit(model_cTADA)
@@ -161,25 +173,35 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_cTADA(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    
+
     lambda_0 = jnp.exp(log_lambda_0_mean)
     s_prime = jnp.exp(log_s_prime_mean)
-    
+
+    # Informed connections of each individual at each time step
     A_sum = jnp.sum(data["A"], axis=0)
     Z_exp = jnp.expand_dims(data["Z"], axis=-1)
     A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
-    
     soc_term = s_prime * A_Z
+
     D_exp = jnp.expand_dims(data["D"], axis=-1)
-    lambda_all = (lambda_0 + soc_term) .* D_exp
+    lambda_all = (lambda_0 + soc_term) * D_exp
+
+    # Survival likelihood: hazard accumulated while naive, log-hazard at the acquisition time
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="cTADA_lik")
 end
 
 m.fit(model_cTADA)
@@ -234,23 +256,29 @@ OADA is used when the precise times of acquisition are unknown, but the sequenti
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 m.data_on_model = {'data': data_list}
 
 def model_OADA(data):
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    s_prime = m.jnp.exp(log_s_prime_mean)
-    
-    A_sum = m.jnp.sum(data['A'], axis=0)
-    Z_exp = m.jnp.expand_dims(data['Z'], axis=-1)
-    A_Z = m.jnp.squeeze(m.jnp.matmul(A_sum, Z_exp), axis=-1)
-    
-    net_effect_all = s_prime * A_Z
-    lambda_all = 1.0 + net_effect_all  # lambda_0 = 1.0 cancels in the ratio
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    # P(i learns next) = lambda_i / sum_j(lambda_j) over naive candidates
-    # m.dist.unit(log_factor=total_log_lik, name="OADA_lik")
+    A_sum = jnp.sum(data['A'], axis=0)
+    Z_exp = jnp.expand_dims(data['Z'], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    lambda_all = 1.0 + s_prime * A_Z   # relative rate: asocial rate fixed to 1
+
+    # Probability that the individual who learnt at each step was the one to learn
+    i_lambda = jnp.sum(lambda_all * data['is_event_3d'], axis=-1)              # (K, T_max)
+    Q_mask = jnp.arange(data['P']) < data['Q']
+    j_rates_sum = jnp.sum(lambda_all * (1.0 - data['Z']) * Q_mask, axis=-1)   # naive individuals
+    event_at_time = data['event_at_time']
+    log_lik = (jnp.log(jnp.where(event_at_time, i_lambda, 1.0))
+               - jnp.log(jnp.where(event_at_time, j_rates_sum, 1.0)))
+    total_log_lik = jnp.sum(jnp.where(event_at_time, log_lik, 0.0))
+    m.dist.unit(log_factor=total_log_lik, name="OADA_lik")
 
 m.fit(model_OADA)
 m.summary()
@@ -259,22 +287,27 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
 m$data_on_model <- list(data = data_list)
 
 model_OADA <- function(data) {
-    log_s_prime_mean <- m$dist$normal(-4, 2, name="log_s_prime_mean")
-    s_prime <- jnp$exp(log_s_prime_mean)
-    
-    A_sum <- jnp$sum(data$A, axis=0L)
-    Z_exp <- jnp$expand_dims(data$Z, axis=-1L)
-    A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis=-1L)
-    
-    net_effect_all <- s_prime * A_Z
-    lambda_all <- 1.0 + net_effect_all
-    
-    # ... OADA probability fractional evaluation based on naive population ...
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+  s_prime <- jnp$exp(log_s_prime_mean)
+
+  A_sum <- jnp$sum(data$A, axis = 0L)
+  Z_exp <- jnp$expand_dims(data$Z, axis = -1L)
+  A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis = -1L)
+  lambda_all <- 1.0 + s_prime * A_Z   # relative rate: asocial rate fixed to 1
+
+  # Probability that the individual who learnt at each step was the one to learn
+  i_lambda <- jnp$sum(lambda_all * data$is_event_3d, axis = -1L)             # (K, T_max)
+  Q_mask <- jnp$arange(data$P) < data$Q
+  j_rates_sum <- jnp$sum(lambda_all * (1.0 - data$Z) * Q_mask, axis = -1L)  # naive individuals
+  event_at_time <- data$event_at_time
+  log_lik <- jnp$log(jnp$where(event_at_time, i_lambda, 1.0)) -
+    jnp$log(jnp$where(event_at_time, j_rates_sum, 1.0))
+  total_log_lik <- jnp$sum(jnp$where(event_at_time, log_lik, 0.0))
+  m$dist$unit(log_factor = total_log_lik, name = "OADA_lik")
 }
 
 m$fit(model_OADA)
@@ -284,21 +317,27 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_OADA(data)
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
     s_prime = jnp.exp(log_s_prime_mean)
-    
+
     A_sum = jnp.sum(data["A"], axis=0)
     Z_exp = jnp.expand_dims(data["Z"], axis=-1)
     A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
-    
-    net_effect_all = s_prime * A_Z
-    lambda_all = 1.0 .+ net_effect_all
+    lambda_all = 1.0 + s_prime * A_Z   # relative rate: asocial rate fixed to 1
+
+    # Probability that the individual who learnt at each step was the one to learn
+    i_lambda = jnp.sum(lambda_all * data["is_event_3d"], axis=-1)             # (K, T_max)
+    Q_mask = jnp.less(jnp.arange(data["P"]), data["Q"])
+    j_rates_sum = jnp.sum(lambda_all * (1.0 - data["Z"]) * Q_mask, axis=-1)  # naive individuals
+    event_at_time = data["event_at_time"]
+    log_lik = jnp.log(jnp.where(event_at_time, i_lambda, 1.0)) -
+              jnp.log(jnp.where(event_at_time, j_rates_sum, 1.0))
+    total_log_lik = jnp.sum(jnp.where(event_at_time, log_lik, 0.0))
+    m.dist.unit(log_factor=total_log_lik, name="OADA_lik")
 end
 
 m.fit(model_OADA)
@@ -341,36 +380,46 @@ The ILV model integrates continuous, boolean, or categorical traits observed on 
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
+# One individual-level variable (ILV) used for asocial, social and multiplicative effects
+data_list['ILV_bool_ILV'] = data_list['ILV'][:, None]                                      # (P, 1)
+data_list['ILV_cont_ILV'] = data_list['ILV']                                               # (P,)
+data_list['ILV_cat_ILV'] = jnp.zeros((data_list['P'], 3)).at[:, 0].set(data_list['ILV'])  # (P, 3)
 m.data_on_model = {'data': data_list}
 
 def model_ILV(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    beta_ILVi_bool_ILV = m.dist.normal(0, 1, shape=(1,), name="beta_ILVi_bool_ILV")
+    beta_ILVs_cont_ILV = m.dist.normal(0, 1, name="beta_ILVs_cont_ILV")
+    beta_ILVm_cat_ILV = m.dist.normal(0, 1, shape=(3,), name="beta_ILVm_cat_ILV")
 
-    # ILV beta coefficients (boolean→asocial, continuous→social, categorical→multiplicative)
-    beta_ILVi = m.dist.normal(0, 1, shape=(1,), name="beta_ILVi_bool_ILV")
-    beta_ILVs = m.dist.normal(0, 1, name="beta_ILVs_cont_ILV")
-    beta_ILVm = m.dist.normal(0, 1, shape=(3,), name="beta_ILVm_cat_ILV")
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    lambda_0 = m.jnp.exp(log_lambda_0_mean)
-    s_prime  = m.jnp.exp(log_s_prime_mean)
+    # ILV effects on asocial learning (i), social learning (s), and both (m)
+    ind_term = jnp.exp(jnp.matmul(data['ILV_bool_ILV'], beta_ILVi_bool_ILV))
+    cont_ILV_s = data['ILV_cont_ILV'] * beta_ILVs_cont_ILV
+    cat_ILV_m = jnp.matmul(data['ILV_cat_ILV'], beta_ILVm_cat_ILV)
 
-    bool_ILV_i = m.jnp.matmul(data['ILV_bool_ILV'], beta_ILVi)
-    cont_ILV_s = data['ILV_cont_ILV'] * beta_ILVs
-    cat_ILV_m  = m.jnp.matmul(data['ILV_cat_ILV'], beta_ILVm)
+    A_sum = jnp.sum(data['A'], axis=0)
+    Z_exp = jnp.expand_dims(data['Z'], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    soc_term = s_prime * A_Z * jnp.exp(cont_ILV_s)
 
-    ind_term = m.jnp.exp(bool_ILV_i)
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
+    lambda_all = jnp.exp(cat_ILV_m) * (lambda_0 * ind_term + soc_term) * D_exp
 
-    A_sum = m.jnp.sum(data['A'], axis=0)
-    Z_exp = m.jnp.expand_dims(data['Z'], axis=-1)
-    A_Z   = m.jnp.squeeze(m.jnp.matmul(A_sum, Z_exp), axis=-1)
-    soc_term = s_prime * A_Z * m.jnp.exp(cont_ILV_s)
-
-    D_exp      = m.jnp.expand_dims(data['D'], axis=-1)
-    lambda_all = m.jnp.exp(cat_ILV_m) * (lambda_0 * ind_term + soc_term) * D_exp
-    # m.dist.unit(log_factor=total_log_lik, name="ILV_lik")
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="ILV_lik")
 
 m.fit(model_ILV)
 m.summary()
@@ -379,35 +428,45 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
+# One individual-level variable (ILV) used for asocial, social and multiplicative effects
+P <- data_list$P
+data_list$ILV_bool_ILV <- jnp$expand_dims(data_list$ILV, axis = -1L)                     # (P, 1)
+data_list$ILV_cont_ILV <- data_list$ILV                                                  # (P,)
+data_list$ILV_cat_ILV <- jnp$stack(list(data_list$ILV, jnp$zeros(P), jnp$zeros(P)), axis = 1L)  # (P, 3)
 m$data_on_model <- list(data = data_list)
 
 model_ILV <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  <- m$dist$normal(-4, 2, name="log_s_prime_mean")
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+  beta_ILVi_bool_ILV <- m$dist$normal(0, 1, shape = reticulate::tuple(1L), name = "beta_ILVi_bool_ILV")
+  beta_ILVs_cont_ILV <- m$dist$normal(0, 1, name = "beta_ILVs_cont_ILV")
+  beta_ILVm_cat_ILV <- m$dist$normal(0, 1, shape = reticulate::tuple(3L), name = "beta_ILVm_cat_ILV")
 
-    beta_ILVi <- m$dist$normal(0, 1, shape=tuple(1L), name="beta_ILVi_bool_ILV")
-    beta_ILVs <- m$dist$normal(0, 1, name="beta_ILVs_cont_ILV")
-    beta_ILVm <- m$dist$normal(0, 1, shape=tuple(3L), name="beta_ILVm_cat_ILV")
+  lambda_0 <- jnp$exp(log_lambda_0_mean)
+  s_prime <- jnp$exp(log_s_prime_mean)
 
-    lambda_0 <- jnp$exp(log_lambda_0_mean)
-    s_prime  <- jnp$exp(log_s_prime_mean)
+  # ILV effects on asocial learning (i), social learning (s), and both (m)
+  ind_term <- jnp$exp(jnp$matmul(data$ILV_bool_ILV, beta_ILVi_bool_ILV))
+  cont_ILV_s <- data$ILV_cont_ILV * beta_ILVs_cont_ILV
+  cat_ILV_m <- jnp$matmul(data$ILV_cat_ILV, beta_ILVm_cat_ILV)
 
-    bool_ILV_i <- jnp$matmul(data$ILV_bool_ILV, beta_ILVi)
-    cont_ILV_s <- data$ILV_cont_ILV * beta_ILVs
-    cat_ILV_m  <- jnp$matmul(data$ILV_cat_ILV, beta_ILVm)
+  A_sum <- jnp$sum(data$A, axis = 0L)
+  Z_exp <- jnp$expand_dims(data$Z, axis = -1L)
+  A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis = -1L)
+  soc_term <- s_prime * A_Z * jnp$exp(cont_ILV_s)
 
-    ind_term <- jnp$exp(bool_ILV_i)
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- jnp$exp(cat_ILV_m) * (lambda_0 * ind_term + soc_term) * D_exp
 
-    A_sum <- jnp$sum(data$A, axis=0L)
-    Z_exp <- jnp$expand_dims(data$Z, axis=-1L)
-    A_Z   <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis=-1L)
-    soc_term <- s_prime * A_Z * jnp$exp(cont_ILV_s)
-
-    D_exp      <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- jnp$exp(cat_ILV_m) * (lambda_0 * ind_term + soc_term) * D_exp
-    # m$dist$unit(log_factor=total_log_lik, name="ILV_lik")
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "ILV_lik")
 }
 
 m$fit(model_ILV)
@@ -417,35 +476,46 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+# One individual-level variable (ILV) used for asocial, social and multiplicative effects
+P = data_list["P"]
+data_list["ILV_bool_ILV"] = jnp.expand_dims(data_list["ILV"], axis=-1)                  # (P, 1)
+data_list["ILV_cont_ILV"] = data_list["ILV"]                                            # (P,)
+data_list["ILV_cat_ILV"] = jnp.stack(pylist([data_list["ILV"], jnp.zeros(P), jnp.zeros(P)]), axis=1)  # (P, 3)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_ILV(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
-
-    beta_ILVi = m.dist.normal(0, 1, shape=(1,), name="beta_ILVi_bool_ILV")
-    beta_ILVs = m.dist.normal(0, 1, name="beta_ILVs_cont_ILV")
-    beta_ILVm = m.dist.normal(0, 1, shape=(3,), name="beta_ILVm_cat_ILV")
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    beta_ILVi_bool_ILV = m.dist.normal(0, 1, shape=(1,), name="beta_ILVi_bool_ILV")
+    beta_ILVs_cont_ILV = m.dist.normal(0, 1, name="beta_ILVs_cont_ILV")
+    beta_ILVm_cat_ILV = m.dist.normal(0, 1, shape=(3,), name="beta_ILVm_cat_ILV")
 
     lambda_0 = jnp.exp(log_lambda_0_mean)
-    s_prime  = jnp.exp(log_s_prime_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    bool_ILV_i = jnp.matmul(data["ILV_bool_ILV"], beta_ILVi)
-    cont_ILV_s = data["ILV_cont_ILV"] .* beta_ILVs
-    cat_ILV_m  = jnp.matmul(data["ILV_cat_ILV"], beta_ILVm)
-
-    ind_term = jnp.exp(bool_ILV_i)
+    # ILV effects on asocial learning (i), social learning (s), and both (m)
+    ind_term = jnp.exp(jnp.matmul(data["ILV_bool_ILV"], beta_ILVi_bool_ILV))
+    cont_ILV_s = data["ILV_cont_ILV"] * beta_ILVs_cont_ILV
+    cat_ILV_m = jnp.matmul(data["ILV_cat_ILV"], beta_ILVm_cat_ILV)
 
     A_sum = jnp.sum(data["A"], axis=0)
     Z_exp = jnp.expand_dims(data["Z"], axis=-1)
-    A_Z   = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
-    soc_term = s_prime .* A_Z .* jnp.exp(cont_ILV_s)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    soc_term = s_prime * A_Z * jnp.exp(cont_ILV_s)
 
-    D_exp      = jnp.expand_dims(data["D"], axis=-1)
-    lambda_all = jnp.exp.(cat_ILV_m) .* (lambda_0 .* ind_term .+ soc_term) .* D_exp
+    D_exp = jnp.expand_dims(data["D"], axis=-1)
+    lambda_all = jnp.exp(cat_ILV_m) * (lambda_0 * ind_term + soc_term) * D_exp
+
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="ILV_lik")
 end
 
 m.fit(model_ILV)
@@ -492,6 +562,7 @@ Models containing varying (random) effects assign specific variance structures, 
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 m.data_on_model = {'data': data_list}
@@ -499,27 +570,32 @@ m.data_on_model = {'data': data_list}
 def model_veff(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    
-    # Recover Individual counts from static shape data (for JIT compilation safety)
-    P = data['Z'].shape[2] 
-    
+
+    # Individual offsets (varying effects) on both rates
+    P = data['Z'].shape[2]
     sigma_sprime = m.dist.half_normal(1.0, name="sigma_sprime")
     sigma_lambda0 = m.dist.half_normal(1.0, name="sigma_lambda0")
-    
     v_sprime = m.dist.normal(0.0, sigma_sprime, shape=(P,), name="v_sprime")
     v_lambda0 = m.dist.normal(0.0, sigma_lambda0, shape=(P,), name="v_lambda0")
-    
-    s_prime  = m.jnp.exp(log_s_prime_mean + v_sprime)   # shape (P,)
-    lambda_0 = m.jnp.exp(log_lambda_0_mean + v_lambda0) # shape (P,)
+    s_prime = jnp.exp(log_s_prime_mean + v_sprime)      # (P,) individual social rates
+    lambda_0 = jnp.exp(log_lambda_0_mean + v_lambda0)   # (P,) individual intrinsic rates
 
-    A_sum = m.jnp.sum(data['A'], axis=0)
-    Z_exp = m.jnp.expand_dims(data['Z'], axis=-1)
-    A_Z   = m.jnp.squeeze(m.jnp.matmul(A_sum, Z_exp), axis=-1)
-    soc_term = s_prime * A_Z  # per-individual s_prime broadcasts over (K, T_max, P)
+    A_sum = jnp.sum(data['A'], axis=0)
+    Z_exp = jnp.expand_dims(data['Z'], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    soc_term = s_prime * A_Z
 
-    D_exp      = m.jnp.expand_dims(data['D'], axis=-1)
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
     lambda_all = (lambda_0 + soc_term) * D_exp
-    # m.dist.unit(log_factor=total_log_lik, name="veff_lik")
+
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="veff_lik")
 
 m.fit(model_veff)
 m.summary()
@@ -528,34 +604,38 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
 m$data_on_model <- list(data = data_list)
 
 model_veff <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean <- m$dist$normal(-4, 2, name="log_s_prime_mean")
-    
-    # 1-indexed R extraction. Python matrix shape axis 2 is [[3]]
-    P <- data$Z$shape[[3]]
-    
-    sigma_sprime <- m$dist$half_normal(1.0, name="sigma_sprime")
-    sigma_lambda0 <- m$dist$half_normal(1.0, name="sigma_lambda0")
-    
-    v_sprime <- m$dist$normal(0.0, sigma_sprime, shape=tuple(P), name="v_sprime")
-    v_lambda0 <- m$dist$normal(0.0, sigma_lambda0, shape=tuple(P), name="v_lambda0")
-    
-    s_prime  <- jnp$exp(log_s_prime_mean + v_sprime)   # shape (P,)
-    lambda_0 <- jnp$exp(log_lambda_0_mean + v_lambda0) # shape (P,)
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
 
-    A_sum <- jnp$sum(data$A, axis=0L)
-    Z_exp <- jnp$expand_dims(data$Z, axis=-1L)
-    A_Z   <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis=-1L)
-    soc_term <- s_prime * A_Z
+  # Individual offsets (varying effects) on both rates
+  P <- data$Z$shape[[3]]
+  sigma_sprime <- m$dist$half_normal(1.0, name = "sigma_sprime")
+  sigma_lambda0 <- m$dist$half_normal(1.0, name = "sigma_lambda0")
+  v_sprime <- m$dist$normal(0.0, sigma_sprime, shape = reticulate::tuple(P), name = "v_sprime")
+  v_lambda0 <- m$dist$normal(0.0, sigma_lambda0, shape = reticulate::tuple(P), name = "v_lambda0")
+  s_prime <- jnp$exp(log_s_prime_mean + v_sprime)     # (P,) individual social rates
+  lambda_0 <- jnp$exp(log_lambda_0_mean + v_lambda0)  # (P,) individual intrinsic rates
 
-    D_exp      <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- (lambda_0 + soc_term) * D_exp
-    # m$dist$unit(log_factor=total_log_lik, name="veff_lik")
+  A_sum <- jnp$sum(data$A, axis = 0L)
+  Z_exp <- jnp$expand_dims(data$Z, axis = -1L)
+  A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis = -1L)
+  soc_term <- s_prime * A_Z
+
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- (lambda_0 + soc_term) * D_exp
+
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "veff_lik")
 }
 
 m$fit(model_veff)
@@ -565,33 +645,39 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_veff(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    
-    P = size(data["Z"], 3)
-    
+
+    # Individual offsets (varying effects) on both rates
+    P = data["Z"].shape[2]
     sigma_sprime = m.dist.half_normal(1.0, name="sigma_sprime")
     sigma_lambda0 = m.dist.half_normal(1.0, name="sigma_lambda0")
-    
     v_sprime = m.dist.normal(0.0, sigma_sprime, shape=(P,), name="v_sprime")
     v_lambda0 = m.dist.normal(0.0, sigma_lambda0, shape=(P,), name="v_lambda0")
-    
-    s_prime  = jnp.exp.(log_s_prime_mean .+ v_sprime)
-    lambda_0 = jnp.exp.(log_lambda_0_mean .+ v_lambda0)
+    s_prime = jnp.exp(log_s_prime_mean + v_sprime)      # (P,) individual social rates
+    lambda_0 = jnp.exp(log_lambda_0_mean + v_lambda0)   # (P,) individual intrinsic rates
 
     A_sum = jnp.sum(data["A"], axis=0)
     Z_exp = jnp.expand_dims(data["Z"], axis=-1)
-    A_Z   = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
-    soc_term = s_prime .* A_Z
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    soc_term = s_prime * A_Z
 
-    D_exp      = jnp.expand_dims(data["D"], axis=-1)
-    lambda_all = (lambda_0 .+ soc_term) .* D_exp
+    D_exp = jnp.expand_dims(data["D"], axis=-1)
+    lambda_all = (lambda_0 + soc_term) * D_exp
+
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="veff_lik")
 end
 
 m.fit(model_veff)
@@ -641,6 +727,7 @@ Traditional linear assumption states transmission increases uniformly with more 
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 m.data_on_model = {'data': data_list}
@@ -649,27 +736,32 @@ def model_complex_f(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
     log_f_mean = m.dist.normal(0, 1, name="log_f_mean")
-    
-    lambda_0 = m.jnp.exp(log_lambda_0_mean)
-    s_prime = m.jnp.exp(log_s_prime_mean)
-    f = m.jnp.exp(log_f_mean)
-    
-    # Assess Active/Inactive associations
-    active = m.jnp.squeeze(m.jnp.matmul(data['A'], data['Z']), axis=-1)
-    inactive = m.jnp.squeeze(m.jnp.matmul(data['A'], (1.0 - data['Zn'])), axis=-1)
-    
-    # Scale through frequency exponent
-    active_f = m.jnp.power(active, f)
-    denom_f = active_f + m.jnp.power(inactive, f)
-    
-    # Filter 0/0 exceptions
-    frac = m.jnp.where((active + inactive) > 0, active_f / denom_f, 0.0)
-    net_effect = m.jnp.sum(frac, axis=0)
-    soc_term = s_prime * net_effect
 
-    D_exp      = m.jnp.expand_dims(data['D'], axis=-1)
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
+    f = jnp.exp(log_f_mean)   # f > 1: conformist, f < 1: anti-conformist transmission
+
+    # Frequency-dependent transmission: informed^f / (informed^f + naive^f)
+    Z_exp = jnp.expand_dims(jnp.expand_dims(data['Z'], axis=-1), axis=0)
+    Zn_exp = jnp.expand_dims(jnp.expand_dims(data['Zn'], axis=-1), axis=0)
+    active = jnp.squeeze(jnp.matmul(data['A'], Z_exp), axis=-1)
+    inactive = jnp.squeeze(jnp.matmul(data['A'], 1.0 - Zn_exp), axis=-1)
+    active_f = jnp.power(active, f)
+    inactive_f = jnp.power(inactive, f)
+    frac = jnp.where((active + inactive) > 0, active_f / (active_f + inactive_f), 0.0)
+    soc_term = s_prime * jnp.sum(frac, axis=0)
+
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
     lambda_all = (lambda_0 + soc_term) * D_exp
-    # m.dist.unit(log_factor=total_log_lik, name="complex_f_lik")
+
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="complex_f_lik")
 
 m.fit(model_complex_f)
 m.summary()
@@ -678,36 +770,39 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
 m$data_on_model <- list(data = data_list)
 
 model_complex_f <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  <- m$dist$normal(-4, 2, name="log_s_prime_mean")
-    log_f_mean        <- m$dist$normal(0, 1, name="log_f_mean")
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+  log_f_mean <- m$dist$normal(0, 1, name = "log_f_mean")
 
-    lambda_0 <- jnp$exp(log_lambda_0_mean)
-    s_prime  <- jnp$exp(log_s_prime_mean)
-    f        <- jnp$exp(log_f_mean)
+  lambda_0 <- jnp$exp(log_lambda_0_mean)
+  s_prime <- jnp$exp(log_s_prime_mean)
+  f <- jnp$exp(log_f_mean)  # f > 1: conformist, f < 1: anti-conformist transmission
 
-    # Expand Z and Zn for matrix multiply against A (N_networks, K, T_max, P, P)
-    Z_exp  <- jnp$expand_dims(jnp$expand_dims(data$Z,  axis=-1L), axis=0L)
-    Zn_exp <- jnp$expand_dims(jnp$expand_dims(data$Zn, axis=-1L), axis=0L)
+  # Frequency-dependent transmission: informed^f / (informed^f + naive^f)
+  Z_exp <- jnp$expand_dims(jnp$expand_dims(data$Z, axis = -1L), axis = 0L)
+  Zn_exp <- jnp$expand_dims(jnp$expand_dims(data$Zn, axis = -1L), axis = 0L)
+  active <- jnp$squeeze(jnp$matmul(data$A, Z_exp), axis = -1L)
+  inactive <- jnp$squeeze(jnp$matmul(data$A, 1.0 - Zn_exp), axis = -1L)
+  active_f <- jnp$power(active, f)
+  inactive_f <- jnp$power(inactive, f)
+  frac <- jnp$where((active + inactive) > 0, active_f / (active_f + inactive_f), 0.0)
+  soc_term <- s_prime * jnp$sum(frac, axis = 0L)
 
-    active   <- jnp$squeeze(jnp$matmul(data$A, Z_exp),          axis=-1L)
-    inactive <- jnp$squeeze(jnp$matmul(data$A, 1.0 - Zn_exp),   axis=-1L)
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- (lambda_0 + soc_term) * D_exp
 
-    active_f <- jnp$power(active,   f)
-    denom_f  <- active_f + jnp$power(inactive, f)
-    frac     <- jnp$where((active + inactive) > 0, active_f / denom_f, 0.0)
-
-    net_effect <- jnp$sum(frac, axis=0L)
-    soc_term   <- s_prime * net_effect
-
-    D_exp      <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- (lambda_0 + soc_term) * D_exp
-    # m$dist$unit(log_factor=total_log_lik, name="complex_f_lik")
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "complex_f_lik")
 }
 
 m$fit(model_complex_f)
@@ -717,25 +812,40 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_complex_f(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
     log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
     log_f_mean = m.dist.normal(0, 1, name="log_f_mean")
-    f = jnp.exp(log_f_mean)
-    
-    active = jnp.squeeze(jnp.matmul(data["A"], data["Z"]), axis=-1)
-    inactive = jnp.squeeze(jnp.matmul(data["A"], (1.0 .- data["Zn"])), axis=-1)
-    
+
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
+    f = jnp.exp(log_f_mean)   # f > 1: conformist, f < 1: anti-conformist transmission
+
+    # Frequency-dependent transmission: informed^f / (informed^f + naive^f)
+    Z_exp = jnp.expand_dims(jnp.expand_dims(data["Z"], axis=-1), axis=0)
+    Zn_exp = jnp.expand_dims(jnp.expand_dims(data["Zn"], axis=-1), axis=0)
+    active = jnp.squeeze(jnp.matmul(data["A"], Z_exp), axis=-1)
+    inactive = jnp.squeeze(jnp.matmul(data["A"], 1.0 - Zn_exp), axis=-1)
     active_f = jnp.power(active, f)
-    denom_f = active_f .+ jnp.power(inactive, f)
-    
-    frac = jnp.where((active .+ inactive) .> 0, active_f ./ denom_f, 0.0)
-    net_effect = jnp.sum(frac, axis=0)
+    inactive_f = jnp.power(inactive, f)
+    frac = jnp.where(jnp.greater(active + inactive, 0), active_f / (active_f + inactive_f), 0.0)
+    soc_term = s_prime * jnp.sum(frac, axis=0)
+
+    D_exp = jnp.expand_dims(data["D"], axis=-1)
+    lambda_all = (lambda_0 + soc_term) * D_exp
+
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="complex_f_lik")
 end
 
 m.fit(model_complex_f)
@@ -781,37 +891,45 @@ Some phenomena involve interactions bounded over fluctuating intervals, such as 
 
 ```python
 from BayesForge import bf
+import jax
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
 m.data_on_model = {'data': data_list}
 
 def model_dynamic_tweights(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    k_raw   = m.dist.normal(0, 3, name="k_raw")
-    k_shape = 2.0 * m.jax.nn.sigmoid(k_raw) - 1.0
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    k_raw = m.dist.normal(0, 3, name="k_raw")
 
-    lambda_0 = m.jnp.exp(log_lambda_0_mean)
-    s_prime  = m.jnp.exp(log_s_prime_mean)
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
+    k_shape = 2.0 * jax.nn.sigmoid(k_raw) - 1.0   # shape of the transmission curve, in (-1, 1)
 
     def dini_func(x, k):
-        x_t = 2.0 * x - 1.0
-        return ((x_t - k * x_t) / (k - 2.0 * k * m.jnp.abs(x_t) + 1.0) + 1.0) / 2.0
+        """Dini curve: maps the proportion of informed contacts to a transmission weight."""
+        x_transformed = 2.0 * x - 1.0
+        return ((x_transformed - k * x_transformed)
+                / (k - 2.0 * k * jnp.abs(x_transformed) + 1.0) + 1.0) / 2.0
 
-    Z_exp  = m.jnp.expand_dims(m.jnp.expand_dims(data['Z'],  axis=-1), axis=0)
-    Zn_exp = m.jnp.expand_dims(m.jnp.expand_dims(data['Zn'], axis=-1), axis=0)
+    Z_exp = jnp.expand_dims(jnp.expand_dims(data['Z'], axis=-1), axis=0)
+    Zn_exp = jnp.expand_dims(jnp.expand_dims(data['Zn'], axis=-1), axis=0)
+    numer = jnp.squeeze(jnp.matmul(data['A'], Z_exp), axis=-1)
+    denom = numer + jnp.squeeze(jnp.matmul(data['A'], 1.0 - Zn_exp), axis=-1)
+    prop = jnp.where(denom > 0, numer / denom, 0.0)
+    soc_term = s_prime * jnp.sum(dini_func(prop, k_shape), axis=0)
 
-    numer = m.jnp.squeeze(m.jnp.matmul(data['A'], Z_exp),        axis=-1)
-    denom = numer + m.jnp.squeeze(m.jnp.matmul(data['A'], 1.0 - Zn_exp), axis=-1)
-
-    prop             = m.jnp.where(denom > 0, numer / denom, 0.0)
-    dini_transformed = dini_func(prop, k_shape)
-    net_effect       = m.jnp.sum(dini_transformed, axis=0)
-    soc_term         = s_prime * net_effect
-
-    D_exp      = m.jnp.expand_dims(data['D'], axis=-1)
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
     lambda_all = (lambda_0 + soc_term) * D_exp
-    # m.dist.unit(log_factor=total_log_lik, name="dynamic_networks_tweights_lik")
+
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="dynamic_tweights_lik")
 
 m.fit(model_dynamic_tweights)
 m.summary()
@@ -820,39 +938,44 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
-jax_nn <- reticulate::import("jax.nn")
+jax <- reticulate::import("jax")
 m$data_on_model <- list(data = data_list)
 
 model_dynamic_tweights <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  <- m$dist$normal(-4, 2, name="log_s_prime_mean")
-    k_raw   <- m$dist$normal(0, 3, name="k_raw")
-    k_shape <- 2.0 * jax_nn$sigmoid(k_raw) - 1.0
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+  k_raw <- m$dist$normal(0, 3, name = "k_raw")
 
-    lambda_0 <- jnp$exp(log_lambda_0_mean)
-    s_prime  <- jnp$exp(log_s_prime_mean)
+  lambda_0 <- jnp$exp(log_lambda_0_mean)
+  s_prime <- jnp$exp(log_s_prime_mean)
+  k_shape <- 2.0 * jax$nn$sigmoid(k_raw) - 1.0  # shape of the transmission curve, in (-1, 1)
 
-    dini_func <- function(x, k) {
-        x_t <- 2.0 * x - 1.0
-        ((x_t - k * x_t) / (k - 2.0 * k * jnp$abs(x_t) + 1.0) + 1.0) / 2.0
-    }
+  # Dini curve: maps the proportion of informed contacts to a transmission weight
+  dini_func <- function(x, k) {
+    x_transformed <- 2.0 * x - 1.0
+    ((x_transformed - k * x_transformed) /
+      (k - 2.0 * k * jnp$abs(x_transformed) + 1.0) + 1.0) / 2.0
+  }
 
-    Z_exp  <- jnp$expand_dims(jnp$expand_dims(data$Z,  axis=-1L), axis=0L)
-    Zn_exp <- jnp$expand_dims(jnp$expand_dims(data$Zn, axis=-1L), axis=0L)
+  Z_exp <- jnp$expand_dims(jnp$expand_dims(data$Z, axis = -1L), axis = 0L)
+  Zn_exp <- jnp$expand_dims(jnp$expand_dims(data$Zn, axis = -1L), axis = 0L)
+  numer <- jnp$squeeze(jnp$matmul(data$A, Z_exp), axis = -1L)
+  denom <- numer + jnp$squeeze(jnp$matmul(data$A, 1.0 - Zn_exp), axis = -1L)
+  prop <- jnp$where(denom > 0, numer / denom, 0.0)
+  soc_term <- s_prime * jnp$sum(dini_func(prop, k_shape), axis = 0L)
 
-    numer <- jnp$squeeze(jnp$matmul(data$A, Z_exp),          axis=-1L)
-    denom <- numer + jnp$squeeze(jnp$matmul(data$A, 1.0 - Zn_exp), axis=-1L)
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- (lambda_0 + soc_term) * D_exp
 
-    prop             <- jnp$where(denom > 0, numer / denom, 0.0)
-    dini_transformed <- dini_func(prop, k_shape)
-    net_effect       <- jnp$sum(dini_transformed, axis=0L)
-    soc_term         <- s_prime * net_effect
-
-    D_exp      <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- (lambda_0 + soc_term) * D_exp
-    # m$dist$unit(log_factor=total_log_lik, name="dynamic_networks_tweights_lik")
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "dynamic_tweights_lik")
 }
 
 m$fit(model_dynamic_tweights)
@@ -862,38 +985,44 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_dynamic_tweights(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
-    k_raw   = m.dist.normal(0, 3, name="k_raw")
-    k_shape = 2.0 * jax.nn.sigmoid(k_raw) - 1.0
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    k_raw = m.dist.normal(0, 3, name="k_raw")
 
     lambda_0 = jnp.exp(log_lambda_0_mean)
-    s_prime  = jnp.exp(log_s_prime_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
+    k_shape = 2.0 * jax.nn.sigmoid(k_raw) - 1.0   # shape of the transmission curve, in (-1, 1)
 
+    # Dini curve: maps the proportion of informed contacts to a transmission weight
     function dini_func(x, k)
-        x_t = 2.0 .* x .- 1.0
-        return ((x_t .- k .* x_t) ./ (k .- 2.0 .* k .* jnp.abs(x_t) .+ 1.0) .+ 1.0) ./ 2.0
+        x_transformed = 2.0 * x - 1.0
+        return ((x_transformed - k * x_transformed) /
+                (k - 2.0 * k * jnp.abs(x_transformed) + 1.0) + 1.0) / 2.0
     end
 
-    Z_exp  = jnp.expand_dims(jnp.expand_dims(data["Z"],  axis=-1), axis=0)
+    Z_exp = jnp.expand_dims(jnp.expand_dims(data["Z"], axis=-1), axis=0)
     Zn_exp = jnp.expand_dims(jnp.expand_dims(data["Zn"], axis=-1), axis=0)
+    numer = jnp.squeeze(jnp.matmul(data["A"], Z_exp), axis=-1)
+    denom = numer + jnp.squeeze(jnp.matmul(data["A"], 1.0 - Zn_exp), axis=-1)
+    prop = jnp.where(jnp.greater(denom, 0), numer / denom, 0.0)
+    soc_term = s_prime * jnp.sum(dini_func(prop, k_shape), axis=0)
 
-    numer = jnp.squeeze(jnp.matmul(data["A"], Z_exp),        axis=-1)
-    denom = numer .+ jnp.squeeze(jnp.matmul(data["A"], 1.0 .- Zn_exp), axis=-1)
+    D_exp = jnp.expand_dims(data["D"], axis=-1)
+    lambda_all = (lambda_0 + soc_term) * D_exp
 
-    prop             = jnp.where(denom .> 0, numer ./ denom, 0.0)
-    dini_transformed = dini_func(prop, k_shape)
-    net_effect       = jnp.sum(dini_transformed, axis=0)
-    soc_term         = s_prime .* net_effect
-
-    D_exp      = jnp.expand_dims(data["D"], axis=-1)
-    lambda_all = (lambda_0 .+ soc_term) .* D_exp
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="dynamic_tweights_lik")
 end
 
 m.fit(model_dynamic_tweights)
@@ -936,41 +1065,56 @@ Networks are commonly abstracted from noisy sampling data featuring unequal effo
 
 ```python
 from BayesForge import bf
+import jax
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
+# Edge weights known only up to a posterior (e.g. from an edge model, see Network Edges Inference):
+# here a standard normal on the logit scale for each of the P(P-1)/2 dyads
+P = data_list['P']
+focal_ID, other_ID = jnp.triu_indices(P, k=1)
+N_dyad = focal_ID.shape[0]
+data_list['N_dyad'] = N_dyad
+data_list['logit_edge_mu'] = jnp.zeros((1, N_dyad))
+data_list['logit_edge_cov'] = jnp.eye(N_dyad)[None]
+data_list['focal_ID'] = focal_ID + 1   # 1-based ids, as STbayes
+data_list['other_ID'] = other_ID + 1
 m.data_on_model = {'data': data_list}
 
 def model_posterior_edges(data):
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
+    lambda_0 = jnp.exp(log_lambda_0_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    lambda_0 = m.jnp.exp(log_lambda_0_mean)
-    s_prime  = m.jnp.exp(log_s_prime_mean)
-
-    # Sample edge weights from posterior covariance structure
-    edge_logit = m.dist.multivariate_normal(
-        loc=data['logit_edge_mu'],
-        covariance_matrix=data['logit_edge_cov'],
-        name="edge_logit"
-    )
-    w = m.jax.nn.sigmoid(edge_logit)
-
-    # Build symmetric A matrix from sampled edge weights
-    N, P = data['N_networks'], data['P']
-    A = m.jnp.zeros((N, P, P))
+    # Sample the edge weights from their posterior and build the network
+    edge_logit = m.dist.multivariate_normal(loc=data['logit_edge_mu'],
+                                            covariance_matrix=data['logit_edge_cov'],
+                                            name="edge_logit")
+    w = jax.nn.sigmoid(edge_logit)
+    network_idx = jnp.arange(data['N_networks'])[:, None]
     focal_idx = data['focal_ID'] - 1
     other_idx = data['other_ID'] - 1
-    A = A.at[:, focal_idx, other_idx].set(w)
-    A = A.at[:, other_idx, focal_idx].set(w)
+    A = jnp.zeros((data['N_networks'], data['P'], data['P']))
+    A = A.at[network_idx, focal_idx, other_idx].set(w)
+    A = A.at[network_idx, other_idx, focal_idx].set(w)
+    A_sum = jnp.sum(A, axis=0)[None, None]   # same network at every trial and time step
 
-    A_sum    = m.jnp.sum(A, axis=0)
-    Z_exp    = m.jnp.expand_dims(data['Z'], axis=-1)
-    A_Z      = m.jnp.squeeze(m.jnp.matmul(A_sum, Z_exp), axis=-1)
+    Z_exp = jnp.expand_dims(data['Z'], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
     soc_term = s_prime * A_Z
 
-    D_exp      = m.jnp.expand_dims(data['D'], axis=-1)
+    D_exp = jnp.expand_dims(data['D'], axis=-1)
     lambda_all = (lambda_0 + soc_term) * D_exp
-    # m.dist.unit(log_factor=total_log_lik, name="posterior_edges_lik")
+
+    time_grid_exp = jnp.arange(data['T_max'])[None, :, None]
+    obs_end_time_exp = jnp.expand_dims(data['obs_end_time'], axis=1)
+    sum_mask = time_grid_exp < obs_end_time_exp
+    log_mask = (time_grid_exp == (obs_end_time_exp - 1)) & jnp.expand_dims(data['is_event'], axis=1)
+    neg_lambda_sum = jnp.sum(-lambda_all * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data['valid_ind'])
+    m.dist.unit(log_factor=total_log_lik, name="posterior_edges_lik")
 
 m.fit(model_posterior_edges)
 m.summary()
@@ -979,44 +1123,55 @@ m.summary()
 ## R
 
 ```r
-library(BayesForge)
 m <- importBF(platform = "cpu")
+jax <- reticulate::import("jax")
+# Edge weights known only up to a posterior (e.g. from an edge model, see Network Edges Inference):
+# here a standard normal on the logit scale for each of the P(P-1)/2 dyads
+P <- data_list$P
+dyads <- jnp$triu_indices(P, k = 1L)
+N_dyad <- dyads[[1]]$shape[[1]]
+data_list$N_dyad <- N_dyad
+data_list$logit_edge_mu <- jnp$zeros(reticulate::tuple(1L, N_dyad))
+data_list$logit_edge_cov <- jnp$expand_dims(jnp$eye(N_dyad), axis = 0L)
+data_list$focal_ID <- dyads[[1]] + 1L  # 1-based ids, as STbayes
+data_list$other_ID <- dyads[[2]] + 1L
 m$data_on_model <- list(data = data_list)
 
 model_posterior_edges <- function(data) {
-    log_lambda_0_mean <- m$dist$normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  <- m$dist$normal(-4, 2, name="log_s_prime_mean")
+  log_lambda_0_mean <- m$dist$normal(-4, 2, name = "log_lambda_0_mean")
+  log_s_prime_mean <- m$dist$normal(-4, 2, name = "log_s_prime_mean")
+  lambda_0 <- jnp$exp(log_lambda_0_mean)
+  s_prime <- jnp$exp(log_s_prime_mean)
 
-    lambda_0 <- jnp$exp(log_lambda_0_mean)
-    s_prime  <- jnp$exp(log_s_prime_mean)
+  # Sample the edge weights from their posterior and build the network
+  edge_logit <- m$dist$multivariate_normal(loc = data$logit_edge_mu,
+                                           covariance_matrix = data$logit_edge_cov,
+                                           name = "edge_logit")
+  w <- jax$nn$sigmoid(edge_logit)
+  network_idx <- jnp$expand_dims(jnp$arange(data$N_networks), axis = -1L)
+  focal_idx <- data$focal_ID - 1L
+  other_idx <- data$other_ID - 1L
+  A <- jnp$zeros(reticulate::tuple(data$N_networks, data$P, data$P))
+  A <- A$at[network_idx, focal_idx, other_idx]$set(w)
+  A <- A$at[network_idx, other_idx, focal_idx]$set(w)
+  # same network at every trial and time step
+  A_sum <- jnp$expand_dims(jnp$expand_dims(jnp$sum(A, axis = 0L), axis = 0L), axis = 0L)
 
-    edge_logit <- m$dist$multivariate_normal(
-        loc = data$logit_edge_mu,
-        covariance_matrix = data$logit_edge_cov,
-        name = "edge_logit"
-    )
+  Z_exp <- jnp$expand_dims(data$Z, axis = -1L)
+  A_Z <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis = -1L)
+  soc_term <- s_prime * A_Z
 
-    jax <- reticulate::import("jax")
-    w <- jax$nn$sigmoid(edge_logit)
+  D_exp <- jnp$expand_dims(data$D, axis = -1L)
+  lambda_all <- (lambda_0 + soc_term) * D_exp
 
-    # Build symmetric A from sampled dyadic weights
-    N  <- as.integer(data$N_networks)
-    P  <- as.integer(data$P)
-    A  <- jnp$zeros(tuple(N, P, P))
-    focal_idx <- data$focal_ID - 1L
-    other_idx <- data$other_ID - 1L
-    net_idx   <- jnp$arange(N)[, jnp$newaxis]
-    A <- A$at[net_idx, focal_idx, other_idx]$set(w)
-    A <- A$at[net_idx, other_idx, focal_idx]$set(w)
-
-    A_sum    <- jnp$sum(A, axis=0L)
-    Z_exp    <- jnp$expand_dims(data$Z, axis=-1L)
-    A_Z      <- jnp$squeeze(jnp$matmul(A_sum, Z_exp), axis=-1L)
-    soc_term <- s_prime * A_Z
-
-    D_exp      <- jnp$expand_dims(data$D, axis=-1L)
-    lambda_all <- (lambda_0 + soc_term) * D_exp
-    # m$dist$unit(log_factor=total_log_lik, name="posterior_edges_lik")
+  time_grid_exp <- jnp$expand_dims(jnp$expand_dims(jnp$arange(data$T_max), axis = 0L), axis = -1L)
+  obs_end_time_exp <- jnp$expand_dims(data$obs_end_time, axis = 1L)
+  sum_mask <- time_grid_exp < obs_end_time_exp
+  log_mask <- (time_grid_exp == (obs_end_time_exp - 1L)) & jnp$expand_dims(data$is_event, axis = 1L)
+  neg_lambda_sum <- jnp$sum(-lambda_all * sum_mask, axis = 1L)
+  log_lambda_term <- jnp$sum(jnp$log(lambda_all) * log_mask, axis = 1L)
+  total_log_lik <- jnp$sum((neg_lambda_sum + log_lambda_term) * data$valid_ind)
+  m$dist$unit(log_factor = total_log_lik, name = "posterior_edges_lik")
 }
 
 m$fit(model_posterior_edges)
@@ -1026,37 +1181,55 @@ m$summary()
 ## Julia
 
 ```julia
-using PyBayesForge
-
 m = importBF(platform="cpu")
-m.data_on_model = Dict("data" => data_list)
+# Edge weights known only up to a posterior (e.g. from an edge model, see Network Edges Inference):
+# here a standard normal on the logit scale for each of the P(P-1)/2 dyads
+P = data_list["P"]
+dyads = jnp.triu_indices(P, k=1)
+N_dyad = dyads[0].shape[0]
+data_list["N_dyad"] = N_dyad
+data_list["logit_edge_mu"] = jnp.zeros((1, N_dyad))
+data_list["logit_edge_cov"] = jnp.expand_dims(jnp.eye(N_dyad), axis=0)
+data_list["focal_ID"] = dyads[0] + 1   # 1-based ids, as STbayes
+data_list["other_ID"] = dyads[1] + 1
+m.data_on_model = pydict(data = data_list)
 
 @BF function model_posterior_edges(data)
     log_lambda_0_mean = m.dist.normal(-4, 2, name="log_lambda_0_mean")
-    log_s_prime_mean  = m.dist.normal(-4, 2, name="log_s_prime_mean")
-
+    log_s_prime_mean = m.dist.normal(-4, 2, name="log_s_prime_mean")
     lambda_0 = jnp.exp(log_lambda_0_mean)
-    s_prime  = jnp.exp(log_s_prime_mean)
+    s_prime = jnp.exp(log_s_prime_mean)
 
-    edge_logit = m.dist.multivariate_normal(
-        loc=data["logit_edge_mu"], covariance_matrix=data["logit_edge_cov"], name="edge_logit"
-    )
+    # Sample the edge weights from their posterior and build the network
+    edge_logit = m.dist.multivariate_normal(loc=data["logit_edge_mu"],
+                                            covariance_matrix=data["logit_edge_cov"],
+                                            name="edge_logit")
     w = jax.nn.sigmoid(edge_logit)
+    network_idx = jnp.expand_dims(jnp.arange(data["N_networks"]), axis=-1)
+    focal_idx = data["focal_ID"] - 1
+    other_idx = data["other_ID"] - 1
+    A = jnp.zeros((data["N_networks"], data["P"], data["P"]))
+    A = A.at[network_idx, focal_idx, other_idx].set(w)
+    A = A.at[network_idx, other_idx, focal_idx].set(w)
+    # same network at every trial and time step
+    A_sum = jnp.expand_dims(jnp.expand_dims(jnp.sum(A, axis=0), axis=0), axis=0)
 
-    N, P = data["N_networks"], data["P"]
-    A = jnp.zeros((N, P, P))
-    focal_idx = data["focal_ID"] .- 1
-    other_idx = data["other_ID"] .- 1
-    A = A.at[:, focal_idx, other_idx].set(w)
-    A = A.at[:, other_idx, focal_idx].set(w)
+    Z_exp = jnp.expand_dims(data["Z"], axis=-1)
+    A_Z = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
+    soc_term = s_prime * A_Z
 
-    A_sum    = jnp.sum(A, axis=0)
-    Z_exp    = jnp.expand_dims(data["Z"], axis=-1)
-    A_Z      = jnp.squeeze(jnp.matmul(A_sum, Z_exp), axis=-1)
-    soc_term = s_prime .* A_Z
+    D_exp = jnp.expand_dims(data["D"], axis=-1)
+    lambda_all = (lambda_0 + soc_term) * D_exp
 
-    D_exp      = jnp.expand_dims(data["D"], axis=-1)
-    lambda_all = (lambda_0 .+ soc_term) .* D_exp
+    time_grid_exp = jnp.expand_dims(jnp.expand_dims(jnp.arange(data["T_max"]), axis=0), axis=-1)
+    obs_end_time_exp = jnp.expand_dims(data["obs_end_time"], axis=1)
+    sum_mask = jnp.less(time_grid_exp, obs_end_time_exp)
+    log_mask = jnp.logical_and(jnp.equal(time_grid_exp, obs_end_time_exp - 1),
+                               jnp.expand_dims(data["is_event"], axis=1))
+    neg_lambda_sum = jnp.sum(jnp.negative(lambda_all) * sum_mask, axis=1)
+    log_lambda_term = jnp.sum(jnp.log(lambda_all) * log_mask, axis=1)
+    total_log_lik = jnp.sum((neg_lambda_sum + log_lambda_term) * data["valid_ind"])
+    m.dist.unit(log_factor=total_log_lik, name="posterior_edges_lik")
 end
 
 m.fit(model_posterior_edges)
@@ -1081,3 +1254,8 @@ This model prevents the severe over-estimation of intrinsic ($\lambda_0$) proper
 :::
 
 ---
+
+## Model validation tests
+
+- [Comparison with STbayes](https://github.com/BGN-for-ASNA/BF/tree/main/Test/12.NBDA): NBDA models fitted with BayesForge and STbayes, posterior densities and timing compared.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).

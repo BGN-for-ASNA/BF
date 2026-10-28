@@ -198,16 +198,18 @@ def test_ppc_stat_2d_mean_sd():
 
 
 # ---------------------------------------------------------------------------
-# 6. ppc_error_scatter (bayesplot ppc_error_scatter_avg: x = colMeans(yrep))
+# 6. ppc_error_scatter (bayesplot ppc_error_scatter_avg: x = average
+#    predictive error y - colMeans(yrep), y = observed y)
 # ---------------------------------------------------------------------------
 
 def test_ppc_error_scatter():
     fig = ppc.ppc_error_scatter(Y, YREP)
     pts = fig.data[0]
+    ref = RC["error_scatter_avg"]
     np.testing.assert_allclose(np.asarray(pts.x, float),
-                               np.array(RC["error_scatter_x"]), rtol=RTOL, atol=ATOL)
+                               np.array(ref["error"]), rtol=RTOL, atol=ATOL)
     np.testing.assert_allclose(np.asarray(pts.y, float),
-                               np.array(RC["error_scatter_y"]), rtol=RTOL, atol=ATOL)
+                               np.array(ref["y_obs"]), rtol=RTOL, atol=ATOL)
 
 
 # ---------------------------------------------------------------------------
@@ -403,3 +405,188 @@ def test_ppc_loo_pit_without_loglik_is_plain_pit():
     np.testing.assert_allclose(grid, np.linspace(0.0, 1.0, 300), rtol=0, atol=0)
     np.testing.assert_allclose(np.asarray(fig.data[-1].y, dtype=float),
                                _reflected_kde_1d(pit, grid), rtol=RTOL, atol=ATOL)
+
+
+# ---------------------------------------------------------------------------
+# 14. ppc_error_binned (bayesplot ppc_error_binned / internal bin_errors):
+#     binned residuals for a binary outcome derived from the continuous
+#     fixture: BY = y > median(y), expected values BP = plogis(yrep).
+#     Reference rows: binary.error_binned (3 draws x 10 bins = n_bins(30)).
+# ---------------------------------------------------------------------------
+
+BY = (Y > np.median(Y)).astype(int)           # binary outcome (30,)
+BP = 1.0 / (1.0 + np.exp(-YREP))              # expected values, (200, 30)
+EB = REF["binary"]["error_binned"]
+BINS = 10                                     # bayesplot n_bins(30)
+
+
+def _eb_rows(rep_id):
+    rows = [i for i, rid in enumerate(EB["rep_id"]) if rid == rep_id]
+    return {k: np.array([EB[k][i] for i in rows], dtype=float)
+            for k in ("ey_bar", "err_bar", "se2")}
+
+
+def test_bin_errors_matches_reference():
+    for s in (0, 1, 2):
+        ref = _eb_rows(s + 1)
+        ey_bar, err_bar, se2 = ppc._bin_errors(BP[s], BY - BP[s], BINS)
+        assert len(ey_bar) == len(ref["ey_bar"])
+        for got, key in ((ey_bar, "ey_bar"), (err_bar, "err_bar"), (se2, "se2")):
+            np.testing.assert_allclose(got, ref[key], rtol=RTOL, atol=ATOL,
+                                       equal_nan=True)
+
+
+def test_ppc_error_binned_figure_matches_reference():
+    fig = ppc.ppc_error_binned(BY, BP[:3])
+    assert len({t.xaxis for t in fig.data}) == 3      # 3 panels
+    points = [t for t in fig.data if t.name == "Average error"]
+    assert len(points) == 3
+    for k, tr in enumerate(points):
+        assert tr.xaxis in ("x", f"x{k + 1}")         # panel k (layout order)
+        ref = _eb_rows(k + 1)
+        np.testing.assert_allclose(np.asarray(tr.x, dtype=float), ref["ey_bar"],
+                                   rtol=RTOL, atol=ATOL, equal_nan=True)
+        np.testing.assert_allclose(np.asarray(tr.y, dtype=float), ref["err_bar"],
+                                   rtol=RTOL, atol=ATOL, equal_nan=True)
+
+
+def test_ppc_error_binned_uses_first_n_draws():
+    fig = ppc.ppc_error_binned(BY, BP[:10], n=3)      # 10 rows -> first 3
+    assert len({t.xaxis for t in fig.data}) == 3
+    points = [t for t in fig.data if t.name == "Average error"]
+    for k, tr in enumerate(points):                   # panels = draws 1..3
+        ref = _eb_rows(k + 1)
+        np.testing.assert_allclose(np.asarray(tr.x, dtype=float), ref["ey_bar"],
+                                   rtol=RTOL, atol=ATOL, equal_nan=True)
+
+
+# ---------------------------------------------------------------------------
+# survival: Kaplan-Meier overlay (survival::survfit reference)
+# ---------------------------------------------------------------------------
+# ST / TY / TYREP mirror make_reference.R exactly.
+ST = np.resize(np.array([1, 1, 0], dtype=float), len(Y))   # every 3rd censored
+TY = np.exp(Y / 2)                                         # positive times (30)
+TYREP = np.exp(YREP[:3] / 2)                               # 3 x 30
+KM = REF["survival"]["km"]
+
+
+def _step_eval(t, surv, x):
+    """Right-continuous step function (t, surv) evaluated at x: the value of
+    the last knot at or before x (KM is a right-continuous step function).
+    The reference times are jsonlite-rounded to 15 significant digits, so a
+    knot counts as reached once x passes it within a relative 1e-12 (the
+    smallest gap between distinct times here is ~4e-5)."""
+    idx = np.searchsorted(t, np.asarray(x, dtype=float) * (1 + 1e-12),
+                          side="right") - 1
+    return surv[np.clip(idx, 0, None)]
+
+
+def test_km_observed_matches_survfit():
+    t, surv = ppc._km(TY, ST)
+    times = np.asarray(KM["obs"]["time"], dtype=float)
+    n_event = np.asarray(KM["obs"]["n_event"], dtype=float)
+    surv_ref = np.asarray(KM["obs"]["surv"], dtype=float)
+    mask = n_event > 0          # survfit steps only at event times
+    np.testing.assert_allclose(_step_eval(t, surv, times[mask]),
+                               surv_ref[mask], rtol=1e-12)
+
+
+def test_km_predicted_matches_survfit():
+    for s, ref in enumerate(KM["rep"]):
+        t, surv = ppc._km(TYREP[s], np.ones(len(TYREP[s])))   # all events
+        np.testing.assert_allclose(
+            _step_eval(t, surv, np.asarray(ref["time"], dtype=float)),
+            np.asarray(ref["surv"], dtype=float), rtol=1e-12)
+
+
+def test_ppc_km_overlay_traces_and_status_validation():
+    fig = ppc.ppc_km_overlay(TY, TYREP, ST, n=3)
+    assert len(fig.data) == 4                       # 3 predicted + observed
+    assert fig.data[-1].name == ppc._obs("y")       # observed drawn last
+    assert all(t.line.shape == "hv" for t in fig.data)
+    bad = ST.copy()
+    bad[0] = 2
+    with pytest.raises(ValueError, match="status_y"):
+        ppc.ppc_km_overlay(TY, TYREP, bad)
+
+
+def test_ppc_km_overlay_extrapolation_cut():
+    fig = ppc.ppc_km_overlay(TY, TYREP, ST, n=3, extrapolation_factor=1.0)
+    for tr in fig.data[:-1]:                        # predicted curves only
+        assert np.max(np.asarray(tr.x, dtype=float)) <= TY.max()
+
+
+# ---------------------------------------------------------------------------
+# Grouped KM overlay (group=): panels mask the y rows and yrep columns; the
+# per-panel curves are checked against ppc._km on the masked arrays directly
+# (the survfit cross-check above validates _km itself).
+# ---------------------------------------------------------------------------
+
+KMGROUP = np.arange(len(TY)) % 3 + 1    # same grouping as test_ppc_grouped.py
+
+
+def _km_panel_traces(fig, panel):
+    """Traces drawn in subplot ``panel`` (1-based): plotly numbers the axes
+    in layout order; the trace attribute is "x", "x2", "x3", ..."""
+    want = "x" if panel == 1 else f"x{panel}"
+    return [t for t in fig.data if t.xaxis == want]
+
+
+def test_ppc_km_overlay_grouped_panels():
+    fig = ppc.ppc_km_overlay(TY, TYREP, ST, n=3, group=KMGROUP, facet=True)
+    assert fig.layout.title.text == "PPC: Kaplan-Meier overlay of y by group"
+    assert [a.text for a in fig.layout.annotations] == \
+        ["group = 1", "group = 2", "group = 3"]
+    assert len(fig.data) == 3 * (3 + 1)             # 3 predicted + observed
+    # legend entries only from the first panel
+    assert sum(t.showlegend is not False for t in fig.data) == 2
+    for i, g in enumerate((1, 2, 3)):
+        traces = _km_panel_traces(fig, i + 1)
+        assert len(traces) == 4
+        sel = KMGROUP == g
+        t_cut = 1.2 * TY[sel].max()                 # per-group extrapolation cut
+        for s, tr in enumerate(traces[:3]):
+            t, surv = ppc._km(TYREP[s][sel], np.ones(int(sel.sum())))
+            keep = t <= t_cut
+            np.testing.assert_allclose(np.asarray(tr.x, dtype=float), t[keep])
+            np.testing.assert_allclose(np.asarray(tr.y, dtype=float), surv[keep])
+        obs = traces[3]                             # observed drawn last
+        assert obs.name == ppc._obs("y")
+        t, surv = ppc._km(TY[sel], ST[sel])         # observed is not cut
+        np.testing.assert_allclose(np.asarray(obs.x, dtype=float), t)
+        np.testing.assert_allclose(np.asarray(obs.y, dtype=float), surv)
+
+
+def test_ppc_km_overlay_grouped_single_plot():
+    # Default is facet=False: all groups on a single plot with distinct colors
+    fig = ppc.ppc_km_overlay(TY, TYREP, ST, n=3, group=KMGROUP)
+    assert fig.layout.title.text == "PPC: Kaplan-Meier overlay of y by group"
+    assert len(fig.layout.annotations or []) == 0   # single plot: no panel annotations
+    assert len(fig.data) == 3 * (3 + 1)
+    # Legend has one predicted + one observed per group = 2 * 3 = 6 entries
+    assert sum(t.showlegend is not False for t in fig.data) == 6
+    for i, g in enumerate((1, 2, 3)):
+        grp_traces = [t for t in fig.data if t.legendgroup in (f"group_{i}_pred", f"group_{i}_obs")]
+        assert len(grp_traces) == 4
+        sel = KMGROUP == g
+        t_cut = 1.2 * TY[sel].max()
+        for s, tr in enumerate(grp_traces[:3]):
+            t, surv = ppc._km(TYREP[s][sel], np.ones(int(sel.sum())))
+            keep = t <= t_cut
+            np.testing.assert_allclose(np.asarray(tr.x, dtype=float), t[keep])
+            np.testing.assert_allclose(np.asarray(tr.y, dtype=float), surv[keep])
+            assert tr.name == f"group = {g} (predicted)"
+        obs = grp_traces[3]
+        assert obs.name == f"group = {g} (observed)"
+        t, surv = ppc._km(TY[sel], ST[sel])
+        np.testing.assert_allclose(np.asarray(obs.x, dtype=float), t)
+        np.testing.assert_allclose(np.asarray(obs.y, dtype=float), surv)
+
+
+def test_ppc_km_overlay_grouped_none_and_length():
+    fig_plain = ppc.ppc_km_overlay(TY, TYREP, ST, n=3)
+    fig_none = ppc.ppc_km_overlay(TY, TYREP, ST, n=3, group=None)
+    assert fig_plain.to_dict()["data"] == fig_none.to_dict()["data"]
+    assert fig_plain.to_dict()["layout"] == fig_none.to_dict()["layout"]
+    with pytest.raises(ValueError, match="length"):
+        ppc.ppc_km_overlay(TY, TYREP, ST, n=3, group=KMGROUP[:-1])

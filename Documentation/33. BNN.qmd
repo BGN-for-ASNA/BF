@@ -44,7 +44,9 @@ or [<span style="color:#0D6EFD">Stochastic Gradient MCMC 🛈</span>]{#SG-MCMC},
 
 ## Example
 
-Below is an example code snippet demonstrating a *Bayesian Neural Network* for regression using the BayesForge (BF) package. Simulated data consist of two continuous variables ($Y$ and $X$), and the goal is to predict $X$ from $Y$ using a non-linear model.
+Below is an example code snippet demonstrating a *Bayesian Neural Network* for regression using the BayesForge (BF) package. Simulated data consist of two continuous variables ($Y$ and $X$), and the goal is to predict $Y$ from $X$ using a non-linear model.
+
+The example reads `BNN.json` (simulated regression data); download it from [Test/3.Documentation/data](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/data).
 
 ::: {.panel-tabset group="language"}
 
@@ -117,39 +119,42 @@ ax.set(xlabel="X", ylabel="Y", title="Mean predictions with 90% CI")
 
 ```r
 library(BayesForge)
-m=importBF(platform='cpu')
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
 
-# Load csv file
 # Import data ------------------------------------------------
-path = normalizePath(paste(system.file(package = "BayesForge"),"/data/BNN.json", sep = ''))
-data <- fromJSON(path)
-m$data_on_model = list()
-m$data_on_model$X = jnp$array(data$X)
-m$data_on_model$Y = jnp$array(data$Y)
+data <- jsonlite::fromJSON("BNN.json")
+X <- jnp$array(data$X) # Note X shape = (N,2) where first column is the intercept and second column is the predictor
+Y <- jnp$array(matrix(data$Y, ncol = 1)) # Note Y shape = (N,1) where N is the number of observations
+m$data_on_model <- list(X = X, Y = Y)
 
 # Define model ------------------------------------------------
-model <- function(X, Y, D_X = 2, D_H=5L, D_Y=1L){
+model <- function(X, Y, D_H = 5L, D_Y = 1L) {
+  D_X <- X$shape[[2]]
 
-  w1 <- m$bnn$layer_linear(X, dist=bf.dist.normal(0, 1,  name='w1',shape=c(D_X,D_H)), activation='tanh')
-  
-  w2 <- m$bnn$layer_linear(
-    w1, 
-    dist=bf.dist.normal(0, 1,  name='w2',shape=c(D_H,D_Y)),
-    activation='tanh'
+  # First hidden layer: Transforms input to N × D_H (hidden units)
+  w1 <- m$bnn$layer_linear(
+    X,
+    dist = m$dist$normal(0, 1, name = "w1", shape = reticulate::tuple(D_X, D_H)),
+    activation = "tanh"
   )
-  
-  # Prior for the output standard deviation
-  s = bf.dist.exponential(1, name = 's')
-  
-  # Likelihood
-  bf.dist.normal(w2, s, obs = Y)
+
+  # Final layer: linear combination of the hidden units
+  w2 <- m$bnn$layer_linear(
+    X = w1,
+    dist = m$dist$normal(0, 1, name = "w2", shape = reticulate::tuple(D_H, D_Y))
+  )
+
+  sigma <- m$dist$exponential(1, name = "sigma")
+
+  m$dist$normal(w2, sigma, obs = Y, name = "Y")
 }
 
 # Run mcmc ------------------------------------------------
-m$fit(model) # Approximate posterior distributions
+m$fit(model, progress_bar = FALSE) # Approximate posterior distributions
+m$summary()
 ```
 :::
-
 
 ## Mathematical Details
 In the Bayesian formulation, we place [<span style="color:#0D6EFD">priors 🛈</span>]{#prior} on all weights and biases and define a likelihood for the output. For a regression task with a $K$-hidden-layer BNN with $J$ neurons per hidden layer and a $D_X$-vector of predictors and a $D_Y$-vector of outcomes we can run the model as below.
@@ -176,6 +181,11 @@ where:
 * $W_1$ is the weight matrix of the first hidden layer, with a shape of $D_X \times D_H$ (i.e., $2 \times 5$).
 * $W_2$ is the final layer weight matrix used to compute the linear combination of the hidden layer, with a shape of $D_H \times D_Y$ (i.e., $5 \times 1$).
 * All elements within the weight matrices $W_1$ and $W_2$ are assigned independent standard Normal priors.
+
+## Model validation tests
+
+- [BNN tests](https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN): Bayesian neural network tests (regression, covariance estimation).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python and R examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`).
 
 ## Notes
 ::: callout-note

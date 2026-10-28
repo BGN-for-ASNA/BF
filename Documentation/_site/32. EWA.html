@@ -642,6 +642,7 @@ window.Quarto = {
   <li><a href="#example-1" id="toc-example-1" class="nav-link" data-scroll-target="#example-1">Example</a></li>
   <li><a href="#mathematical-details-1" id="toc-mathematical-details-1" class="nav-link" data-scroll-target="#mathematical-details-1">Mathematical Details</a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -720,88 +721,249 @@ Note
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(K, J, tech, <span class="bu">id</span>, bout, y_prev, s, ps):</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">4</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.full(<span class="dv">4</span>, <span class="fl">3.0</span>))</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.lkj_cholesky(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="dv">4</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.zeros((<span class="dv">4</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> sigma[:, <span class="va">None</span>]</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> (L_scaled <span class="op">@</span> z).T</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">0</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">0</span>])      <span class="co"># Learning rate</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">1</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">1</span>])      <span class="co"># Social weight</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.exp(mu[<span class="dv">2</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">2</span>])             <span class="co"># Conformity</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    Bpay_arr  <span class="op">=</span> mu[<span class="dv">3</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">3</span>]                      <span class="co"># Pay-off bias</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step_fn(carry, x):</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> carry</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        (phi_i, gamma_i, fconf_i, Bpay_i, tech_i, id_i, bout_i, prev_y_i, s_i, ps_i) <span class="op">=</span> x</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update attractions (EWA)</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.where(bout_i <span class="op">==</span> <span class="dv">1</span>, jnp.zeros(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> prev_y_i)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.softmax(lam <span class="op">*</span> ac_new)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Social choice probability (Pay-off bias)</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.concatenate([jnp.ones(<span class="dv">1</span>), jnp.exp(Bpay_i <span class="op">*</span> ps_i[<span class="dv">1</span>:])]) <span class="op">*</span> jnp.power(s_i, fconf_i)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.where(jnp.<span class="bu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="dv">0</span>, jnp.<span class="bu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.where(bout_i <span class="op">&gt;</span> <span class="dv">1</span>, prob_mix, prob_individual)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> AC.at[id_i].<span class="bu">set</span>(ac_new), prob_final</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.zeros((J, K))</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, <span class="bu">id</span>, bout, y_prev, s, ps)</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    _, probs_matrix <span class="op">=</span> jax.lax.scan(step_fn, AC_init, xs)</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    m.dist.categorical(<span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>m.fit(model)</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Data: capuchin foraging choices (panama_ewa) ------------------------------</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> pd.read_csv(m.load.panama_ewa(only_path<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">7</span>  <span class="co"># foraging techniques</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cue(prefix, scale<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum."""</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> d[[<span class="ss">f"</span><span class="sc">{</span>prefix<span class="sc">}{</span>k<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, K <span class="op">+</span> <span class="dv">1</span>)]].values</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jnp.array(x <span class="op">/</span> x.<span class="bu">max</span>() <span class="cf">if</span> scale <span class="cf">else</span> x)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> cue(<span class="st">"y"</span>)                                   <span class="co"># personal yield of each technique</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>y_prev <span class="op">=</span> jnp.zeros_like(y).at[<span class="dv">1</span>:].<span class="bu">set</span>(y[:<span class="op">-</span><span class="dv">1</span>])  <span class="co"># yields of the previous row</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    K<span class="op">=</span>K,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    J<span class="op">=</span><span class="bu">int</span>(d[<span class="st">"mono_index"</span>].nunique()),            <span class="co"># number of monkeys</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    tech<span class="op">=</span>jnp.array(d[<span class="st">"tech_index"</span>].values <span class="op">-</span> <span class="dv">1</span>),  <span class="co"># chosen technique, 0-indexed</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span><span class="op">=</span>jnp.array(d[<span class="st">"mono_index"</span>].values <span class="op">-</span> <span class="dv">1</span>),    <span class="co"># monkey, 0-indexed</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    bout<span class="op">=</span>jnp.array(d[<span class="st">"forg_bout"</span>].values),       <span class="co"># 1 = first bout (attractions reset)</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    y_prev<span class="op">=</span>y_prev,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span>cue(<span class="st">"s"</span>),                                  <span class="co"># frequency cue</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    ps<span class="op">=</span>cue(<span class="st">"ps"</span>, scale<span class="op">=</span><span class="va">True</span>),                    <span class="co"># payoff cue</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(K, J, tech, <span class="bu">id</span>, bout, y_prev, s, ps):</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">4</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.full(<span class="dv">4</span>, <span class="fl">3.0</span>))</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.lkj_cholesky(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="dv">4</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.zeros((<span class="dv">4</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> sigma[:, <span class="va">None</span>]</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> (L_scaled <span class="op">@</span> z).T</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">0</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">0</span>])      <span class="co"># Learning rate</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">1</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">1</span>])      <span class="co"># Social weight</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.exp(mu[<span class="dv">2</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">2</span>])             <span class="co"># Conformity</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    Bpay_arr  <span class="op">=</span> mu[<span class="dv">3</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">3</span>]                      <span class="co"># Pay-off bias</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step_fn(carry, x):</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> carry</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        (phi_i, gamma_i, fconf_i, Bpay_i, tech_i, id_i, bout_i, prev_y_i, s_i, ps_i) <span class="op">=</span> x</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update attractions (EWA)</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.where(bout_i <span class="op">==</span> <span class="dv">1</span>, jnp.zeros(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> prev_y_i)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.softmax(lam <span class="op">*</span> ac_new)</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Social choice probability (Pay-off bias)</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.concatenate([jnp.ones(<span class="dv">1</span>), jnp.exp(Bpay_i <span class="op">*</span> ps_i[<span class="dv">1</span>:])]) <span class="op">*</span> jnp.power(s_i, fconf_i)</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.where(jnp.<span class="bu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="dv">0</span>, jnp.<span class="bu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.where(bout_i <span class="op">&gt;</span> <span class="dv">1</span>, prob_mix, prob_individual)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> AC.at[id_i].<span class="bu">set</span>(ac_new), prob_final</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.zeros((J, K))</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, <span class="bu">id</span>, bout, y_prev, s, ps)</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>    _, probs_matrix <span class="op">=</span> jax.lax.scan(step_fn, AC_init, xs)</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>    m.dist.categorical(name<span class="op">=</span><span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>m.fit(model, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(K, J, tech, id, bout, y_prev, s, ps) {</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Priors</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  lam <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name=</span><span class="st">"lambda"</span>, <span class="at">rate=</span><span class="fl">1.0</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name=</span><span class="st">"mu"</span>, <span class="at">loc=</span>jnp<span class="sc">$</span><span class="fu">zeros</span>(<span class="dv">4</span>L), <span class="at">scale=</span><span class="fl">1.0</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name=</span><span class="st">"sigma"</span>, <span class="at">rate=</span>jnp<span class="sc">$</span><span class="fu">full</span>(<span class="dv">4</span>L, <span class="fl">3.0</span>))</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  L_Rho <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">lkj_cholesky</span>(<span class="at">name=</span><span class="st">"L_Rho"</span>, <span class="at">dimension=</span><span class="dv">4</span>L, <span class="at">concentration=</span><span class="fl">3.0</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name=</span><span class="st">"z"</span>, <span class="at">loc=</span>jnp<span class="sc">$</span><span class="fu">zeros</span>(<span class="fu">tuple</span>(<span class="dv">4</span>L, J)), <span class="at">scale=</span><span class="fl">1.0</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ... Equivalent logic to Python implementation ...</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>jax <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>py <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import_builtins</span>()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Data: capuchin foraging choices (panama_ewa) ------------------------------</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">panama_ewa</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="dv">7</span>L  <span class="co"># foraging techniques</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>cue <span class="ot">&lt;-</span> <span class="cf">function</span>(prefix, <span class="at">scale =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(d[, <span class="fu">paste0</span>(prefix, <span class="dv">1</span><span class="sc">:</span>K)])</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  jnp<span class="sc">$</span><span class="fu">array</span>(<span class="cf">if</span> (scale) x <span class="sc">/</span> <span class="fu">max</span>(x) <span class="cf">else</span> x)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(d[, <span class="fu">paste0</span>(<span class="st">"y"</span>, <span class="dv">1</span><span class="sc">:</span>K)])</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>y_prev <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="dv">0</span>, y[<span class="sc">-</span><span class="fu">nrow</span>(y), ])  <span class="co"># yields of the previous row</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">K =</span> K,</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">J =</span> <span class="fu">length</span>(<span class="fu">unique</span>(d<span class="sc">$</span>mono_index)),               <span class="co"># number of monkeys</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">tech =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>tech_index <span class="sc">-</span> <span class="dv">1</span>)),  <span class="co"># chosen technique, 0-indexed</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">id =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>mono_index <span class="sc">-</span> <span class="dv">1</span>)),    <span class="co"># monkey, 0-indexed</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">bout =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>forg_bout)),       <span class="co"># 1 = first bout (attractions reset)</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_prev =</span> jnp<span class="sc">$</span><span class="fu">array</span>(y_prev),</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">s =</span> <span class="fu">cue</span>(<span class="st">"s"</span>),                                    <span class="co"># frequency cue</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ps =</span> <span class="fu">cue</span>(<span class="st">"ps"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>)                     <span class="co"># payoff cue</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># x[1:] of a JAX vector (all techniques but the first)</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>rest <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x<span class="sc">$</span><span class="st">`</span><span class="at">__getitem__</span><span class="st">`</span>(py<span class="sc">$</span><span class="fu">slice</span>(<span class="dv">1</span>L, <span class="cn">NULL</span>))</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(K, J, tech, id, bout, y_prev, s, ps) {</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Priors</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  lam   <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name =</span> <span class="st">"lambda"</span>, <span class="at">rate =</span> <span class="fl">1.0</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>  mu    <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name =</span> <span class="st">"mu"</span>, <span class="at">loc =</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(<span class="dv">4</span>L), <span class="at">scale =</span> <span class="fl">1.0</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name =</span> <span class="st">"sigma"</span>, <span class="at">rate =</span> jnp<span class="sc">$</span><span class="fu">full</span>(<span class="dv">4</span>L, <span class="fl">3.0</span>))</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>  L_Rho <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">lkj_cholesky</span>(<span class="at">name =</span> <span class="st">"L_Rho"</span>, <span class="at">dimension =</span> <span class="dv">4</span>L, <span class="at">concentration =</span> <span class="fl">3.0</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>  z     <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name =</span> <span class="st">"z"</span>, <span class="at">loc =</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">4</span>L, J)), <span class="at">scale =</span> <span class="fl">1.0</span>)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Varying effects</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>  L_scaled <span class="ot">&lt;-</span> L_Rho <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(sigma, <span class="sc">-</span><span class="dv">1</span>L)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  a_id     <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">transpose</span>(jnp<span class="sc">$</span><span class="fu">matmul</span>(L_scaled, z))</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameters per individual</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>  phi_arr   <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">sigmoid</span>(mu[<span class="dv">0</span>L] <span class="sc">+</span> a_id[id, <span class="dv">0</span>L])  <span class="co"># Learning rate</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  gamma_arr <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">sigmoid</span>(mu[<span class="dv">1</span>L] <span class="sc">+</span> a_id[id, <span class="dv">1</span>L])  <span class="co"># Social weight</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  fconf_arr <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">exp</span>(mu[<span class="dv">2</span>L] <span class="sc">+</span> a_id[id, <span class="dv">2</span>L])         <span class="co"># Conformity</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  Bpay_arr  <span class="ot">&lt;-</span> mu[<span class="dv">3</span>L] <span class="sc">+</span> a_id[id, <span class="dv">3</span>L]                  <span class="co"># Pay-off bias</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  step_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(carry, x) {</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    AC <span class="ot">&lt;-</span> carry</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    phi_i <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]; gamma_i <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]; fconf_i <span class="ot">&lt;-</span> x[[<span class="dv">3</span>]]; Bpay_i <span class="ot">&lt;-</span> x[[<span class="dv">4</span>]]</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    tech_i <span class="ot">&lt;-</span> x[[<span class="dv">5</span>]]; id_i <span class="ot">&lt;-</span> x[[<span class="dv">6</span>]]; bout_i <span class="ot">&lt;-</span> x[[<span class="dv">7</span>]]; prev_y_i <span class="ot">&lt;-</span> x[[<span class="dv">8</span>]]</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    s_i <span class="ot">&lt;-</span> x[[<span class="dv">9</span>]]; ps_i <span class="ot">&lt;-</span> x[[<span class="dv">10</span>]]</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Update attractions (EWA)</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>    ac_new <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(bout_i <span class="sc">==</span> <span class="dv">1</span>L, jnp<span class="sc">$</span><span class="fu">zeros</span>(K), (<span class="fl">1.0</span> <span class="sc">-</span> phi_i) <span class="sc">*</span> AC[id_i] <span class="sc">+</span> phi_i <span class="sc">*</span> prev_y_i)</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Asocial choice probability</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    prob_individual <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">softmax</span>(lam <span class="sc">*</span> ac_new)</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Social choice probability (Pay-off bias)</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>    lin_mod <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">concatenate</span>(<span class="fu">list</span>(jnp<span class="sc">$</span><span class="fu">ones</span>(<span class="dv">1</span>L), jnp<span class="sc">$</span><span class="fu">exp</span>(Bpay_i <span class="sc">*</span> <span class="fu">rest</span>(ps_i)))) <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">power</span>(s_i, fconf_i)</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    safe_denom <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(jnp<span class="sc">$</span><span class="fu">sum</span>(lin_mod) <span class="sc">&gt;</span> <span class="dv">0</span>, jnp<span class="sc">$</span><span class="fu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    prob_social <span class="ot">&lt;-</span> lin_mod <span class="sc">/</span> safe_denom</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mixture probability</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    prob_mix <span class="ot">&lt;-</span> (<span class="fl">1.0</span> <span class="sc">-</span> gamma_i) <span class="sc">*</span> prob_individual <span class="sc">+</span> gamma_i <span class="sc">*</span> prob_social</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    prob_final <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(bout_i <span class="sc">&gt;</span> <span class="dv">1</span>L, prob_mix, prob_individual)</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    reticulate<span class="sc">::</span><span class="fu">tuple</span>(AC<span class="sc">$</span>at[id_i]<span class="sc">$</span><span class="fu">set</span>(ac_new), prob_final)</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>  AC_init <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(J, K))</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>  xs <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, id, bout, y_prev, s, ps)</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>  probs_matrix <span class="ot">&lt;-</span> jax<span class="sc">$</span>lax<span class="sc">$</span><span class="fu">scan</span>(step_fn, AC_init, xs)[[<span class="dv">2</span>]]</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">categorical</span>(<span class="at">name =</span> <span class="st">"obs"</span>, <span class="at">probs =</span> probs_matrix, <span class="at">obs =</span> tech)</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">seed =</span> <span class="dv">0</span>L)</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
 <div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(K, J, tech, id, bout, y_prev, s, ps)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>(<span class="fl">4</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.<span class="fu">full</span>(<span class="fl">4</span>, <span class="fl">3.0</span>))</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="fl">4</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>(<span class="fl">4</span>, J), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ... Equivalent logic to Python implementation ...</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">CSV</span>, <span class="bu">DataFrames</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Data: capuchin foraging choices (panama_ewa) ------------------------------</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> CSV.<span class="fu">read</span>(<span class="fu">pyconvert</span>(<span class="dt">String</span>, m.load.<span class="fu">panama_ewa</span>(only_path<span class="op">=</span><span class="cn">true</span>).py), DataFrame)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="fl">7</span>  <span class="co"># foraging techniques</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">cue</span>(prefix; scale<span class="op">=</span><span class="cn">false</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="fu">Matrix</span><span class="dt">{Float64}</span>(d[<span class="op">:</span>, [<span class="st">"</span><span class="sc">$</span>(prefix)<span class="sc">$</span>(k)<span class="st">"</span> for k <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span>K]])</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    jnp.<span class="fu">array</span>(scale ? x <span class="op">./</span> <span class="fu">maximum</span>(x) <span class="op">:</span> x)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fu">Matrix</span><span class="dt">{Float64}</span>(d[<span class="op">:</span>, [<span class="st">"y</span><span class="sc">$</span>(k)<span class="st">"</span> for k <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span>K]])</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>y_prev <span class="op">=</span> <span class="fu">vcat</span>(<span class="fu">zeros</span>(<span class="fl">1</span>, K), y[<span class="fl">1</span><span class="op">:</span><span class="kw">end</span><span class="op">-</span><span class="fl">1</span>, <span class="op">:</span>])  <span class="co"># yields of the previous row</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> K,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    J <span class="op">=</span> <span class="fu">length</span>(<span class="fu">unique</span>(d.mono_index)),          <span class="co"># number of monkeys</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    tech <span class="op">=</span> jnp.<span class="fu">array</span>(d.tech_index <span class="op">.-</span> <span class="fl">1</span>),       <span class="co"># chosen technique, 0-indexed</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    id <span class="op">=</span> jnp.<span class="fu">array</span>(d.mono_index <span class="op">.-</span> <span class="fl">1</span>),         <span class="co"># monkey, 0-indexed</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    bout <span class="op">=</span> jnp.<span class="fu">array</span>(d.forg_bout),             <span class="co"># 1 = first bout (attractions reset)</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    y_prev <span class="op">=</span> jnp.<span class="fu">array</span>(y_prev),</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"s"</span>),                              <span class="co"># frequency cue</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    ps <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"ps"</span>, scale<span class="op">=</span><span class="cn">true</span>),                <span class="co"># payoff cue</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co"># x[1:] of a JAX vector (all techniques but the first); Python indexing is 0-based</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="fu">rest</span>(x) <span class="op">=</span> x[pybuiltins.<span class="fu">slice</span>(<span class="fl">1</span>, <span class="cn">nothing</span>)]</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(K, J, tech, id, bout, y_prev, s, ps)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>(<span class="fl">4</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.<span class="fu">full</span>(<span class="fl">4</span>, <span class="fl">3.0</span>))</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="fl">4</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>((<span class="fl">4</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> jnp.<span class="fu">transpose</span>(jnp.<span class="fu">matmul</span>(L_scaled, z))</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.<span class="fu">sigmoid</span>(mu[<span class="fl">0</span>] <span class="op">+</span> a_id[id, <span class="fl">0</span>])  <span class="co"># Learning rate</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.<span class="fu">sigmoid</span>(mu[<span class="fl">1</span>] <span class="op">+</span> a_id[id, <span class="fl">1</span>])  <span class="co"># Social weight</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.<span class="fu">exp</span>(mu[<span class="fl">2</span>] <span class="op">+</span> a_id[id, <span class="fl">2</span>])         <span class="co"># Conformity</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    Bpay_arr  <span class="op">=</span> mu[<span class="fl">3</span>] <span class="op">+</span> a_id[id, <span class="fl">3</span>]                  <span class="co"># Pay-off bias</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">step_fn</span>(AC, x)</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> <span class="fu">Py</span>(AC)</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        phi_i, gamma_i, fconf_i, Bpay_i, tech_i, id_i, bout_i, prev_y_i, s_i, ps_i <span class="op">=</span> <span class="fu">map</span>(Py, x)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update attractions (EWA)</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.<span class="fu">where</span>(bout_i <span class="op">==</span> <span class="fl">1</span>, jnp.<span class="fu">zeros</span>(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> prev_y_i)</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.<span class="fu">softmax</span>(lam <span class="op">*</span> ac_new)</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Social choice probability (Pay-off bias)</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.<span class="fu">concatenate</span>(<span class="fu">pylist</span>([jnp.<span class="fu">ones</span>(<span class="fl">1</span>), jnp.<span class="fu">exp</span>(Bpay_i <span class="op">*</span> <span class="fu">rest</span>(ps_i))])) <span class="op">*</span> jnp.<span class="fu">power</span>(s_i, fconf_i)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.<span class="fu">where</span>(jnp.<span class="fu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="fl">0</span>, jnp.<span class="fu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.<span class="fu">where</span>(bout_i <span class="op">&gt;</span> <span class="fl">1</span>, prob_mix, prob_individual)</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (AC.at[id_i].<span class="fu">set</span>(ac_new), prob_final)</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.<span class="fu">zeros</span>((J, K))</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, id, bout, y_prev, s, ps)</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    probs_matrix <span class="op">=</span> jax.lax.<span class="fu">scan</span>(step_fn, AC_init, xs)[<span class="fl">1</span>]</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">categorical</span>(name<span class="op">=</span><span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, seed<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -906,67 +1068,241 @@ f_i = \exp(\mu_3 + a_{id}[i,3])
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(K, J, tech, <span class="bu">id</span>, bout, y_prev, s, ps, ks, pr, co, yo, age):</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors (8 varying effects)</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">8</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.full(<span class="dv">8</span>, <span class="fl">3.0</span>))</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.lkj_cholesky(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="dv">8</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.zeros((<span class="dv">8</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    b_age <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"b_age"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">2</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> sigma[:, <span class="va">None</span>]</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> (L_scaled <span class="op">@</span> z).T</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual with age effects</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">0</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">0</span>] <span class="op">+</span> b_age[<span class="dv">0</span>] <span class="op">*</span> age)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">1</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">1</span>] <span class="op">+</span> b_age[<span class="dv">1</span>] <span class="op">*</span> age)</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.exp(mu[<span class="dv">2</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">2</span>])</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    B_pay     <span class="op">=</span> mu[<span class="dv">3</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">3</span>]</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    B_kin     <span class="op">=</span> mu[<span class="dv">4</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">4</span>]</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    B_pres    <span class="op">=</span> mu[<span class="dv">5</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">5</span>]</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    B_coho    <span class="op">=</span> mu[<span class="dv">6</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">6</span>]</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    B_yob     <span class="op">=</span> mu[<span class="dv">7</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">7</span>]</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step_fn(carry, x):</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> carry</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        (phi_i, gamma_i, fconf_i, Bp, Bk, Bpr, Bc, By, t_i, id_i, b_i, py_i, s_i, ps_i, ks_i, pr_i, co_i, yo_i) <span class="op">=</span> x</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.where(b_i <span class="op">==</span> <span class="dv">1</span>, jnp.zeros(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> py_i)</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.softmax(lam <span class="op">*</span> ac_new)</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Multi-cue social influence</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>        lin_rest <span class="op">=</span> jnp.exp(Bp <span class="op">*</span> ps_i[<span class="dv">1</span>:] <span class="op">+</span> Bk <span class="op">*</span> ks_i[<span class="dv">1</span>:] <span class="op">+</span> Bpr <span class="op">*</span> pr_i[<span class="dv">1</span>:] <span class="op">+</span> Bc <span class="op">*</span> co_i[<span class="dv">1</span>:] <span class="op">+</span> By <span class="op">*</span> yo_i[<span class="dv">1</span>:])</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.concatenate([jnp.ones(<span class="dv">1</span>), lin_rest]) <span class="op">*</span> jnp.power(s_i, fconf_i)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.where(jnp.<span class="bu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="dv">0</span>, jnp.<span class="bu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>        has_social_info <span class="op">=</span> jnp.logical_and(b_i <span class="op">&gt;</span> <span class="dv">1</span>, jnp.<span class="bu">sum</span>(s_i) <span class="op">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.where(has_social_info, prob_mix, prob_individual)</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> AC.at[id_i].<span class="bu">set</span>(ac_new), prob_final</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.zeros((J, K))</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>          tech, <span class="bu">id</span>, bout, y_prev, s, ps, ks, pr, co, yo)</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>    _, probs_matrix <span class="op">=</span> jax.lax.scan(step_fn, AC_init, xs)</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    m.dist.categorical(<span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>m.fit(model)</span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    K<span class="op">=</span>K,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    J<span class="op">=</span><span class="bu">int</span>(d[<span class="st">"mono_index"</span>].nunique()),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    tech<span class="op">=</span>jnp.array(d[<span class="st">"tech_index"</span>].values <span class="op">-</span> <span class="dv">1</span>),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span><span class="op">=</span>jnp.array(d[<span class="st">"mono_index"</span>].values <span class="op">-</span> <span class="dv">1</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    bout<span class="op">=</span>jnp.array(d[<span class="st">"forg_bout"</span>].values),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    y_prev<span class="op">=</span>y_prev,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span>cue(<span class="st">"s"</span>),                       <span class="co"># frequency cue</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    ps<span class="op">=</span>cue(<span class="st">"ps"</span>, scale<span class="op">=</span><span class="va">True</span>),         <span class="co"># payoff cue</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    ks<span class="op">=</span>cue(<span class="st">"ks"</span>, scale<span class="op">=</span><span class="va">True</span>),         <span class="co"># kin cue</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    pr<span class="op">=</span>cue(<span class="st">"prs"</span>, scale<span class="op">=</span><span class="va">True</span>),        <span class="co"># rank (prestige) cue</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    co<span class="op">=</span>cue(<span class="st">"cos"</span>, scale<span class="op">=</span><span class="va">True</span>),        <span class="co"># cohort cue</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    yo<span class="op">=</span>cue(<span class="st">"Yobs"</span>, scale<span class="op">=</span><span class="va">True</span>),       <span class="co"># age (year of birth) cue</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    age<span class="op">=</span>jnp.array(d[<span class="st">"age.c"</span>].values), <span class="co"># centred age</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(K, J, tech, <span class="bu">id</span>, bout, y_prev, s, ps, ks, pr, co, yo, age):</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors (8 varying effects)</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">8</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.full(<span class="dv">8</span>, <span class="fl">3.0</span>))</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.lkj_cholesky(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="dv">8</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.zeros((<span class="dv">8</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    b_age <span class="op">=</span> m.dist.normal(name<span class="op">=</span><span class="st">"b_age"</span>, loc<span class="op">=</span>jnp.zeros(<span class="dv">2</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> sigma[:, <span class="va">None</span>]</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> (L_scaled <span class="op">@</span> z).T</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual with age effects</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">0</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">0</span>] <span class="op">+</span> b_age[<span class="dv">0</span>] <span class="op">*</span> age)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.sigmoid(mu[<span class="dv">1</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">1</span>] <span class="op">+</span> b_age[<span class="dv">1</span>] <span class="op">*</span> age)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.exp(mu[<span class="dv">2</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">2</span>])</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    B_pay     <span class="op">=</span> mu[<span class="dv">3</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">3</span>]</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>    B_kin     <span class="op">=</span> mu[<span class="dv">4</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">4</span>]</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    B_pres    <span class="op">=</span> mu[<span class="dv">5</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">5</span>]</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>    B_coho    <span class="op">=</span> mu[<span class="dv">6</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">6</span>]</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>    B_yob     <span class="op">=</span> mu[<span class="dv">7</span>] <span class="op">+</span> a_id[<span class="bu">id</span>, <span class="dv">7</span>]</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step_fn(carry, x):</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> carry</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>        (phi_i, gamma_i, fconf_i, Bp, Bk, Bpr, Bc, By, t_i, id_i, b_i, py_i, s_i, ps_i, ks_i, pr_i, co_i, yo_i) <span class="op">=</span> x</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.where(b_i <span class="op">==</span> <span class="dv">1</span>, jnp.zeros(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> py_i)</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.softmax(lam <span class="op">*</span> ac_new)</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Multi-cue social influence</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>        lin_rest <span class="op">=</span> jnp.exp(Bp <span class="op">*</span> ps_i[<span class="dv">1</span>:] <span class="op">+</span> Bk <span class="op">*</span> ks_i[<span class="dv">1</span>:] <span class="op">+</span> Bpr <span class="op">*</span> pr_i[<span class="dv">1</span>:] <span class="op">+</span> Bc <span class="op">*</span> co_i[<span class="dv">1</span>:] <span class="op">+</span> By <span class="op">*</span> yo_i[<span class="dv">1</span>:])</span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.concatenate([jnp.ones(<span class="dv">1</span>), lin_rest]) <span class="op">*</span> jnp.power(s_i, fconf_i)</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.where(jnp.<span class="bu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="dv">0</span>, jnp.<span class="bu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>        has_social_info <span class="op">=</span> jnp.logical_and(b_i <span class="op">&gt;</span> <span class="dv">1</span>, jnp.<span class="bu">sum</span>(s_i) <span class="op">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.where(has_social_info, prob_mix, prob_individual)</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> AC.at[id_i].<span class="bu">set</span>(ac_new), prob_final</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.zeros((J, K))</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>          tech, <span class="bu">id</span>, bout, y_prev, s, ps, ks, pr, co, yo)</span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>    _, probs_matrix <span class="op">=</span> jax.lax.scan(step_fn, AC_init, xs)</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>    m.dist.categorical(name<span class="op">=</span><span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>m.fit(model, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Equivalent R implementation with 8 effects and age slopes...</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">K =</span> K,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">J =</span> <span class="fu">length</span>(<span class="fu">unique</span>(d<span class="sc">$</span>mono_index)),</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">tech =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>tech_index <span class="sc">-</span> <span class="dv">1</span>)),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">id =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>mono_index <span class="sc">-</span> <span class="dv">1</span>)),</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">bout =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(d<span class="sc">$</span>forg_bout)),</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_prev =</span> jnp<span class="sc">$</span><span class="fu">array</span>(y_prev),</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">s =</span> <span class="fu">cue</span>(<span class="st">"s"</span>),                    <span class="co"># frequency cue</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">ps =</span> <span class="fu">cue</span>(<span class="st">"ps"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>),    <span class="co"># payoff cue</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">ks =</span> <span class="fu">cue</span>(<span class="st">"ks"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>),    <span class="co"># kin cue</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">pr =</span> <span class="fu">cue</span>(<span class="st">"prs"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>),   <span class="co"># rank (prestige) cue</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">co =</span> <span class="fu">cue</span>(<span class="st">"cos"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>),   <span class="co"># cohort cue</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">yo =</span> <span class="fu">cue</span>(<span class="st">"Yobs"</span>, <span class="at">scale =</span> <span class="cn">TRUE</span>),  <span class="co"># age (year of birth) cue</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">age =</span> jnp<span class="sc">$</span><span class="fu">array</span>(d<span class="sc">$</span>age.c)         <span class="co"># centred age</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age) {</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Priors (8 varying effects)</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  lam   <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name =</span> <span class="st">"lambda"</span>, <span class="at">rate =</span> <span class="fl">1.0</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  mu    <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name =</span> <span class="st">"mu"</span>, <span class="at">loc =</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(<span class="dv">8</span>L), <span class="at">scale =</span> <span class="fl">1.0</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="at">name =</span> <span class="st">"sigma"</span>, <span class="at">rate =</span> jnp<span class="sc">$</span><span class="fu">full</span>(<span class="dv">8</span>L, <span class="fl">3.0</span>))</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  L_Rho <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">lkj_cholesky</span>(<span class="at">name =</span> <span class="st">"L_Rho"</span>, <span class="at">dimension =</span> <span class="dv">8</span>L, <span class="at">concentration =</span> <span class="fl">3.0</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  z     <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name =</span> <span class="st">"z"</span>, <span class="at">loc =</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">8</span>L, J)), <span class="at">scale =</span> <span class="fl">1.0</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  b_age <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="at">name =</span> <span class="st">"b_age"</span>, <span class="at">loc =</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(<span class="dv">2</span>L), <span class="at">scale =</span> <span class="fl">1.0</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Varying effects</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  L_scaled <span class="ot">&lt;-</span> L_Rho <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(sigma, <span class="sc">-</span><span class="dv">1</span>L)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  a_id     <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">transpose</span>(jnp<span class="sc">$</span><span class="fu">matmul</span>(L_scaled, z))</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameters per individual with age effects</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  phi_arr   <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">sigmoid</span>(mu[<span class="dv">0</span>L] <span class="sc">+</span> a_id[id, <span class="dv">0</span>L] <span class="sc">+</span> b_age[<span class="dv">0</span>L] <span class="sc">*</span> age)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  gamma_arr <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">sigmoid</span>(mu[<span class="dv">1</span>L] <span class="sc">+</span> a_id[id, <span class="dv">1</span>L] <span class="sc">+</span> b_age[<span class="dv">1</span>L] <span class="sc">*</span> age)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  fconf_arr <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">exp</span>(mu[<span class="dv">2</span>L] <span class="sc">+</span> a_id[id, <span class="dv">2</span>L])</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  B_pay     <span class="ot">&lt;-</span> mu[<span class="dv">3</span>L] <span class="sc">+</span> a_id[id, <span class="dv">3</span>L]</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  B_kin     <span class="ot">&lt;-</span> mu[<span class="dv">4</span>L] <span class="sc">+</span> a_id[id, <span class="dv">4</span>L]</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  B_pres    <span class="ot">&lt;-</span> mu[<span class="dv">5</span>L] <span class="sc">+</span> a_id[id, <span class="dv">5</span>L]</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  B_coho    <span class="ot">&lt;-</span> mu[<span class="dv">6</span>L] <span class="sc">+</span> a_id[id, <span class="dv">6</span>L]</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  B_yob     <span class="ot">&lt;-</span> mu[<span class="dv">7</span>L] <span class="sc">+</span> a_id[id, <span class="dv">7</span>L]</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  step_fn <span class="ot">&lt;-</span> <span class="cf">function</span>(carry, x) {</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    AC <span class="ot">&lt;-</span> carry</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    phi_i <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]; gamma_i <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]; fconf_i <span class="ot">&lt;-</span> x[[<span class="dv">3</span>]]</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    Bp <span class="ot">&lt;-</span> x[[<span class="dv">4</span>]]; Bk <span class="ot">&lt;-</span> x[[<span class="dv">5</span>]]; Bpr <span class="ot">&lt;-</span> x[[<span class="dv">6</span>]]; Bc <span class="ot">&lt;-</span> x[[<span class="dv">7</span>]]; By <span class="ot">&lt;-</span> x[[<span class="dv">8</span>]]</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    t_i <span class="ot">&lt;-</span> x[[<span class="dv">9</span>]]; id_i <span class="ot">&lt;-</span> x[[<span class="dv">10</span>]]; b_i <span class="ot">&lt;-</span> x[[<span class="dv">11</span>]]; py_i <span class="ot">&lt;-</span> x[[<span class="dv">12</span>]]</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>    s_i <span class="ot">&lt;-</span> x[[<span class="dv">13</span>]]; ps_i <span class="ot">&lt;-</span> x[[<span class="dv">14</span>]]; ks_i <span class="ot">&lt;-</span> x[[<span class="dv">15</span>]]; pr_i <span class="ot">&lt;-</span> x[[<span class="dv">16</span>]]; co_i <span class="ot">&lt;-</span> x[[<span class="dv">17</span>]]; yo_i <span class="ot">&lt;-</span> x[[<span class="dv">18</span>]]</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>    ac_new <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(b_i <span class="sc">==</span> <span class="dv">1</span>L, jnp<span class="sc">$</span><span class="fu">zeros</span>(K), (<span class="fl">1.0</span> <span class="sc">-</span> phi_i) <span class="sc">*</span> AC[id_i] <span class="sc">+</span> phi_i <span class="sc">*</span> py_i)</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Asocial choice probability</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>    prob_individual <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">softmax</span>(lam <span class="sc">*</span> ac_new)</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Multi-cue social influence</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>    lin_rest <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">exp</span>(Bp <span class="sc">*</span> <span class="fu">rest</span>(ps_i) <span class="sc">+</span> Bk <span class="sc">*</span> <span class="fu">rest</span>(ks_i) <span class="sc">+</span> Bpr <span class="sc">*</span> <span class="fu">rest</span>(pr_i) <span class="sc">+</span> Bc <span class="sc">*</span> <span class="fu">rest</span>(co_i) <span class="sc">+</span> By <span class="sc">*</span> <span class="fu">rest</span>(yo_i))</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>    lin_mod <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">concatenate</span>(<span class="fu">list</span>(jnp<span class="sc">$</span><span class="fu">ones</span>(<span class="dv">1</span>L), lin_rest)) <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">power</span>(s_i, fconf_i)</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>    safe_denom <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(jnp<span class="sc">$</span><span class="fu">sum</span>(lin_mod) <span class="sc">&gt;</span> <span class="dv">0</span>, jnp<span class="sc">$</span><span class="fu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>    prob_social <span class="ot">&lt;-</span> lin_mod <span class="sc">/</span> safe_denom</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mixture probability</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    prob_mix <span class="ot">&lt;-</span> (<span class="fl">1.0</span> <span class="sc">-</span> gamma_i) <span class="sc">*</span> prob_individual <span class="sc">+</span> gamma_i <span class="sc">*</span> prob_social</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>    has_social_info <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">logical_and</span>(b_i <span class="sc">&gt;</span> <span class="dv">1</span>L, jnp<span class="sc">$</span><span class="fu">sum</span>(s_i) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    prob_final <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">where</span>(has_social_info, prob_mix, prob_individual)</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>    reticulate<span class="sc">::</span><span class="fu">tuple</span>(AC<span class="sc">$</span>at[id_i]<span class="sc">$</span><span class="fu">set</span>(ac_new), prob_final)</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>  AC_init <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">zeros</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(J, K))</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>  xs <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,</span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>                          tech, id, bout, y_prev, s, ps, ks, pr, co, yo)</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>  probs_matrix <span class="ot">&lt;-</span> jax<span class="sc">$</span>lax<span class="sc">$</span><span class="fu">scan</span>(step_fn, AC_init, xs)[[<span class="dv">2</span>]]</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">categorical</span>(<span class="at">name =</span> <span class="st">"obs"</span>, <span class="at">probs =</span> probs_matrix, <span class="at">obs =</span> tech)</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">seed =</span> <span class="dv">0</span>L)</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Equivalent Julia implementation with 8 effects and age slopes...</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> K,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    J <span class="op">=</span> <span class="fu">length</span>(<span class="fu">unique</span>(d.mono_index)),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    tech <span class="op">=</span> jnp.<span class="fu">array</span>(d.tech_index <span class="op">.-</span> <span class="fl">1</span>),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    id <span class="op">=</span> jnp.<span class="fu">array</span>(d.mono_index <span class="op">.-</span> <span class="fl">1</span>),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    bout <span class="op">=</span> jnp.<span class="fu">array</span>(d.forg_bout),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    y_prev <span class="op">=</span> jnp.<span class="fu">array</span>(y_prev),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"s"</span>),                    <span class="co"># frequency cue</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    ps <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"ps"</span>, scale<span class="op">=</span><span class="cn">true</span>),      <span class="co"># payoff cue</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    ks <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"ks"</span>, scale<span class="op">=</span><span class="cn">true</span>),      <span class="co"># kin cue</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    pr <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"prs"</span>, scale<span class="op">=</span><span class="cn">true</span>),     <span class="co"># rank (prestige) cue</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    co <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"cos"</span>, scale<span class="op">=</span><span class="cn">true</span>),     <span class="co"># cohort cue</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    yo <span class="op">=</span> <span class="fu">cue</span>(<span class="st">"Yobs"</span>, scale<span class="op">=</span><span class="cn">true</span>),    <span class="co"># age (year of birth) cue</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    age <span class="op">=</span> jnp.<span class="fu">array</span>(d[<span class="op">:</span>, <span class="st">"age.c"</span>]),  <span class="co"># centred age</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors (8 varying effects)</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    lam   <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"lambda"</span>, rate<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"mu"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>(<span class="fl">8</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(name<span class="op">=</span><span class="st">"sigma"</span>, rate<span class="op">=</span>jnp.<span class="fu">full</span>(<span class="fl">8</span>, <span class="fl">3.0</span>))</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    L_Rho <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(name<span class="op">=</span><span class="st">"L_Rho"</span>, dimension<span class="op">=</span><span class="fl">8</span>, concentration<span class="op">=</span><span class="fl">3.0</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    z     <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"z"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>((<span class="fl">8</span>, J)), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    b_age <span class="op">=</span> m.dist.<span class="fu">normal</span>(name<span class="op">=</span><span class="st">"b_age"</span>, loc<span class="op">=</span>jnp.<span class="fu">zeros</span>(<span class="fl">2</span>), scale<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Varying effects</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    L_scaled <span class="op">=</span> L_Rho <span class="op">*</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>)</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    a_id     <span class="op">=</span> jnp.<span class="fu">transpose</span>(jnp.<span class="fu">matmul</span>(L_scaled, z))</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Parameters per individual with age effects</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    phi_arr   <span class="op">=</span> jax.nn.<span class="fu">sigmoid</span>(mu[<span class="fl">0</span>] <span class="op">+</span> a_id[id, <span class="fl">0</span>] <span class="op">+</span> b_age[<span class="fl">0</span>] <span class="op">*</span> age)</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    gamma_arr <span class="op">=</span> jax.nn.<span class="fu">sigmoid</span>(mu[<span class="fl">1</span>] <span class="op">+</span> a_id[id, <span class="fl">1</span>] <span class="op">+</span> b_age[<span class="fl">1</span>] <span class="op">*</span> age)</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    fconf_arr <span class="op">=</span> jnp.<span class="fu">exp</span>(mu[<span class="fl">2</span>] <span class="op">+</span> a_id[id, <span class="fl">2</span>])</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    B_pay     <span class="op">=</span> mu[<span class="fl">3</span>] <span class="op">+</span> a_id[id, <span class="fl">3</span>]</span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    B_kin     <span class="op">=</span> mu[<span class="fl">4</span>] <span class="op">+</span> a_id[id, <span class="fl">4</span>]</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    B_pres    <span class="op">=</span> mu[<span class="fl">5</span>] <span class="op">+</span> a_id[id, <span class="fl">5</span>]</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>    B_coho    <span class="op">=</span> mu[<span class="fl">6</span>] <span class="op">+</span> a_id[id, <span class="fl">6</span>]</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    B_yob     <span class="op">=</span> mu[<span class="fl">7</span>] <span class="op">+</span> a_id[id, <span class="fl">7</span>]</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scan carry: Attractions</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">step_fn</span>(AC, x)</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        AC <span class="op">=</span> <span class="fu">Py</span>(AC)</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>        (phi_i, gamma_i, fconf_i, Bp, Bk, Bpr, Bc, By, t_i, id_i, b_i, py_i,</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>         s_i, ps_i, ks_i, pr_i, co_i, yo_i) <span class="op">=</span> <span class="fu">map</span>(Py, x)</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>        ac_new <span class="op">=</span> jnp.<span class="fu">where</span>(b_i <span class="op">==</span> <span class="fl">1</span>, jnp.<span class="fu">zeros</span>(K), (<span class="fl">1.0</span> <span class="op">-</span> phi_i) <span class="op">*</span> AC[id_i] <span class="op">+</span> phi_i <span class="op">*</span> py_i)</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Asocial choice probability</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>        prob_individual <span class="op">=</span> jax.nn.<span class="fu">softmax</span>(lam <span class="op">*</span> ac_new)</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Multi-cue social influence</span></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>        lin_rest <span class="op">=</span> jnp.<span class="fu">exp</span>(Bp <span class="op">*</span> <span class="fu">rest</span>(ps_i) <span class="op">+</span> Bk <span class="op">*</span> <span class="fu">rest</span>(ks_i) <span class="op">+</span> Bpr <span class="op">*</span> <span class="fu">rest</span>(pr_i) <span class="op">+</span> Bc <span class="op">*</span> <span class="fu">rest</span>(co_i) <span class="op">+</span> By <span class="op">*</span> <span class="fu">rest</span>(yo_i))</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>        lin_mod <span class="op">=</span> jnp.<span class="fu">concatenate</span>(<span class="fu">pylist</span>([jnp.<span class="fu">ones</span>(<span class="fl">1</span>), lin_rest])) <span class="op">*</span> jnp.<span class="fu">power</span>(s_i, fconf_i)</span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>        safe_denom <span class="op">=</span> jnp.<span class="fu">where</span>(jnp.<span class="fu">sum</span>(lin_mod) <span class="op">&gt;</span> <span class="fl">0</span>, jnp.<span class="fu">sum</span>(lin_mod), <span class="fl">1.0</span>)</span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>        prob_social <span class="op">=</span> lin_mod <span class="op">/</span> safe_denom</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Mixture probability</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a>        prob_mix <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> gamma_i) <span class="op">*</span> prob_individual <span class="op">+</span> gamma_i <span class="op">*</span> prob_social</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>        has_social_info <span class="op">=</span> jnp.<span class="fu">logical_and</span>(b_i <span class="op">&gt;</span> <span class="fl">1</span>, jnp.<span class="fu">sum</span>(s_i) <span class="op">&gt;</span> <span class="fl">0</span>)</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>        prob_final <span class="op">=</span> jnp.<span class="fu">where</span>(has_social_info, prob_mix, prob_individual)</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (AC.at[id_i].<span class="fu">set</span>(ac_new), prob_final)</span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>    AC_init <span class="op">=</span> jnp.<span class="fu">zeros</span>((J, K))</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">=</span> (phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,</span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a>          tech, id, bout, y_prev, s, ps, ks, pr, co, yo)</span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>    probs_matrix <span class="op">=</span> jax.lax.<span class="fu">scan</span>(step_fn, AC_init, xs)[<span class="fl">1</span>]</span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">categorical</span>(name<span class="op">=</span><span class="st">"obs"</span>, probs<span class="op">=</span>probs_matrix, obs<span class="op">=</span>tech)</span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, seed<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -1036,6 +1372,13 @@ f_i = \exp(\mu_2 + a_{id}[i, 2])
 </ul>
 <hr>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/18.EWA">Comparison with Stan</a>: EWA learning model on the panama_ewa data fitted with Stan and BayesForge, posteriors compared.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+</ul>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>

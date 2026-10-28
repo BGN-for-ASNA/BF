@@ -98,21 +98,22 @@ m=importBF(platform='cpu')
 
 # Import data ------------------------------------------------
 m$data(m$load$reedfrogs(only_path=T), sep=';')
-m$df$tank = c(0:(nrow(m$df)-1)) # Manipulate
+m$df$tank = as.integer(0:(nrow(m$df)-1)) # Manipulate
 m$data_to_model(list('tank', 'surv', 'density')) # Manipulate
 m$data_on_model$tank = m$data_on_model$tank$astype(jnp$int32) # Manipulate
 m$data_on_model$surv = m$data_on_model$surv$astype(jnp$int32) # Manipulate
+m$data_on_model$density = m$data_on_model$density$astype(jnp$int64) # Manipulate
 
 
 # Define model ------------------------------------------------
 model <- function(tank, surv, density){
   # Parameter prior distributions
-  sigma = bf.dist.exponential( 1,  name = 'sigma',shape=c(1))
-  a_bar =  bf.dist.normal(0, 1.5, name='a_bar',shape=c(1))
-  alpha = bf.dist.normal(a_bar, sigma, name='alpha', shape =c(48))
-  p = alpha[tank]
+  sigma = m$dist$exponential( 1, name = 'sigma')
+  a_bar =  m$dist$normal(0, 1.5, name = 'a_bar')
+  alpha = m$dist$normal(a_bar, sigma, name = 'alpha', shape = reticulate::tuple(48L))
+  p = alpha$`__getitem__`(tank)
   # Likelihood
-  m$dist$binomial(total_count = density, logits = p, obs=surv)
+  m$dist$binomial(total_count = density, logits = p, obs = surv, name = 'surv')
 } 
 
 # Run MCMC ------------------------------------------------
@@ -149,6 +150,52 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 # Summary ------------------------------------------------
 m.summary() # Get posterior distributions
 ```
+:::
+
+### Posterior predictive checks
+
+Does the model reproduce the number of survivors in every tank?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals()
+```
+
+#### R
+```r
+m$diag$ppc_intervals()
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals()
+```
+:::
+
+One point per tank (observed survivors) with the 50 % and 90 % predictive intervals. Partial pooling pulls extreme tanks toward the average, so a few points may sit at the edge of their interval; many points outside would mean too much shrinkage. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd")
+```
+:::
+
+The observed spread of survivor counts between tanks (vertical line) should fall inside the simulated spreads.
 :::
 
 ## Mathematical Details
@@ -196,6 +243,11 @@ Where:
 
 - $\varsigma$ is the variance of the intercepts across groups.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `11.Varying intercepts.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note 

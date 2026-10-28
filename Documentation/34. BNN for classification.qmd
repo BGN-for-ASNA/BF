@@ -89,9 +89,8 @@ x1 = jnp.linspace(X[:, 1].min() - 0.5, X[:, 1].max() + 0.5, n_grid)
 xx0, xx1 = jnp.meshgrid(x0, x1)
 X_grid = jnp.c_[xx0.ravel(), xx1.ravel()]
 
-# Swap data on model temporarily to predict on the grid
-m.data_on_model = dict(X=X_grid, Y=jnp.zeros(X_grid.shape[0]))
-pred = m.sample(samples=500)['Y']
+# Predict on the grid (the model data stay unchanged)
+pred = m.sample(data=dict(X=X_grid, Y=jnp.zeros(X_grid.shape[0])), samples=500)['Y']
 p_mean = jnp.mean(pred, axis=0)
 
 # Plotting the posterior predictive mean
@@ -106,22 +105,22 @@ fig.colorbar(contour, ax=ax)
 
 ```julia
 using PyBayesForge
-using PyCall
+using PythonCall
 
 # Setup device------------------------------------------------
 m = importBF(platform="cpu")
 
 # Generate Synthetic Data using Python's scikit-learn ---------
 sk_datasets = pyimport("sklearn.datasets")
-X = sk_datasets.make_moons(n_samples=500, noise=0.25, random_state=42)[1]
-Y = sk_datasets.make_moons(n_samples=500, noise=0.25, random_state=42)[2]
+X = sk_datasets.make_moons(n_samples=500, noise=0.25, random_state=42)[0]
+Y = sk_datasets.make_moons(n_samples=500, noise=0.25, random_state=42)[1]
 
-m.data_on_model["X"] = X
-m.data_on_model["Y"] = Y
+m.data_on_model = pydict(X = X, Y = Y)
 
 # Define model ------------------------------------------------
 @BF function model(X, Y)
-    N, D_X = size(X)
+    N = pyconvert(Int, X.shape[0])
+    D_X = pyconvert(Int, X.shape[1])
     D_H1 = 4
     D_H2 = 3
     
@@ -146,7 +145,7 @@ m.data_on_model["Y"] = Y
     )
     
     # Extract logits
-    logits = w3[:, 1]
+    logits = w3[pybuiltins.slice(nothing), 0]
     
     # Likelihood mapping the logits to binary outcomes
     m.dist.binomial(total_count=1, logits=logits, obs=Y, name="Y")
@@ -185,6 +184,11 @@ where:
 * $W_2$ is the weight matrix of the second hidden layer, with a shape of $D_{H1} \times D_{H2}$ (i.e., $4 \times 3$).
 * $W_3$ is the final layer weight matrix used to compute the logits, with a shape of $D_{H2} \times 1$ (i.e., $3 \times 1$).
 * All elements within the weight matrices $W_1$, $W_2$, and $W_3$ are assigned independent standard Normal priors.
+
+## Model validation tests
+
+- [BNN tests](https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN): Bayesian neural network tests (regression, covariance estimation).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 

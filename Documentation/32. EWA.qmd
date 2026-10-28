@@ -42,6 +42,30 @@ import jax
 
 m = bf(platform='cpu')
 
+# Data: capuchin foraging choices (panama_ewa) ------------------------------
+import pandas as pd
+d = pd.read_csv(m.load.panama_ewa(only_path=True))
+K = 7  # foraging techniques
+
+def cue(prefix, scale=False):
+    """N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum."""
+    x = d[[f"{prefix}{k}" for k in range(1, K + 1)]].values
+    return jnp.array(x / x.max() if scale else x)
+
+y = cue("y")                                   # personal yield of each technique
+y_prev = jnp.zeros_like(y).at[1:].set(y[:-1])  # yields of the previous row
+
+m.data_on_model = dict(
+    K=K,
+    J=int(d["mono_index"].nunique()),            # number of monkeys
+    tech=jnp.array(d["tech_index"].values - 1),  # chosen technique, 0-indexed
+    id=jnp.array(d["mono_index"].values - 1),    # monkey, 0-indexed
+    bout=jnp.array(d["forg_bout"].values),       # 1 = first bout (attractions reset)
+    y_prev=y_prev,
+    s=cue("s"),                                  # frequency cue
+    ps=cue("ps", scale=True),                    # payoff cue
+)
+
 def model(K, J, tech, id, bout, y_prev, s, ps):
     # Priors
     lam   = m.dist.exponential(name="lambda", rate=1.0)
@@ -86,9 +110,9 @@ def model(K, J, tech, id, bout, y_prev, s, ps):
     xs = (phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, id, bout, y_prev, s, ps)
     _, probs_matrix = jax.lax.scan(step_fn, AC_init, xs)
     
-    m.dist.categorical("obs", probs=probs_matrix, obs=tech)
+    m.dist.categorical(name="obs", probs=probs_matrix, obs=tech)
 
-m.fit(model)
+m.fit(model, seed=0)
 m.summary()
 ```
 
@@ -96,19 +120,89 @@ m.summary()
 
 ```R
 library(BayesForge)
-m <- importBF(platform='cpu')
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+jax <- reticulate::import("jax")
+py <- reticulate::import_builtins()
+
+# Data: capuchin foraging choices (panama_ewa) ------------------------------
+d <- read.csv(m$load$panama_ewa(only_path = TRUE))
+K <- 7L  # foraging techniques
+
+# N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum
+cue <- function(prefix, scale = FALSE) {
+  x <- as.matrix(d[, paste0(prefix, 1:K)])
+  jnp$array(if (scale) x / max(x) else x)
+}
+
+y <- as.matrix(d[, paste0("y", 1:K)])
+y_prev <- rbind(0, y[-nrow(y), ])  # yields of the previous row
+
+m$data_on_model <- list(
+  K = K,
+  J = length(unique(d$mono_index)),               # number of monkeys
+  tech = jnp$array(as.integer(d$tech_index - 1)),  # chosen technique, 0-indexed
+  id = jnp$array(as.integer(d$mono_index - 1)),    # monkey, 0-indexed
+  bout = jnp$array(as.integer(d$forg_bout)),       # 1 = first bout (attractions reset)
+  y_prev = jnp$array(y_prev),
+  s = cue("s"),                                    # frequency cue
+  ps = cue("ps", scale = TRUE)                     # payoff cue
+)
+
+# x[1:] of a JAX vector (all techniques but the first)
+rest <- function(x) x$`__getitem__`(py$slice(1L, NULL))
 
 model <- function(K, J, tech, id, bout, y_prev, s, ps) {
   # Priors
-  lam <- m$dist$exponential(name="lambda", rate=1.0)
-  mu <- m$dist$normal(name="mu", loc=jnp$zeros(4L), scale=1.0)
-  sigma <- m$dist$exponential(name="sigma", rate=jnp$full(4L, 3.0))
-  L_Rho <- m$dist$lkj_cholesky(name="L_Rho", dimension=4L, concentration=3.0)
-  z <- m$dist$normal(name="z", loc=jnp$zeros(tuple(4L, J)), scale=1.0)
+  lam   <- m$dist$exponential(name = "lambda", rate = 1.0)
+  mu    <- m$dist$normal(name = "mu", loc = jnp$zeros(4L), scale = 1.0)
+  sigma <- m$dist$exponential(name = "sigma", rate = jnp$full(4L, 3.0))
+  L_Rho <- m$dist$lkj_cholesky(name = "L_Rho", dimension = 4L, concentration = 3.0)
+  z     <- m$dist$normal(name = "z", loc = jnp$zeros(reticulate::tuple(4L, J)), scale = 1.0)
 
-  # ... Equivalent logic to Python implementation ...
+  # Varying effects
+  L_scaled <- L_Rho * jnp$expand_dims(sigma, -1L)
+  a_id     <- jnp$transpose(jnp$matmul(L_scaled, z))
+
+  # Parameters per individual
+  phi_arr   <- jax$nn$sigmoid(mu[0L] + a_id[id, 0L])  # Learning rate
+  gamma_arr <- jax$nn$sigmoid(mu[1L] + a_id[id, 1L])  # Social weight
+  fconf_arr <- jnp$exp(mu[2L] + a_id[id, 2L])         # Conformity
+  Bpay_arr  <- mu[3L] + a_id[id, 3L]                  # Pay-off bias
+
+  # Scan carry: Attractions
+  step_fn <- function(carry, x) {
+    AC <- carry
+    phi_i <- x[[1]]; gamma_i <- x[[2]]; fconf_i <- x[[3]]; Bpay_i <- x[[4]]
+    tech_i <- x[[5]]; id_i <- x[[6]]; bout_i <- x[[7]]; prev_y_i <- x[[8]]
+    s_i <- x[[9]]; ps_i <- x[[10]]
+
+    # Update attractions (EWA)
+    ac_new <- jnp$where(bout_i == 1L, jnp$zeros(K), (1.0 - phi_i) * AC[id_i] + phi_i * prev_y_i)
+
+    # Asocial choice probability
+    prob_individual <- jax$nn$softmax(lam * ac_new)
+
+    # Social choice probability (Pay-off bias)
+    lin_mod <- jnp$concatenate(list(jnp$ones(1L), jnp$exp(Bpay_i * rest(ps_i)))) * jnp$power(s_i, fconf_i)
+    safe_denom <- jnp$where(jnp$sum(lin_mod) > 0, jnp$sum(lin_mod), 1.0)
+    prob_social <- lin_mod / safe_denom
+
+    # Mixture probability
+    prob_mix <- (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
+    prob_final <- jnp$where(bout_i > 1L, prob_mix, prob_individual)
+
+    reticulate::tuple(AC$at[id_i]$set(ac_new), prob_final)
+  }
+
+  AC_init <- jnp$zeros(reticulate::tuple(J, K))
+  xs <- reticulate::tuple(phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, id, bout, y_prev, s, ps)
+  probs_matrix <- jax$lax$scan(step_fn, AC_init, xs)[[2]]
+
+  m$dist$categorical(name = "obs", probs = probs_matrix, obs = tech)
 }
-m$fit(model)
+
+m$fit(model, seed = 0L)
 m$summary()
 ```
 
@@ -116,19 +210,86 @@ m$summary()
 
 ```julia
 using PyBayesForge
+using PythonCall
+using CSV, DataFrames
 m = importBF(platform="cpu")
+
+# Data: capuchin foraging choices (panama_ewa) ------------------------------
+d = CSV.read(pyconvert(String, m.load.panama_ewa(only_path=true).py), DataFrame)
+K = 7  # foraging techniques
+
+# N x K matrix of the columns prefix1..prefix7, optionally divided by its maximum
+function cue(prefix; scale=false)
+    x = Matrix{Float64}(d[:, ["$(prefix)$(k)" for k in 1:K]])
+    jnp.array(scale ? x ./ maximum(x) : x)
+end
+
+y = Matrix{Float64}(d[:, ["y$(k)" for k in 1:K]])
+y_prev = vcat(zeros(1, K), y[1:end-1, :])  # yields of the previous row
+
+m.data_on_model = pydict(
+    K = K,
+    J = length(unique(d.mono_index)),          # number of monkeys
+    tech = jnp.array(d.tech_index .- 1),       # chosen technique, 0-indexed
+    id = jnp.array(d.mono_index .- 1),         # monkey, 0-indexed
+    bout = jnp.array(d.forg_bout),             # 1 = first bout (attractions reset)
+    y_prev = jnp.array(y_prev),
+    s = cue("s"),                              # frequency cue
+    ps = cue("ps", scale=true),                # payoff cue
+)
+
+# x[1:] of a JAX vector (all techniques but the first); Python indexing is 0-based
+rest(x) = x[pybuiltins.slice(1, nothing)]
 
 @BF function model(K, J, tech, id, bout, y_prev, s, ps)
     # Priors
-    lam = m.dist.exponential(name="lambda", rate=1.0)
-    mu = m.dist.normal(name="mu", loc=jnp.zeros(4), scale=1.0)
+    lam   = m.dist.exponential(name="lambda", rate=1.0)
+    mu    = m.dist.normal(name="mu", loc=jnp.zeros(4), scale=1.0)
     sigma = m.dist.exponential(name="sigma", rate=jnp.full(4, 3.0))
     L_Rho = m.dist.lkj_cholesky(name="L_Rho", dimension=4, concentration=3.0)
-    z = m.dist.normal(name="z", loc=jnp.zeros(4, J), scale=1.0)
+    z     = m.dist.normal(name="z", loc=jnp.zeros((4, J)), scale=1.0)
 
-    # ... Equivalent logic to Python implementation ...
+    # Varying effects
+    L_scaled = L_Rho * jnp.expand_dims(sigma, -1)
+    a_id     = jnp.transpose(jnp.matmul(L_scaled, z))
+
+    # Parameters per individual
+    phi_arr   = jax.nn.sigmoid(mu[0] + a_id[id, 0])  # Learning rate
+    gamma_arr = jax.nn.sigmoid(mu[1] + a_id[id, 1])  # Social weight
+    fconf_arr = jnp.exp(mu[2] + a_id[id, 2])         # Conformity
+    Bpay_arr  = mu[3] + a_id[id, 3]                  # Pay-off bias
+
+    # Scan carry: Attractions
+    function step_fn(AC, x)
+        AC = Py(AC)
+        phi_i, gamma_i, fconf_i, Bpay_i, tech_i, id_i, bout_i, prev_y_i, s_i, ps_i = map(Py, x)
+
+        # Update attractions (EWA)
+        ac_new = jnp.where(bout_i == 1, jnp.zeros(K), (1.0 - phi_i) * AC[id_i] + phi_i * prev_y_i)
+
+        # Asocial choice probability
+        prob_individual = jax.nn.softmax(lam * ac_new)
+
+        # Social choice probability (Pay-off bias)
+        lin_mod = jnp.concatenate(pylist([jnp.ones(1), jnp.exp(Bpay_i * rest(ps_i))])) * jnp.power(s_i, fconf_i)
+        safe_denom = jnp.where(jnp.sum(lin_mod) > 0, jnp.sum(lin_mod), 1.0)
+        prob_social = lin_mod / safe_denom
+
+        # Mixture probability
+        prob_mix = (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
+        prob_final = jnp.where(bout_i > 1, prob_mix, prob_individual)
+
+        return (AC.at[id_i].set(ac_new), prob_final)
+    end
+
+    AC_init = jnp.zeros((J, K))
+    xs = (phi_arr, gamma_arr, fconf_arr, Bpay_arr, tech, id, bout, y_prev, s, ps)
+    probs_matrix = jax.lax.scan(step_fn, AC_init, xs)[1]
+
+    m.dist.categorical(name="obs", probs=probs_matrix, obs=tech)
 end
-m.fit(model)
+
+m.fit(model, seed=0)
 m.summary()
 ```
 :::
@@ -262,6 +423,23 @@ import jax
 
 m = bf(platform='cpu')
 
+# Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age
+m.data_on_model = dict(
+    K=K,
+    J=int(d["mono_index"].nunique()),
+    tech=jnp.array(d["tech_index"].values - 1),
+    id=jnp.array(d["mono_index"].values - 1),
+    bout=jnp.array(d["forg_bout"].values),
+    y_prev=y_prev,
+    s=cue("s"),                       # frequency cue
+    ps=cue("ps", scale=True),         # payoff cue
+    ks=cue("ks", scale=True),         # kin cue
+    pr=cue("prs", scale=True),        # rank (prestige) cue
+    co=cue("cos", scale=True),        # cohort cue
+    yo=cue("Yobs", scale=True),       # age (year of birth) cue
+    age=jnp.array(d["age.c"].values), # centred age
+)
+
 def model(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age):
     # Priors (8 varying effects)
     lam   = m.dist.exponential(name="lambda", rate=1.0)
@@ -313,22 +491,179 @@ def model(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age):
           tech, id, bout, y_prev, s, ps, ks, pr, co, yo)
     _, probs_matrix = jax.lax.scan(step_fn, AC_init, xs)
     
-    m.dist.categorical("obs", probs=probs_matrix, obs=tech)
+    m.dist.categorical(name="obs", probs=probs_matrix, obs=tech)
 
-m.fit(model)
+m.fit(model, seed=0)
 m.summary()
 ```
 
 ## R
 
 ```R
-# Equivalent R implementation with 8 effects and age slopes...
+library(BayesForge)
+m <- importBF(platform = "cpu")
+
+# Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age
+m$data_on_model <- list(
+  K = K,
+  J = length(unique(d$mono_index)),
+  tech = jnp$array(as.integer(d$tech_index - 1)),
+  id = jnp$array(as.integer(d$mono_index - 1)),
+  bout = jnp$array(as.integer(d$forg_bout)),
+  y_prev = jnp$array(y_prev),
+  s = cue("s"),                    # frequency cue
+  ps = cue("ps", scale = TRUE),    # payoff cue
+  ks = cue("ks", scale = TRUE),    # kin cue
+  pr = cue("prs", scale = TRUE),   # rank (prestige) cue
+  co = cue("cos", scale = TRUE),   # cohort cue
+  yo = cue("Yobs", scale = TRUE),  # age (year of birth) cue
+  age = jnp$array(d$age.c)         # centred age
+)
+
+model <- function(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age) {
+  # Priors (8 varying effects)
+  lam   <- m$dist$exponential(name = "lambda", rate = 1.0)
+  mu    <- m$dist$normal(name = "mu", loc = jnp$zeros(8L), scale = 1.0)
+  sigma <- m$dist$exponential(name = "sigma", rate = jnp$full(8L, 3.0))
+  L_Rho <- m$dist$lkj_cholesky(name = "L_Rho", dimension = 8L, concentration = 3.0)
+  z     <- m$dist$normal(name = "z", loc = jnp$zeros(reticulate::tuple(8L, J)), scale = 1.0)
+  b_age <- m$dist$normal(name = "b_age", loc = jnp$zeros(2L), scale = 1.0)
+
+  # Varying effects
+  L_scaled <- L_Rho * jnp$expand_dims(sigma, -1L)
+  a_id     <- jnp$transpose(jnp$matmul(L_scaled, z))
+
+  # Parameters per individual with age effects
+  phi_arr   <- jax$nn$sigmoid(mu[0L] + a_id[id, 0L] + b_age[0L] * age)
+  gamma_arr <- jax$nn$sigmoid(mu[1L] + a_id[id, 1L] + b_age[1L] * age)
+  fconf_arr <- jnp$exp(mu[2L] + a_id[id, 2L])
+  B_pay     <- mu[3L] + a_id[id, 3L]
+  B_kin     <- mu[4L] + a_id[id, 4L]
+  B_pres    <- mu[5L] + a_id[id, 5L]
+  B_coho    <- mu[6L] + a_id[id, 6L]
+  B_yob     <- mu[7L] + a_id[id, 7L]
+
+  # Scan carry: Attractions
+  step_fn <- function(carry, x) {
+    AC <- carry
+    phi_i <- x[[1]]; gamma_i <- x[[2]]; fconf_i <- x[[3]]
+    Bp <- x[[4]]; Bk <- x[[5]]; Bpr <- x[[6]]; Bc <- x[[7]]; By <- x[[8]]
+    t_i <- x[[9]]; id_i <- x[[10]]; b_i <- x[[11]]; py_i <- x[[12]]
+    s_i <- x[[13]]; ps_i <- x[[14]]; ks_i <- x[[15]]; pr_i <- x[[16]]; co_i <- x[[17]]; yo_i <- x[[18]]
+
+    ac_new <- jnp$where(b_i == 1L, jnp$zeros(K), (1.0 - phi_i) * AC[id_i] + phi_i * py_i)
+
+    # Asocial choice probability
+    prob_individual <- jax$nn$softmax(lam * ac_new)
+
+    # Multi-cue social influence
+    lin_rest <- jnp$exp(Bp * rest(ps_i) + Bk * rest(ks_i) + Bpr * rest(pr_i) + Bc * rest(co_i) + By * rest(yo_i))
+    lin_mod <- jnp$concatenate(list(jnp$ones(1L), lin_rest)) * jnp$power(s_i, fconf_i)
+    safe_denom <- jnp$where(jnp$sum(lin_mod) > 0, jnp$sum(lin_mod), 1.0)
+    prob_social <- lin_mod / safe_denom
+
+    # Mixture probability
+    prob_mix <- (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
+    has_social_info <- jnp$logical_and(b_i > 1L, jnp$sum(s_i) > 0)
+    prob_final <- jnp$where(has_social_info, prob_mix, prob_individual)
+
+    reticulate::tuple(AC$at[id_i]$set(ac_new), prob_final)
+  }
+
+  AC_init <- jnp$zeros(reticulate::tuple(J, K))
+  xs <- reticulate::tuple(phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,
+                          tech, id, bout, y_prev, s, ps, ks, pr, co, yo)
+  probs_matrix <- jax$lax$scan(step_fn, AC_init, xs)[[2]]
+
+  m$dist$categorical(name = "obs", probs = probs_matrix, obs = tech)
+}
+
+m$fit(model, seed = 0L)
+m$summary()
 ```
 
 ## Julia
 
 ```julia
-# Equivalent Julia implementation with 8 effects and age slopes...
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+
+# Same data as Example 1 (d, cue, K, y_prev), plus the other social cues and age
+m.data_on_model = pydict(
+    K = K,
+    J = length(unique(d.mono_index)),
+    tech = jnp.array(d.tech_index .- 1),
+    id = jnp.array(d.mono_index .- 1),
+    bout = jnp.array(d.forg_bout),
+    y_prev = jnp.array(y_prev),
+    s = cue("s"),                    # frequency cue
+    ps = cue("ps", scale=true),      # payoff cue
+    ks = cue("ks", scale=true),      # kin cue
+    pr = cue("prs", scale=true),     # rank (prestige) cue
+    co = cue("cos", scale=true),     # cohort cue
+    yo = cue("Yobs", scale=true),    # age (year of birth) cue
+    age = jnp.array(d[:, "age.c"]),  # centred age
+)
+
+@BF function model(K, J, tech, id, bout, y_prev, s, ps, ks, pr, co, yo, age)
+    # Priors (8 varying effects)
+    lam   = m.dist.exponential(name="lambda", rate=1.0)
+    mu    = m.dist.normal(name="mu", loc=jnp.zeros(8), scale=1.0)
+    sigma = m.dist.exponential(name="sigma", rate=jnp.full(8, 3.0))
+    L_Rho = m.dist.lkj_cholesky(name="L_Rho", dimension=8, concentration=3.0)
+    z     = m.dist.normal(name="z", loc=jnp.zeros((8, J)), scale=1.0)
+    b_age = m.dist.normal(name="b_age", loc=jnp.zeros(2), scale=1.0)
+
+    # Varying effects
+    L_scaled = L_Rho * jnp.expand_dims(sigma, -1)
+    a_id     = jnp.transpose(jnp.matmul(L_scaled, z))
+
+    # Parameters per individual with age effects
+    phi_arr   = jax.nn.sigmoid(mu[0] + a_id[id, 0] + b_age[0] * age)
+    gamma_arr = jax.nn.sigmoid(mu[1] + a_id[id, 1] + b_age[1] * age)
+    fconf_arr = jnp.exp(mu[2] + a_id[id, 2])
+    B_pay     = mu[3] + a_id[id, 3]
+    B_kin     = mu[4] + a_id[id, 4]
+    B_pres    = mu[5] + a_id[id, 5]
+    B_coho    = mu[6] + a_id[id, 6]
+    B_yob     = mu[7] + a_id[id, 7]
+
+    # Scan carry: Attractions
+    function step_fn(AC, x)
+        AC = Py(AC)
+        (phi_i, gamma_i, fconf_i, Bp, Bk, Bpr, Bc, By, t_i, id_i, b_i, py_i,
+         s_i, ps_i, ks_i, pr_i, co_i, yo_i) = map(Py, x)
+
+        ac_new = jnp.where(b_i == 1, jnp.zeros(K), (1.0 - phi_i) * AC[id_i] + phi_i * py_i)
+
+        # Asocial choice probability
+        prob_individual = jax.nn.softmax(lam * ac_new)
+
+        # Multi-cue social influence
+        lin_rest = jnp.exp(Bp * rest(ps_i) + Bk * rest(ks_i) + Bpr * rest(pr_i) + Bc * rest(co_i) + By * rest(yo_i))
+        lin_mod = jnp.concatenate(pylist([jnp.ones(1), lin_rest])) * jnp.power(s_i, fconf_i)
+        safe_denom = jnp.where(jnp.sum(lin_mod) > 0, jnp.sum(lin_mod), 1.0)
+        prob_social = lin_mod / safe_denom
+
+        # Mixture probability
+        prob_mix = (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
+        has_social_info = jnp.logical_and(b_i > 1, jnp.sum(s_i) > 0)
+        prob_final = jnp.where(has_social_info, prob_mix, prob_individual)
+
+        return (AC.at[id_i].set(ac_new), prob_final)
+    end
+
+    AC_init = jnp.zeros((J, K))
+    xs = (phi_arr, gamma_arr, fconf_arr, B_pay, B_kin, B_pres, B_coho, B_yob,
+          tech, id, bout, y_prev, s, ps, ks, pr, co, yo)
+    probs_matrix = jax.lax.scan(step_fn, AC_init, xs)[1]
+
+    m.dist.categorical(name="obs", probs=probs_matrix, obs=tech)
+end
+
+m.fit(model, seed=0)
+m.summary()
 ```
 :::
 
@@ -422,6 +757,11 @@ Where:
 - $\lambda > 0$ is the multinomial sensitivity parameter, governing choice deterministic behavior.
 
 ---
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/18.EWA): EWA learning model on the panama_ewa data fitted with Stan and BayesForge, posteriors compared.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 

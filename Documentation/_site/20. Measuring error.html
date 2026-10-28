@@ -635,11 +635,15 @@ window.Quarto = {
    
   <ul>
   <li><a href="#general-principles" id="toc-general-principles" class="nav-link active" data-scroll-target="#general-principles">General Principles</a></li>
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
+  <ul class="collapse">
+  <li><a href="#posterior-predictive-checks" id="toc-posterior-predictive-checks" class="nav-link" data-scroll-target="#posterior-predictive-checks">Posterior predictive checks</a></li>
+  </ul></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a>
   <ul class="collapse">
   <li><a href="#bayesian-formulation" id="toc-bayesian-formulation" class="nav-link" data-scroll-target="#bayesian-formulation"><em>Bayesian formulation</em></a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -687,7 +691,7 @@ window.Quarto = {
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="d8e62a7a" class="cell" data-execution_count="1">
+<div id="f489f6f6" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -726,8 +730,14 @@ window.Quarto = {
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>m.summary() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -740,123 +750,123 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[0]</td>
 <td>1.19</td>
-<td>0.36</td>
-<td>0.63</td>
-<td>1.78</td>
+<td>0.37</td>
+<td>0.61</td>
+<td>1.80</td>
+<td>6275.56</td>
+<td>3282.01</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>6629.04</td>
-<td>2878.92</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[1]</td>
-<td>0.68</td>
+<td>0.69</td>
 <td>0.56</td>
-<td>-0.19</td>
-<td>1.62</td>
+<td>-0.20</td>
+<td>1.59</td>
+<td>6543.33</td>
+<td>2959.58</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7094.65</td>
-<td>2729.13</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[2]</td>
-<td>0.43</td>
-<td>0.35</td>
-<td>-0.12</td>
-<td>0.98</td>
+<td>0.44</td>
+<td>0.34</td>
+<td>-0.11</td>
+<td>1.00</td>
+<td>8554.89</td>
+<td>2767.72</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7764.21</td>
-<td>2816.86</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[3]</td>
-<td>1.42</td>
+<td>1.44</td>
 <td>0.47</td>
-<td>0.66</td>
-<td>2.16</td>
+<td>0.71</td>
+<td>2.21</td>
+<td>7378.57</td>
+<td>3224.34</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>8049.51</td>
-<td>3321.60</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[4]</td>
 <td>-0.91</td>
 <td>0.13</td>
-<td>-1.11</td>
-<td>-0.70</td>
+<td>-1.12</td>
+<td>-0.71</td>
+<td>7919.63</td>
+<td>2785.68</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8925.51</td>
-<td>2665.55</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[5]</td>
-<td>0.67</td>
-<td>0.41</td>
-<td>0.02</td>
-<td>1.30</td>
+<td>0.68</td>
+<td>0.40</td>
+<td>0.04</td>
+<td>1.33</td>
+<td>7462.03</td>
+<td>2993.34</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>6879.72</td>
-<td>3112.95</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[6]</td>
 <td>-1.39</td>
-<td>0.34</td>
-<td>-1.94</td>
-<td>-0.90</td>
+<td>0.36</td>
+<td>-1.95</td>
+<td>-0.82</td>
+<td>7345.65</td>
+<td>2921.20</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7175.34</td>
-<td>2676.90</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[7]</td>
-<td>-0.34</td>
-<td>0.50</td>
-<td>-1.13</td>
-<td>0.45</td>
+<td>-0.35</td>
+<td>0.48</td>
+<td>-1.12</td>
+<td>0.42</td>
+<td>7767.48</td>
+<td>2663.08</td>
+<td>1.01</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7490.95</td>
-<td>2809.90</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[8]</td>
-<td>-1.91</td>
-<td>0.58</td>
-<td>-2.79</td>
-<td>-0.97</td>
+<td>-1.90</td>
+<td>0.63</td>
+<td>-2.89</td>
+<td>-0.88</td>
+<td>5476.66</td>
+<td>3393.18</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>5408.54</td>
-<td>3604.80</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[9]</td>
@@ -864,263 +874,263 @@ jax.local_device_count 32</code></pre>
 <td>0.17</td>
 <td>-0.89</td>
 <td>-0.35</td>
+<td>8486.12</td>
+<td>2759.64</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8339.19</td>
-<td>2822.10</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[10]</td>
-<td>0.78</td>
-<td>0.28</td>
-<td>0.35</td>
-<td>1.26</td>
+<td>0.79</td>
+<td>0.29</td>
+<td>0.33</td>
+<td>1.25</td>
+<td>6759.52</td>
+<td>2640.96</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7008.09</td>
-<td>2717.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[11]</td>
-<td>-0.56</td>
-<td>0.50</td>
-<td>-1.38</td>
+<td>-0.57</td>
+<td>0.49</td>
+<td>-1.35</td>
 <td>0.21</td>
+<td>6122.06</td>
+<td>3029.87</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6904.22</td>
-<td>2986.23</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[12]</td>
 <td>0.15</td>
-<td>0.49</td>
-<td>-0.63</td>
-<td>0.91</td>
+<td>0.50</td>
+<td>-0.66</td>
+<td>0.92</td>
+<td>3733.79</td>
+<td>3046.44</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>3837.65</td>
-<td>3016.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[13]</td>
-<td>-0.88</td>
+<td>-0.87</td>
 <td>0.23</td>
-<td>-1.27</td>
-<td>-0.54</td>
+<td>-1.24</td>
+<td>-0.51</td>
+<td>8915.12</td>
+<td>2981.24</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9512.46</td>
-<td>2976.93</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[14]</td>
 <td>0.57</td>
 <td>0.31</td>
-<td>0.06</td>
-<td>1.05</td>
+<td>0.09</td>
+<td>1.06</td>
+<td>7444.28</td>
+<td>3015.84</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8909.69</td>
-<td>2445.22</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[15]</td>
 <td>0.29</td>
-<td>0.37</td>
-<td>-0.32</td>
-<td>0.86</td>
+<td>0.40</td>
+<td>-0.35</td>
+<td>0.93</td>
+<td>8997.22</td>
+<td>3049.69</td>
+<td>1.01</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9092.89</td>
-<td>2919.07</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[16]</td>
-<td>0.50</td>
+<td>0.51</td>
 <td>0.43</td>
-<td>-0.21</td>
-<td>1.13</td>
+<td>-0.19</td>
+<td>1.21</td>
+<td>9301.40</td>
+<td>2555.45</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9021.36</td>
-<td>2514.60</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[17]</td>
 <td>1.28</td>
-<td>0.35</td>
-<td>0.69</td>
-<td>1.82</td>
+<td>0.34</td>
+<td>0.75</td>
+<td>1.84</td>
+<td>7071.13</td>
+<td>3190.09</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8538.03</td>
-<td>2396.44</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[18]</td>
 <td>0.44</td>
-<td>0.38</td>
-<td>-0.14</td>
-<td>1.06</td>
+<td>0.39</td>
+<td>-0.18</td>
+<td>1.07</td>
+<td>9197.91</td>
+<td>2639.63</td>
+<td>1.01</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8851.56</td>
-<td>2917.39</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[19]</td>
 <td>0.43</td>
 <td>0.54</td>
-<td>-0.42</td>
-<td>1.29</td>
+<td>-0.41</td>
+<td>1.34</td>
+<td>4376.36</td>
+<td>3102.18</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>4992.56</td>
-<td>3178.63</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[20]</td>
-<td>-0.56</td>
+<td>-0.55</td>
 <td>0.33</td>
-<td>-1.07</td>
-<td>-0.05</td>
+<td>-1.08</td>
+<td>-0.03</td>
+<td>8122.22</td>
+<td>2729.45</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8300.10</td>
-<td>3211.52</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[21]</td>
 <td>-1.10</td>
 <td>0.26</td>
-<td>-1.52</td>
-<td>-0.68</td>
+<td>-1.53</td>
+<td>-0.69</td>
+<td>7841.29</td>
+<td>3082.19</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>7504.60</td>
-<td>2795.96</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[22]</td>
-<td>-0.28</td>
+<td>-0.27</td>
 <td>0.26</td>
-<td>-0.69</td>
-<td>0.15</td>
+<td>-0.67</td>
+<td>0.13</td>
+<td>8266.07</td>
+<td>3213.83</td>
+<td>1.00</td>
 <td>0.00</td>
-<td>0.01</td>
-<td>9842.48</td>
-<td>2757.38</td>
-<td>1.0</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[23]</td>
 <td>-1.02</td>
-<td>0.29</td>
-<td>-1.44</td>
-<td>-0.52</td>
+<td>0.30</td>
+<td>-1.51</td>
+<td>-0.55</td>
+<td>7498.92</td>
+<td>2919.04</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8002.34</td>
-<td>2955.43</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[24]</td>
-<td>0.44</td>
+<td>0.45</td>
 <td>0.41</td>
-<td>-0.24</td>
-<td>1.08</td>
+<td>-0.20</td>
+<td>1.12</td>
+<td>7533.85</td>
+<td>2828.22</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7483.46</td>
-<td>3180.78</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[25]</td>
 <td>-0.03</td>
-<td>0.32</td>
-<td>-0.55</td>
+<td>0.31</td>
+<td>-0.53</td>
 <td>0.46</td>
+<td>8365.94</td>
+<td>2353.17</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8085.39</td>
-<td>2743.57</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[26]</td>
-<td>-0.01</td>
-<td>0.50</td>
+<td>-0.02</td>
+<td>0.51</td>
 <td>-0.83</td>
-<td>0.77</td>
+<td>0.80</td>
+<td>8898.92</td>
+<td>3345.58</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7881.33</td>
-<td>2944.57</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[27]</td>
-<td>-0.16</td>
-<td>0.40</td>
-<td>-0.81</td>
-<td>0.48</td>
+<td>-0.17</td>
+<td>0.39</td>
+<td>-0.80</td>
+<td>0.47</td>
+<td>7596.13</td>
+<td>2919.40</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9324.57</td>
-<td>2890.59</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[28]</td>
-<td>-0.25</td>
+<td>-0.26</td>
 <td>0.50</td>
-<td>-1.10</td>
-<td>0.50</td>
+<td>-1.04</td>
+<td>0.58</td>
+<td>7351.30</td>
+<td>2736.84</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7690.81</td>
-<td>2635.79</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[29]</td>
 <td>-1.82</td>
-<td>0.24</td>
-<td>-2.22</td>
-<td>-1.46</td>
+<td>0.23</td>
+<td>-2.20</td>
+<td>-1.45</td>
+<td>8390.54</td>
+<td>3107.24</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8466.67</td>
-<td>2320.61</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[30]</td>
 <td>0.17</td>
-<td>0.41</td>
-<td>-0.46</td>
-<td>0.86</td>
+<td>0.42</td>
+<td>-0.48</td>
+<td>0.82</td>
+<td>8527.68</td>
+<td>2996.13</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8294.74</td>
-<td>3163.74</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[31]</td>
@@ -1128,275 +1138,275 @@ jax.local_device_count 32</code></pre>
 <td>0.16</td>
 <td>-1.94</td>
 <td>-1.42</td>
+<td>7946.29</td>
+<td>3103.25</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8636.19</td>
-<td>2594.41</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[32]</td>
 <td>0.12</td>
 <td>0.24</td>
-<td>-0.25</td>
-<td>0.52</td>
+<td>-0.26</td>
+<td>0.50</td>
+<td>8935.85</td>
+<td>2689.56</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9224.69</td>
-<td>2694.10</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[33]</td>
 <td>-0.07</td>
-<td>0.50</td>
-<td>-0.81</td>
-<td>0.81</td>
+<td>0.52</td>
+<td>-0.91</td>
+<td>0.74</td>
+<td>5419.49</td>
+<td>2925.56</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7013.83</td>
-<td>3140.99</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[34]</td>
 <td>-0.12</td>
 <td>0.23</td>
-<td>-0.48</td>
-<td>0.24</td>
+<td>-0.50</td>
+<td>0.25</td>
+<td>7554.59</td>
+<td>2848.06</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9015.09</td>
-<td>2675.53</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[35]</td>
-<td>1.29</td>
-<td>0.43</td>
-<td>0.61</td>
-<td>1.97</td>
-<td>0.00</td>
+<td>1.30</td>
+<td>0.42</td>
+<td>0.63</td>
+<td>1.99</td>
+<td>7174.73</td>
+<td>2620.16</td>
+<td>1.00</td>
 <td>0.01</td>
-<td>7701.31</td>
-<td>3003.09</td>
-<td>1.0</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[36]</td>
-<td>0.23</td>
-<td>0.37</td>
-<td>-0.36</td>
-<td>0.81</td>
+<td>0.24</td>
+<td>0.35</td>
+<td>-0.32</td>
+<td>0.80</td>
+<td>7729.18</td>
+<td>3101.87</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>10821.19</td>
-<td>2613.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[37]</td>
 <td>-1.04</td>
 <td>0.22</td>
-<td>-1.41</td>
-<td>-0.70</td>
+<td>-1.39</td>
+<td>-0.69</td>
+<td>7499.58</td>
+<td>3026.79</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8946.61</td>
-<td>3099.16</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[38]</td>
-<td>-0.93</td>
-<td>0.52</td>
-<td>-1.66</td>
-<td>-0.03</td>
+<td>-0.92</td>
+<td>0.54</td>
+<td>-1.76</td>
+<td>-0.05</td>
+<td>7246.49</td>
+<td>3269.20</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6591.51</td>
-<td>3184.34</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[39]</td>
-<td>-0.69</td>
-<td>0.34</td>
-<td>-1.20</td>
-<td>-0.14</td>
+<td>-0.70</td>
+<td>0.33</td>
+<td>-1.21</td>
+<td>-0.19</td>
+<td>7350.42</td>
+<td>2781.14</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8715.45</td>
-<td>3138.81</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[40]</td>
-<td>0.24</td>
-<td>0.57</td>
-<td>-0.65</td>
-<td>1.15</td>
+<td>0.25</td>
+<td>0.55</td>
+<td>-0.61</td>
+<td>1.14</td>
+<td>9177.58</td>
+<td>3076.29</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7164.11</td>
-<td>2890.96</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[41]</td>
 <td>0.76</td>
-<td>0.35</td>
-<td>0.21</td>
-<td>1.35</td>
+<td>0.34</td>
+<td>0.23</td>
+<td>1.31</td>
+<td>7264.21</td>
+<td>2887.52</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8313.98</td>
-<td>2428.10</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[42]</td>
 <td>0.19</td>
 <td>0.18</td>
-<td>-0.09</td>
-<td>0.49</td>
+<td>-0.10</td>
+<td>0.48</td>
+<td>7256.32</td>
+<td>2911.20</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>10597.38</td>
-<td>2509.83</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[43]</td>
 <td>0.79</td>
-<td>0.42</td>
-<td>0.15</td>
-<td>1.46</td>
+<td>0.43</td>
+<td>0.11</td>
+<td>1.47</td>
+<td>5328.14</td>
+<td>3527.03</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>5438.69</td>
-<td>3058.51</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[44]</td>
 <td>-0.40</td>
-<td>0.51</td>
-<td>-1.21</td>
-<td>0.43</td>
+<td>0.55</td>
+<td>-1.29</td>
+<td>0.50</td>
+<td>8745.72</td>
+<td>3009.56</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7106.12</td>
-<td>2860.56</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[45]</td>
 <td>-0.40</td>
-<td>0.26</td>
-<td>-0.81</td>
-<td>0.02</td>
+<td>0.25</td>
+<td>-0.80</td>
+<td>-0.01</td>
+<td>8897.31</td>
+<td>3051.66</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>7926.32</td>
-<td>2663.58</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[46]</td>
-<td>0.14</td>
+<td>0.13</td>
 <td>0.31</td>
-<td>-0.34</td>
-<td>0.62</td>
+<td>-0.37</td>
+<td>0.61</td>
+<td>9217.40</td>
+<td>2851.74</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9719.21</td>
-<td>2947.81</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[47]</td>
-<td>0.56</td>
-<td>0.49</td>
-<td>-0.19</td>
-<td>1.35</td>
+<td>0.57</td>
+<td>0.47</td>
+<td>-0.17</td>
+<td>1.32</td>
+<td>8084.79</td>
+<td>3013.07</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>8806.41</td>
-<td>2846.19</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[48]</td>
 <td>-0.65</td>
 <td>0.28</td>
 <td>-1.11</td>
-<td>-0.21</td>
+<td>-0.20</td>
+<td>8197.22</td>
+<td>2670.21</td>
+<td>1.00</td>
 <td>0.00</td>
-<td>0.00</td>
-<td>7771.87</td>
-<td>2902.06</td>
-<td>1.0</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[49]</td>
-<td>0.84</td>
-<td>0.59</td>
-<td>-0.04</td>
-<td>1.83</td>
+<td>0.85</td>
+<td>0.60</td>
+<td>-0.14</td>
+<td>1.81</td>
+<td>5865.90</td>
+<td>3517.95</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6431.67</td>
-<td>3440.32</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>-0.06</td>
+<td>-0.05</td>
 <td>0.10</td>
-<td>-0.20</td>
+<td>-0.21</td>
 <td>0.10</td>
+<td>5031.71</td>
+<td>3371.44</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>5290.36</td>
-<td>3710.99</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">beta</td>
 <td>-0.62</td>
-<td>0.16</td>
-<td>-0.86</td>
-<td>-0.37</td>
+<td>0.17</td>
+<td>-0.88</td>
+<td>-0.36</td>
+<td>3620.46</td>
+<td>3324.24</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>3368.47</td>
-<td>3292.77</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">eta</td>
 <td>0.05</td>
 <td>0.17</td>
-<td>-0.23</td>
-<td>0.30</td>
+<td>-0.22</td>
+<td>0.33</td>
+<td>3287.29</td>
+<td>3141.41</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>3558.85</td>
-<td>3116.66</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">s</td>
 <td>0.60</td>
-<td>0.10</td>
+<td>0.11</td>
 <td>0.44</td>
-<td>0.77</td>
+<td>0.78</td>
+<td>1834.37</td>
+<td>2300.69</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>1641.36</td>
-<td>2319.13</td>
-<td>1.0</td>
 </tr>
 </tbody>
 </table>
@@ -1406,81 +1416,204 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform------------------------------------------------</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/WaffleDivorce.csv"</span>, <span class="at">sep =</span> <span class="st">''</span>), <span class="at">sep=</span><span class="st">';'</span>)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">'MedianAgeMarriage'</span>, <span class="st">'Marriage'</span>))</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_obs <span class="ot">=</span> m<span class="sc">$</span><span class="fu">z_score</span>(jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_sd <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce SE'</span>]) <span class="sc">/</span> <span class="fu">sd</span>(<span class="fu">unlist</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>A <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'MedianAgeMarriage'</span>])</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>M <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Marriage'</span>])</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df))</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(D_obs, D_sd, A, N, M){</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="at">name =</span> <span class="st">'a'</span>) </span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'beta'</span>)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  eta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'eta'</span>) </span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>) </span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a <span class="sc">+</span> beta <span class="sc">*</span> A <span class="sc">+</span> eta <span class="sc">*</span> M</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  D_true <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(mu, s, <span class="at">name =</span> <span class="st">'D_true'</span>) </span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(D_true , D_sd, <span class="at">obs =</span> D_obs) </span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform------------------------------------------------</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/WaffleDivorce.csv"</span>, <span class="at">sep =</span> <span class="st">''</span>), <span class="at">sep=</span><span class="st">';'</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">'MedianAgeMarriage'</span>, <span class="st">'Marriage'</span>))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_obs <span class="ot">=</span> m<span class="sc">$</span><span class="fu">z_score</span>(jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_sd <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce SE'</span>]) <span class="sc">/</span> <span class="fu">sd</span>(<span class="fu">unlist</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>A <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'MedianAgeMarriage'</span>])</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>M <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Marriage'</span>])</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df))</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(D_obs, D_sd, A, N, M){</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="at">name =</span> <span class="st">'a'</span>) </span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'beta'</span>)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  eta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'eta'</span>) </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>) </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a <span class="sc">+</span> beta <span class="sc">*</span> A <span class="sc">+</span> eta <span class="sc">*</span> M</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  D_true <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(mu, s, <span class="at">name =</span> <span class="st">'D_true'</span>) </span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(D_true , D_sd, <span class="at">obs =</span> D_obs) </span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">WaffleDivorce</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">"MedianAgeMarriage"</span>, <span class="st">"Marriage"</span>]) <span class="co"># Scale</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="fu">pydict</span>(</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    D_obs <span class="op">=</span> m.<span class="fu">z_score</span>(m.df[<span class="st">"Divorce"</span>].values),   </span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Divorce SE"</span>].values <span class="op">/</span> m.df[<span class="st">"Divorce"</span>].<span class="fu">std</span>()), </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"MedianAgeMarriage"</span>].values), </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Marriage"</span>].values),</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> m.df.shape[<span class="fl">0</span>]   </span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat <span class="co"># Send to model (convert to jax array)</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(D_obs, D_sd, A, N, M)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.2</span>, name <span class="op">=</span> <span class="st">"a"</span>) </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    eta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"eta"</span>)  </span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"s"</span>) </span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> beta <span class="op">*</span> A <span class="op">+</span> eta <span class="op">*</span> M</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    D_true <span class="op">=</span> m.dist.<span class="fu">normal</span>(mu, s, name <span class="op">=</span> <span class="st">"D_true"</span>) </span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(D_true , D_sd, obs <span class="op">=</span> D_obs) </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">WaffleDivorce</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">"MedianAgeMarriage"</span>, <span class="st">"Marriage"</span>]) <span class="co"># Scale</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    D_obs <span class="op">=</span> m.<span class="fu">z_score</span>(m.df[<span class="st">"Divorce"</span>].values),   </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Divorce SE"</span>].values <span class="op">/</span> m.df[<span class="st">"Divorce"</span>].<span class="fu">std</span>()), </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"MedianAgeMarriage"</span>].values), </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Marriage"</span>].values),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> m.df.shape[<span class="fl">0</span>]   </span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat <span class="co"># Send to model (convert to jax array)</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(D_obs, D_sd, A, N, M)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.2</span>, name <span class="op">=</span> <span class="st">"a"</span>) </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    eta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"eta"</span>)  </span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"s"</span>) </span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> beta <span class="op">*</span> A <span class="op">+</span> eta <span class="op">*</span> M</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    D_true <span class="op">=</span> m.dist.<span class="fu">normal</span>(mu, s, name <span class="op">=</span> <span class="st">"D_true"</span>) </span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(D_true , D_sd, obs <span class="op">=</span> D_obs) </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
+<section id="posterior-predictive-checks" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
+<p>Does the model reproduce the observed divorce rates, given their measurement error?</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="499e50ba" class="cell" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+        <script type="text/javascript">
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        </script>
+        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
+        
+</div>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="2cc412db-9fa1-4783-a149-ead2ddb975c9" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("2cc412db-9fa1-4783-a149-ead2ddb975c9")) {                    Plotly.newPlot(                        "2cc412db-9fa1-4783-a149-ead2ddb975c9",                        [{"hoverinfo":"skip","line":{"color":"rgba(100,149,237,0.6)","width":1.5},"mode":"lines","name":"90% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null,48,48,null,49,49,null],"y":[0.2688149478856711,2.139833802784357,null,-1.3632744239846541,2.8009376117881137,null,-0.41978268698498666,1.3207601279212988,null,0.11982103300475837,2.749748523476891,null,-1.211887092183647,-0.6010100787186202,null,-0.3801432680698217,1.7479349829556834,null,-2.3099127069143846,-0.4637941924322506,null,-1.849673516715076,1.156003871982992,null,-3.8498157846874763,0.15555895640353562,null,-1.022099722458295,-0.2331214808502229,null,0.07048943948413787,1.4902004788434986,null,-2.023692896953325,0.7979873840317372,null,-1.1495540817294772,1.3743243724903933,null,-1.4165060106418847,-0.31761348749832236,null,-0.18923988168166514,1.3520911898395402,null,-0.7408764131377282,1.3646912230869572,null,-0.7000274222089382,1.745498095966948,null,0.4027961276348736,2.1726594816076257,null,-0.5984497291870103,1.4581850076753606,null,-1.1616395830831439,2.0162365311128996,null,-1.3494995761582695,0.28321013437107934,null,-1.7514794727996073,-0.46377119440281084,null,-0.9279778344029392,0.37065183478595226,null,-1.7721569382932327,-0.29311438982013255,null,-0.701949809113616,1.6043391568085106,null,-0.8134544144596972,0.7688651205782457,null,-1.725501356567584,1.7166049910422883,null,-1.2227200416524606,0.905426034975143,null,-1.9118817942108768,1.432667213928531,null,-2.397312500449105,-1.2453227868679877,null,-1.0201101106451462,1.359652552144053,null,-2.0706592360331295,-1.2816633254667522,null,-0.44294682494732546,0.7011584973643605,null,-1.7107216370197518,1.4864065551951409,null,-0.6635948983051705,0.4475449824176402,null,0.18594043263864973,2.492812074298671,null,-0.6523283506542936,1.1864975534639828,null,-1.5776120906242455,-0.5116397619002887,null,-2.7539837336553536,0.9660976176076859,null,-1.5220152889737988,0.10771156363247422,null,-2.1408679999081563,2.703687311154675,null,-0.10776293923123677,1.6310848953000172,null,-0.2456390888728558,0.6149102789487138,null,-0.2963825304514446,1.8405316102189342,null,-2.280225701578599,1.5550565798891394,null,-1.0236252675458544,0.20743560447475085,null,-0.6496243199408734,0.8772337892686559,null,-0.8729252146494015,2.019028632150854,null,-1.3448195470674538,0.03558595277570414,null,-1.1143594199143938,2.8749763543336337,null],"type":"scatter"},{"hoverinfo":"skip","line":{"color":"cornflowerblue","width":5},"mode":"lines","name":"50% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null,48,48,null,49,49,null],"y":[0.8082432352409342,1.5876076591331811,null,-0.13096008184350638,1.5546372993863258,null,0.09540016521163744,0.8311882795629678,null,0.8957151003785813,1.9847538461208256,null,-1.0343414409951865,-0.7813970485218515,null,0.230167575593901,1.1105351488994708,null,-1.7569392365780647,-1.0090438686817629,null,-0.9564672079697236,0.27353243130257177,null,-2.722177048981772,-1.0761510748757563,null,-0.792382524364479,-0.4598095509188055,null,0.5036065784092334,1.0789705883937724,null,-1.1903160847538774,-0.0027365247604058825,null,-0.357063914804879,0.6698885756800441,null,-1.0947901825152777,-0.6417747765043644,null,0.27053034864000514,0.8822696776297265,null,-0.1384287114923597,0.7307896117063626,null,0.015728253347782658,1.0331263151415024,null,0.9141429487282314,1.6361582089088007,null,0.009514306752418896,0.841140015406649,null,-0.22722476560542496,1.1071186480480346,null,-0.8908775075698893,-0.2035221510982464,null,-1.3792302107107632,-0.8321278857371317,null,-0.5382017928978148,-0.02767792185644655,null,-1.3289373983875903,-0.7244807036107587,null,-0.02292716257156397,0.9274385105497387,null,-0.34626792247427673,0.2949506534960824,null,-0.7111730867935684,0.7054049133704052,null,-0.5844626913583355,0.25864579153470707,null,-0.9255809328699355,0.42075183996902676,null,-2.0539938265770328,-1.5913106668992711,null,-0.31815320045100914,0.6506594006607339,null,-1.8355688543400692,-1.5126255515186784,null,-0.13393019929225572,0.344780867250159,null,-0.7243122000773685,0.5691527294883314,null,-0.3543309964463514,0.09821471914676663,null,0.8632199422876958,1.774608370143883,null,-0.1428021419749419,0.6156006972357615,null,-1.250715579446536,-0.8244650969608182,null,-1.6698628869826861,-0.16508918847174625,null,-1.0518302053846789,-0.3808670452455567,null,-0.7664294705493543,1.2321199184119118,null,0.40335055773304984,1.1025147712559327,null,0.016606354096600523,0.3677558490398313,null,0.3724218372769843,1.2424561733195016,null,-1.1784871519222906,0.4120727504361257,null,-0.6585765084883832,-0.14688263047382166,null,-0.19129667751587073,0.44253620943652217,null,-0.0009041848511011359,1.183095041656256,null,-0.9213595357030067,-0.3621096959527283,null,0.06274077388158104,1.6976009348579937,null],"type":"scatter"},{"marker":{"color":"white","line":{"color":"cornflowerblue","width":1.5},"size":7},"mode":"markers","name":"Median prediction of D_obs","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDE="},"y":{"dtype":"f8","bdata":"BZZhg3YT8z98AwzXw9bmP9MN3jjhtNw\u002fWhx\u002fm00y9z\u002fXn77nDBDtv05MZ\u002fcBqOU\u002feg0MOcVF9r\u002fiSuHloJzUvwq2KG2tPv6\u002f9CqSX\u002fPq47\u002fBlYU+8nvpP4\u002fMsSTf8uK\u002fvv44lH\u002fYxT8oPP4t4wXsv0KyNOEj\u002f+E\u002f\u002fDTOR4yT0j8kUgGq7PngPyQbDsr9afQ\u002fpBYEkTmi2z+YcFkICinbP5ymX9lLl+G\u002fjo\u002f3kWKO8b9J6pXHfkbSv1\u002fZFjSfUPC\u002fj\u002fSr4fTH2z\u002fo\u002fopLM32gv7QVFP1qYm+\u002f0H8ZKIyQxr8rGqhM+KjRv0IzqZzHC\u002f2\u002feotDokeZwz\u002f+jfqx9sT6v\u002fJsVpG\u002fWb0\u002fnL1oQD\u002fDsL9pph8EaWDAvzCSrNPFvPQ\u002fnQOnyhIczj\u002fitDbL36PwvxbHOQ5XOu6\u002fcPt4NAON5r\u002fSV6jZ+DPMP6zEXzXdJOg\u002f07rsqr64xz8OqWRYPvPpP9k8TKao59e\u002ftPak\u002fb9B2b\u002fAAAzaYIG\u002fPxkA+KGyhOI\u002fdC86wwWr5L9QDox9\u002fRDsPw=="},"type":"scatter"},{"marker":{"color":"black","size":5},"mode":"markers","name":"D_obs (observed)","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDE="},"y":{"dtype":"f8","bdata":"EJmNK2q8+j+wg5Q18PX4P96bnhXHveM\u002fTfe4ASnrAEDjup\u002fRj\u002fftv3Wjs2LL+PA\u002fb+iip+CF+r\u002fb9LtXjPrbvzUTlZPUEv6\u002f+E\u002fCAy4X5b\u002fFGLdnjhXwP7l6tO8hpOi\u002fhH3F2X6l8b\u002fjup\u002fRj\u002fftv5\u002fGkAG7Suc\u002fFDeQo9Yt0j8Ucawp0zDgP2AOkTAt2fk\u002fn8aQAbtK5z8lOYMcIWb9P5wfrkOAh9+\u002f1PLI3kHC8L+YdOWTsFPRv5cdu8o1T\u002fS\u002f\u002f9uJ9zQR6T8R0TtAU7O6v1mf13+k4NS\u002fnB+uQ4CH37+lGDxvxUHNP5cojolO2f+\u002fFDeQo9Yt0j8ic5+iHWn7v0Tb5n7rG74\u002f47qf0Y\u002f37b8R0TtAU7O6v8Ujiiann\u002fs\u002fp4x0e75H2T+EfcXZfqXxvwo+AniRc8S\u002fg6Wm2xUx7L8\u002fsZcLQYTlPyocddmiZO4\u002fJMNXl90nxj8UN5Cj1i3SPxpM5iAH\u002f6i\u002f2\u002fS7V4z6278kw1eX3SfGPz+xlwtBhOU\u002fuXq07yGk6L\u002fmYYKPyrrVPw=="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"title":{"text":"PPC: Predictive intervals — predictions of D_obs"},"xaxis":{"title":{"text":"Observation"}},"yaxis":{"title":{"text":"D_obs"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('2cc412db-9fa1-4783-a149-ead2ddb975c9');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>Points are the observed (standardised) divorce rates, bars the 50 % and 90 % predictive intervals. States measured with a large error get wide intervals. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+More checks
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div id="13b865fe" class="cell" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_error_scatter()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="00f10957-2c0f-4ff6-9d75-34ac8e519582" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("00f10957-2c0f-4ff6-9d75-34ac8e519582")) {                    Plotly.newPlot(                        "00f10957-2c0f-4ff6-9d75-34ac8e519582",                        [{"marker":{"color":"cornflowerblue","opacity":0.7,"size":6},"mode":"markers","name":"observations","x":{"dtype":"f8","bdata":"FHqGcKKJ3j8X6sTi+HjqP6zaoYXstsc\u002fnob0Pqae5T8ANPntbpObv6jW9wLomdg\u002fvFsx\u002fc5e0L8cycud9rO2vwAehS43Hok\u002f0BX5HRdcob9YpAFgBw\u002fMP3QwoqyYN8m\u002f8\u002fYJa7vY87\u002fwvrdZDDeuv5B\u002fFbzRo8M\u002fIMAOKS5llL8AGJWY6eZPv7jJAwUEW9U\u002f7O8dCaod0j8KI6BBVJP2P6CrisI3Z68\u002fQFFMEj5iqj+Ax58wAEdjvxDle+9pz8+\u002f4d1o+cUp1T\u002fIgjAxb36yv8lfdRy5Vda\u002fE0hCAYJp1L\u002faEThp3gbeP\u002fBobKB8+sS\u002f2NOg3P37vD9ga2N7nEeiv7BXid1C2Xw\u002fu7xo8VTj6794n+vEUFiPP2wqxQHI0to\u002f8WBPig6Pwz+ggFLLGr2wv\u002fyGtLrWLug\u002fiIXwmpZYyL+RM5iMO67ZP3C+3C4GOco\u002fgGsHPo3Skb9u0TbmDifgvzgdXIpPxdY\u002fsPQEqcYYob9wRuU+GLirPwCGGcNymbk\u002fSEV5KIM9v7\u002fOCT7rYDzgvw=="},"y":{"dtype":"f8","bdata":"EJmNK2q8+j+wg5Q18PX4P96bnhXHveM\u002fTfe4ASnrAEDjup\u002fRj\u002fftv3Wjs2LL+PA\u002fb+iip+CF+r\u002fb9LtXjPrbvzUTlZPUEv6\u002f+E\u002fCAy4X5b\u002fFGLdnjhXwP7l6tO8hpOi\u002fhH3F2X6l8b\u002fjup\u002fRj\u002fftv5\u002fGkAG7Suc\u002fFDeQo9Yt0j8Ucawp0zDgP2AOkTAt2fk\u002fn8aQAbtK5z8lOYMcIWb9P5wfrkOAh9+\u002f1PLI3kHC8L+YdOWTsFPRv5cdu8o1T\u002fS\u002f\u002f9uJ9zQR6T8R0TtAU7O6v1mf13+k4NS\u002fnB+uQ4CH37+lGDxvxUHNP5cojolO2f+\u002fFDeQo9Yt0j8ic5+iHWn7v0Tb5n7rG74\u002f47qf0Y\u002f37b8R0TtAU7O6v8Ujiiann\u002fs\u002fp4x0e75H2T+EfcXZfqXxvwo+AniRc8S\u002fg6Wm2xUx7L8\u002fsZcLQYTlPyocddmiZO4\u002fJMNXl90nxj8UN5Cj1i3SPxpM5iAH\u002f6i\u002f2\u002fS7V4z6278kw1eX3SfGPz+xlwtBhOU\u002fuXq07yGk6L\u002fmYYKPyrrVPw=="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"black","dash":"dash"},"type":"line","x0":0,"x1":0,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"title":{"text":"PPC: Average predictive error — predictions of D_obs"},"xaxis":{"title":{"text":"Average error (D_obs − mean prediction)"}},"yaxis":{"title":{"text":"D_obs (observed)"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('00f10957-2c0f-4ff6-9d75-34ac8e519582');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_error_scatter</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_error_scatter</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>Average error (observed minus mean prediction) against the observed value. The errors grow with the observed value: the model pulls noisy measurements toward the regression line (shrinkage), which is expected for a measurement-error model, not a misfit.</p>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -1509,6 +1642,12 @@ D_i \sim \text{Normal}(\mu_i, \sigma)
 <li><p><span class="math inline">\eta</span> is the regression coefficient for marriage rate.</p></li>
 </ul>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+</ul>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>

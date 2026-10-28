@@ -42,7 +42,7 @@ m.scale(['weight', 'age']) # Normalize
 # Define model ------------------------------------------------
 def model(height, weight, age):
     # Parameter prior distributions
-    alpha = m.dist.normal(0, 0.5, name = 'alpha')    
+    alpha = m.dist.normal(178, 20, name = 'alpha')    
     beta1 = m.dist.normal(0, 0.5, name = 'beta1')
     beta2 = m.dist.normal(0, 0.5, name = 'beta2')
     sigma = m.dist.uniform(0, 50, name = 'sigma')
@@ -70,7 +70,7 @@ m$data_to_model(list('weight', 'height', 'age')) # Send to model (convert to jax
 # Define model ------------------------------------------------
 model <- function(height, weight, age){
   # Parameter prior distributions
-  alpha = bf.dist.normal(0, 0.5, name = 'a')
+  alpha = bf.dist.normal(178, 20, name = 'a')
   beta1 = bf.dist.normal(0, 0.5, name = 'b1')
   beta2 = bf.dist.normal(0, 0.5, name = 'b2')   
   sigma = bf.dist.uniform(0, 50, name = 's')
@@ -103,7 +103,7 @@ m.scale(["weight", "age"]) # Normalize
 # Define model ------------------------------------------------
 @BF function model(height, weight, age)
     # Parameter prior distributions
-    alpha = m.dist.normal(0, 0.5, name = "alpha")    
+    alpha = m.dist.normal(178, 20, name = "alpha")    
     beta1 = m.dist.normal(0, 0.5, name = "beta1")
     beta2 = m.dist.normal(0, 0.5, name = "beta2")
     sigma = m.dist.uniform(0, 50, name = "sigma")
@@ -122,15 +122,61 @@ m.summary() # Get posterior distributions
 ::: callout-caution
 For R users, if you create the regression coefficient in a single call:
 
-```python
-betas = bf.dist.normal(0, 0.5, name = 'regression_coefficients', shape = (2,))
+```{.r .no-test}
+betas = m$dist$normal(0, 0.5, name = 'regression_coefficients', shape = c(2))
 ```
 
 you need to index them starting by 0:
 
-```python
- m$normal(alpha + betas[0] * weight + betas[1] * age, sigma, obs=height)
+```{.r .no-test}
+m$dist$normal(alpha + betas[0] * weight + betas[1] * age, sigma, obs = height)
 ``` 
+:::
+
+### Posterior predictive checks
+
+Are the prediction errors free of structure once weight and age are in the model?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_error_scatter()
+```
+
+#### R
+```r
+m$diag$ppc_error_scatter()
+```
+
+#### Julia
+```julia
+m.diag.ppc_error_scatter()
+```
+:::
+
+Each point is one person: x is the average error (observed height minus mean prediction), y the observed height. Points should scatter around the dashed line at 0 with no trend; a slope or a curve means the model misses part of the relation. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals(x="weight")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "weight")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="weight")
+```
+:::
+
+Observed heights (points) against weight, with 50 % and 90 % predictive intervals; most points should fall inside the 90 % bars.
 :::
 
 ## Mathematical Details
@@ -162,11 +208,11 @@ $$
 $$
 
 $$
-\alpha \sim \text{Normal}(0,1)
+\alpha \sim \text{Normal}(178, 20)
 $$
 
 $$
-\beta_k \sim \text{Normal}(0,1)
+\beta_k \sim \text{Normal}(0, 0.5)
 $$
 
 $$
@@ -177,13 +223,18 @@ Where:
 
 - $Y_i$ is the dependent variable for observation *i*. 
   
-- $\alpha$ is the intercept term, which in this case has a unit-normal prior.
+- $\alpha$ is the intercept term, with a Normal(178, 20) prior centred on a plausible adult height (height is not scaled).
   
-- $\beta_k$ are slope coefficients for the _K_ distinct independent variables, which also have unit-normal priors.
+- $\beta_k$ are slope coefficients for the _K_ distinct independent variables, with Normal(0, 0.5) priors (the predictors are scaled).
   
 - $X_{[1,i]}$, $X_{[2,i]}$, ..., $X_{[K,i]}$ are the values of the independent variables for observation *i*.
   
 - $\sigma$ is a standard deviation parameter, which here has a Uniform prior that constrains it to be positive.
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `1.Continuous variable.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)
 ::: {#refs}

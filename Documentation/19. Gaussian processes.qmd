@@ -134,10 +134,10 @@ model <- function(Dmat, population, society, total_tools){
   # non-centered Gaussian Process prior
   etasq = bf.dist.exponential(2, name = 'etasq')
   rhosq = bf.dist.exponential(0.5, name = 'rhosq')
-  k = m$gaussian$gaussian_process(Dmat, etasq, rhosq, 0.01)
+  k = m$gaussian$gaussian_process(Dmat, etasq, rhosq, 0.001)
   
   lambda_ = a * population**b / g * jnp$exp(k[society])
-  m$dist$poisson(lambda_, obs=total_tools)
+  m$dist$poisson(lambda_, obs = total_tools, name = "y")
 }
 
 # Run MCMC ------------------------------------------------
@@ -176,13 +176,13 @@ m.data_on_model["Dmat"] = jnp.array(islandsDistMatrix) # Distance matrix
     # non-centered Gaussian Process prior
     etasq = m.dist.exponential(2, name = "etasq")
     rhosq = m.dist.exponential(0.5, name = "rhosq")
-    SIGMA = etasq * jnp.exp(-rhosq * jnp.square(Dmat))
-    SIGMA = SIGMA.at[jnp.diag_indices(Dmat.shape[0])].add(etasq)
+    SIGMA = etasq * jnp.exp(jnp.negative(rhosq) * jnp.square(Dmat))
+    SIGMA = SIGMA.at[jnp.diag_indices(Dmat.shape[0])].add(0.001)
     k = m.dist.multivariate_normal(0, SIGMA, name = "k")
 
     lambda_ = a * population^b / g * jnp.exp(k[society])
 
-    m.dist.poisson(lambda_, obs=total_tools)
+    m.dist.poisson(lambda_, obs=total_tools, name="y")
 
 end
 
@@ -192,6 +192,52 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 # Summary ------------------------------------------------
 m.summary() # Get posterior distributions
 ```
+:::
+
+### Posterior predictive checks
+
+Does the model predict the number of tools of each society?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals(x="population")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "population")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="population")
+```
+:::
+
+Points are observed tool counts, bars the 50 % and 90 % predictive intervals along population. The Gaussian process lets nearby islands share deviations, so points away from the population trend can still fall inside their interval. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_rootogram()
+```
+
+#### R
+```r
+m$diag$ppc_rootogram()
+```
+
+#### Julia
+```julia
+m.diag.ppc_rootogram()
+```
+:::
+
+`ppc_rootogram`: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten societies the bars are sparse).
 :::
 
 ## Mathematical Details
@@ -301,6 +347,11 @@ where:
 
 - $K_{ij}$ is the kernel function evaluated at the corresponding points, $K_{ij} = k(Z_i, Z_j)$, with priors of HalfCauchy(0,1) for $\eta^2$ and $p^2$ to ensure positive values.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `13.Gaussian processes.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes{#notes}
 ::: callout-note

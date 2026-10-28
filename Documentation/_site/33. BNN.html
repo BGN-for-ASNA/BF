@@ -260,7 +260,7 @@ window.Quarto = {
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./api_dist.html"> 
+    <a class="nav-link" href="./reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -635,6 +635,7 @@ window.Quarto = {
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -714,7 +715,7 @@ Caution
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="52842d0b" class="cell" data-execution_count="1">
+<div id="5aa5bd46" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -780,29 +781,26 @@ Caution
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"X"</span>, ylabel<span class="op">=</span><span class="st">"Y"</span>, title<span class="op">=</span><span class="st">"Mean predictions with 90% CI"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/3.12venv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning:
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
 
 IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+
+An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/BF/BayesForge/Main/main.py:674: UserWarning:
-
-Sample's batch dimension size 4000 is different from the provided 500 num_samples argument. Defaulting to 4000.
-</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -813,44 +811,44 @@ Sample's batch dimension size 4000 is different from the provided 500 num_sample
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="33. BNN_files/figure-html/cell-2-output-6.png" width="779" height="587" class="figure-img"></p>
+<p><img src="33. BNN_files/figure-html/cell-2-output-4.png" width="779" height="587" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load csv file</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>path <span class="ot">=</span> <span class="fu">normalizePath</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/BNN.json"</span>, <span class="at">sep =</span> <span class="st">''</span>))</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(path)</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">=</span> <span class="fu">list</span>()</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>X <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(data<span class="sc">$</span>X)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>Y <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(data<span class="sc">$</span>Y)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(X, Y, <span class="at">D_X =</span> <span class="dv">2</span>, <span class="at">D_H=</span><span class="dv">5</span>L, <span class="at">D_Y=</span><span class="dv">1</span>L){</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  w1 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(X, <span class="at">dist=</span><span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>,  <span class="at">name=</span><span class="st">'w1'</span>,<span class="at">shape=</span><span class="fu">c</span>(D_X,D_H)), <span class="at">activation=</span><span class="st">'tanh'</span>)</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  w2 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    w1, </span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">dist=</span><span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>,  <span class="at">name=</span><span class="st">'w2'</span>,<span class="at">shape=</span><span class="fu">c</span>(D_H,D_Y)),</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">activation=</span><span class="st">'tanh'</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Prior for the output standard deviation</span></span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>)</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(w2, s, <span class="at">obs =</span> Y)</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Approximate posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load csv file</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>path <span class="ot">=</span> <span class="fu">normalizePath</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/BNN.json"</span>, <span class="at">sep =</span> <span class="st">''</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(path)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">=</span> <span class="fu">list</span>()</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>X <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(data<span class="sc">$</span>X)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>Y <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(data<span class="sc">$</span>Y)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(X, Y, <span class="at">D_X =</span> <span class="dv">2</span>, <span class="at">D_H=</span><span class="dv">5</span>L, <span class="at">D_Y=</span><span class="dv">1</span>L){</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  w1 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(X, <span class="at">dist=</span><span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>,  <span class="at">name=</span><span class="st">'w1'</span>,<span class="at">shape=</span><span class="fu">c</span>(D_X,D_H)), <span class="at">activation=</span><span class="st">'tanh'</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  w2 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    w1, </span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">dist=</span><span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>,  <span class="at">name=</span><span class="st">'w2'</span>,<span class="at">shape=</span><span class="fu">c</span>(D_H,D_Y)),</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">activation=</span><span class="st">'tanh'</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Prior for the output standard deviation</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(w2, s, <span class="at">obs =</span> Y)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Approximate posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -878,6 +876,13 @@ W_2 &amp; \sim \text{Normal}(0, 1) \\
 <li><span class="math inline">W_1</span> is the weight matrix of the first hidden layer, with a shape of <span class="math inline">D_X \times D_H</span> (i.e., <span class="math inline">2 \times 5</span>).</li>
 <li><span class="math inline">W_2</span> is the final layer weight matrix used to compute the linear combination of the hidden layer, with a shape of <span class="math inline">D_H \times D_Y</span> (i.e., <span class="math inline">5 \times 1</span>).</li>
 <li>All elements within the weight matrices <span class="math inline">W_1</span> and <span class="math inline">W_2</span> are assigned independent standard Normal priors.</li>
+</ul>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN">BNN tests</a>: Bayesian neural network tests (regression, covariance estimation).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">

@@ -138,6 +138,64 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+### Posterior predictive checks
+
+Does the model reproduce the distribution of observed heights?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_density()
+```
+
+#### R
+```r
+m$diag$ppc_density()
+```
+
+#### Julia
+```julia
+m.diag.ppc_density()
+```
+:::
+
+Each blue curve is the density of one dataset simulated from the posterior; the black curve is the observed heights. The black curve should look like one more blue curve: a shift, a different spread or a different shape (skew, two modes) shows what the model misses. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd")
+```
+
+```{python}
+m.diag.ppc_loo_pit()
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd")
+```
+
+```r
+m$diag$ppc_loo_pit()
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd")
+```
+
+```julia
+m.diag.ppc_loo_pit()
+```
+:::
+
+`ppc_stat(stat="sd")`: the vertical line (observed standard deviation) should fall inside the distribution of simulated standard deviations. `ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
+:::
+
 ## Mathematical Details
 
 ### *Frequentist Formulation*
@@ -190,6 +248,11 @@ Where:
 
 -   $\sigma$ is the standard deviation of the Normal distribution, which describes the variance in the relationship between the dependent variable $Y$ and the independent variable $X$.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `1.Continuous variable.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note

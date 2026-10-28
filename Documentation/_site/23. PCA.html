@@ -638,6 +638,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#standard-pca" id="toc-standard-pca" class="nav-link" data-scroll-target="#standard-pca">Standard PCA</a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#note" id="toc-note" class="nav-link" data-scroll-target="#note">Note</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -705,25 +706,26 @@ Note
 <h2 class="anchored" data-anchor-id="example">Example</h2>
 <p>Here is an example code snippet demonstrating Bayesian PCA using BF:</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Build in functions</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Standard</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Build in functions</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Standard</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf, jnp</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>m<span class="op">=</span> bf()</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.iris(only_path<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>m.data(data_path)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>jnp.array(m.df.iloc[:,<span class="dv">1</span>:<span class="dv">4</span>].values)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>m.fit(m.models.pca(<span class="bu">type</span><span class="op">=</span><span class="st">"classic"</span>), progress_bar<span class="op">=</span><span class="va">False</span>) <span class="co"># or robust, sparse, classic, sparse_robust_ard</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>m.models.pca.plot(</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> m.df.iloc[:,<span class="dv">1</span>:<span class="dv">4</span>].values,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> m.df.iloc[:,<span class="dv">5</span>].values, </span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    feature_names <span class="op">=</span> m.df.columns[<span class="dv">1</span>:<span class="dv">4</span>], </span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    target_names <span class="op">=</span> m.df.iloc[:,<span class="dv">6</span>].unique(),</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    color_var <span class="op">=</span> m.df.iloc[:,<span class="dv">1</span>].values</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>m<span class="op">=</span> bf()</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.iris(only_path<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>m.data(data_path)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>jnp.array(m.df.iloc[:,<span class="dv">1</span>:<span class="dv">4</span>].values)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>m.fit(m.models.pca(<span class="bu">type</span><span class="op">=</span><span class="st">"classic"</span>), progress_bar<span class="op">=</span><span class="va">False</span>) <span class="co"># or robust, sparse, classic, sparse_robust_ard</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.models.pca.plot(</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> m.df.iloc[:,<span class="dv">1</span>:<span class="dv">4</span>].values,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> m.df.iloc[:,<span class="dv">5</span>].values, </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    feature_names <span class="op">=</span> m.df.columns[<span class="dv">1</span>:<span class="dv">4</span>], </span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    target_names <span class="op">=</span> m.df.iloc[:,<span class="dv">5</span>].unique(),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    color_var <span class="op">=</span> m.df.iloc[:,<span class="dv">1</span>].values</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(x_train, data_dim, latent_dim, num_datapoints): </span>
@@ -739,13 +741,17 @@ Note
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Likelihood</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(w <span class="op">@</span> z , epsilon, obs <span class="op">=</span> x_train)  </span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    x_train<span class="op">=</span>x_train_h,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    data_dim<span class="op">=</span>data_dim,</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    latent_dim<span class="op">=</span><span class="dv">4</span>,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    num_datapoints<span class="op">=</span>num_datapoints</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>m.fit(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>x_train_h <span class="op">=</span> jnp.array(m.df.iloc[:,<span class="dv">1</span>:<span class="dv">4</span>].values.T)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>data_dim <span class="op">=</span> x_train_h.shape[<span class="dv">0</span>]</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>num_datapoints <span class="op">=</span> x_train_h.shape[<span class="dv">1</span>]</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    x_train<span class="op">=</span>x_train_h,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    data_dim<span class="op">=</span>data_dim,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    latent_dim<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    num_datapoints<span class="op">=</span>num_datapoints</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>m.fit(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <!--
 ## With ARD
 ```python
@@ -755,7 +761,7 @@ import jax.numpy as jnp
 
 m = bf(platform='cpu')
 
-def model_ARD(X, data_dim, latent_dim, num_datapoints):
+def model_ARD(x_train, data_dim, latent_dim, num_datapoints):
     # --- Automatic Dimensionality Selection using an ARD Prior ---
     # There is one 'alpha' for each latent dimension.
     # This 'alpha' acts as a prior on the "relevance" of each principal component. A large alpha will signal low relevance.
@@ -775,8 +781,8 @@ def model_ARD(X, data_dim, latent_dim, num_datapoints):
     stddv = 1. / jnp.sqrt(precision)
 
     # Likelihood
-    # 'X' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
-    m.dist.normal(w @ z, stddv, obs=X)
+    # 'x_train' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
+    m.dist.normal(w @ z, stddv, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -800,7 +806,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
 
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     # This defines the prior on the scale (similar to standard deviation) of the noise.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # This is a prior on the "degrees of freedom" ('nu') of the Student's t-distribution.
     # This parameter controls the "heaviness" of the tails. A small 'nu' means
@@ -812,7 +818,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
     # As your description states, this "heavy-tailed distribution... reduces the
     # influence of outliers" by treating them as more plausible events than a
     # Gaussian distribution would, thus preventing them from skewing the results.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -904,14 +910,14 @@ def model_sparse_robust_ard(x_train, data_dim, latent_dim, num_datapoints):
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     
     # Prior on the scale of the Student's t-distribution.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # Prior on the degrees of freedom 'nu', which controls the robustness.
     nu = m.dist.gamma(2.0, 0.1, name='nu')
 
     # The likelihood is the Student's t-distribution, which makes the entire
     # model robust to outliers in the observed data 'x_train'.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -926,48 +932,69 @@ m.summary()
 -->
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">iris</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>jnp.<span class="fu">array</span>(m.df.iloc[<span class="op">:</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span>].values)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(m.models.<span class="fu">pca</span>(<span class="kw">type</span><span class="op">=</span><span class="st">"classic"</span>))</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------------</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  ⚠️ Forcing Matplotlib to use the "Inline" backend for jupyter notebook</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------------</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>plt <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"matplotlib.pyplot"</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Create empty contexts </span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>globals_dict <span class="op">=</span> pybuiltins.<span class="fu">dict</span>()</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>locals_dict <span class="op">=</span> pybuiltins.<span class="fu">dict</span>()</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Define the dummy function safely</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>dummy_show <span class="op">=</span> pybuiltins.<span class="fu">eval</span>(<span class="st">"lambda *args, **kwargs: None"</span>, globals_dict, locals_dict)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Save the real show function</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>real_show <span class="op">=</span> plt.show</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Overwrite</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>plt.show <span class="op">=</span> dummy_show</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Run your plot</span></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>m.models.pca.<span class="fu">plot</span>(</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> m.df.iloc[<span class="op">:</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">4</span>].values,</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> m.df.iloc[<span class="op">:</span>,<span class="fl">5</span>].values, </span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    feature_names <span class="op">=</span> m.df.columns[<span class="fl">1</span><span class="op">:</span><span class="fl">4</span>], </span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    target_names <span class="op">=</span> m.df.iloc[<span class="op">:</span>,<span class="fl">6</span>].<span class="fu">unique</span>(),</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    color_var <span class="op">=</span> m.df.iloc[<span class="op">:</span>,<span class="fl">1</span>].values</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Restore real show</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>plt.show <span class="op">=</span> real_show</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. Display the result</span></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="fu">display</span>(plt.<span class="fu">gcf</span>())</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>plt.<span class="fu">close</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>np <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"numpy"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Iris data: sepal width, petal length and petal width</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">iris</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(d[, <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>])</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">X =</span> jnp<span class="sc">$</span><span class="fu">array</span>(X))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(m<span class="sc">$</span>models<span class="sc">$</span><span class="fu">pca</span>(<span class="at">type =</span> <span class="st">"classic"</span>), <span class="at">progress_bar =</span> <span class="cn">FALSE</span>) <span class="co"># or robust, sparse, classic, sparse_robust_ard</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>pca<span class="sc">$</span><span class="fu">plot</span>(</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> X,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> np<span class="sc">$</span><span class="fu">array</span>(d<span class="sc">$</span>species),</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">feature_names =</span> <span class="fu">names</span>(d)[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>],</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">target_names =</span> <span class="fu">unique</span>(d<span class="sc">$</span>species),</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">color_var =</span> d[, <span class="dv">2</span>]</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">iris</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span>jnp.<span class="fu">array</span>(m.df.iloc[pybuiltins.<span class="fu">slice</span>(<span class="cn">nothing</span>), pybuiltins.<span class="fu">slice</span>(<span class="fl">1</span>, <span class="fl">4</span>)].values)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(m.models.<span class="fu">pca</span>(<span class="kw">type</span><span class="op">=</span><span class="st">"classic"</span>))</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------------</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#  ⚠️ Forcing Matplotlib to use the "Inline" backend for jupyter notebook</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------------</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>plt <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"matplotlib.pyplot"</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Create empty contexts </span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>globals_dict <span class="op">=</span> pybuiltins.<span class="fu">dict</span>()</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>locals_dict <span class="op">=</span> pybuiltins.<span class="fu">dict</span>()</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Define the dummy function safely</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>dummy_show <span class="op">=</span> pybuiltins.<span class="fu">eval</span>(<span class="st">"lambda *args, **kwargs: None"</span>, globals_dict, locals_dict)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Save the real show function</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>real_show <span class="op">=</span> plt.show</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Overwrite</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>plt.show <span class="op">=</span> dummy_show</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Run your plot</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>m.models.pca.<span class="fu">plot</span>(</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> m.df.iloc[pybuiltins.<span class="fu">slice</span>(<span class="cn">nothing</span>), pybuiltins.<span class="fu">slice</span>(<span class="fl">1</span>, <span class="fl">4</span>)].values,</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> m.df.iloc[pybuiltins.<span class="fu">slice</span>(<span class="cn">nothing</span>), <span class="fl">5</span>].values, </span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    feature_names <span class="op">=</span> m.df.columns[pybuiltins.<span class="fu">slice</span>(<span class="fl">1</span>, <span class="fl">4</span>)], </span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    target_names <span class="op">=</span> m.df.iloc[pybuiltins.<span class="fu">slice</span>(<span class="cn">nothing</span>), <span class="fl">5</span>].<span class="fu">unique</span>(),</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    color_var <span class="op">=</span> m.df.iloc[pybuiltins.<span class="fu">slice</span>(<span class="cn">nothing</span>), <span class="fl">1</span>].values</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Restore real show</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>plt.show <span class="op">=</span> real_show</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. Display the result</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="fu">display</span>(plt.<span class="fu">gcf</span>())</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>plt.<span class="fu">close</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -1110,29 +1137,36 @@ $$
 -->
 </section>
 </section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/8.PCA">PCA test</a>: <code>PCA.py</code> fits the Bayesian PCA models of this page on simulated data.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+</ul>
+</section>
 <section id="note" class="level2">
 <h2 class="anchored" data-anchor-id="note">Note</h2>
 <ul>
 <li>To account for <strong><span id="signAmbiguity"><span style="color:#0D6EFD">sign ambiguity 🛈</span></span></strong> in PCA, we can set the number of latent dimensions <span class="math inline">K</span> to be equal to the number of variables <span class="math inline">V</span>. Then, we can calculate the dot product between the estimated parameters and the data. If it is negative, we multiply the estimated parameters by -1 to align them with the data. Below, a code snippet highlights how to do this:</li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>true_params <span class="op">=</span> jnp.array(real_data)      </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>estimated_params <span class="op">=</span> jnp.array(m.posteriors) </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute dot product</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>dot_product <span class="op">=</span> jnp.dot(true_params, estimated_params)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Align signs if necessary</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> dot_product <span class="op">&lt;</span> <span class="dv">0</span>:</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    estimated_params <span class="op">=</span> <span class="op">-</span>estimated_params</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the aligned parameters</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>plt.scatter(true_params, estimated_params, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>plt.plot([<span class="bu">min</span>(true_params), <span class="bu">max</span>(true_params)], [<span class="bu">min</span>(true_params), <span class="bu">max</span>(true_params)], <span class="st">'r--'</span>)</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'True Parameters'</span>)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Estimated Parameters'</span>)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'True vs. Estimated Parameters After Sign Alignment'</span>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>true_params <span class="op">=</span> jnp.array(real_data)      </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>estimated_params <span class="op">=</span> jnp.array(m.posteriors) </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute dot product</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>dot_product <span class="op">=</span> jnp.dot(true_params, estimated_params)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Align signs if necessary</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> dot_product <span class="op">&lt;</span> <span class="dv">0</span>:</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    estimated_params <span class="op">=</span> <span class="op">-</span>estimated_params</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the aligned parameters</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>plt.scatter(true_params, estimated_params, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>plt.plot([<span class="bu">min</span>(true_params), <span class="bu">max</span>(true_params)], [<span class="bu">min</span>(true_params), <span class="bu">max</span>(true_params)], <span class="st">'r--'</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'True Parameters'</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'Estimated Parameters'</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">'True vs. Estimated Parameters After Sign Alignment'</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><img src="pca2.png" class="img-fluid"></p>
 </section>
 <section id="references" class="level2">

@@ -27,7 +27,7 @@ To model the relationship between a outcome variable in which each observation i
 :::
 
 ## Example
-Below is an example code snippet demonstrating a Bayesian Categorical model using the BayesForge (BF) package. This example is based on @mcelreath2018statistical.
+Below is an example code snippet demonstrating a Bayesian Categorical model using the BayesForge (BF) package. This example is based on @mcelreath2018statistical. The covariate (income) varies across individuals and careers: with the same incomes for everyone, the slope b could not be distinguished from the intercepts.
 
 ::: {.panel-tabset group="language"}
 ### Python
@@ -38,20 +38,27 @@ import jax
 # Setup device ------------------------------------------------
 m = bf('cpu')
 
-# Import Data & Data Manipulation ------------------------------------------------
-# Import
-from importlib.resources import files
-data_path = m.load.sim_multinomial(only_path=True)
-m.data(data_path, sep=',') 
+# Simulate data ------------------------------------------------
+# 300 people each choose among 3 careers; income[i, k] is the income
+# person i would earn in career k. Income must vary across people,
+# otherwise b cannot be told apart from the intercepts a.
+N = 300
+income = m.dist.uniform(1, 10, shape=(N, 3), sample=True, seed=1)
+a_true, b_true = jnp.array([0.5, -0.2]), 0.4   # career 3 is the pivot
+scores = jnp.stack([a_true[0] + b_true * income[:, 0],
+                    a_true[1] + b_true * income[:, 1],
+                    b_true * income[:, 2]], axis=1)
+career = m.dist.categorical(probs=jax.nn.softmax(scores, axis=1), sample=True, seed=0)
+m.data_on_model = dict(career=career, inc0=income[:, 0], inc1=income[:, 1], inc2=income[:, 2])
 
 # Define model ------------------------------------------------
-def model(career, income):
-    a = m.dist.normal(0, 1, shape=(2,), name = 'a')
-    b = m.dist.half_normal(0.5, shape=(1,), name = 'b')
-    s_1 = a[0] + b * income[0]
-    s_2 = a[1] + b * income[1]
-    s_3 = [0] #pivot
-    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
+def model(career, inc0, inc1, inc2):
+    a = m.dist.normal(0, 1, shape=(2,), name='a')
+    b = m.dist.half_normal(1.0, name='b')
+    s_1 = a[0] + b * inc0
+    s_2 = a[1] + b * inc1
+    s_3 = b * inc2   # pivot: no intercept
+    p = jax.nn.softmax(jnp.stack([s_1, s_2, s_3], axis=1), axis=1)
     m.dist.categorical(probs=p, obs=career)
 
 # Run sampler ------------------------------------------------ 
@@ -65,32 +72,31 @@ m.summary() # Get posterior distributions
 ```R
 library(BayesForge)
 jax = reticulate::import('jax')
+jnp = reticulate::import('jax.numpy')
 
 # setup platform------------------------------------------------
 m=importBF(platform='cpu')
 
-# import data ------------------------------------------------
-m$data(m$load$sim_multinomial(only_path=T), sep=',')
-keys <- c("income", "career")
-income = unique(m$df$income)
-income = income[order(income)]
-values <- list(jnp$array(as.integer(income)),jnp$array( as.integer(m$df$career)))
-m$data_on_model = py_dict(keys, values, convert = TRUE)
+# Simulate data ------------------------------------------------
+set.seed(1)
+N <- 300L
+income <- matrix(runif(N * 3, 1, 10), N, 3)
+scores <- cbind(0.5 + 0.4 * income[, 1], -0.2 + 0.4 * income[, 2], 0.4 * income[, 3])
+p_true <- exp(scores) / rowSums(exp(scores))
+career <- apply(p_true, 1, function(p) sample(0:2, 1, prob = p))
+m$data_on_model <- list(career = jnp$array(as.integer(career)),
+                        inc0 = jnp$array(income[, 1]), inc1 = jnp$array(income[, 2]),
+                        inc2 = jnp$array(income[, 3]))
 
 # Define model ------------------------------------------------
-model <- function(income, career){
-  # Parameter prior distributions
-  alpha = bf.dist.normal(0, 1, name='alpha', shape = c(2))
-  beta = bf.dist.normal(0.5, name='beta')
-  
-  s_1 = alpha[0] + beta * income[0]
-  s_2 = alpha[1] + beta * income[1]
-  s_3 = 0 # reference category
-
-  p = jax$nn$softmax(jnp$stack(list(s_1, s_2, s_3)))
-
-  # Likelihood
-  m$dist$categorical(probs=p[career], obs=career)
+model <- function(career, inc0, inc1, inc2){
+  a = m$dist$normal(0, 1, shape = reticulate::tuple(2L), name = 'a')
+  b = m$dist$half_normal(1.0, name = 'b')
+  s_1 = a[0] + b * inc0
+  s_2 = a[1] + b * inc1
+  s_3 = b * inc2   # pivot: no intercept
+  p = jax$nn$softmax(jnp$stack(list(s_1, s_2, s_3), axis = 1L), axis = 1L)
+  m$dist$categorical(probs = p, obs = career, name = "career")
 }
 
 # Run MCMC ------------------------------------------------
@@ -108,26 +114,25 @@ using PyBayesForge
 # Setup device------------------------------------------------
 m = importBF(platform="cpu")
 
-# Import Data & Data Manipulation ------------------------------------------------
-# Import
-data_path = m.load.sim_multinomial(only_path = true)
-m.data(data_path, sep=',')
+using Random
+# Simulate data ------------------------------------------------
+rng = MersenneTwister(1)
+N = 300
+income = 1 .+ 9 .* rand(rng, N, 3)
+scores = hcat(0.5 .+ 0.4 .* income[:, 1], -0.2 .+ 0.4 .* income[:, 2], 0.4 .* income[:, 3])
+p_true = exp.(scores) ./ sum(exp.(scores), dims=2)
+career = [findfirst(cumsum(p_true[i, :]) .>= rand(rng)) - 1 for i in 1:N]
+m.data_on_model = Dict("career" => jnp.array(career), "inc0" => jnp.array(income[:, 1]),
+                       "inc1" => jnp.array(income[:, 2]), "inc2" => jnp.array(income[:, 3]))
 
 # Define model ------------------------------------------------
-@BF function model(career, income)
+@BF function model(career, inc0, inc1, inc2)
     a = m.dist.normal(0, 1, shape=(2,), name = "a")
-    b = m.dist.half_normal(0.5, shape=(1,), name = "b")
-    
-    # indexing works now because of the package update
-    s_1 = a[0] + b * income[0]
-    s_2 = a[1] + b * income[1]
-    
-    # ⚠️ Use jnp.array to create a Python object, so [0] indexing works
-    s_3 = jnp.array([0.0]) 
-    
-    # Now s_3[0] is valid because it calls Python's __getitem__(0)
-    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
-    
+    b = m.dist.half_normal(1.0, name = "b")
+    s_1 = a[0] + b * inc0
+    s_2 = a[1] + b * inc1
+    s_3 = b * inc2   # pivot: no intercept
+    p = jax.nn.softmax(jnp.stack([s_1, s_2, s_3], axis=1), axis=1)
     m.dist.categorical(probs=p, obs=career)
 end
 
@@ -138,6 +143,29 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 m.summary() # Get posterior distributions
 ```
 :::
+
+### Posterior predictive checks
+
+Does the model reproduce how often each career is chosen?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_bars()
+```
+
+#### R
+```r
+m$diag$ppc_bars()
+```
+
+#### Julia
+```julia
+m.diag.ppc_bars()
+```
+:::
+
+Bars are the observed number of people in each career, points the median predicted number with a 90 % interval. Each bar top should lie inside its interval. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
 
 ## Mathematical Details 
 We can model a *Categorical* model using a $Categorical distribution$. The multinomial distribution models the counts of outcomes falling into different categories. For an outcome variable 
@@ -164,6 +192,11 @@ Where:
   
 - Each element of $\phi_i$ is obtained by applying a linear regression model with its own respective intercept $\alpha_k$ and slope coefficient $\beta_k$. To ensure the model is identifiable, one category, *K*, is arbitrarily chosen as a reference or baseline category. The linear predictor for this reference category is set to zero. The coefficients for the other categories then represent the change in the log-odds of being in that category versus the reference category.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `8.Multinomial.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)
 ::: {#refs}

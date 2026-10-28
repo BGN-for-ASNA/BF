@@ -36,7 +36,8 @@ Here is an example code snippet demonstrating Bayesian PCA using BF:
 ## Build in functions
 ```python
 
-from BayesForge import bf, jnp
+from BayesForge import bf
+import jax.numpy as jnp
 m= bf()
 data_path = m.load.iris(only_path=True)
 m.data(data_path)
@@ -48,7 +49,7 @@ m.models.pca.plot(
     X = m.df.iloc[:,1:4].values,
     y = m.df.iloc[:,5].values, 
     feature_names = m.df.columns[1:4], 
-    target_names = m.df.iloc[:,6].unique(),
+    target_names = m.df.iloc[:,5].unique(),
     color_var = m.df.iloc[:,1].values
 )
 ```
@@ -68,6 +69,10 @@ def model(x_train, data_dim, latent_dim, num_datapoints):
     # Likelihood
     m.dist.normal(w @ z , epsilon, obs = x_train)  
 
+x_train_h = jnp.array(m.df.iloc[:,1:4].values.T)
+data_dim = x_train_h.shape[0]
+num_datapoints = x_train_h.shape[1]
+
 m.data_on_model = dict(
     x_train=x_train_h,
     data_dim=data_dim,
@@ -86,7 +91,7 @@ import jax.numpy as jnp
 
 m = bf(platform='cpu')
 
-def model_ARD(X, data_dim, latent_dim, num_datapoints):
+def model_ARD(x_train, data_dim, latent_dim, num_datapoints):
     # --- Automatic Dimensionality Selection using an ARD Prior ---
     # There is one 'alpha' for each latent dimension.
     # This 'alpha' acts as a prior on the "relevance" of each principal component. A large alpha will signal low relevance.
@@ -106,8 +111,8 @@ def model_ARD(X, data_dim, latent_dim, num_datapoints):
     stddv = 1. / jnp.sqrt(precision)
 
     # Likelihood
-    # 'X' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
-    m.dist.normal(w @ z, stddv, obs=X)
+    # 'x_train' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
+    m.dist.normal(w @ z, stddv, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -131,7 +136,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
 
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     # This defines the prior on the scale (similar to standard deviation) of the noise.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # This is a prior on the "degrees of freedom" ('nu') of the Student's t-distribution.
     # This parameter controls the "heaviness" of the tails. A small 'nu' means
@@ -143,7 +148,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
     # As your description states, this "heavy-tailed distribution... reduces the
     # influence of outliers" by treating them as more plausible events than a
     # Gaussian distribution would, thus preventing them from skewing the results.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -235,14 +240,14 @@ def model_sparse_robust_ard(x_train, data_dim, latent_dim, num_datapoints):
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     
     # Prior on the scale of the Student's t-distribution.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # Prior on the degrees of freedom 'nu', which controls the robustness.
     nu = m.dist.gamma(2.0, 0.1, name='nu')
 
     # The likelihood is the Student's t-distribution, which makes the entire
     # model robust to outliers in the observed data 'x_train'.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -256,14 +261,37 @@ m.summary()
 ```
 -->
 
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+np <- reticulate::import("numpy")
+
+# Iris data: sepal width, petal length and petal width
+d <- read.csv(m$load$iris(only_path = TRUE))
+X <- as.matrix(d[, 2:4])
+m$data_on_model <- list(X = jnp$array(X))
+m$fit(m$models$pca(type = "classic"), progress_bar = FALSE) # or robust, sparse, classic, sparse_robust_ard
+
+m$models$pca$plot(
+  X = X,
+  y = np$array(d$species),
+  feature_names = names(d)[2:4],
+  target_names = unique(d$species),
+  color_var = d[, 2]
+)
+```
+
 ## Julia
 ```julia
 using PyBayesForge
+using PythonCall
 m = importBF(platform="cpu")
 data_path = m.load.iris(only_path=true)
 m.data(data_path)
 m.data_on_model = pydict(
-    X=jnp.array(m.df.iloc[:,1:4].values)
+    X=jnp.array(m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(1, 4)].values)
 )
 m.fit(m.models.pca(type="classic"))
 
@@ -287,11 +315,11 @@ plt.show = dummy_show
 
 # 5. Run your plot
 m.models.pca.plot(
-    X = m.df.iloc[:,1:4].values,
-    y = m.df.iloc[:,5].values, 
-    feature_names = m.df.columns[1:4], 
-    target_names = m.df.iloc[:,6].unique(),
-    color_var = m.df.iloc[:,1].values
+    X = m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(1, 4)].values,
+    y = m.df.iloc[pybuiltins.slice(nothing), 5].values, 
+    feature_names = m.df.columns[pybuiltins.slice(1, 4)], 
+    target_names = m.df.iloc[pybuiltins.slice(nothing), 5].unique(),
+    color_var = m.df.iloc[pybuiltins.slice(nothing), 1].values
 )
 
 # 6. Restore real show
@@ -454,11 +482,17 @@ $$
 \sigma \sim \text{HalfCauchy}(1) 
 $$
 -->
+
+## Model validation tests
+
+- [PCA test](https://github.com/BGN-for-ASNA/BF/tree/main/Test/8.PCA): `PCA.py` fits the Bayesian PCA models of this page on simulated data.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+
 ## Note 
 - To account for **[<span style="color:#0D6EFD">sign ambiguity 🛈</span>]{#signAmbiguity}** in PCA, we can set the number of latent dimensions $K$ to be equal to the number of variables $V$. Then, we can calculate the dot product between the estimated parameters and the data. If it is negative, we multiply the estimated parameters by -1 to align them with the data. Below, a code snippet highlights how to do this:
 
 
-```python
+```{.python .no-test}
 
 true_params = jnp.array(real_data)      
 estimated_params = jnp.array(m.posteriors) 

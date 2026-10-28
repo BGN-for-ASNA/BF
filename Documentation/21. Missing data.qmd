@@ -382,6 +382,11 @@ $$
 \det(\Sigma) > 0 \implies \text{var}_1 \text{var}_2 - \text{cov}^2 > 0 \implies |\text{cov}| < \sqrt{\text{var}_1 \text{var}_2}
 $$
 
+## Model validation tests
+
+- [Imputation example](https://github.com/BGN-for-ASNA/BF/tree/main/Test/Imputation): `0.Code.py` discrete imputation reproduced from the NumPyro tutorial.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+
 ## Notes{#notes}
 
 ::: callout-note

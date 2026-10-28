@@ -63,7 +63,7 @@ jnp = reticulate::import('jax.numpy')
 m=importBF(platform='cpu')
 
 # Import data ------------------------------------------------
-m$data(paste(system.file(package = "BayesForge"),"/data/WaffleDivorce.csv", sep = ''), sep=';')
+m$data(m$load$WaffleDivorce(only_path = TRUE), sep=';')
 
 m$scale(list('MedianAgeMarriage', 'Marriage'))
 
@@ -75,13 +75,13 @@ m$data_on_model$N = as.integer(nrow(m$df))
 
 # Define model ------------------------------------------------
 model <- function(D_obs, D_sd, A, N, M){
-  a = bf.dist.normal(0, 0.2, name = 'a') 
-  beta = bf.dist.normal(0, 0.5, name = 'beta')
-  eta = bf.dist.normal(0, 0.5, name = 'eta') 
-  s = bf.dist.exponential(1, name = 's') 
+  a = m$dist$normal(0, 0.2, name = 'a') 
+  beta = m$dist$normal(0, 0.5, name = 'beta')
+  eta = m$dist$normal(0, 0.5, name = 'eta') 
+  s = m$dist$exponential(1, name = 's') 
   mu = a + beta * A + eta * M
-  D_true = bf.dist.normal(mu, s, name = 'D_true') 
-  bf.dist.normal(D_true , D_sd, obs = D_obs) 
+  D_true = m$dist$normal(mu, s, name = 'D_true') 
+  m$dist$normal(D_true , D_sd, obs = D_obs, name = 'D_obs') 
 }
 
 # Run MCMC ------------------------------------------------
@@ -134,6 +134,52 @@ m.summary() # Get posterior distributions
 
 :::
 
+### Posterior predictive checks
+
+Does the model reproduce the observed divorce rates, given their measurement error?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals()
+```
+
+#### R
+```r
+m$diag$ppc_intervals()
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals()
+```
+:::
+
+Points are the observed (standardised) divorce rates, bars the 50 % and 90 % predictive intervals. States measured with a large error get wide intervals. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_error_scatter()
+```
+
+#### R
+```r
+m$diag$ppc_error_scatter()
+```
+
+#### Julia
+```julia
+m.diag.ppc_error_scatter()
+```
+:::
+
+Average error (observed minus mean prediction) against the observed value. The errors grow with the observed value: the model pulls noisy measurements toward the regression line (shrinkage), which is expected for a measurement-error model, not a misfit.
+:::
+
 ## Mathematical Details
 ### *Bayesian formulation*
 
@@ -169,6 +215,10 @@ where:
 
 - $\eta$ is the regression coefficient for marriage rate.    
 
+
+## Model validation tests
+
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note

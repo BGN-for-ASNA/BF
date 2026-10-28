@@ -325,6 +325,18 @@ See [`m.diag.divergence_energy`](../reference/diag.qmd#divergence_energy) for fu
 ## Posterior predictive checks
 All posterior predictive checks compare the observed outcome with *predictions*: datasets of the outcome simulated by the fitted model, one per posterior draw (`m.diag.get_yrep()`). Both are taken from the fitted model automatically, and the plots are labelled with the name of the observed site (here `height`, from `obs=height`). With several observed sites, each function returns one figure per site; pass `site=` to choose one. The idea is always the same: if the model is good, the data it simulates should look like the real data. For count or categorical outcomes, [`m.diag.ppc_bars()`](../reference/diag.qmd#ppc_bars) and [`m.diag.ppc_rootogram()`](../reference/diag.qmd#ppc_rootogram) instead compare observed counts with predicted counts per category.
 
+**Which check for which model.** The model pages show the checks that matter for each kind of model:
+
+- Varying effects, one panel per group (`group=`): [Varying slopes](../16.%20Varying%20slopes.qmd), [Nested varying effects](../17.%20Nested%20varying%20effects.qmd), [Categorical variable](../4.%20Categorical%20variable.qmd).
+- A group effect the model leaves out: [Binomial model](../5.%20Binomial%20model.qmd) (one intercept for all chimpanzees).
+- Predictions along a covariate (`x=`, optionally with `group=`): [Interaction between continuous variables](../3.%20Interaction%20between%20continuous%20variables.qmd), [Poisson model with offset](../8.%20Poisson%20mode%20with%20offset.qmd), [Gaussian processes](../19.%20Gaussian%20processes.qmd).
+- Counts and over-dispersion (`ppc_rootogram`, `ppc_stat(stat="sd")`): [Gamma-Poisson](../9.%20Gamma-Poisson.qmd), [Beta binomial model](../6.%20Beta%20binomial%20model.qmd).
+- Excess of zeros (`ppc_stat(stat="n_zero")`): [Zero inflated](../13.%20Zero%20inflated.qmd).
+- Categorical outcomes (`ppc_bars`): [Categorical model](../10.%20Categorical%20model.qmd).
+- Survival times with censoring (`ppc_km_overlay`): [Survival analysis](../14.%20Survival%20analysis.qmd).
+- Calibration of the predictive distributions (`ppc_loo_pit`): [Phylogenetic analysis](../18.%20Phylogenetic%20analysis.qmd), [Feature extraction - R2D2](../37.%20Feature%20extraction%20-%20R2D2.qmd).
+- Measurement error and shrinkage (`ppc_error_scatter`): [Measuring error](../20.%20Measuring%20error.qmd).
+
 ### Density overlay
 Overlays the density of the observed data (black) with the densities of n predicted datasets (blue). The black curve should look like one more blue curve; a different shape (two modes, skewness, mass below 0 for a positive outcome) points to a missing group or a wrong likelihood.
 
@@ -416,7 +428,7 @@ m$diag$ppc_stat(stat = "sd")
 See [`m.diag.ppc_stat`](../reference/diag.qmd#ppc_stat) for further information regarding the list of arguments.
 
 ### Predictive intervals
-One vertical bar per observation: the thin line is the 90% predictive interval (`prob_outer`), the thick line the 50% interval (`prob`), the white point the median prediction and the black point the observed value. About 50% of the black points should fall on the thick bars and 90% on the thin ones. Many points outside mean the model is over-confident; all points close to the median mean it is too cautious. Pass `x=` (a predictor) to see *where* the model misses.
+One vertical bar per observation: the thin line is the 90% predictive interval (`prob_outer`), the thick line the 50% interval (`prob`), the white point the median prediction and the black point the observed value. About 50% of the black points should fall on the thick bars and 90% on the thin ones. Many points outside mean the model is over-confident; all points close to the median mean it is too cautious. Pass `x=` (a predictor) to see *where* the model misses; a discrete `x` (a few distinct levels, e.g. a normalized 1/2/3 design) gets one tick per level instead of plotly's default ticks, which would fall between the bars. Pass `group=` to get one panel per level of a second variable.
 
 ::: {.panel-tabset group="language"}
 ## Python
@@ -459,8 +471,8 @@ m$diag$ppc_ribbon(x = m$df$weight)
 
 See [`m.diag.ppc_ribbon`](../reference/diag.qmd#ppc_ribbon) for further information regarding the list of arguments.
 
-### Observed versus mean prediction
-Observed value (y axis) against the mean prediction of each observation (x axis); the dashed diagonal is a perfect prediction. A cloud of constant width around the diagonal is good. A funnel (spread growing with the prediction) indicates heteroscedasticity, a curve an unmodelled non-linearity, and a slope below 1 shrinkage (expected in hierarchical models, suspicious when strong).
+### Average predictive error
+Average predictive error e_i = observed_i − mean prediction_i of each observation (x axis) against the observed value (y axis); the dashed vertical line at 0 is where a perfectly calibrated observation sits. Read it like a residual plot: no pattern in the cloud is good. A slope means the errors depend on the observed value (the model under-predicts at one end and over-predicts at the other), a funnel (spread growing with the observed value) indicates heteroscedasticity, and a shift off 0 a systematic bias.
 
 ::: {.panel-tabset group="language"}
 ## Python
@@ -480,6 +492,12 @@ m$diag$ppc_error_scatter()
 :::
 
 See [`m.diag.ppc_error_scatter`](../reference/diag.qmd#ppc_error_scatter) for further information regarding the list of arguments.
+
+### Binned residuals
+For binary (or proportion) outcomes: observations are grouped into bins by their expected value (posterior probability), and each panel — one per posterior draw — plots the average error per bin against that expected value, with a ±2 SE band around the dashed line at 0. Read it: most points inside the band and no trend across bins is good; points systematically above or below the band, or a slope, mean the predicted probabilities are mis-calibrated. The model on this page has a continuous outcome, so no example is shown here.
+
+### Kaplan–Meier overlay (`ppc_km_overlay`)
+For time-to-event outcomes: `status_y` marks each observation as an event (1) or censored (0), and the plot overlays the Kaplan–Meier survival curve of the observed data (thick line) on the Kaplan–Meier curves of the posterior predictive replications (thin lines), which — as in bayesplot — carry no censoring. Read it: the observed curve should lie inside the band of predicted curves; a curve systematically above or below the band means the model mis-predicts survival times. The model on this page has a continuous outcome, so no example is shown here; see [Survival analysis](../14.%20Survival%20analysis.qmd).
 
 ### Residuals
 Histogram of the residuals r_i = observed_i − mean prediction_i. It should be centred on 0 and roughly symmetric; a shift is a systematic bias, skewness a wrong likelihood family, two modes a missing group, and long tails a few badly predicted observations (see [LOO influence](#loo-influence)).

@@ -58,7 +58,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -165,10 +165,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-
-<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
-<script src="https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
   <script>document.addEventListener("DOMContentLoaded", function () {
@@ -621,6 +617,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#bayesian-formulation" id="toc-bayesian-formulation" class="nav-link" data-scroll-target="#bayesian-formulation">Bayesian Formulation</a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -691,7 +688,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="d102875d" class="cell" data-execution_count="1">
+<div id="0bbb7ee3" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -747,120 +744,267 @@ Note
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>xx0, xx1 <span class="op">=</span> jnp.meshgrid(x0, x1)</span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>X_grid <span class="op">=</span> jnp.c_[xx0.ravel(), xx1.ravel()]</span>
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Swap data on model temporarily to predict on the grid</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(X<span class="op">=</span>X_grid, Y<span class="op">=</span>jnp.zeros(X_grid.shape[<span class="dv">0</span>], dtype<span class="op">=</span>jnp.int32))</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> m.sample(data <span class="op">=</span> m.data_on_model)[<span class="st">'Y'</span>]</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>p_mean <span class="op">=</span> jnp.mean(pred, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting the posterior predictive mean (categorical blending)</span></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>contour <span class="op">=</span> ax.contourf(xx0, xx1, p_mean.reshape(n_grid, n_grid), cmap<span class="op">=</span><span class="st">"viridis"</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>scatter <span class="op">=</span> ax.scatter(X[:, <span class="dv">0</span>], X[:, <span class="dv">1</span>], c<span class="op">=</span>Y, cmap<span class="op">=</span><span class="st">"viridis"</span>, edgecolors<span class="op">=</span><span class="st">'k'</span>)</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(title<span class="op">=</span><span class="st">"Posterior Predictive Mean"</span>, xlabel<span class="op">=</span><span class="st">"Feature 1"</span>, ylabel<span class="op">=</span><span class="st">"Feature 2"</span>)</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>fig.colorbar(contour, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict on the grid (the model data stay unchanged)</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> m.sample(data<span class="op">=</span><span class="bu">dict</span>(X<span class="op">=</span>X_grid, Y<span class="op">=</span>jnp.zeros(X_grid.shape[<span class="dv">0</span>], dtype<span class="op">=</span>jnp.int32)))[<span class="st">'Y'</span>]</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>p_mean <span class="op">=</span> jnp.mean(pred, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting the posterior predictive mean (categorical blending)</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>contour <span class="op">=</span> ax.contourf(xx0, xx1, p_mean.reshape(n_grid, n_grid), cmap<span class="op">=</span><span class="st">"viridis"</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>scatter <span class="op">=</span> ax.scatter(X[:, <span class="dv">0</span>], X[:, <span class="dv">1</span>], c<span class="op">=</span>Y, cmap<span class="op">=</span><span class="st">"viridis"</span>, edgecolors<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(title<span class="op">=</span><span class="st">"Posterior Predictive Mean"</span>, xlabel<span class="op">=</span><span class="st">"Feature 1"</span>, ylabel<span class="op">=</span><span class="st">"Feature 2"</span>)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>fig.colorbar(contour, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+
+An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
 </div>
-<div class="cell-output cell-output-display">
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"28dbcee566ac403d815e12d24196c3e2","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
-</script>
-</div>
-<div class="cell-output cell-output-display">
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"0cc77b076df746759690fab22e775f20","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
-</script>
-</div>
-<div class="cell-output cell-output-display">
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"519945c675e54162b72017cbe85acc35","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
-</script>
-</div>
-<div class="cell-output cell-output-display">
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"198c02c46786496c98c9c34efc63c477","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
-</script>
+<div class="cell-output cell-output-stderr">
+<pre><code>  0%|          | 0/2000 [00:00&lt;?, ?it/s]Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
+  0%|          | 0/2000 [00:00&lt;?, ?it/s]
+Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
+
+  0%|          | 0/2000 [00:00&lt;?, ?it/s]
+
+Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
+
+
+  0%|          | 0/2000 [00:00&lt;?, ?it/s]
+
+
+Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/BF/BayesForge/Main/main.py:1186: UserWarning:
+<pre><code>Running chain 0:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
+Running chain 1:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
 
-Sample's batch dimension size 4000 is different from the provided 1 num_samples argument. Defaulting to 4000.
-</code></pre>
+Running chain 2:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
+
+
+Running chain 3:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
+Running chain 1:   5%|▌         | 100/2000 [00:01&lt;00:04, 443.28it/s]
+
+
+Running chain 3:   5%|▌         | 100/2000 [00:01&lt;00:04, 390.59it/s]Running chain 0:   5%|▌         | 100/2000 [00:01&lt;00:04, 380.04it/s]
+
+Running chain 2:   5%|▌         | 100/2000 [00:01&lt;00:05, 359.07it/s]
+
+Running chain 2:  10%|█         | 200/2000 [00:01&lt;00:05, 351.83it/s]
+
+
+Running chain 3:  10%|█         | 200/2000 [00:02&lt;00:06, 275.19it/s]
+Running chain 1:  10%|█         | 200/2000 [00:02&lt;00:06, 261.66it/s]Running chain 0:  10%|█         | 200/2000 [00:02&lt;00:06, 260.42it/s]
+
+Running chain 2:  15%|█▌        | 300/2000 [00:02&lt;00:05, 313.91it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+
+
+Running chain 3:  15%|█▌        | 300/2000 [00:02&lt;00:05, 306.67it/s]Running chain 0:  15%|█▌        | 300/2000 [00:02&lt;00:07, 241.81it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Running chain 1:  15%|█▌        | 300/2000 [00:02&lt;00:08, 196.42it/s]
+
+Running chain 2:  20%|██        | 400/2000 [00:02&lt;00:06, 261.31it/s]
+
+
+Running chain 3:  20%|██        | 400/2000 [00:02&lt;00:06, 246.24it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Running chain 0:  20%|██        | 400/2000 [00:03&lt;00:08, 187.98it/s]
+Running chain 1:  20%|██        | 400/2000 [00:03&lt;00:08, 187.13it/s]
+
+Running chain 2:  25%|██▌       | 500/2000 [00:03&lt;00:07, 206.38it/s]
+
+
+Running chain 3:  25%|██▌       | 500/2000 [00:03&lt;00:07, 198.66it/s]Running chain 0:  25%|██▌       | 500/2000 [00:03&lt;00:07, 195.98it/s]
+Running chain 1:  25%|██▌       | 500/2000 [00:03&lt;00:07, 194.86it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+
+Running chain 2:  30%|███       | 600/2000 [00:03&lt;00:06, 217.52it/s]
+
+
+Running chain 3:  30%|███       | 600/2000 [00:03&lt;00:06, 200.86it/s]Running chain 0:  30%|███       | 600/2000 [00:04&lt;00:06, 218.92it/s]
+
+Running chain 2:  35%|███▌      | 700/2000 [00:04&lt;00:05, 245.34it/s]
+Running chain 1:  30%|███       | 600/2000 [00:04&lt;00:06, 215.99it/s]
+
+
+Running chain 3:  35%|███▌      | 700/2000 [00:04&lt;00:05, 230.95it/s]Running chain 0:  35%|███▌      | 700/2000 [00:04&lt;00:05, 240.47it/s]
+Running chain 1:  35%|███▌      | 700/2000 [00:04&lt;00:05, 252.03it/s]
+
+Running chain 2:  40%|████      | 800/2000 [00:04&lt;00:04, 274.99it/s]
+
+
+Running chain 3:  40%|████      | 800/2000 [00:04&lt;00:04, 274.36it/s]Running chain 0:  40%|████      | 800/2000 [00:04&lt;00:04, 259.87it/s]
+Running chain 1:  40%|████      | 800/2000 [00:04&lt;00:04, 268.69it/s]
+
+Running chain 2:  45%|████▌     | 900/2000 [00:04&lt;00:04, 273.15it/s]
+
+
+Running chain 3:  45%|████▌     | 900/2000 [00:04&lt;00:03, 280.88it/s]Running chain 0:  45%|████▌     | 900/2000 [00:05&lt;00:04, 245.23it/s]
+Running chain 1:  45%|████▌     | 900/2000 [00:05&lt;00:04, 243.45it/s]
+
+Running chain 2:  50%|█████     | 1000/2000 [00:05&lt;00:04, 215.15it/s]
+
+
+Running chain 3:  50%|█████     | 1000/2000 [00:05&lt;00:04, 228.09it/s]Running chain 0:  50%|█████     | 1000/2000 [00:05&lt;00:04, 234.88it/s]
+Running chain 1:  50%|█████     | 1000/2000 [00:05&lt;00:04, 234.45it/s]
+
+Running chain 2:  55%|█████▌    | 1100/2000 [00:05&lt;00:03, 230.65it/s]
+
+
+Running chain 3:  55%|█████▌    | 1100/2000 [00:05&lt;00:03, 242.24it/s]Running chain 0:  55%|█████▌    | 1100/2000 [00:05&lt;00:03, 256.93it/s]
+Running chain 1:  55%|█████▌    | 1100/2000 [00:05&lt;00:03, 263.96it/s]
+
+Running chain 2:  60%|██████    | 1200/2000 [00:06&lt;00:03, 249.55it/s]
+
+
+Running chain 3:  60%|██████    | 1200/2000 [00:06&lt;00:03, 263.06it/s]
+Running chain 1:  60%|██████    | 1200/2000 [00:06&lt;00:02, 283.98it/s]Running chain 0:  60%|██████    | 1200/2000 [00:06&lt;00:03, 255.44it/s]
+
+
+Running chain 3:  65%|██████▌   | 1300/2000 [00:06&lt;00:02, 245.70it/s]
+Running chain 1:  65%|██████▌   | 1300/2000 [00:06&lt;00:02, 259.37it/s]
+
+Running chain 2:  65%|██████▌   | 1300/2000 [00:06&lt;00:03, 216.20it/s]Running chain 0:  65%|██████▌   | 1300/2000 [00:06&lt;00:02, 242.34it/s]
+
+
+Running chain 3:  70%|███████   | 1400/2000 [00:07&lt;00:02, 227.19it/s]
+Running chain 1:  70%|███████   | 1400/2000 [00:07&lt;00:02, 235.54it/s]Running chain 0:  70%|███████   | 1400/2000 [00:07&lt;00:02, 205.98it/s]
+
+Running chain 2:  70%|███████   | 1400/2000 [00:07&lt;00:03, 182.07it/s]
+
+
+Running chain 3:  75%|███████▌  | 1500/2000 [00:07&lt;00:02, 196.95it/s]
+Running chain 1:  75%|███████▌  | 1500/2000 [00:07&lt;00:02, 205.20it/s]Running chain 0:  75%|███████▌  | 1500/2000 [00:08&lt;00:02, 183.34it/s]
+
+Running chain 2:  75%|███████▌  | 1500/2000 [00:08&lt;00:02, 173.24it/s]
+
+
+Running chain 3:  80%|████████  | 1600/2000 [00:08&lt;00:02, 197.91it/s]
+Running chain 1:  80%|████████  | 1600/2000 [00:08&lt;00:01, 206.14it/s]
+
+Running chain 2:  80%|████████  | 1600/2000 [00:08&lt;00:02, 180.06it/s]Running chain 0:  80%|████████  | 1600/2000 [00:08&lt;00:02, 187.11it/s]
+Running chain 1:  85%|████████▌ | 1700/2000 [00:08&lt;00:01, 219.02it/s]
+
+
+Running chain 3:  85%|████████▌ | 1700/2000 [00:08&lt;00:01, 207.26it/s]
+
+Running chain 2:  85%|████████▌ | 1700/2000 [00:09&lt;00:01, 198.58it/s]Running chain 0:  85%|████████▌ | 1700/2000 [00:09&lt;00:01, 199.97it/s]
+
+
+Running chain 3:  90%|█████████ | 1800/2000 [00:09&lt;00:00, 219.93it/s]
+Running chain 1:  90%|█████████ | 1800/2000 [00:09&lt;00:00, 225.36it/s]
+
+Running chain 2:  90%|█████████ | 1800/2000 [00:09&lt;00:00, 218.24it/s]
+Running chain 1:  95%|█████████▌| 1900/2000 [00:09&lt;00:00, 246.40it/s]Running chain 0:  90%|█████████ | 1800/2000 [00:09&lt;00:00, 213.43it/s]
+
+
+Running chain 3:  95%|█████████▌| 1900/2000 [00:09&lt;00:00, 232.01it/s]
+Running chain 1: 100%|██████████| 2000/2000 [00:09&lt;00:00, 265.35it/s]
+
+Running chain 2:  95%|█████████▌| 1900/2000 [00:09&lt;00:00, 230.45it/s]Running chain 1: 100%|██████████| 2000/2000 [00:09&lt;00:00, 205.17it/s]
+Running chain 0:  95%|█████████▌| 1900/2000 [00:09&lt;00:00, 230.54it/s]
+
+
+Running chain 3: 100%|██████████| 2000/2000 [00:09&lt;00:00, 251.42it/s]Running chain 3: 100%|██████████| 2000/2000 [00:09&lt;00:00, 204.14it/s]
+
+
+Running chain 2: 100%|██████████| 2000/2000 [00:10&lt;00:00, 247.52it/s]Running chain 2: 100%|██████████| 2000/2000 [00:10&lt;00:00, 198.46it/s]
+Running chain 0: 100%|██████████| 2000/2000 [00:10&lt;00:00, 252.54it/s]Running chain 0: 100%|██████████| 2000/2000 [00:10&lt;00:00, 197.76it/s]</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="35. BNN for multiclass classification_files/figure-html/cell-2-output-8.png" width="778" height="587" class="figure-img"></p>
+<p><img src="35. BNN for multiclass classification_files/figure-html/cell-2-output-14.png" width="778" height="587" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>np <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"numpy"</span>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>jax_random <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"jax.random"</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>jnp <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"jax.numpy"</span>)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> jax_random.<span class="fu">PRNGKey</span>(<span class="fl">42</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> jax_random.<span class="fu">normal</span>(key, (<span class="fl">300</span>, <span class="fl">2</span>))</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple rule to partition into K=3 classes</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> jnp.<span class="fu">where</span>(X[<span class="op">:</span>, <span class="fl">0</span>] <span class="op">&gt;</span> <span class="fl">0</span>, jnp.<span class="fu">where</span>(X[<span class="op">:</span>, <span class="fl">1</span>] <span class="op">&gt;</span> <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>), <span class="fl">2</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"X"</span>] <span class="op">=</span> X</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"Y"</span>] <span class="op">=</span> Y</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(X, Y)</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    N, D_X <span class="op">=</span> <span class="fu">size</span>(X)</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    D_H1 <span class="op">=</span> <span class="fl">5</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> <span class="fl">3</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># First hidden layer</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    w1 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        X, </span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"w1_weight"</span>, shape<span class="op">=</span>(D_X, D_H1)),</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        activation<span class="op">=</span><span class="st">"tanh"</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Final output layer </span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    w2 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>        w1,</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"w2_weight"</span>, shape<span class="op">=</span>(D_H1, K))</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Softmax conversion to probability simplex</span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> jax.nn.<span class="fu">softmax</span>(w2, axis<span class="op">=-</span><span class="fl">1</span>)</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Categorical Likelihood</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>p, obs<span class="op">=</span>Y)</span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, num_samples<span class="op">=</span><span class="fl">500</span>, progress_bar<span class="op">=</span><span class="cn">false</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>np <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"numpy"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>jax_random <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"jax.random"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>jnp <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> jax_random.<span class="fu">PRNGKey</span>(<span class="fl">42</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> jax_random.<span class="fu">normal</span>(key, (<span class="fl">300</span>, <span class="fl">2</span>))</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple rule to partition into K=3 classes</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> jnp.<span class="fu">where</span>(X[<span class="op">:</span>, <span class="fl">0</span>] <span class="op">&gt;</span> <span class="fl">0</span>, jnp.<span class="fu">where</span>(X[<span class="op">:</span>, <span class="fl">1</span>] <span class="op">&gt;</span> <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>), <span class="fl">2</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"X"</span>] <span class="op">=</span> X</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"Y"</span>] <span class="op">=</span> Y</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(X, Y)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    N, D_X <span class="op">=</span> <span class="fu">size</span>(X)</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    D_H1 <span class="op">=</span> <span class="fl">5</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> <span class="fl">3</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># First hidden layer</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    w1 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>        X, </span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"w1_weight"</span>, shape<span class="op">=</span>(D_X, D_H1)),</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>        activation<span class="op">=</span><span class="st">"tanh"</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Final output layer </span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>    w2 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>        w1,</span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"w2_weight"</span>, shape<span class="op">=</span>(D_H1, K))</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Softmax conversion to probability simplex</span></span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> jax.nn.<span class="fu">softmax</span>(w2, axis<span class="op">=-</span><span class="fl">1</span>)</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Categorical Likelihood</span></span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>p, obs<span class="op">=</span>Y)</span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, num_samples<span class="op">=</span><span class="fl">500</span>, progress_bar<span class="op">=</span><span class="cn">false</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -893,6 +1037,13 @@ H_i &amp; = \tanh(X_i \Theta_1) \\
 <li>All elements within the weight matrices <span class="math inline">\Theta_1</span> and <span class="math inline">\Theta_2</span> are assigned independent standard Normal priors.</li>
 </ul>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN">BNN tests</a>: Bayesian neural network tests (regression, covariance estimation).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+</ul>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
@@ -1677,9 +1828,6 @@ An activation function is a nonlinear transformation applied to the pre-activati
       }, 50);
     });
   })();
-</script>
-<script type="application/vnd.jupyter.widget-state+json">
-{"state":{"05d4c76044cd44abbf107fffe6b549d9":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"0cc77b076df746759690fab22e775f20":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_e7b46560300647e6b60c1cf4344a2110","IPY_MODEL_4b0781f5b6e04f3790af0e0a0249eb23","IPY_MODEL_40122dcf59774f448b86b835a3408435"],"layout":"IPY_MODEL_6ebdd55428bb42088e753a047dd8e787","tabbable":null,"tooltip":null}},"0e6bda46503f484a9335f51412298642":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"107af2b2948c4c87a026f8dda72248e6":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_b2e3ce5ec8fc4e3d9284d54cb688f71c","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_67dcdf6b613d452da50db11ad7af7253","tabbable":null,"tooltip":null,"value":2000}},"198c02c46786496c98c9c34efc63c477":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_254d5dea62e14e22a629e342131d0d59","IPY_MODEL_c60e3cd023b74cca8354bc7912a40ba3","IPY_MODEL_7bbf9939dbf04992997ca73143c41c79"],"layout":"IPY_MODEL_fa0cb6526d8c4fb388730d301e32e871","tabbable":null,"tooltip":null}},"1de5a5340f054f47a23879a1ed669fce":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"2427742e3a95457ca1d7243b2171c4df":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"254d5dea62e14e22a629e342131d0d59":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_663f201bd5544a49bf4a146f5c42ee20","placeholder":"​","style":"IPY_MODEL_dc682ccf28df480e9f5c85c09c62a1ee","tabbable":null,"tooltip":null,"value":"Running chain 3: 100%"}},"28dbcee566ac403d815e12d24196c3e2":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_b11a34b342e647c184a6da89c309bbe0","IPY_MODEL_107af2b2948c4c87a026f8dda72248e6","IPY_MODEL_63c94921574448ce9d6e6c47c8c03330"],"layout":"IPY_MODEL_9b930feec1fa43d88aa5007d8ad1cc11","tabbable":null,"tooltip":null}},"2ab38b6e78d346d7bcf7df502c057da5":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"2f8b5a5d80024674b8d38053fc363d83":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"30d02c60de004548b183a56a758c5b14":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"3359127d91d847e9a7bea132284169f8":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_6c9c2ad48875468d85ec7fdee6a845fd","placeholder":"​","style":"IPY_MODEL_a2964b26642b4e9281e4049ddab8c009","tabbable":null,"tooltip":null,"value":" 2000/2000 [00:09&lt;00:00, 313.73it/s]"}},"3aca6bd4ffe84b10b79318d6aa9c1435":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"40122dcf59774f448b86b835a3408435":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_2f8b5a5d80024674b8d38053fc363d83","placeholder":"​","style":"IPY_MODEL_d7ea67a316d2473083df27e8d371422a","tabbable":null,"tooltip":null,"value":" 2000/2000 [00:09&lt;00:00, 293.20it/s]"}},"4b0781f5b6e04f3790af0e0a0249eb23":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_2ab38b6e78d346d7bcf7df502c057da5","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_05d4c76044cd44abbf107fffe6b549d9","tabbable":null,"tooltip":null,"value":2000}},"4b340349ed8b475ba500681cca1e5722":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"519945c675e54162b72017cbe85acc35":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_727b2c17a07a4017b8be26ba5a4bd07f","IPY_MODEL_664e1d05a64d4dae9534af9c339bd68a","IPY_MODEL_3359127d91d847e9a7bea132284169f8"],"layout":"IPY_MODEL_d5f8db37db8f48068f372d407bacac74","tabbable":null,"tooltip":null}},"62f2aafd20b845858ba489739ce1296f":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"63c94921574448ce9d6e6c47c8c03330":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_a146fed084014f3c8a7d5f4512669e50","placeholder":"​","style":"IPY_MODEL_4b340349ed8b475ba500681cca1e5722","tabbable":null,"tooltip":null,"value":" 2000/2000 [00:09&lt;00:00, 274.21it/s]"}},"663f201bd5544a49bf4a146f5c42ee20":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"664e1d05a64d4dae9534af9c339bd68a":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_3aca6bd4ffe84b10b79318d6aa9c1435","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_c846622bb6ea4144bb02d04fb2406d63","tabbable":null,"tooltip":null,"value":2000}},"67dcdf6b613d452da50db11ad7af7253":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"6c9c2ad48875468d85ec7fdee6a845fd":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"6ebdd55428bb42088e753a047dd8e787":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"727b2c17a07a4017b8be26ba5a4bd07f":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_62f2aafd20b845858ba489739ce1296f","placeholder":"​","style":"IPY_MODEL_cd84880d551f49cfa4f162f458e198fd","tabbable":null,"tooltip":null,"value":"Running chain 2: 100%"}},"7bbf9939dbf04992997ca73143c41c79":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_7c39eb623420406483f9b45bec9d4f64","placeholder":"​","style":"IPY_MODEL_a2ba16477e3f4235a50c0f8deec27bdc","tabbable":null,"tooltip":null,"value":" 2000/2000 [00:09&lt;00:00, 261.82it/s]"}},"7c39eb623420406483f9b45bec9d4f64":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"9b930feec1fa43d88aa5007d8ad1cc11":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"a146fed084014f3c8a7d5f4512669e50":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"a2964b26642b4e9281e4049ddab8c009":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"a2ba16477e3f4235a50c0f8deec27bdc":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"b11a34b342e647c184a6da89c309bbe0":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_f598f90cfa9f40ae8ea52016e3decc84","placeholder":"​","style":"IPY_MODEL_30d02c60de004548b183a56a758c5b14","tabbable":null,"tooltip":null,"value":"Running chain 0: 100%"}},"b2e3ce5ec8fc4e3d9284d54cb688f71c":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"c60e3cd023b74cca8354bc7912a40ba3":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_2427742e3a95457ca1d7243b2171c4df","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_1de5a5340f054f47a23879a1ed669fce","tabbable":null,"tooltip":null,"value":2000}},"c846622bb6ea4144bb02d04fb2406d63":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"cd84880d551f49cfa4f162f458e198fd":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"d5f8db37db8f48068f372d407bacac74":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"d7ea67a316d2473083df27e8d371422a":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"dc682ccf28df480e9f5c85c09c62a1ee":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"e7b46560300647e6b60c1cf4344a2110":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_fecb840f27cb438582d449150411867a","placeholder":"​","style":"IPY_MODEL_0e6bda46503f484a9335f51412298642","tabbable":null,"tooltip":null,"value":"Running chain 1: 100%"}},"f598f90cfa9f40ae8ea52016e3decc84":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"fa0cb6526d8c4fb388730d301e32e871":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"fecb840f27cb438582d449150411867a":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}}},"version_major":2,"version_minor":0}
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {

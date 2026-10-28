@@ -154,5 +154,9 @@ where:
 * $\mu_k$ and $\sigma_k$ are the mean and standard deviation for the $k$-th Gaussian mixture component.
 * All gating network weights are assigned independent Normal priors.
 
+## Model validation tests
+
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python examples of this page are run by the documentation tests (`Python/test_model_pages.py`).
+
 ## Reference(s)
 1. Murphy, K. P. (2012). *Machine Learning: A Probabilistic Perspective*. MIT Press.

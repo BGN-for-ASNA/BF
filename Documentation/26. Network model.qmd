@@ -85,41 +85,49 @@ m.fit(model, progress_bar=False)
 ```r
 library(BayesForge)
 # Setup platform------------------------------------------------
-m=importBF(platform='cpu')
+m <- importBF(platform = 'cpu')
+jnp <- reticulate::import("jax.numpy")
 
-# Import data ------------------------------------------------
-load(paste(system.file(package = "BayesForge"),'/data/STRAND sim sr only.Rdata', sep = ''))
+# Simulate data ------------------------------------------------
+N <- 50L
+individual_predictor <- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)
 
-m$data_on_model = list()
-m$data_on_model$N_id = length(ids)
-m$data_on_model$network = m$net$mat_to_edgl(model_dat$outcomes[,,1])
-m$data_on_model$N_dyads = m$net$mat_to_edgl(model_dat$outcomes[,,1])$shape[[1]]
-m$data_on_model$focal_individual_predictors = jnp$array(model_dat$individual_predictors)
-m$data_on_model$target_individual_predictors =jnp$array(model_dat$individual_predictors)
+kinship <- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)
+diag_idx <- jnp$diag_indices(N)
+kinship <- kinship$at[reticulate::tuple(diag_idx[[1]], diag_idx[[2]])]$set(0L)
 
-# Define model ------------------------------------------------
-model <- function( N_id, N_dyads, network, focal_individual_predictors, target_individual_predictors){
-
-  
-  ## Block ---------------------------------------
-  B = bf.dist.normal(0, 2.5, shape=c(1), name = 'block')
-  
-  #SR ---------------------------------------
-  sr =  m$net$sender_receiver(focal_individual_predictors,target_individual_predictors)
-  
-  ### Dyadic--------------------------------------  
-  #dr, dr_raw, dr_sigma, dr_L = m.net.dyadic_random_effects(idx.shape[0], cholesky_density = 2)# shape = n dyads
-  dr = m$net$dyadic_effect(shape = c(N_dyads))
-  
-  ## SR ---------------------------------------                                                      
-  m$dist$poisson(jnp$exp(B + sr + dr), obs=network)  
+sim_network <- function(kinship, individual_predictor) {
+  # Intercept
+  alpha <- m$dist$normal(0, 1, sample = TRUE)
+  # SR
+  sr <- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)
+  # D
+  DR <- m$net$dyadic_effect(kinship, d_sd = 2.5, sample = TRUE)
+  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)
 }
 
-# Run MCMC ------------------------------------------------
-m$fit(model) # Optimize model parameters through MCMC sampling
+network <- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)
 
-# Summary ------------------------------------------------
-summary =m$summary()
+# Predictive model ------------------------------------------------
+m$data_on_model <- list(
+  network = network,
+  dyadic_predictors = m$net$mat_to_edgl(kinship),
+  focal_individual_predictors = individual_predictor,
+  target_individual_predictors = individual_predictor
+)
+
+model <- function(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors) {
+  # Block ---------------------------------------
+  alpha <- m$dist$normal(0, 1)
+  # SR shape = N individuals ---------------------------------------
+  sr <- m$net$sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu = 0.4, r_mu = -0.4)
+  # Dyadic shape = N dyads --------------------------------------
+  dr <- m$net$dyadic_effect(dyadic_predictors, d_sd = 2.5)
+  m$dist$bernoulli(logits = alpha + sr + dr, obs = network, name = "y")
+}
+
+m$fit(model, progress_bar = FALSE)
+m$summary()
 
 ```
 
@@ -308,6 +316,11 @@ $$
 $$
 
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/6.Network/SRM): Social Relations Model fitted with BayesForge and Stan: fitting time and posterior distributions compared.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Note(s)
 ::: callout-note

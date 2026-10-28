@@ -76,9 +76,10 @@ library(BayesForge)
 
 # Setup platform------------------------------------------------
 m=importBF(platform='cpu')
+jnp <- reticulate::import("jax.numpy")
 
 # import data ------------------------------------------------
-m$data(m$load$kline(only_path = T), sep=';')
+m$data(m$load$kline(only_path = TRUE), sep=';')
 m$scale(list('population'))# Scale
 m$df["cid"] =  as.integer(ifelse(m$df$contact == "high", 1, 0)) # Manipulate
 m$data_to_model(list('total_tools', 'population', 'cid' )) # Send to model (convert to jax array)
@@ -86,11 +87,11 @@ m$data_to_model(list('total_tools', 'population', 'cid' )) # Send to model (conv
 # Define model ------------------------------------------------
 model <- function(total_tools, population, cid){
   # Parameter prior distributions
-  alpha = bf.dist.normal(3, 0.5, name='alpha', shape = c(2))
-  beta = bf.dist.normal(0, 0.2, name='beta', shape = c(2))
+  alpha = m$dist$normal(3, 0.5, name='alpha', shape = reticulate::tuple(2L))
+  beta = m$dist$normal(0, 0.2, name='beta', shape = reticulate::tuple(2L))
   l = jnp$exp(alpha[cid] + beta[cid]*population)
   # Likelihood
-  m.dist.poisson(l, obs=total_tools)
+  m$dist$poisson(l, obs = total_tools, name = "total_tools")
 }
 
 # Run MCMC ------------------------------------------------
@@ -131,6 +132,52 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+### Posterior predictive checks
+
+Does the model predict the number of tools of each island, given its population?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals(x="population")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "population")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="population")
+```
+:::
+
+Points are the observed tool counts, bars the 50 % and 90 % predictive intervals, along population. With only ten islands, look for islands far outside their 90 % interval: they are the ones the model explains badly. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_rootogram()
+```
+
+#### R
+```r
+m$diag$ppc_rootogram()
+```
+
+#### Julia
+```julia
+m.diag.ppc_rootogram()
+```
+:::
+
+`ppc_rootogram`: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten observations the bars are sparse).
+:::
+
 ## Mathematical Details
 
 In the Bayesian formulation, we define each parameter with [<span style="color:#0D6EFD">priors 🛈</span>]{#prior}. We can express the Bayesian regression model accounting for prior distributions as follows:
@@ -160,6 +207,11 @@ Where:
 - $\alpha$ and $\beta$ are the intercept and regression coefficient, respectively, with their associated prior distributions. 
 
 - $X_i$ is the value of the independent variable for observation *i*.
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `6.Poisson.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note

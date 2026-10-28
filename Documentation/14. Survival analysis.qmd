@@ -158,6 +158,61 @@ from $\beta$ (equivalently the hazard ratio $e^{\beta}$) in
 
 :::
 
+### Posterior predictive checks
+
+Do survival times simulated from the fitted hazard reproduce the observed survival curve?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+s = m.models.survival
+times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+
+#### R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+# Fit the survival model of this page (see the Python example above)
+data_path <- m$load$mastectomy(only_path = TRUE)
+m$data(data_path, sep = ",")
+np <- reticulate::import("numpy")
+met <- np$astype(np$equal(m$df$metastasized, "yes"), np$int64)
+m$df$metastasized <- met
+s <- m$models$survival
+s$import_time_even(np$asarray(m$df$time), np$asarray(m$df$event), interval_length = 3L)
+s$import_covF(met, list("metastasized"))
+s$baseline_rate_prior <- c(0.01, 0.01)
+s$hazard_rate_prior_scale <- 10.0
+m$fit(s$model)
+times_rep = s$sample_times(lambda0 = "Baseline_rate", beta = "Hazard_rate_metastasized", n_draws = 100L)
+m$diag$ppc_km_overlay(y = s$time, yrep = times_rep, status_y = s$event, name = "time")
+```
+
+#### Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+# Fit the survival model of this page (see the Python example above)
+data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+m.data(data_path, sep=",")
+np = pyimport("numpy")
+m.df.metastasized = np.astype(np.equal(m.df.metastasized.values, "yes"), np.int64)
+s = m.models.survival
+s.import_time_even(m.df.time.values, m.df.event.values, interval_length=3)
+s.import_covF(m.df.metastasized.values, ["metastasized"])
+s.baseline_rate_prior = (0.01, 0.01)
+s.hazard_rate_prior_scale = 10.0
+m.fit(s.model)
+times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+:::
+
+The black step curve is the Kaplan–Meier estimate of the observed data (censored patients included); each blue curve is the Kaplan–Meier curve of one set of survival times simulated from the posterior hazard (no censoring). The black curve should stay inside the blue band. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
 ## Mathematical Details
 
 ### *Bayesian formulation*
@@ -217,6 +272,12 @@ S_i(t_K) = \exp\!\left(-\Lambda_i(t_K)\right)
 $$
 
 Where $\Delta_k$ is the width of interval $k$.
+
+## Model validation tests
+
+- [Comparison with PyMC](https://github.com/BGN-for-ASNA/BF/tree/main/Test/7.Survival%20analysis): `Survival_analysis_verify.py` fits the mastectomy survival model with BayesForge and PyMC and checks that the baseline rates and the hazard ratio agree.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+
 ## Reference(s)
 https://en.wikipedia.org/wiki/Proportional_hazards_model
 https://www.mathworks.com/help/stats/cox-proportional-hazard-regression.html

@@ -121,6 +121,52 @@ m.summary() # Get posterior distributions
 For R users, when working with indices you have to ensure 1) that indices are intergers (i.e. ```as.integer(index_clade)```) and, 2) that indices start at 0 (i.e. ```as.integer(index_clade)-1```).
 :::
 
+### Posterior predictive checks
+
+Does the model reproduce the mean energy content of milk in every clade?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="mean", group="index_clade")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "mean", group = "index_clade")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="mean", group="index_clade")
+```
+:::
+
+One panel per clade: the vertical line is the observed mean, the curve the means of the simulated datasets (hover the line for its value). A two-sided p-value (in the panel title) close to 0 flags a clade whose mean the model misses. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_density()
+```
+
+#### R
+```r
+m$diag$ppc_density()
+```
+
+#### Julia
+```julia
+m.diag.ppc_density()
+```
+:::
+
+`ppc_density`: density overlay of all observations (as on the linear regression page).
+:::
+
 ## Mathematical Details
 ### *Frequentist formulation*
 We model the relationship between the categorical input feature (X) and the target variable (Y) using the following equation:
@@ -173,6 +219,11 @@ Where:
 - $X_i$ is the encoded categorical input variable for observation *i*. 
   
 - $\sigma$ is a standard deviation parameter, which here has a Exponential prior that constrains it to be positive.
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `2.Categorical variable.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note

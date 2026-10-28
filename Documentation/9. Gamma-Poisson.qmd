@@ -59,22 +59,22 @@ library(BayesForge)
 m=importBF(platform='cpu')
 
 # Import data ------------------------------------------------
-m$data(m$load$sim_gamma_poisson(only_path=T), sep = '')
+m$data(m$load$sim_gamma_poisson(only_path=T), sep = ',')
 m$data_to_model(list('log_days', 'monastery', 'y' )) # Send to model (convert to jax array)
 
 # Define model ------------------------------------------------
 model <- function(log_days, monastery, y){
   # Parameter prior distributions
-  alpha = bf.dist.normal(0, 1, name='alpha', shape=c(1))
-  beta = bf.dist.normal(0, 1, name='beta', shape=c(1))
-  phi = bf.dist.exponential(1, name='phi', shape=c(1))
-  mu = jnp$exp(log_days + alpha + beta * monastery)
-  Lambda =  bf.dist.gamma(rate = mu*phi, concentration = phi, name = 'Lambda')
+  a = m$dist$normal(0, 1, name='a', shape=reticulate::tuple(1L))
+  b = m$dist$normal(0, 1, name='b', shape=reticulate::tuple(1L))
+  phi = m$dist$exponential(1, name='phi', shape=reticulate::tuple(1L))
+  mu = jnp$exp(log_days + a + b * monastery)
+  Lambda =  m$dist$gamma(rate = mu*phi, concentration = phi, name = 'Lambda')
   # Likelihood
-  bf.dist.poisson(rate=Lambda, obs=y)
+  m$dist$poisson(rate=Lambda, obs=y, name = "y")
 }
 # Run MCMC ------------------------------------------------
-m$fit(model) # Optimize model parameters through MCMC sampling
+m$fit(model, progress_bar=FALSE) # Optimize model parameters through MCMC sampling
 
 # Summary ------------------------------------------------
 m$summary() # Get posterior distributions
@@ -109,6 +109,64 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 # Summary ------------------------------------------------
 m.summary() # Get posterior distributions
 ```
+:::
+
+### Posterior predictive checks
+
+Does the model reproduce the spread of the counts, which a plain Poisson model underestimates?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_rootogram()
+```
+
+#### R
+```r
+m$diag$ppc_rootogram()
+```
+
+#### Julia
+```julia
+m.diag.ppc_rootogram()
+```
+:::
+
+Bars are the square roots of the observed frequencies of each count, the line the frequencies expected under the model. A Poisson model that is too narrow leaves bars sticking out at small and large counts; here the bars should follow the line. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd")
+```
+
+```{python}
+m.diag.ppc_stat(stat="n_zero")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd")
+```
+
+```r
+m$diag$ppc_stat(stat = "n_zero")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd")
+```
+
+```julia
+m.diag.ppc_stat(stat="n_zero")
+```
+:::
+
+The observed standard deviation and the observed number of zeros (vertical lines) should fall inside their simulated distributions.
 :::
 
 ## Mathematical Details
@@ -155,6 +213,11 @@ Where:
   
 - $X_i$ is the value of the predictor variable for observation *i*.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `7.Negative binomial.py` fits the same model (negative binomial with an exposure offset) with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 

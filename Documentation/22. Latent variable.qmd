@@ -58,8 +58,10 @@ a = 0.5
 # offsets: Generate random normal offsets for each of the NV observations
 means = m.dist.normal(0, 1, shape=(NY,), sample=True, seed=10)
 offsets = m.dist.normal(0, 1, shape=(NV, 1), sample=True, seed=20)
+# observation noise (sd 0.5)
+noise = m.dist.normal(0, 0.5, shape=(NV, NY), sample=True, seed=30)
 
-Y2 = offsets + means
+Y2 = offsets + means + noise
 
 # Simulate individual-level random effects (e.g., random slopes or intercepts)
 # b_individual: A matrix of size (N, K) where N is the number of individuals and K is the number of covariates
@@ -97,10 +99,69 @@ m.fit(model, progress_bar=False)
 m.summary()
 ```
 ## R
-``` R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+
+# Setup device ------------------------------------------------
+m <- importBF(platform = "cpu")
+
+# Data Simulation ------------------------------------------------
+NY <- 4L  # Number of dependent variables or outcomes (e.g., dimensions for latent variables)
+NV <- 8L  # Number of observations or individual-level data points (e.g., subjects)
+N <- 100L
+K <- 5L
+a <- 0.5
+means <- m$dist$normal(0, 1, shape = reticulate::tuple(NY), sample = TRUE, seed = 10L)
+offsets <- m$dist$normal(0, 1, shape = reticulate::tuple(NV, 1L), sample = TRUE, seed = 20L)
+noise <- m$dist$normal(0, 0.5, shape = reticulate::tuple(NV, NY), sample = TRUE, seed = 30L)
+
+Y2 <- offsets + means + noise
+
+b_individual <- m$dist$normal(0, 1, shape = reticulate::tuple(N, K), sample = TRUE, seed = 0L)
+mu <- b_individual + a
+
+Y2 <- jnp$array(Y2)
+
+# Set data ------------------------------------------------
+m$data_on_model <- list(NY = NY, NV = NV, Y2 = Y2)
+
+# Define model ------------------------------------------------
+model <- function(NY, NV, Y2) {
+  means <- m$dist$normal(0, 1, shape = reticulate::tuple(NY), name = "means")
+  offset <- m$dist$normal(0, 1, shape = reticulate::tuple(NV, 1L), name = "offset")
+  sigma <- m$dist$exponential(1, shape = reticulate::tuple(NY), name = "sigma")
+  tmp <- jnp$reshape(jnp$tile(means, reticulate::tuple(NV, 1L)), reticulate::tuple(NV, NY))
+  mu_l <- tmp + offset
+  m$dist$normal(mu_l, jnp$tile(sigma, list(NV, 1L)), obs = Y2, name = "y")
+}
+
+# Run sampler ------------------------------------------------
+m$fit(model, progress_bar = FALSE)
+
+# Summary ------------------------------------------------
+m$summary()
 ```
 ![](travaux-routiers.png){fig-align="center"}
 :::
+
+### Posterior predictive checks
+
+Does the model reproduce the distribution of the observed values?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_density()
+```
+
+#### R
+```r
+m$diag$ppc_density()
+```
+:::
+
+The black curve is the density of all observed values, the blue curves the densities of simulated datasets; the black curve should look like one more blue curve. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
 
 ## Mathematical Details
 
@@ -135,3 +196,7 @@ The latent variable _Z_ introduces additional flexibility to the model, capturin
 - **Mixed Models**: In hierarchical or mixed models, latent variables can represent group-specific intercepts or slopes.
 
 -->
+
+## Model validation tests
+
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python and R examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`).

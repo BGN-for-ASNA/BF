@@ -260,7 +260,7 @@ window.Quarto = {
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./api_dist.html"> 
+    <a class="nav-link" href="./reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -639,6 +639,7 @@ window.Quarto = {
   <li><a href="#main-formula" id="toc-main-formula" class="nav-link" data-scroll-target="#main-formula"><em>Main Formula</em></a></li>
   <li><a href="#defining-formula-sub-equations-and-prior-distributions" id="toc-defining-formula-sub-equations-and-prior-distributions" class="nav-link" data-scroll-target="#defining-formula-sub-equations-and-prior-distributions"><em>Defining formula sub-equations and prior distributions</em></a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Note(s)</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="28.-Network-control-for-data-collection-biases.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
@@ -697,46 +698,209 @@ Caution
 <section id="example-1" class="level2">
 <h2 class="anchored" data-anchor-id="example-1">Example 1</h2>
 <p>Below is an example code snippet demonstrating a Bayesian network model with a sender-receiver effect, a dyadic effect, and a block model effect while accounting for exposure biases. This example is based on <span class="citation" data-cites="sosa2024robust">Sosa et al. (<a href="#ref-sosa2024robust" role="doc-biblioref">n.d.</a>)</span>.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> idx,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    Any <span class="op">=</span> Any<span class="op">-</span><span class="dv">1</span>, </span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    Merica <span class="op">=</span> Merica<span class="op">-</span><span class="dv">1</span>, </span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    Quantum <span class="op">=</span> Quantum<span class="op">-</span><span class="dv">1</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    result_outcomes <span class="op">=</span> m.net.mat_to_edgl(data[<span class="st">'outcomes'</span>]), </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    kinship <span class="op">=</span> m.net.mat_to_edgl(kinship),</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    focal_individual_predictors <span class="op">=</span> data[<span class="st">'individual_predictors'</span>],</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    target_individual_predictors <span class="op">=</span> data[<span class="st">'individual_predictors'</span>],</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    exposure_mat <span class="op">=</span> data[<span class="st">'exposure'</span>]</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>, rand_seed<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data ------------------------------------------------</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="dv">50</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>individual_predictor <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(N, <span class="dv">1</span>), sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>kinship <span class="op">=</span> m.dist.bernoulli(<span class="fl">0.3</span>, shape<span class="op">=</span>(N, N), sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>kinship <span class="op">=</span> kinship.at[jnp.diag_indices(N)].<span class="bu">set</span>(<span class="dv">0</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>category <span class="op">=</span> m.dist.categorical(jnp.array([<span class="fl">.25</span>, <span class="fl">.25</span>, <span class="fl">.25</span>, <span class="fl">.25</span>]), sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(N,))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>N_grp, N_by_grp <span class="op">=</span> jnp.unique(category, return_counts<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>N_grp <span class="op">=</span> N_grp.shape[<span class="dv">0</span>]</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(idx, result_outcomes, </span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    exposure_mat,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    kinship, </span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    focal_individual_predictors, target_individual_predictors, </span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    Any, Merica, Quantum):</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Block ---------------------------------------</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>      B_any <span class="op">=</span> m.net.block_model(Any,<span class="dv">1</span>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>      B_Merica <span class="op">=</span> m.net.block_model(Merica,<span class="dv">3</span>)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>      B_Quantum <span class="op">=</span> m.net.block_model(Quantum,<span class="dv">2</span>)</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>      <span class="co">## SR shape =  N individuals---------------------------------------</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>      sr <span class="op">=</span>  m.net.sender_receiver(focal_individual_predictors,target_individual_predictors)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Exposure: number of observation sessions of each dyad (unequal sampling effort)</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>exposure <span class="op">=</span> m.dist.poisson(<span class="dv">5</span>, shape<span class="op">=</span>m.net.mat_to_edgl(kinship).shape, sample<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sim_network(kinship, individual_predictor, category, exposure):</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    B_intercept <span class="op">=</span> m.net.block_model(jnp.full((N,), <span class="dv">0</span>), <span class="dv">1</span>, jnp.array([N]), sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    B_category <span class="op">=</span> m.net.block_model(category, N_grp, N_by_grp, sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    sr <span class="op">=</span> m.net.sender_receiver(individual_predictor, individual_predictor,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                               s_mu<span class="op">=</span><span class="fl">0.4</span>, r_mu<span class="op">=-</span><span class="fl">0.4</span>, sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    DR <span class="op">=</span> m.net.dyadic_effect(kinship, d_sd<span class="op">=</span><span class="fl">2.5</span>, sample<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Number of sessions (out of `exposure`) in which the interaction was seen</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> m.dist.binomial(total_count<span class="op">=</span>exposure, logits<span class="op">=</span>B_intercept <span class="op">+</span> B_category <span class="op">+</span> sr <span class="op">+</span> DR,</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>                           sample<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Dyadic shape = N dyads--------------------------------------  </span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>      dr <span class="op">=</span> m.net.dyadic_effect(dyadic_predictors)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>      m.dist.binomial(total_count <span class="op">=</span> m.net.mat_to_edgl(exposure_mat), logits <span class="op">=</span> jnp.exp(B_any <span class="op">+</span> B_Merica <span class="op">+</span> B_Quantum <span class="op">+</span> sender_receiver <span class="op">+</span> dr), obs <span class="op">=</span> result_outcomes, name<span class="op">=</span> <span class="st">'latent network'</span> )</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>m.fit(model) </span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> m.summary()</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>summary.loc[[<span class="st">'focal_effects[0]'</span>, <span class="st">'target_effects[0]'</span>, <span class="st">'dyad_effects[0]'</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>network <span class="op">=</span> sim_network(m.net.mat_to_edgl(kinship), individual_predictor, category, exposure)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictive model ------------------------------------------------</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    network<span class="op">=</span>network,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    exposure<span class="op">=</span>exposure,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    dyadic_predictors<span class="op">=</span>m.net.mat_to_edgl(kinship),</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    focal_individual_predictors<span class="op">=</span>individual_predictor,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    target_individual_predictors<span class="op">=</span>individual_predictor,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    category<span class="op">=</span>category</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(network, exposure, dyadic_predictors, focal_individual_predictors,</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>          target_individual_predictors, category):</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    N_id <span class="op">=</span> focal_individual_predictors.shape[<span class="dv">0</span>]</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Block ---------------------------------------</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    B_intercept <span class="op">=</span> m.net.block_model(jnp.full((N_id,), <span class="dv">0</span>), <span class="dv">1</span>, jnp.array([N_id]), name<span class="op">=</span><span class="st">"B_intercept"</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    B_category <span class="op">=</span> m.net.block_model(category, N_grp, N_by_grp, name<span class="op">=</span><span class="st">"B_category"</span>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="co">## SR shape = N individuals---------------------------------------</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    sr <span class="op">=</span> m.net.sender_receiver(focal_individual_predictors, target_individual_predictors,</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>                               s_mu<span class="op">=</span><span class="fl">0.4</span>, r_mu<span class="op">=-</span><span class="fl">0.4</span>)</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Dyadic shape = N dyads--------------------------------------</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    dr <span class="op">=</span> m.net.dyadic_effect(dyadic_predictors, d_sd<span class="op">=</span><span class="fl">2.5</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Exposure: each dyad was observed `exposure` times (binomial instead of Bernoulli)</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    m.dist.binomial(total_count<span class="op">=</span>exposure, logits<span class="op">=</span>B_intercept <span class="op">+</span> B_category <span class="op">+</span> sr <span class="op">+</span> dr, obs<span class="op">=</span>network)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">rand_seed =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data ------------------------------------------------</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">50</span>L</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>individual_predictor <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(N, <span class="dv">1</span>L), <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>kinship <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">bernoulli</span>(<span class="fl">0.3</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(N, N), <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>diag_idx <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">diag_indices</span>(N)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>kinship <span class="ot">&lt;-</span> kinship<span class="sc">$</span>at[reticulate<span class="sc">::</span><span class="fu">tuple</span>(diag_idx[[<span class="dv">1</span>]], diag_idx[[<span class="dv">2</span>]])]<span class="sc">$</span><span class="fu">set</span>(<span class="dv">0</span>L)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>category <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">categorical</span>(jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>)), <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(N))</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>u <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">unique</span>(category, <span class="at">return_counts =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>N_grp <span class="ot">&lt;-</span> u[[<span class="dv">1</span>]]<span class="sc">$</span>shape[[<span class="dv">1</span>]]</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>N_by_grp <span class="ot">&lt;-</span> u[[<span class="dv">2</span>]]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Exposure: number of observation sessions of each dyad (unequal sampling effort)</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>edges <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">mat_to_edgl</span>(kinship)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>exposure <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">poisson</span>(<span class="dv">5</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(edges<span class="sc">$</span>shape[[<span class="dv">1</span>]], edges<span class="sc">$</span>shape[[<span class="dv">2</span>]]), <span class="at">sample =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span>L</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>sim_network <span class="ot">&lt;-</span> <span class="cf">function</span>(kinship, individual_predictor, category, exposure) {</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  B_intercept <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">block_model</span>(jnp<span class="sc">$</span><span class="fu">full</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(N), <span class="dv">0</span>L), <span class="dv">1</span>L, jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(N)), <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  B_category <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">block_model</span>(category, N_grp, N_by_grp, <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  sr <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">sender_receiver</span>(individual_predictor, individual_predictor,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>                              <span class="at">s_mu =</span> <span class="fl">0.4</span>, <span class="at">r_mu =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  DR <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">dyadic_effect</span>(kinship, <span class="at">d_sd =</span> <span class="fl">2.5</span>, <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Number of sessions (out of `exposure`) in which the interaction was seen</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> exposure, <span class="at">logits =</span> B_intercept <span class="sc">+</span> B_category <span class="sc">+</span> sr <span class="sc">+</span> DR, <span class="at">sample =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>network <span class="ot">&lt;-</span> <span class="fu">sim_network</span>(m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">mat_to_edgl</span>(kinship), individual_predictor, category, exposure)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictive model ------------------------------------------------</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">network =</span> network,</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">exposure =</span> exposure,</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">dyadic_predictors =</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">mat_to_edgl</span>(kinship),</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">focal_individual_predictors =</span> individual_predictor,</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">target_individual_predictors =</span> individual_predictor,</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">category =</span> category</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(network, exposure, dyadic_predictors, focal_individual_predictors,</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>                  target_individual_predictors, category) {</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  N_id <span class="ot">&lt;-</span> focal_individual_predictors<span class="sc">$</span>shape[[<span class="dv">1</span>]]</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Block ---------------------------------------</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  B_intercept <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">block_model</span>(jnp<span class="sc">$</span><span class="fu">full</span>(reticulate<span class="sc">::</span><span class="fu">tuple</span>(N_id), <span class="dv">0</span>L), <span class="dv">1</span>L, jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(N_id)), <span class="at">name =</span> <span class="st">"B_intercept"</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  B_category <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">block_model</span>(category, N_grp, N_by_grp, <span class="at">name =</span> <span class="st">"B_category"</span>)</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  <span class="do">## SR shape = N individuals---------------------------------------</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>  sr <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">sender_receiver</span>(focal_individual_predictors, target_individual_predictors,</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>                              <span class="at">s_mu =</span> <span class="fl">0.4</span>, <span class="at">r_mu =</span> <span class="sc">-</span><span class="fl">0.4</span>)</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Dyadic shape = N dyads--------------------------------------</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>  dr <span class="ot">&lt;-</span> m<span class="sc">$</span>net<span class="sc">$</span><span class="fu">dyadic_effect</span>(dyadic_predictors, <span class="at">d_sd =</span> <span class="fl">2.5</span>)</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Exposure: each dyad was observed `exposure` times (binomial instead of Bernoulli)</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> exposure, <span class="at">logits =</span> B_intercept <span class="sc">+</span> B_category <span class="sc">+</span> sr <span class="sc">+</span> dr, <span class="at">obs =</span> network)</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">progress_bar =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="cn">false</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data ------------------------------------------------</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">50</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>individual_predictor <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(N, <span class="fl">1</span>), sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>kinship <span class="op">=</span> m.dist.<span class="fu">bernoulli</span>(<span class="fl">0.3</span>, shape<span class="op">=</span>(N, N), sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>kinship <span class="op">=</span> kinship.at[jnp.<span class="fu">diag_indices</span>(N)].<span class="fu">set</span>(<span class="fl">0</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>category <span class="op">=</span> m.dist.<span class="fu">categorical</span>(jnp.<span class="fu">array</span>([<span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>]), sample<span class="op">=</span><span class="cn">true</span>, shape<span class="op">=</span>(N,))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>u <span class="op">=</span> jnp.<span class="fu">unique</span>(category, return_counts<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>N_grp <span class="op">=</span> u[<span class="fl">0</span>].shape[<span class="fl">0</span>]</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>N_by_grp <span class="op">=</span> u[<span class="fl">1</span>]</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Exposure: number of observation sessions of each dyad (unequal sampling effort)</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>exposure <span class="op">=</span> m.dist.<span class="fu">poisson</span>(<span class="fl">5</span>, shape<span class="op">=</span>m.net.<span class="fu">mat_to_edgl</span>(kinship).shape, sample<span class="op">=</span><span class="cn">true</span>) <span class="op">+</span> <span class="fl">1</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">sim_network</span>(kinship, individual_predictor, category, exposure)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    B_intercept <span class="op">=</span> m.net.<span class="fu">block_model</span>(jnp.<span class="fu">full</span>((N,), <span class="fl">0</span>), <span class="fl">1</span>, jnp.<span class="fu">array</span>((N,)), sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    B_category <span class="op">=</span> m.net.<span class="fu">block_model</span>(category, N_grp, N_by_grp, sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    sr <span class="op">=</span> m.net.<span class="fu">sender_receiver</span>(individual_predictor, individual_predictor,</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>                               s_mu<span class="op">=</span><span class="fl">0.4</span>, r_mu<span class="op">=-</span><span class="fl">0.4</span>, sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    DR <span class="op">=</span> m.net.<span class="fu">dyadic_effect</span>(kinship, d_sd<span class="op">=</span><span class="fl">2.5</span>, sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Number of sessions (out of `exposure`) in which the interaction was seen</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> m.dist.<span class="fu">binomial</span>(total_count<span class="op">=</span>exposure, logits<span class="op">=</span>B_intercept <span class="op">+</span> B_category <span class="op">+</span> sr <span class="op">+</span> DR, sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>network <span class="op">=</span> <span class="fu">sim_network</span>(m.net.<span class="fu">mat_to_edgl</span>(kinship), individual_predictor, category, exposure)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictive model ------------------------------------------------</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    network<span class="op">=</span>network,</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    exposure<span class="op">=</span>exposure,</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    dyadic_predictors<span class="op">=</span>m.net.<span class="fu">mat_to_edgl</span>(kinship),</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    focal_individual_predictors<span class="op">=</span>individual_predictor,</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    target_individual_predictors<span class="op">=</span>individual_predictor,</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    category<span class="op">=</span>category</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(network, exposure, dyadic_predictors, focal_individual_predictors,</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                   target_individual_predictors, category)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    N_id <span class="op">=</span> focal_individual_predictors.shape[<span class="fl">0</span>]</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Block ---------------------------------------</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    B_intercept <span class="op">=</span> m.net.<span class="fu">block_model</span>(jnp.<span class="fu">full</span>((N_id,), <span class="fl">0</span>), <span class="fl">1</span>, jnp.<span class="fu">array</span>((N_id,)), name<span class="op">=</span><span class="st">"B_intercept"</span>)</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    B_category <span class="op">=</span> m.net.<span class="fu">block_model</span>(category, N_grp, N_by_grp, name<span class="op">=</span><span class="st">"B_category"</span>)</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="co">## SR shape = N individuals---------------------------------------</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    sr <span class="op">=</span> m.net.<span class="fu">sender_receiver</span>(focal_individual_predictors, target_individual_predictors,</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>                               s_mu<span class="op">=</span><span class="fl">0.4</span>, r_mu<span class="op">=-</span><span class="fl">0.4</span>)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Dyadic shape = N dyads--------------------------------------</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    dr <span class="op">=</span> m.net.<span class="fu">dyadic_effect</span>(dyadic_predictors, d_sd<span class="op">=</span><span class="fl">2.5</span>)</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Exposure: each dyad was observed `exposure` times (binomial instead of Bernoulli)</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">binomial</span>(total_count<span class="op">=</span>exposure, logits<span class="op">=</span>B_intercept <span class="op">+</span> B_category <span class="op">+</span> sr <span class="op">+</span> dr, obs<span class="op">=</span>network)</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, progress_bar<span class="op">=</span><span class="cn">false</span>)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 </section>
 <section id="example-2" class="level2">
 <h2 class="anchored" data-anchor-id="example-2">Example 2</h2>
@@ -778,6 +942,12 @@ Q_{[i,j]} \sim \begin{cases}
 <li><p><span class="math inline">\hat\psi_{[i]}\sim \text{Normal}(0,1)</span>, and the ellipsis signifies any linear model of coefficients and individual-level covariates. For example, if <span class="math inline">C</span> is an animal-specific measure, like a binary variable for cryptic coloration, then the ellipsis may be replaced with <span class="math inline">\kappa_{[5]}C_{[i]}</span> to give the effects of coloration on censoring probability.</p></li>
 </ul>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+</ul>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Note(s)</h2>

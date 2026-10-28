@@ -65,9 +65,9 @@ m$data_to_model(list('pulled_left')) # Send to model (convert to jax array)
 # Define model ------------------------------------------------
 model <- function(pulled_left){
   # Parameters priors distributions
-  alpha = bf.dist.normal( 0, 10, name = 'alpha')
+  alpha = m$dist$normal( 0, 10, name = 'alpha')
   # Likelihood
-  bf.dist.binomial(total_count = 1, logits = alpha, obs=pulled_left)
+  m$dist$binomial(total_count = 1L, logits = alpha, obs = pulled_left, name = 'pulled_left')
 }
 
 
@@ -104,6 +104,52 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+### Posterior predictive checks
+
+The model gives every chimpanzee the same probability of pulling the left lever. Is that true?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="mean", group="actor")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "mean", group = "actor")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="mean", group="actor")
+```
+:::
+
+One panel per chimpanzee: the vertical line is the observed proportion of left pulls, the curve the proportions in simulated datasets. Lines far in the tails (p-values near 0) show actors with their own handedness, which a single intercept cannot capture: see [Varying intercepts](15.%20Varying%20intercepts.qmd). See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_bars()
+```
+
+#### R
+```r
+m$diag$ppc_bars()
+```
+
+#### Julia
+```julia
+m.diag.ppc_bars()
+```
+:::
+
+`ppc_bars`: observed counts of 0 and 1 (bars) against the predicted counts (points with 90 % intervals); pooled over all actors, the intercept-only model matches them.
+:::
+
 ## Mathematical Details
 ### *Bayesian formulation*
 
@@ -137,6 +183,12 @@ Where:
 
 -   $\beta$ and $\alpha$ are the regression coefficient and intercept, respectively.
 
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `4.Binomial.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Comparison with Stan (indexed predictors)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `5.Binomial with indices.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+
 ## Notes
 
 ::: callout-note
@@ -151,7 +203,7 @@ Where:
 ``` python
 from BayesForge import bf
 m = bf(platform='cpu')
-m.data('../resources/data/chimpanzees.csv', sep=';')
+m.data(m.load.chimpanzees(only_path = True), sep=';')
 m.df['treatment'] =  m.df.prosoc_left + 2 * m.df.condition
 m.df['actor'] = m.df['actor'] - 1
 
@@ -174,19 +226,22 @@ library(BayesForge)
 
 # setup platform------------------------------------------------
 m=importBF(platform='cpu')
+jnp <- reticulate::import("jax.numpy")
 
 # import data ------------------------------------------------
-m$data(paste(system.file(package = "BayesForge"),"/data/chimpanzees.csv", sep = ''), sep=';')
-m$data_to_model(list('pulled_left')) # Send to model (convert to jax array)
+m$data(m$load$chimpanzees(only_path = TRUE), sep=';')
+m$df$treatment <- m$df$prosoc_left + 2 * m$df$condition
+m$df$actor <- m$df$actor - 1
+m$data_to_model(list('actor', 'treatment', 'pulled_left')) # Send to model (convert to jax array)
 
 # Define model ------------------------------------------------
-model <- function(pulled_left){
+model <- function(actor, treatment, pulled_left){
   # Parameters priors distributions
-  a = bf.dist.normal( 0, 1.5, name = 'a')
-  b = bf.dist.normal( 0, 0.5, name = 'b')
-  p = a[actor] + b[treatment]
+  a = m$dist$normal(0, 1.5, shape = reticulate::tuple(7L), name = 'a')
+  b = m$dist$normal(0, 0.5, shape = reticulate::tuple(4L), name = 'b')
+  p = a[jnp$asarray(actor, dtype = jnp$int32)] + b[jnp$asarray(treatment, dtype = jnp$int32)]
   # Likelihood
-  m$binomial(total_count = 1, logits = alpha, obs=pulled_left)
+  m$dist$binomial(total_count = 1L, logits = p, obs = pulled_left, name = 'pulled_left')
 }
 
 # Run MCMC ------------------------------------------------

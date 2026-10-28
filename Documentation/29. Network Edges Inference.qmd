@@ -45,7 +45,9 @@ The binary data model is used when the presence or absence of a social event for
 #### Example with simulated data
 Simulated data can be generated with **bisonR** function `simulate_bison_model`. For all example we will account the presence of all possible features: 1 fixed nodal predictors, 1 random nodal predictors, presence of subgroups,  partial_pooling and zero inflated model. This will allow you to adapt the model by removing parts of the model based on your data.
 
-To be compatible with `data` used in the model `data` must contain and be zero-based indexed (i.e. dyad_idsID, num_random_groups need to start at 0):
+The simulated data of the three examples are in `network_edges_binary.json`, `network_edges_count.json` and `network_edges_duration.json`: download them from [Test/3.Documentation/data](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/data), where `make_network_edges_data.R` shows how bisonR builds them.
+
+To be compatible with the model, `data` must contain the entries below. Indices are 1-based, as in bisonR (`dyad_ids` and `random_group_index` start at 1; the models subtract 1):
 1. *num_rows* : Number of observations for the total period of time.
 2. *event* : For binary model whether event occur (1) or not (0).
 3. *duration* : Duration for each observations.
@@ -66,12 +68,19 @@ To be compatible with `data` used in the model `data` must contain and be zero-b
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
+
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_binary.json
+import json
+with open('network_edges_binary.json') as f:
+    data_list_jax = {key: jnp.array(v) if isinstance(v, list) else v
+                     for key, v in json.load(f).items()}
 m.data_on_model = {'data': data_list_jax}
 
 def BF_model_binary(data):
-    predictor  = m.jnp.zeros(data['num_rows'])
+    predictor  = jnp.zeros(data['num_rows'])
     dyad_ids_0 = data['dyad_ids'] - 1
 
     # Edge weights (partial pooling, non-centered)
@@ -82,7 +91,7 @@ def BF_model_binary(data):
     # Fixed effects
     beta_fixed = m.dist.normal(data['prior_fixed_mu'], data['prior_fixed_sigma'],
                                shape=(data['num_fixed'],), name="beta_fixed")
-    predictor = predictor + m.jnp.dot(data['design_fixed'], beta_fixed)
+    predictor = predictor + jnp.dot(data['design_fixed'], beta_fixed)
 
     # Random nodal effects
     random_group_mu    = m.dist.normal(data['prior_random_mean_mu'], data['prior_random_mean_sigma'],
@@ -92,7 +101,7 @@ def BF_model_binary(data):
     group_idx_0 = data['random_group_index'] - 1
     beta_random = m.dist.normal(random_group_mu[group_idx_0], random_group_sigma[group_idx_0],
                                 shape=(data['num_random'],), name="beta_random")
-    predictor = predictor + m.jnp.dot(data['design_random'], beta_random)
+    predictor = predictor + jnp.dot(data['design_random'], beta_random)
 
     p = m.link.inv_logit(predictor)
 
@@ -117,6 +126,9 @@ jax <- import("jax")
 jax$config$update("jax_enable_x64", TRUE)
 jnp <- import("jax.numpy")
 
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_binary.json
+raw <- jsonlite::fromJSON("network_edges_binary.json")
+data_list_jax <- lapply(raw, function(v) if (length(v) > 1 || is.matrix(v)) jnp$array(v) else v)
 m$data_on_model <- list(data = data_list_jax)
 
 BF_model_binary <- function(data) {
@@ -161,33 +173,39 @@ m$summary()
 
 ```julia
 using PyBayesForge
+using PythonCall
 
 m = importBF(platform="cpu")
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_binary.json
+json = pyimport("json")
+raw = json.load(pybuiltins.open("network_edges_binary.json"))
+data_list_jax = pydict(Dict(string(key) => (pyisinstance(v, pybuiltins.list) ? jnp.array(v) : v)
+                            for (key, v) in raw.items()))
 m.data_on_model = Dict("data" => data_list_jax)
 
 @BF function BF_model_binary(data)
     predictor  = jnp.zeros(data["num_rows"])
-    dyad_ids_0 = data["dyad_ids"] .- 1
+    dyad_ids_0 = data["dyad_ids"] - 1
 
     # Edge weights (partial pooling, non-centered)
     edge_sigma  = m.dist.half_normal(data["prior_edge_sigma"], name="edge_sigma")
     edge_weight = m.dist.normal(0, 1, shape=(data["num_edges"],), name="edge_weight")
-    predictor   = predictor .+ (data["prior_edge_mu"] .+ edge_sigma .* edge_weight)[dyad_ids_0]
+    predictor   = predictor + (data["prior_edge_mu"] + edge_sigma * edge_weight)[dyad_ids_0]
 
     # Fixed effects
     beta_fixed = m.dist.normal(data["prior_fixed_mu"], data["prior_fixed_sigma"],
                                shape=(data["num_fixed"],), name="beta_fixed")
-    predictor = predictor .+ jnp.dot(data["design_fixed"], beta_fixed)
+    predictor = predictor + jnp.dot(data["design_fixed"], beta_fixed)
 
     # Random nodal effects
     random_group_mu    = m.dist.normal(data["prior_random_mean_mu"], data["prior_random_mean_sigma"],
                                        shape=(data["num_random_groups"],), name="random_group_mu")
     random_group_sigma = m.dist.half_normal(data["prior_random_std_sigma"],
                                             shape=(data["num_random_groups"],), name="random_group_sigma")
-    group_idx_0 = data["random_group_index"] .- 1
+    group_idx_0 = data["random_group_index"] - 1
     beta_random = m.dist.normal(random_group_mu[group_idx_0], random_group_sigma[group_idx_0],
                                 shape=(data["num_random"],), name="beta_random")
-    predictor = predictor .+ jnp.dot(data["design_random"], beta_random)
+    predictor = predictor + jnp.dot(data["design_random"], beta_random)
 
     p = m.link.inv_logit(predictor)
 
@@ -195,7 +213,7 @@ m.data_on_model = Dict("data" => data_list_jax)
     zero_prob = m.dist.beta(data["prior_zero_prob_alpha"], data["prior_zero_prob_beta"],
                             shape=(1,), name="zero_prob")
     base_dist = m.dist.binomial(data["divisor"], p, create_obj=true)
-    m.dist.zero_inflated_distribution(base_dist, gate=zero_prob[1], obs=data["event"], name="event")
+    m.dist.zero_inflated_distribution(base_dist, gate=zero_prob[0], obs=data["event"], name="event")
 end
 
 m.fit(BF_model_binary)
@@ -239,12 +257,19 @@ The count data model interprets instances where the exact *number of events* for
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
+
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_count.json
+import json
+with open('network_edges_count.json') as f:
+    data_list_jax = {key: jnp.array(v) if isinstance(v, list) else v
+                     for key, v in json.load(f).items()}
 m.data_on_model = {'data': data_list_jax}
 
 def BF_model_count(data):
-    predictor  = m.jnp.zeros(data['num_rows'])
+    predictor  = jnp.zeros(data['num_rows'])
     dyad_ids_0 = data['dyad_ids'] - 1
 
     # Edge weights (partial pooling, non-centered)
@@ -255,7 +280,7 @@ def BF_model_count(data):
     # Fixed effects
     beta_fixed = m.dist.normal(data['prior_fixed_mu'], data['prior_fixed_sigma'],
                                shape=(data['num_fixed'],), name="beta_fixed")
-    predictor = predictor + m.jnp.dot(data['design_fixed'], beta_fixed)
+    predictor = predictor + jnp.dot(data['design_fixed'], beta_fixed)
 
     # Random nodal effects (non-centered)
     random_group_mu    = m.dist.normal(data['prior_random_mean_mu'], data['prior_random_mean_sigma'],
@@ -264,10 +289,10 @@ def BF_model_count(data):
                                             shape=(data['num_random_groups'],), name="random_group_sigma")
     group_idx_0    = data['random_group_index'] - 1
     beta_random    = m.dist.normal(0, 1, shape=(data['num_random'],), name="beta_random")
-    predictor = predictor + m.jnp.dot(data['design_random'],
+    predictor = predictor + jnp.dot(data['design_random'],
                                       random_group_mu[group_idx_0] + random_group_sigma[group_idx_0] * beta_random)
 
-    rate = m.jnp.exp(predictor) * data['divisor']
+    rate = jnp.exp(predictor) * data['divisor']
 
     # Zero-inflated Poisson likelihood
     zero_prob = m.dist.beta(data['prior_zero_prob_alpha'], data['prior_zero_prob_beta'],
@@ -290,6 +315,9 @@ jax <- import("jax")
 jax$config$update("jax_enable_x64", TRUE)
 jnp <- import("jax.numpy")
 
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_count.json
+raw <- jsonlite::fromJSON("network_edges_count.json")
+data_list_jax <- lapply(raw, function(v) if (length(v) > 1 || is.matrix(v)) jnp$array(v) else v)
 m$data_on_model <- list(data = data_list_jax)
 
 BF_model_count <- function(data) {
@@ -334,41 +362,47 @@ m$summary()
 
 ```julia
 using PyBayesForge
+using PythonCall
 
 m = importBF(platform="cpu")
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_count.json
+json = pyimport("json")
+raw = json.load(pybuiltins.open("network_edges_count.json"))
+data_list_jax = pydict(Dict(string(key) => (pyisinstance(v, pybuiltins.list) ? jnp.array(v) : v)
+                            for (key, v) in raw.items()))
 m.data_on_model = Dict("data" => data_list_jax)
 
 @BF function BF_model_count(data)
     predictor  = jnp.zeros(data["num_rows"])
-    dyad_ids_0 = data["dyad_ids"] .- 1
+    dyad_ids_0 = data["dyad_ids"] - 1
 
     # Edge weights (partial pooling, non-centered)
     edge_sigma  = m.dist.half_normal(data["prior_edge_sigma"], name="edge_sigma")
     edge_weight = m.dist.normal(0, 1, shape=(data["num_edges"],), name="edge_weight")
-    predictor   = predictor .+ (data["prior_edge_mu"] .+ edge_sigma .* edge_weight)[dyad_ids_0]
+    predictor   = predictor + (data["prior_edge_mu"] + edge_sigma * edge_weight)[dyad_ids_0]
 
     # Fixed effects
     beta_fixed = m.dist.normal(data["prior_fixed_mu"], data["prior_fixed_sigma"],
                                shape=(data["num_fixed"],), name="beta_fixed")
-    predictor = predictor .+ jnp.dot(data["design_fixed"], beta_fixed)
+    predictor = predictor + jnp.dot(data["design_fixed"], beta_fixed)
 
     # Random nodal effects (non-centered)
     random_group_mu    = m.dist.normal(data["prior_random_mean_mu"], data["prior_random_mean_sigma"],
                                        shape=(data["num_random_groups"],), name="random_group_mu")
     random_group_sigma = m.dist.half_normal(data["prior_random_std_sigma"],
                                             shape=(data["num_random_groups"],), name="random_group_sigma")
-    group_idx_0    = data["random_group_index"] .- 1
+    group_idx_0    = data["random_group_index"] - 1
     beta_random    = m.dist.normal(0, 1, shape=(data["num_random"],), name="beta_random")
-    predictor = predictor .+ jnp.dot(data["design_random"],
-                                     random_group_mu[group_idx_0] .+ random_group_sigma[group_idx_0] .* beta_random)
+    predictor = predictor + jnp.dot(data["design_random"],
+                                     random_group_mu[group_idx_0] + random_group_sigma[group_idx_0] * beta_random)
 
-    rate = jnp.exp(predictor) .* data["divisor"]
+    rate = jnp.exp(predictor) * data["divisor"]
 
     # Zero-inflated Poisson likelihood
     zero_prob = m.dist.beta(data["prior_zero_prob_alpha"], data["prior_zero_prob_beta"],
                             shape=(1,), name="zero_prob")
     base_dist = m.dist.poisson(rate, create_obj=true)
-    m.dist.zero_inflated_distribution(base_dist, gate=zero_prob[1], obs=data["event"], name="event")
+    m.dist.zero_inflated_distribution(base_dist, gate=zero_prob[0], obs=data["event"], name="event")
 end
 
 m.fit(BF_model_count)
@@ -411,12 +445,19 @@ The duration model simultaneously handles two data metrics: the *duration* of so
 
 ```python
 from BayesForge import bf
+import jax.numpy as jnp
 
 m = bf(platform='cpu')
+
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_duration.json
+import json
+with open('network_edges_duration.json') as f:
+    data_list_jax = {key: jnp.array(v) if isinstance(v, list) else v
+                     for key, v in json.load(f).items()}
 m.data_on_model = {'data': data_list_jax}
 
 def BF_model_duration(data):
-    predictor  = m.jnp.zeros(data['num_rows'])
+    predictor  = jnp.zeros(data['num_rows'])
     dyad_ids_0 = data['dyad_ids'] - 1
 
     # 1. Edge weights (partial pooling, non-centered)
@@ -431,7 +472,7 @@ def BF_model_duration(data):
     # 2. Fixed effects
     beta_fixed = m.dist.normal(data['prior_fixed_mu'], data['prior_fixed_sigma'],
                                shape=(data['num_fixed'],), name="beta_fixed")
-    predictor = predictor + m.jnp.dot(data['design_fixed'], beta_fixed)
+    predictor = predictor + jnp.dot(data['design_fixed'], beta_fixed)
 
     # 3. Random nodal effects (non-centered)
     random_group_mu    = m.dist.normal(data['prior_random_mean_mu'], data['prior_random_mean_sigma'],
@@ -440,12 +481,12 @@ def BF_model_duration(data):
                                             shape=(data['num_random_groups'],), name="random_group_sigma")
     group_idx_0    = data['random_group_index'] - 1
     beta_random    = m.dist.normal(0, 1, shape=(data['num_random'],), name="beta_random")
-    predictor = predictor + m.jnp.dot(data['design_random'],
+    predictor = predictor + jnp.dot(data['design_random'],
                                       random_group_mu[group_idx_0] + random_group_sigma[group_idx_0] * beta_random)
 
     # 4. Rate parameters (1/sigmoid(x) = 1 + exp(-x), numerically stable)
-    edge_divisor = m.jnp.zeros(data['num_edges']).at[dyad_ids_0].add(data['divisor'])
-    lambda_exp   = rate_positive[dyad_ids_0] * (1.0 + m.jnp.exp(-predictor))
+    edge_divisor = jnp.zeros(data['num_edges']).at[dyad_ids_0].add(data['divisor'])
+    lambda_exp   = rate_positive[dyad_ids_0] * (1.0 + jnp.exp(-predictor))
     lambda_pois  = rate_positive * edge_divisor
 
     # 5. Joint likelihood
@@ -467,6 +508,9 @@ jax <- import("jax")
 jax$config$update("jax_enable_x64", TRUE)
 jnp <- import("jax.numpy")
 
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_duration.json
+raw <- jsonlite::fromJSON("network_edges_duration.json")
+data_list_jax <- lapply(raw, function(v) if (length(v) > 1 || is.matrix(v)) jnp$array(v) else v)
 m$data_on_model <- list(data = data_list_jax)
 
 BF_model_duration <- function(data) {
@@ -516,43 +560,48 @@ m$summary()
 
 ```julia
 using PyBayesForge
+using PythonCall
 
 m = importBF(platform="cpu")
-jnp = m.jax.numpy
+# Data: simulated observations of a 20-node network (bisonR), file network_edges_duration.json
+json = pyimport("json")
+raw = json.load(pybuiltins.open("network_edges_duration.json"))
+data_list_jax = pydict(Dict(string(key) => (pyisinstance(v, pybuiltins.list) ? jnp.array(v) : v)
+                            for (key, v) in raw.items()))
 m.data_on_model = Dict("data" => data_list_jax)
 
 @BF function BF_model_duration(data)
     predictor  = jnp.zeros(data["num_rows"])
-    dyad_ids_0 = data["dyad_ids"] .- 1
+    dyad_ids_0 = data["dyad_ids"] - 1
 
     # 1. Edge weights (partial pooling, non-centered)
     edge_sigma         = m.dist.half_normal(data["prior_edge_sigma"], name="edge_sigma")
     edge_weight        = m.dist.normal(0, 1, shape=(data["num_edges"],), name="edge_weight")
-    edge_weight_actual = data["prior_edge_mu"] .+ edge_sigma .* edge_weight
+    edge_weight_actual = data["prior_edge_mu"] + edge_sigma * edge_weight
 
     rate_positive = m.dist.half_normal(data["prior_rate_sigma"],
                                        shape=(data["num_edges"],), name="rate")
-    predictor = predictor .+ edge_weight_actual[dyad_ids_0]
+    predictor = predictor + edge_weight_actual[dyad_ids_0]
 
     # 2. Fixed effects
     beta_fixed = m.dist.normal(data["prior_fixed_mu"], data["prior_fixed_sigma"],
                                shape=(data["num_fixed"],), name="beta_fixed")
-    predictor = predictor .+ jnp.dot(data["design_fixed"], beta_fixed)
+    predictor = predictor + jnp.dot(data["design_fixed"], beta_fixed)
 
     # 3. Random nodal effects (non-centered)
     random_group_mu    = m.dist.normal(data["prior_random_mean_mu"], data["prior_random_mean_sigma"],
                                        shape=(data["num_random_groups"],), name="random_group_mu")
     random_group_sigma = m.dist.half_normal(data["prior_random_std_sigma"],
                                             shape=(data["num_random_groups"],), name="random_group_sigma")
-    group_idx_0    = data["random_group_index"] .- 1
+    group_idx_0    = data["random_group_index"] - 1
     beta_random    = m.dist.normal(0, 1, shape=(data["num_random"],), name="beta_random")
-    predictor = predictor .+ jnp.dot(data["design_random"],
-                                     random_group_mu[group_idx_0] .+ random_group_sigma[group_idx_0] .* beta_random)
+    predictor = predictor + jnp.dot(data["design_random"],
+                                     random_group_mu[group_idx_0] + random_group_sigma[group_idx_0] * beta_random)
 
     # 4. Rate parameters (1/sigmoid(x) = 1 + exp(-x), numerically stable)
     edge_divisor = jnp.zeros(data["num_edges"]).at[dyad_ids_0].add(data["divisor"])
-    lambda_exp   = rate_positive[dyad_ids_0] .* (1.0 .+ jnp.exp(-predictor))
-    lambda_pois  = rate_positive .* edge_divisor
+    lambda_exp   = rate_positive[dyad_ids_0] * (1.0 + jnp.exp(jnp.negative(predictor)))
+    lambda_pois  = rate_positive * edge_divisor
 
     # 5. Joint likelihood
     m.dist.exponential(lambda_exp, obs=data["event"], name="event")
@@ -589,3 +638,7 @@ Because edge estimates define probability scales while absolute intensity genera
 Varying effects for nodes ad dyads could be build using Multi Variate Normal distribution to account for dyadic Correlated Effects.
 :::
 
+## Model validation tests
+
+- [Edge models grid](https://github.com/BGN-for-ASNA/BF/tree/main/Test/6.Network/Network%20edges): 12 edge-level models (binary, count, duration × directed/undirected × zero-inflated or not) fitted with BayesForge and Stan.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).

@@ -635,9 +635,13 @@ window.Quarto = {
    
   <ul>
   <li><a href="#general-principles" id="toc-general-principles" class="nav-link active" data-scroll-target="#general-principles">General Principles</a></li>
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
+  <ul class="collapse">
+  <li><a href="#posterior-predictive-checks" id="toc-posterior-predictive-checks" class="nav-link" data-scroll-target="#posterior-predictive-checks">Posterior predictive checks</a></li>
+  </ul></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a>
   <ul class="collapse">
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul></li>
   </ul>
@@ -686,7 +690,7 @@ window.Quarto = {
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="3ba33b20" class="cell" data-execution_count="1">
+<div id="567b7ad1" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -723,8 +727,14 @@ window.Quarto = {
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -737,13 +747,13 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
@@ -751,25 +761,25 @@ jax.local_device_count 32</code></pre>
 <td data-quarto-table-cell-role="th">al</td>
 <td>0.06</td>
 <td>0.08</td>
-<td>-0.07</td>
+<td>-0.08</td>
 <td>0.19</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>1118.70</td>
-<td>1783.66</td>
+<td>1352.1</td>
+<td>1658.99</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">ap</td>
 <td>-1.60</td>
-<td>0.40</td>
-<td>-2.21</td>
-<td>-0.99</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>1193.67</td>
-<td>1201.84</td>
+<td>0.42</td>
+<td>-2.36</td>
+<td>-1.07</td>
+<td>1389.1</td>
+<td>1319.82</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.02</td>
 </tr>
 </tbody>
 </table>
@@ -779,80 +789,203 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data ------------------------------------------------</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>prob_drink <span class="ot">=</span> <span class="fl">0.2</span>  <span class="co"># 20% of days</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>rate_work <span class="ot">=</span> <span class="dv">1</span>     <span class="co"># average 1 manuscript per day</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># sample one year of production</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="dv">365</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>drink <span class="ot">=</span> <span class="fu">bf.dist.binomial</span>(<span class="at">total_count =</span> <span class="fu">as.integer</span>(<span class="dv">1</span>), <span class="at">probs =</span> prob_drink, <span class="at">shape =</span> <span class="fu">c</span>(N), <span class="at">sample =</span> T ) <span class="co"># An example of sampling a distribution with BF</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> (<span class="dv">1</span> <span class="sc">-</span> drink) <span class="sc">*</span>  <span class="fu">bf.dist.poisson</span>(rate_work, <span class="at">shape =</span> <span class="fu">c</span>(N), <span class="at">sample =</span> T)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">list</span>()</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>y <span class="ot">=</span> y</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">=</span> data</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y){</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  al <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">1</span>, <span class="fl">0.5</span>, <span class="at">name=</span><span class="st">'al'</span>, <span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  ap <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="at">name=</span><span class="st">'ap'</span>, <span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> m<span class="sc">$</span>link<span class="sc">$</span><span class="fu">inv_logit</span>(ap)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  lambda_ <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">exp</span>(al)</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.zero_inflated_poisson</span>(p, lambda_, <span class="at">obs=</span>y)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data ------------------------------------------------</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>prob_drink <span class="ot">=</span> <span class="fl">0.2</span>  <span class="co"># 20% of days</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>rate_work <span class="ot">=</span> <span class="dv">1</span>     <span class="co"># average 1 manuscript per day</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># sample one year of production</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="dv">365</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>drink <span class="ot">=</span> <span class="fu">bf.dist.binomial</span>(<span class="at">total_count =</span> <span class="fu">as.integer</span>(<span class="dv">1</span>), <span class="at">probs =</span> prob_drink, <span class="at">shape =</span> <span class="fu">c</span>(N), <span class="at">sample =</span> T ) <span class="co"># An example of sampling a distribution with BF</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> (<span class="dv">1</span> <span class="sc">-</span> drink) <span class="sc">*</span>  <span class="fu">bf.dist.poisson</span>(rate_work, <span class="at">shape =</span> <span class="fu">c</span>(N), <span class="at">sample =</span> T)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">list</span>()</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>y <span class="ot">=</span> y</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">=</span> data</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y){</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  al <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">1</span>, <span class="fl">0.5</span>, <span class="at">name=</span><span class="st">'al'</span>, <span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  ap <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="at">name=</span><span class="st">'ap'</span>, <span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> m<span class="sc">$</span>link<span class="sc">$</span><span class="fu">inv_logit</span>(ap)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  lambda_ <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">exp</span>(al)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.zero_inflated_poisson</span>(p, lambda_, <span class="at">obs=</span>y)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulated data ------------------------------------------------</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>prob_drink <span class="op">=</span> <span class="fl">0.2</span>  </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>rate_work <span class="op">=</span> <span class="fl">1</span>     </span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample one year of production</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">365</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: Use lowercase 'true' for booleans in Julia</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 'drink' will be a Python/JAX object</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>drink <span class="op">=</span> m.dist.<span class="fu">binomial</span>(<span class="fl">1</span>, prob_drink, shape<span class="op">=</span>(N,), sample<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Math works automatically because 'drink' is a Py object </span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># and we taught Julia how to handle Py arithmetic in the previous step</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> (<span class="fl">1</span> <span class="op">-</span> drink) <span class="op">*</span> m.dist.<span class="fu">poisson</span>(rate_work, shape<span class="op">=</span>(N,), sample<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Send data to BF class object ------------------------------------------------</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(<span class="fu">Dict</span>(<span class="st">"y"</span> <span class="op">=&gt;</span>y))</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y)</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    al <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">1</span>, <span class="fl">0.5</span>, name<span class="op">=</span><span class="st">"al"</span>)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    ap <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="op">-</span><span class="fl">1.5</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"ap"</span>)</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> m.link.<span class="fu">inv_logit</span>(ap)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> jnp.<span class="fu">exp</span>(al)</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">zero_inflated_poisson</span>(p, lambda_, obs<span class="op">=</span>y)</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulated data ------------------------------------------------</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>prob_drink <span class="op">=</span> <span class="fl">0.2</span>  </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>rate_work <span class="op">=</span> <span class="fl">1</span>     </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample one year of production</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">365</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: Use lowercase 'true' for booleans in Julia</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 'drink' will be a Python/JAX object</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>drink <span class="op">=</span> m.dist.<span class="fu">binomial</span>(<span class="fl">1</span>, prob_drink, shape<span class="op">=</span>(N,), sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Math works automatically because 'drink' is a Py object </span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># and we taught Julia how to handle Py arithmetic in the previous step</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> (<span class="fl">1</span> <span class="op">-</span> drink) <span class="op">*</span> m.dist.<span class="fu">poisson</span>(rate_work, shape<span class="op">=</span>(N,), sample<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Send data to BF class object ------------------------------------------------</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(<span class="fu">Dict</span>(<span class="st">"y"</span> <span class="op">=&gt;</span>y))</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    al <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">1</span>, <span class="fl">0.5</span>, name<span class="op">=</span><span class="st">"al"</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    ap <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="op">-</span><span class="fl">1.5</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"ap"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> m.link.<span class="fu">inv_logit</span>(ap)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> jnp.<span class="fu">exp</span>(al)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">zero_inflated_poisson</span>(p, lambda_, obs<span class="op">=</span>y)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
+<section id="posterior-predictive-checks" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
+<p>Does the model reproduce the excess of zeros (days without production because the monks drink)?</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="e8fbc366" class="cell" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat(stat<span class="op">=</span><span class="st">"n_zero"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+        <script type="text/javascript">
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        </script>
+        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
+        
+</div>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="1cca2080-b179-4b11-8da6-c76ce82c079b" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("1cca2080-b179-4b11-8da6-c76ce82c079b")) {                    Plotly.newPlot(                        "1cca2080-b179-4b11-8da6-c76ce82c079b",                        [{"fill":"tozeroy","fillcolor":"rgba(100,149,237,0.3)","line":{"color":"cornflowerblue","width":1.5},"mode":"lines","name":"n_zero of each prediction of y","x":{"dtype":"f8","bdata":"AAAAAAAAX0DGyzZAnxJfQIyXbYA+JV9AUWOkwN03X0AXL9sAfUpfQN36EUEcXV9Ao8ZIgbtvX0Bokn\u002fBWoJfQC5etgH6lF9A9CntQZmnX0C69SOCOLpfQIDBWsLXzF9ARY2RAnffX0ALWchCFvJfQGiSf8FaAmBAS\u002fiaYaoLYEAuXrYB+hRgQBHE0aFJHmBA9CntQZknYEDXjwji6DBgQLr1I4I4OmBAnVs\u002fIohDYECAwVrC10xgQGIndmInVmBARY2RAndfYEAo86yixmhgQAtZyEIWcmBA7r7j4mV7YEDRJP+CtYRgQLSKGiMFjmBAl\u002fA1w1SXYEB6VlFjpKBgQFy8bAP0qWBAPyKIo0OzYEAiiKNDk7xgQAXuvuPixWBA6FPagzLPYEDLufUjgthgQK4fEcTR4WBAkYUsZCHrYEB060cEcfRgQFZRY6TA\u002fWBAObd+RBAHYUAcHZrkXxBhQP+CtYSvGWFA4ujQJP8iYUDFTuzETixhQKi0B2WeNWFAixojBe4+YUBugD6lPUhhQFDmWUWNUWFAM0x15dxaYUAWspCFLGRhQPkXrCV8bWFA3H3Hxct2YUC\u002f4+JlG4BhQKJJ\u002fgVriWFAha8ZprqSYUBoFTVGCpxhQEp7UOZZpWFALeFrhqmuYUAQR4cm+bdhQPOsosZIwWFA1hK+ZpjKYUC5eNkG6NNhQJze9KY33WFAf0QQR4fmYUBiqivn1u9hQEQQR4cm+WFAJ3ZiJ3YCYkAK3H3HxQtiQO1BmWcVFWJA0Ke0B2UeYkCzDdCntCdiQJZz60cEMWJAedkG6FM6YkBcPyKIo0NiQD6lPSjzTGJAIQtZyEJWYkAEcXRokl9iQOfWjwjiaGJAyjyrqDFyYkCtosZIgXtiQJAI4ujQhGJAc279iCCOYkBW1BgpcJdiQDg6NMm\u002foGJAG6BPaQ+qYkD+BWsJX7NiQOFrhqmuvGJAxNGhSf7FYkCnN73pTc9iQIqd2Imd2GJAbQP0Ke3hYkBQaQ\u002fKPOtiQDLPKmqM9GJAFTVGCtz9YkD4mmGqKwdjQNsAfUp7EGNAvmaY6soZY0ChzLOKGiNjQIQyzypqLGNAZ5jqyrk1Y0BK\u002fgVrCT9jQCxkIQtZSGNAD8o8q6hRY0DyL1hL+FpjQNWVc+tHZGNAuPuOi5dtY0CbYaor53ZjQH7Hxcs2gGNAYS3ha4aJY0BEk\u002fwL1pJjQCb5F6wlnGNACV8zTHWlY0DsxE7sxK5jQM8qaowUuGNAspCFLGTBY0CV9qDMs8pjQHhcvGwD1GNAW8LXDFPdY0A+KPOsouZjQCCODk3y72NAA\u002fQp7UH5Y0DmWUWNkQJkQMm\u002fYC3hC2RArCV8zTAVZECPi5dtgB5kQHLxsg3QJ2RAVVfOrR8xZEA4velNbzpkQBojBe6+Q2RA\u002fYggjg5NZEDg7jsuXlZkQMNUV86tX2RAprpybv1oZECJII4OTXJkQGyGqa6ce2RAT+zETuyEZEAyUuDuO45kQBS4+46Ll2RA9x0XL9ugZEDagzLPKqpkQL3pTW96s2RAoE9pD8q8ZECDtYSvGcZkQGYboE9pz2RASYG777jYZEAs59aPCOJkQA5N8i9Y62RA8bIN0Kf0ZEDUGClw9\u002f1kQLd+RBBHB2VAmuRfsJYQZUB9SntQ5hllQGCwlvA1I2VAQxaykIUsZUAmfM0w1TVlQAji6NAkP2VA60cEcXRIZUDOrR8RxFFlQLETO7ETW2VAlHlWUWNkZUB333Hxsm1lQFpFjZECd2VAPauoMVKAZUAgEcTRoYllQAJ333HxkmVA5dz6EUGcZUDIQhaykKVlQKuoMVLgrmVAjg5N8i+4ZUBxdGiSf8FlQFTagzLPymVAN0Cf0h7UZUAaprpybt1lQPwL1hK+5mVA33Hxsg3wZUDC1wxTXfllQKU9KPOsAmZAiKNDk\u002fwLZkBrCV8zTBVmQE5vetObHmZAMdWVc+snZkAUO7ETOzFmQPagzLOKOmZA2QboU9pDZkC8bAP0KU1mQJ\u002fSHpR5VmZAgjg6NMlfZkBlnlXUGGlmQEgEcXRocmZAKmqMFLh7ZkAO0Ke0B4VmQPA1w1RXjmZA05ve9KaXZkC2AfqU9qBmQJlnFTVGqmZAfM0w1ZWzZkBfM0x15bxmQEKZZxU1xmZAJP+CtYTPZkAIZZ5V1NhmQOrKufUj4mZAzTDVlXPrZkCwlvA1w\u002fRmQJP8C9YS\u002fmZAdmIndmIHZ0BZyEIWshBnQDwuXrYBGmdAHpR5VlEjZ0AC+pT2oCxnQORfsJbwNWdAx8XLNkA\u002fZ0CqK+fWj0hnQI2RAnffUWdAcPcdFy9bZ0BTXTm3fmRnQDbDVFfObWdAGClw9x13Z0D8jouXbYBnQN70pje9iWdAwlrC1wyTZ0CkwN13XJxnQIcm+RespWdAaowUuPuuZ0BN8i9YS7hnQDBYS\u002fiawWdAEr5mmOrKZ0D2I4I4OtRnQNiJndiJ3WdAvO+4eNnmZ0CeVdQYKfBnQIG777h4+WdAZCELWcgCaEBHhyb5FwxoQCrtQZlnFWhADFNdObceaEDwuHjZBihoQNIelHlWMWhAtoSvGaY6aECY6sq59UNoQHtQ5llFTWhAXrYB+pRWaEBBHB2a5F9oQCSCODo0aWhABuhT2oNyaEDqTW9603toQMyzihojhWhAsBmmunKOaECSf8FawpdoQHXl3PoRoWhAWEv4mmGqaEA7sRM7sbNoQB4XL9sAvWhAAH1Ke1DGaEDk4mUboM9oQMZIgbvv2GhAqq6cWz\u002fiaECMFLj7jutoQG9605ve9GhAUuDuOy7+aEA1RgrcfQdpQBisJXzNEGlA+hFBHB0aaUDed1y8bCNpQMDdd1y8LGlApEOT\u002fAs2aUCGqa6cWz9pQGkPyjyrSGlATHXl3PpRaUAv2wB9SltpQBJBHB2aZGlA9KY3veltaUDYDFNdOXdpQLpybv2IgGlAntiJndiJaUCAPqU9KJNpQGOkwN13nGlARgrcfcelaUApcPcdF69pQAzWEr5muGlA7jsuXrbBaUDSoUn+BctpQLQHZZ5V1GlAmG2APqXdaUB605ve9OZpQF05t35E8GlAQJ\u002fSHpT5aUAjBe6+4wJqQAZrCV8zDGpA6NAk\u002f4IVakDMNkCf0h5qQK6cWz8iKGpAkgJ333ExakB0aJJ\u002fwTpqQFfOrR8RRGpAOjTJv2BNakAdmuRfsFZqQAAAAAAAYGpA"},"y":{"dtype":"f8","bdata":"tlsAKYI5ID8dwMmZKI0hP+7offku+yI\u002faPGCLDOKJD8IZf58LUEmP0AXwTQDJyg\u002f2hg6ahJCKj+zWBvTv5csP44JAhQPLC8\u002f\u002fuMUaqYAMT8SxbAI6IsyP7\u002f8uQzrNjQ\u002ftOz+Pr3\u002fNT+mE\u002fdKZeM3Pxk6q2353Tk\u002fSUoi3cHqOz9U4LaQZQQ+PzQ61wmQEkA\u002fA0EEiH8jQT+20M4UEzJCPzhVSL6LO0M\u002fmbZkTH89RD\u002fs5SOa\u002fTVFP4g3IBO0I0Y\u002fmqCRWw0GRz9nCisNS91HP2xjEZGXqkg\u002fEXcjgA5wST\u002fs3XiUujBKPxq19gmJ8Eo\u002fMagxNTO0Sz+O0jH1H4FMPzeqFlI\u002fXU0\u002faYEh+eJOTj8WcapCllxPP6snGAJ8RlA\u002fPn4h10vzUD9gzE0d67dRPzBaHzNll1I\u002fcBz5Z5OUUz8lLhMCELJUPxI2gDQo8lU\u002fTquCOMxWVz8XnVM5feFYP6x0pm85k1o\u002f1Nrjj2dsXD9HTxZpw2xeP16iQA+nSWA\u002f+7NQUSJvYT\u002fjRfh4j6ViP+Wpv\u002ftM62M\u002fvQ9AiGY+ZT+MJZR1pZxmP\u002fEkCxamA2g\u002fGC2Ah\u002fBwaT9E8HQnE+JqP\u002fRqvZi8VGw\u002f99mbWNPGbT8MTbg6iTZvPybAkt00UXA\u002frpyTarEEcT+AhQ1rZLVxPzpj7ikrY3I\u002fY3Lj8hQOcz9YDcSzYbZzP1+mRi2BXHQ\u002f\u002fMQLORMBdT82+pJF6aR1P+pii7IISXY\u002fi0W1Ra3udj\u002fyxpKXSpd3P6oT+ymLRHg\u002f\u002fDaZ5Uv4eD\u002fbURQCk7R5P6S709iBe3o\u002fbI1pxEFPez8TS87f7DF8P1baJR50JX0\u002fMs2ys4Qrfj+ZxcoNb0V\u002fP6cPyMoIOoA\u002feW0ul+TbgD\u002fgaoJrNIiBP7nnEJCcPoI\u002fs7HusX\u002f+gj8ucdn4BceDP6cpKOYml4Q\u002f6kH2HbVthT8SsGoua0mGP5dVBnv4KIc\u002fVy6znA0LiD+oyW\u002fAZ+6IP2V1m8na0Yk\u002fDqtHLlq0ij8qjWmiAJWLP69wia0Wc4w\u002f5wkBNhhOjT+rBmfquCWOP6dD1Ubn+Y4\u002fldXay83Kjz9RAt7xaEyQP+aBw\u002fhHspA\u002fTavvEGoXkT8ZJbXnR3yRPyYMoM9l4ZE\u002fA6dQbUtHkj+dwoN2eq6SP5\u002f74iBlF5M\u002f3juQ+mSCkz8Y4cbvsu+TP560oTRhX5Q\u002fSS5QqFfRlD8AmAITU0WVP69kX1\u002fnupU\u002fUvbxqoQxlj\u002ft6djGfqiWP+GUnYoWH5c\u002f++2HNISUlz+Ea4oAAgiYP8It6CHWeJg\u002fBjA\u002fYlvmmD+\u002feM7OB1CZP56bdg1xtZk\u002feAZzKE4Wmj9C4ubUdnKaPylCzmjgyZo\u002fU1C63Zgcmz8EI0FdwGqbP+lYi+mBtJs\u002fT7\u002fivwv6mz+Qy9QUiDucP52po8EWeZw\u002fcSqVaciynD8dznKDm+icP+f31JB7Gp0\u002fYqDMokJInT8yLjMcvXGdP+1zT3Cvlp0\u002fzIhkbN22nT9SInNwEtKdP8iLWNsp6J0\u002f8tBw3Bb5nT+2O+Tb6gSeP8xzYLzZC54\u002fchUTXTsOnj8aQXj3iQyeP2uVczZdB54\u002ftI5DLmL\u002fnT\u002fX6CCpUPWdPzraCITe6Z0\u002faSlgE7LdnT9fEUWxVNGdP0Qr\u002fakmxZ0\u002fSC4HslW5nT\u002f6t0Hr1q2dP1MsTzxlop0\u002fcDDgYoSWnT+srde9iImdP2Di7Vijep0\u002fJuAaVPFonT87DvBhjVOdPwz4ztShOZ0\u002f5XodlXkanT9\u002fxB5ojvWcPzPnIymTypw\u002fXx4u+XiZnD+TdXLqbmKcP4\u002fokj\u002fcJZw\u002fL1YK6VXkmz9jRZVskJ6bPxTYL8JPVZs\u002f9x055FYJmz\u002fTarnNWLuaP8Fvv2rsa5o\u002fCYhNmoQbmj+OG4zcbMqZPyJ0ZbTKeJk\u002fXFm4NKMmmT+M+HW549OYP5xnQntsgJg\u002fsK\u002fgiRssmD8rpjvJ1taXP1yKhsmTgJc\u002f5E\u002fRsVwplz8vUDzmUdGWP1NNiIaoeJY\u002fkP+vRqYflj9b3mZsm8aVP7VcwOHbbZU\u002frb7qTLgVlT8U7ND6d76UPww5iy9UaJQ\u002fcQjRJ3UTlD\u002fzJwvP8L+TP4S70fHKbZM\u002f4TTujPYckz\u002fzZG7JV82SP8KcPD7GfpI\u002fWMkjKg8xkj8askl+9+ORP1G23bc9l5E\u002f5S1qp5tKkT8Y4mtWyP2QP9W+TD16sJA\u002fawH57GlikD+Mh7AzVROQP3tBGkUFho8\u002f0TNyb4rijj\u002fvWeCu\u002fzuOP5jR92FQko0\u002fOeOKX5HljD9SNINWAjaMP40DLVAMhIs\u002flX\u002faSD3Qij+iKZ0lQRuKPxSf\u002f5fYZYk\u002fFsvAt86wiD\u002fGhLM37vyHP2d9mBv3Soc\u002fx1b\u002fupWbhj+AHKCuW++FP9clSgq7RoU\u002fsiZ1BgSihD93dgwCZQGEP8AHppXsZIM\u002fGQvLUI3Mgj8IqjmpIjiCP5wJhqF2p4E\u002fKITotEcagT\u002fAyTalTpCAP9k1BNpDCYA\u002ff0FMI8gJfz++KVNp6AV+PzS9vlOIBn0\u002fLZ6sKmELfD88QqPxRhR7P89JvXMnIXo\u002fcHzAQgcyeT8UxPvz\u002fEZ4P8p3JAorYHc\u002fwnSaHLl9dj+2EDLlzJ91P9hswOiDxnQ\u002fyb9LaO7xcz8OfjQvDCJzP9Tj26bLVnI\u002fzBPWXQuQcT8g433tnc1wP8sXLORPD3A\u002fInGfON6pbj+DST1xpTxtP36uHcPF1ms\u002fuN5CuD54aj8V5hlOSCFpP43xLPBW0mc\u002fUjjDZxmMZj+hQteQcE9lP2OawUthHWQ\u002f2GJ0wwH3Yj8cL5GoY91hP8jQOmJ90WA\u002fS6tmxCioXz9TTZh3VctdPzwyDqjjDFw\u002fnjgBB4dsWj9iR6m6ROlYP67ezyaCgVc\u002fsCV8ayAzVj\u002frnWTLoftUP4lDEjVV2FM\u002fKZuhooPGUj9i+2r7msNRP73u0pZSzVA\u002fvDJ\u002fvIzDTz8eP+NsDf9NP\u002fPch0w5S0w\u002fDVBy7gWnSj8XRDpHLBJJP89b0177jEc\u002fCANV5CMYRj9YT2+5grREP0hpBt\u002fvYkM\u002fFiHF9BUkQj\u002fwwL7yVPhAP9zgVUdivz8\u002fo00d0ZuzPT+\u002f\u002fTFA5cs7P+ipJY8uBjo\u002f3NWcMexfOD\u002fsSjr8PtY2P6ODqDYcZjU\u002f83Zpg3IMND8cbXqVScYyP3OSMdzbkDE\u002fta6WN6ppMD+x5cWqFJ0uPzOEMBFheyw\u002fX\u002fOMqWtrKj86rks\u002fNWsoPxSCcVGMeSY\u002f"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"black","width":2.5},"type":"line","x0":170.0,"x1":170.0,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"annotations":[{"showarrow":false,"text":"observed n_zero = 170","x":170.0,"xanchor":"left","xref":"x","y":1,"yanchor":"top","yref":"y domain"}],"title":{"text":"PPC: n_zero of y  |  P(predicted ≥ observed) = 0.462  (two-sided p = 0.924)"},"xaxis":{"title":{"text":"n_zero(y)"}},"yaxis":{"title":{"text":"Density"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('1cca2080-b179-4b11-8da6-c76ce82c079b');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_stat</span>(<span class="at">stat =</span> <span class="st">"n_zero"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_stat</span>(stat<span class="op">=</span><span class="st">"n_zero"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>The vertical line is the observed number of zeros, the curve the number of zeros in simulated datasets. A plain Poisson model would put the line far to the right of the curve; the zero-inflated model should place it in the middle. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+More checks
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div id="7304cc5a" class="cell" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_rootogram()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="97e3e422-bbc4-4280-aa81-9eb47097be1c" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("97e3e422-bbc4-4280-aa81-9eb47097be1c")) {                    Plotly.newPlot(                        "97e3e422-bbc4-4280-aa81-9eb47097be1c",                        [{"base":[-0.05099744788678784,-0.057891587199234706,0.17014849480325012,-0.1211981024995854,0.13753687588250818,1.1048755586037733,-0.552506983294711,0.1816590212458495,0.04743416490252569,0.015811388300841896],"marker":{"color":"cornflowerblue"},"name":"√Observed (hanging from √Expected)","opacity":0.7,"x":{"dtype":"i1","bdata":"AAECAwQFBgcICQ=="},"y":{"dtype":"f8","bdata":"UWaZy6kTKkDg9mw1QRIlQEk\u002faBHq7h1Ap1ZUWfzCEkCo9Jebd+MBQAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"type":"bar"},{"line":{"color":"black","width":2},"mode":"lines+markers","name":"√Expected count (predictions of y)","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQ=="},"y":{"dtype":"f8","bdata":"eLEzdY35KUDxfhk+nfQkQFHSmnklnR5A7Qta\u002fuBGEkATO5eKJP0CQKKlZf6RrfE\u002fmgH8v7mj3D8HHKNRmkDHP6tX8HVKSag\u002fcjqgTtwwkD8="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"grey","dash":"dash"},"type":"line","x0":0,"x1":1,"xref":"x domain","y0":0,"y1":0,"yref":"y"}],"title":{"text":"PPC: Rootogram — predictions of y"},"xaxis":{"title":{"text":"y"}},"yaxis":{"title":{"text":"√Frequency"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('97e3e422-bbc4-4280-aa81-9eb47097be1c');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_rootogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_rootogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p><code>ppc_rootogram</code>: observed frequency of each count (bars, square-root scale) against the expected frequency (line); the bar at 0 should reach the line.</p>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="mathematical-details" class="level1">
 <h1>Mathematical Details</h1>
@@ -894,6 +1027,13 @@ P(Y_i | \pi_i, \lambda_i) =
 <p><span class="math display">
 \beta_\lambda \sim \text{Normal}(0, 1)
 </span></p>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>10.Zero inflated.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+</ul>
+</section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">Reference(s)</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">

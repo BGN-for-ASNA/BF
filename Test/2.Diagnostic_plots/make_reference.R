@@ -8,7 +8,7 @@
 # fixtures are read/written under <base>/Test/2.Diagnostic_plots/fixtures/.
 
 suppressMessages({
-  for (pkg in c("jsonlite", "bayesplot", "loo", "posterior", "rstantools", "ggplot2")) {
+  for (pkg in c("jsonlite", "bayesplot", "loo", "posterior", "rstantools", "ggplot2", "survival")) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop(sprintf("Required package '%s' is not installed (no installs allowed).", pkg))
     }
@@ -40,6 +40,24 @@ cy <- as.integer(d$count$y)
 cyrep <- as.matrix(d$count$yrep)          # rows = draws
 stopifnot(length(cy) == 30L, nrow(cyrep) == 200L, ncol(cyrep) == 30L)
 
+by <- as.integer(y > stats::median(y))        # binary outcome (30)
+bp <- stats::plogis(yrep)                     # expected values in (0,1), 200 x 30
+eb <- as.data.frame(bayesplot:::ppc_error_binnned_data(by, bp[1:3, , drop = FALSE]))
+error_binned <- list(rep_id = as.integer(eb$rep_id), bin = as.integer(eb$bin),
+                     ey_bar = eb$ey_bar, err_bar = eb$err_bar, se2 = eb$se2)
+
+## ---- survival: Kaplan-Meier overlay (bayesplot ppc_km_overlay) ----------------
+# bayesplot::ppc_km_overlay needs ggfortify (not installed); it only wraps
+# survival::survfit, which we call directly. Observed: (ty, st); each
+# replication: (tyrep[s, ], all events -- predicted data carry no censoring).
+st <- rep(c(1L, 1L, 0L), length.out = length(y))     # status: every 3rd censored
+ty <- exp(y / 2)                                      # positive times (30)
+tyrep <- exp(yrep[1:3, , drop = FALSE] / 2)           # 3 x 30
+km_obs <- survival::survfit(survival::Surv(ty, st) ~ 1)
+km_rep <- lapply(1:3, function(s) survival::survfit(survival::Surv(tyrep[s, ], rep(1L, 30)) ~ 1))
+km <- list(obs = list(time = km_obs$time, surv = km_obs$surv, n_event = km_obs$n.event),
+           rep = lapply(km_rep, function(f) list(time = f$time, surv = f$surv)))
+
 q7 <- function(v, probs) unname(stats::quantile(v, probs = probs, type = 7))
 
 ## ---- continuous: intervals / ribbon ----------------------------------------
@@ -69,6 +87,13 @@ stat_sd_y      <- stats::sd(y)
 stat_sd_yrep   <- apply(yrep, 1L, stats::sd)  # 200
 error_scatter_x <- colMeans(yrep)          # 30
 error_scatter_y <- y                       # 30
+# bayesplot ppc_error_scatter_avg: x = average predictive error y - colMeans(yrep),
+# y = observed y (data columns: value = average error, y_obs = observed).
+esa <- as.data.frame(bayesplot::ppc_error_scatter_avg(y, yrep)$data)
+stopifnot(nrow(esa) == length(y),
+          max(abs(esa$value - (y - colMeans(yrep)))) < 1e-10,
+          max(abs(esa$y_obs - y)) == 0)
+error_scatter_avg <- list(error = as.numeric(esa$value), y_obs = as.numeric(esa$y_obs))
 
 resid <- matrix(y, nrow = nrow(yrep), ncol = ncol(yrep), byrow = TRUE) - yrep  # y[j] - yrep[s, j]
 stopifnot(identical(dim(resid), dim(yrep)))
@@ -77,6 +102,41 @@ error_hist_resid <- lapply(seq_len(nrow(resid)), function(s) as.numeric(resid[s,
 boxplot_q <- c(list(y = q7(y, c(0.25, 0.5, 0.75))),
                stats::setNames(lapply(1:10, function(s) q7(yrep[s, ], c(0.25, 0.5, 0.75))),
                                paste0("yrep_", 1:10)))
+
+## ---- continuous: grouped (bayesplot ppc_stat_grouped / ppc_intervals_grouped) --
+# group = rep(1:3, length.out = length(y)): deterministic, derived from the
+# fixture only (the Python test uses np.arange(30) %% 3 + 1, the same vector).
+group <- rep(1:3, length.out = length(y))
+stopifnot(length(group) == length(y))
+
+sd_g <- as.data.frame(bayesplot:::ppc_stat_data(y, yrep, group = group, stat = "mean"))
+stopifnot(all(c("group", "variable", "value") %in% names(sd_g)))
+stat_grouped <- lapply(sort(unique(group)), function(g) {
+  sub  <- sd_g[sd_g$group == g, , drop = FALSE]
+  reps <- sub[sub$variable != "y", , drop = FALSE]
+  reps <- reps[order(as.integer(sub("yrep_", "", reps$variable))), , drop = FALSE]
+  list(y_obs = sub$value[sub$variable == "y"], yrep = reps$value)
+})
+names(stat_grouped) <- paste0("g", sort(unique(group)))
+stopifnot(all(vapply(stat_grouped, function(s) length(s$yrep) == nrow(yrep) &&
+                                             length(s$y_obs) == 1L, logical(1))))
+
+# cross-check ppc_stat_data(group=) against direct mean(y[g]) / rowMeans(yrep[, g])
+diff_stat_g <- max(unlist(lapply(sort(unique(group)), function(g) {
+  cols <- which(group == g)
+  s <- stat_grouped[[paste0("g", g)]]
+  c(abs(s$y_obs - mean(y[cols])), max(abs(s$yrep - rowMeans(yrep[, cols, drop = FALSE]))))
+})))
+
+ig <- as.data.frame(bayesplot:::ppc_intervals_data(y, yrep, group = group,
+                                                   prob = 0.5, prob_outer = 0.9))
+stopifnot(nrow(ig) == length(y),
+          all(c("y_id", "group", "ll", "l", "m", "h", "hh", "y_obs") %in% names(ig)))
+ig <- ig[order(ig$group, ig$y_id), , drop = FALSE]   # rows: group, then observation
+intervals_grouped <- list(group = as.integer(ig$group), ll = ig$ll, l = ig$l,
+                          m = ig$m, h = ig$h, hh = ig$hh, y_obs = ig$y_obs)
+
+grouped <- list(stat_grouped = stat_grouped, intervals_grouped = intervals_grouped)
 
 ## ---- continuous: LOO-PIT ------------------------------------------------------
 psis <- loo::psis(-log_lik, r_eff = 1)
@@ -147,12 +207,16 @@ ref <- list(
               R = R.version.string),
   continuous = list(
     intervals = intervals, intervals_sorted = intervals_sorted, ribbon = ribbon,
+    grouped = grouped,
     stat_mean_y = stat_mean_y, stat_mean_yrep = stat_mean_yrep,
     stat_sd_y = stat_sd_y, stat_sd_yrep = stat_sd_yrep,
     error_scatter_x = error_scatter_x, error_scatter_y = error_scatter_y,
+    error_scatter_avg = error_scatter_avg,
     error_hist_resid = error_hist_resid, boxplot = boxplot_q, loo_pit = loo_pit
   ),
-  count = list(rootogram = rootogram, bars = bars)
+  count = list(rootogram = rootogram, bars = bars),
+  binary = list(error_binned = error_binned),
+  survival = list(km = km)
 )
 
 jsonlite::write_json(ref, out_path, digits = NA, auto_unbox = TRUE, pretty = FALSE)
@@ -177,6 +241,10 @@ cat(sprintf("cross-check ppc_bars_data  max|diff| l/m/h: %.3e (obs counts: %.3e)
             diff_bars, diff_bars_obs, if (diff_bars == 0 && diff_bars_obs == 0) "MATCH" else "MISMATCH"))
 cat(sprintf("cross-check ppc_intervals_data max|diff| ll..hh: %.3e -> %s\n",
             diff_iv, if (diff_iv == 0) "MATCH" else "MISMATCH"))
+cat(sprintf("cross-check ppc_stat_data(group=) vs mean/rowMeans max|diff|: %.3e -> %s\n",
+            diff_stat_g, if (diff_stat_g == 0) "MATCH" else "MISMATCH"))
+cat("grouped: levels", paste(sort(unique(group)), collapse = ","),
+    "| intervals_grouped rows:", nrow(ig), "\n")
 cat("ppc_loo_pit_data $pit field present:", !is.null(pit_bayesplot),
     "(used rstantools::loo_pit instead)\n")
 cat("wrote", out_path, "\n")

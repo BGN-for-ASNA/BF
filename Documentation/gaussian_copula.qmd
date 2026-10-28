@@ -221,7 +221,6 @@ m.sampler.print_summary()
 
 ```r
 library(tidyverse)
-library(patchwork)
 
 n_obs <- 1000
 rho <- 0.6

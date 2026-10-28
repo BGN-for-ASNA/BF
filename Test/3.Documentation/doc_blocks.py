@@ -7,13 +7,29 @@ A block is left out of the execution tests when its fence carries the
 ``.no-test`` class (```{.python .no-test}, ```{.r .no-test},
 ```{.julia .no-test}) or its code contains ``# doc-test: skip``: install
 commands, GPU-only code, placeholders such as ``<your model>``.
+
+Data files that the examples open by name live in ``data/`` next to this
+module; ``copy_data`` copies them into the directory a page runs in.
 """
 import pathlib
 import re
+import shutil
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCS = ROOT / "Documentation"
 START_PAGES = sorted((DOCS / "start").glob("*.qmd"))
+_NOT_MODEL_PAGES = {"index", "get started", "0.Introduction"}
+MODEL_PAGES = sorted(p for p in DOCS.glob("*.qmd") if p.stem not in _NOT_MODEL_PAGES)
+
+# Data files the examples read from the working directory (e.g. 'BNN.json'):
+# copied into the temporary directory each page runs in.
+DATA = pathlib.Path(__file__).resolve().parent / "data"
+
+
+def copy_data(dest):
+    """Copy the files of Test/3.Documentation/data into ``dest``."""
+    if DATA.is_dir():
+        shutil.copytree(DATA, dest, dirs_exist_ok=True)
 
 # Language of a fence info string: ```python, ``` R, ```{r}, ```{.julia .no-test}
 LANGS = {"python": "python", "r": "r", "julia": "julia"}

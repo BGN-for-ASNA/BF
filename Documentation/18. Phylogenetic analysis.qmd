@@ -86,26 +86,42 @@ m.fit(model)
 
 ``` r
 library(BayesForge)
-m <- importBF(platform="cpu")
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# Load and prepare data
+df <- read.csv(m$load$phylo_simple(only_path = TRUE))
+L_df <- read.csv(m$load$phylo_L_simple(only_path = TRUE))
+L <- as.matrix(L_df)
+species <- colnames(L_df)                      # species order = columns of L
+df$phylo_idx <- match(df$phylo, species) - 1L  # 0-based indices
+
+m$data_on_model <- list(
+    y = jnp$array(df$y),
+    x = jnp$array(df$x),
+    phylo_idx = jnp$array(as.integer(df$phylo_idx), dtype = jnp$int32),
+    L = jnp$array(L)
+)
 
 model <- function(y, x, phylo_idx, L) {
     # Priors
-    intercept <- bf.dist.normal(0, 50, name = "intercept")
-    b_x <- bf.dist.normal(0, 10, name = "b_x")
-    
-    sd_phylo <- bf.dist.half_normal(20, name = "sd_phylo")
-    sigma <- bf.dist.half_normal(20, name = "sigma")
+    intercept <- m$dist$normal(0, 50, name = "intercept")
+    b_x <- m$dist$normal(0, 10, name = "b_x")
 
-    # Phylogenetic effects
-    num_species <- dim(L)[1]
-    z_phylo <- bf.dist.normal(rep(0, num_species), 1.0, name = "z_phylo")
-    u_phylo <- (L %*% z_phylo) * sd_phylo
+    # Standard deviation for phylogenetic effect
+    sd_phylo <- m$dist$half_normal(20, name = "sd_phylo")
+    sigma <- m$dist$half_normal(20, name = "sigma")
+
+    # Phylogenetic random effect (non-centered parameterization)
+    num_species <- as.integer(L$shape[[1L]])  # shape arrives as an R list
+    z_phylo <- m$dist$normal(jnp$zeros(num_species), 1.0, name = "z_phylo")
+    u_phylo <- jnp$matmul(L, z_phylo) * sd_phylo
 
     # Linear predictor
     mu <- intercept + b_x * x + u_phylo[phylo_idx]
-    
+
     # Likelihood
-    bf.dist.normal(mu, sigma, name = "obs", obs = y)
+    m$dist$normal(mu, sigma, name = "obs", obs = y)
 }
 
 m$fit(model)
@@ -115,26 +131,43 @@ m$fit(model)
 
 ``` julia
 using PyBayesForge
+using PythonCall
+using CSV, DataFrames
 m = importBF(platform="cpu")
 
-@BF function model(y, x, phylo_idx, L):
-    # Priors
-    intercept = m.dist.normal(0, 50, name = "intercept")
-    b_x = m.dist.normal(0, 10, name = "b_x")
-    
-    sd_phylo = m.dist.half_normal(20, name = "sd_phylo")
-    sigma = m.dist.half_normal(20, name = "sigma")
+# Load and prepare data
+df = CSV.read(pyconvert(String, m.load.phylo_simple(only_path=true).py), DataFrame)
+L_df = CSV.read(pyconvert(String, m.load.phylo_L_simple(only_path=true).py), DataFrame)
+L = Matrix(L_df)
+species = names(L_df)                            # species order = columns of L
+phylo_idx = [findfirst(==(s), species) for s in df.phylo] .- 1  # 0-based indices
 
-    # Phylogenetic effects
-    num_species = size(L, 1)
-    z_phylo = m.dist.normal(zeros(num_species), 1.0, name = "z_phylo")
-    u_phylo = (L * z_phylo) .* sd_phylo
+m.data_on_model = pydict(
+    y = jnp.array(df.y),
+    x = jnp.array(df.x),
+    phylo_idx = jnp.array(phylo_idx; dtype = jnp.int32),
+    L = jnp.array(L)
+)
+
+@BF function model(y, x, phylo_idx, L)
+    # Priors
+    intercept = m.dist.normal(0, 50; name = "intercept")
+    b_x = m.dist.normal(0, 10; name = "b_x")
+
+    # Standard deviation for phylogenetic effect
+    sd_phylo = m.dist.half_normal(20; name = "sd_phylo")
+    sigma = m.dist.half_normal(20; name = "sigma")
+
+    # Phylogenetic random effect (non-centered parameterization)
+    num_species = L.shape[0]
+    z_phylo = m.dist.normal(jnp.zeros(num_species), 1.0; name = "z_phylo")
+    u_phylo = jnp.matmul(L, z_phylo) * sd_phylo
 
     # Linear predictor
-    mu = intercept .+ b_x .* x .+ u_phylo[phylo_idx]
-    
+    mu = intercept + b_x * x + u_phylo[phylo_idx]
+
     # Likelihood
-    m.dist.normal(mu, sigma, name = "obs", obs = y)
+    m.dist.normal(mu, sigma; name = "obs", obs = y)
 end
 
 m.fit(model)
@@ -223,50 +256,103 @@ m.fit(model)
 ## R
 
 ``` r
-model <- function(y, x, phylo_idx, obs_idx, L) {
-    intercept <- bf.dist.normal(0, 5, name = "intercept")
-    b_x <- bf.dist.normal(0, 2, name = "b_x")
-    
-    sd_phylo <- bf.dist.half_normal(1, name = "sd_phylo")
-    sd_obs <- bf.dist.half_normal(1, name = "sd_obs")
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
 
-    num_species <- dim(L)[1]
-    z_p <- bf.dist.normal(rep(0, num_species), 1, name = "z_p")
-    u_p <- (L %*% z_p) * sd_phylo
-    
-    z_o <- bf.dist.normal(rep(0, length(y)), 1, name = "z_o")
+# Load and prepare data
+df <- read.csv(m$load$phylo_poisson(only_path = TRUE))
+L_df <- read.csv(m$load$phylo_L_poisson(only_path = TRUE))
+L <- as.matrix(L_df)
+species <- colnames(L_df)                      # species order = columns of L
+df$phylo_idx <- match(df$phylo, species) - 1L  # 0-based indices
+
+m$data_on_model <- list(
+    y = jnp$array(df$y),
+    x = jnp$array(df$x),
+    phylo_idx = jnp$array(as.integer(df$phylo_idx), dtype = jnp$int32),
+    obs_idx = jnp$arange(as.integer(nrow(df)), dtype = jnp$int32),
+    L = jnp$array(L)
+)
+
+model <- function(y, x, phylo_idx, obs_idx, L) {
+    # Priors
+    intercept <- m$dist$normal(0, 5, name = "intercept")
+    b_x <- m$dist$normal(0, 2, name = "b_x")
+
+    sd_phylo <- m$dist$half_normal(1, name = "sd_phylo")
+    sd_obs <- m$dist$half_normal(1, name = "sd_obs")
+
+    # Effects (non-centered parameterization)
+    num_species <- as.integer(L$shape[[1L]])  # shape arrives as an R list
+    z_p <- m$dist$normal(jnp$zeros(num_species), 1.0, name = "z_p")
+    u_p <- jnp$matmul(L, z_p) * sd_phylo
+
+    n_obs <- as.integer(y$shape[[1L]])
+    z_o <- m$dist$normal(jnp$zeros(n_obs), 1.0, name = "z_o")
     u_o <- z_o * sd_obs
 
+    # Predictor (log link)
     mu <- intercept + b_x * x + u_p[phylo_idx] + u_o[obs_idx]
-    bf.dist.poisson(exp(mu), name = "obs", obs = y)
+
+    # Likelihood
+    m$dist$poisson(jnp$exp(mu), name = "obs", obs = y)
 }
+
+m$fit(model)
 ```
 
 ## Julia
 
 ``` julia
-@BF function model(y, x, phylo_idx, obs_idx, L):
-    intercept = m.dist.normal(0, 5, name = "intercept")
-    b_x = m.dist.normal(0, 2, name = "b_x")
-    
-    sd_phylo = m.dist.half_normal(1, name = "sd_phylo")
-    sd_obs = m.dist.half_normal(1, name = "sd_obs")
+using PyBayesForge
+using PythonCall
+using CSV, DataFrames
+m = importBF(platform="cpu")
 
-    num_species = size(L, 1)
-    z_p = m.dist.normal(zeros(num_species), 1, name = "z_p")
-    u_p = (L * z_p) .* sd_phylo
-    
-    z_o = m.dist.normal(zeros(length(y)), 1, name = "z_o")
-    u_o = z_o .* sd_obs
+# Load and prepare data
+df = CSV.read(pyconvert(String, m.load.phylo_poisson(only_path=true).py), DataFrame)
+L_df = CSV.read(pyconvert(String, m.load.phylo_L_poisson(only_path=true).py), DataFrame)
+L = Matrix(L_df)
+species = names(L_df)                            # species order = columns of L
+phylo_idx = [findfirst(==(s), species) for s in df.phylo] .- 1  # 0-based indices
 
-    mu = intercept .+ b_x .* x .+ u_p[phylo_idx] .+ u_o[obs_idx]
-    m.dist.poisson(exp.(mu), name = "obs", obs = y)
+m.data_on_model = pydict(
+    y = jnp.array(df.y),
+    x = jnp.array(df.x),
+    phylo_idx = jnp.array(phylo_idx; dtype = jnp.int32),
+    obs_idx = jnp.arange(length(df.y); dtype = jnp.int32),
+    L = jnp.array(L)
+)
+
+@BF function model(y, x, phylo_idx, obs_idx, L)
+    # Priors
+    intercept = m.dist.normal(0, 5; name = "intercept")
+    b_x = m.dist.normal(0, 2; name = "b_x")
+
+    sd_phylo = m.dist.half_normal(1; name = "sd_phylo")
+    sd_obs = m.dist.half_normal(1; name = "sd_obs")
+
+    # Effects (non-centered parameterization)
+    num_species = L.shape[0]
+    z_p = m.dist.normal(jnp.zeros(num_species), 1.0; name = "z_p")
+    u_p = jnp.matmul(L, z_p) * sd_phylo
+
+    n_obs = y.shape[0]
+    z_o = m.dist.normal(jnp.zeros(n_obs), 1.0; name = "z_o")
+    u_o = z_o * sd_obs
+
+    # Predictor (log link)
+    mu = intercept + b_x * x + u_p[phylo_idx] + u_o[obs_idx]
+
+    # Likelihood
+    m.dist.poisson(jnp.exp(mu); name = "obs", obs = y)
 end
+
+m.fit(model)
 ```
 :::
 ### Mathematical Details
-
-Here is the refined version of the mathematical specifications. I have aligned the notation with the rigorous standards established in the previous sections, formalized the matrix/vector notation, and elevated the variable descriptions to explicitly capture the statistical mechanics of the model.
 
 ***
 
@@ -353,41 +439,102 @@ m.fit(model)
 ## R
 
 ``` r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# Load and prepare data
+df <- read.csv(m$load$phylo_repeated(only_path = TRUE))
+L_df <- read.csv(m$load$phylo_L_repeated(only_path = TRUE))
+L <- as.matrix(L_df)
+species <- colnames(L_df)                         # species order = columns of L
+df$phylo_idx <- match(df$phylo, species) - 1L     # 0-based indices
+df$species_idx <- match(df$species, species) - 1L
+
+m$data_on_model <- list(
+    y = jnp$array(df$y),
+    x = jnp$array(df$x),
+    phylo_idx = jnp$array(as.integer(df$phylo_idx), dtype = jnp$int32),
+    species_idx = jnp$array(as.integer(df$species_idx), dtype = jnp$int32),
+    L = jnp$array(L)
+)
+
 model <- function(y, x, phylo_idx, species_idx, L) {
-    intercept <- bf.dist.normal(0, 50, name = "Intercept")
-    b_x <- bf.dist.normal(0, 10, name = "b_x")
+    # Priors
+    intercept <- m$dist$normal(0, 50, name = "Intercept")
+    b_x <- m$dist$normal(0, 10, name = "b_x")
 
-    sd_p <- bf.dist.half_normal(20, name = "sd_p")
-    sd_s <- bf.dist.half_normal(20, name = "sd_s")
-    sigma <- bf.dist.half_normal(20, name = "sigma")
+    sd_p <- m$dist$half_normal(20, name = "sd_p")
+    sd_s <- m$dist$half_normal(20, name = "sd_s")
+    sigma <- m$dist$half_normal(20, name = "sigma")
 
-    num_sp <- dim(L)[1]
-    u_p <- (L %*% bf.dist.normal(rep(0, num_sp), 1, name="z_p")) * sd_p
-    u_s <- bf.dist.normal(rep(0, num_sp), 1, name="z_s") * sd_s
+    # Effects (non-centered parameterization)
+    num_sp <- as.integer(L$shape[[1L]])  # shape arrives as an R list
+    z_p <- m$dist$normal(jnp$zeros(num_sp), 1.0, name = "z_p")
+    u_p <- jnp$matmul(L, z_p) * sd_p
 
+    z_s <- m$dist$normal(jnp$zeros(num_sp), 1.0, name = "z_s")
+    u_s <- z_s * sd_s
+
+    # Predictor
     mu <- intercept + b_x * x + u_p[phylo_idx] + u_s[species_idx]
-    bf.dist.normal(mu, sigma, obs = y)
+
+    # Likelihood
+    m$dist$normal(mu, sigma, name = "obs", obs = y)
 }
+
+m$fit(model)
 ```
 
 ## Julia
 
 ``` julia
-@BF function model(y, x, phylo_idx, species_idx, L):
-    intercept = m.dist.normal(0, 50, name = "Intercept")
-    b_x = m.dist.normal(0, 10, name = "b_x")
+using PyBayesForge
+using PythonCall
+using CSV, DataFrames
+m = importBF(platform="cpu")
 
-    sd_p = m.dist.half_normal(20, name = "sd_p")
-    sd_s = m.dist.half_normal(20, name = "sd_s")
-    sigma = m.dist.half_normal(20, name = "sigma")
+# Load and prepare data
+df = CSV.read(pyconvert(String, m.load.phylo_repeated(only_path=true).py), DataFrame)
+L_df = CSV.read(pyconvert(String, m.load.phylo_L_repeated(only_path=true).py), DataFrame)
+L = Matrix(L_df)
+species = names(L_df)                             # species order = columns of L
+phylo_idx = [findfirst(==(s), species) for s in df.phylo] .- 1    # 0-based indices
+species_idx = [findfirst(==(s), species) for s in df.species] .- 1
 
-    num_sp = size(L, 1)
-    u_p = (L * m.dist.normal(zeros(num_sp), 1, name="z_p")) .* sd_p
-    u_s = m.dist.normal(zeros(num_sp), 1, name="z_s") .* sd_s
+m.data_on_model = pydict(
+    y = jnp.array(df.y),
+    x = jnp.array(df.x),
+    phylo_idx = jnp.array(phylo_idx; dtype = jnp.int32),
+    species_idx = jnp.array(species_idx; dtype = jnp.int32),
+    L = jnp.array(L)
+)
 
+@BF function model(y, x, phylo_idx, species_idx, L)
+    # Priors
+    intercept = m.dist.normal(0, 50; name = "Intercept")
+    b_x = m.dist.normal(0, 10; name = "b_x")
+
+    sd_p = m.dist.half_normal(20; name = "sd_p")
+    sd_s = m.dist.half_normal(20; name = "sd_s")
+    sigma = m.dist.half_normal(20; name = "sigma")
+
+    # Effects (non-centered parameterization)
+    num_sp = L.shape[0]
+    z_p = m.dist.normal(jnp.zeros(num_sp), 1.0; name = "z_p")
+    u_p = jnp.matmul(L, z_p) * sd_p
+
+    z_s = m.dist.normal(jnp.zeros(num_sp), 1.0; name = "z_s")
+    u_s = z_s * sd_s
+
+    # Predictor
     mu = intercept + b_x * x + u_p[phylo_idx] + u_s[species_idx]
-    m.dist.normal(mu, sigma, obs = y)
+
+    # Likelihood
+    m.dist.normal(mu, sigma; name = "obs", obs = y)
 end
+
+m.fit(model)
 ```
 :::
 
@@ -476,33 +623,92 @@ m.fit(model)
 ## R
 
 ``` r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# Load and prepare data
+df <- read.csv(m$load$phylo_meta(only_path = TRUE))
+L_df <- read.csv(m$load$phylo_L_meta(only_path = TRUE))
+L <- as.matrix(L_df)
+species <- colnames(L_df)                          # species order = columns of L
+df$phylo_idx <- match(df$phylo, species) - 1L      # 0-based indices
+df$se <- sqrt(1 / (df$N - 3))
+
+m$data_on_model <- list(
+    y = jnp$array(df$y),
+    se = jnp$array(df$se),
+    phylo_idx = jnp$array(as.integer(df$phylo_idx), dtype = jnp$int32),
+    obs_idx = jnp$arange(as.integer(nrow(df)), dtype = jnp$int32),
+    L = jnp$array(L)
+)
+
 model <- function(y, se, phylo_idx, obs_idx, L) {
-    intercept <- bf.dist.normal(0, 10, name = "Intercept")
-    sd_o <- bf.dist.half_normal(10, name = "sd_o")
-    sd_p <- bf.dist.half_normal(10, name = "sd_p")
+    # Priors
+    intercept <- m$dist$normal(0.0, 10.0, name = "Intercept")
+    sd_obs <- m$dist$half_normal(10, name = "sd_obs")
+    sd_phylo <- m$dist$half_normal(10, name = "sd_phylo")
 
-    u_p <- (L %*% bf.dist.normal(rep(0, dim(L)[1]), 1, name="z_p")) * sd_p
-    u_o <- bf.dist.normal(rep(0, length(y)), 1, name="z_o") * sd_o
+    # Effects
+    num_sp <- as.integer(L$shape[[1L]])
+    num_obs <- as.integer(y$shape[[1L]])
+    u_p <- jnp$matmul(L, m$dist$normal(jnp$zeros(num_sp), 1.0, name = "z_p")) * sd_phylo
+    u_o <- m$dist$normal(jnp$zeros(num_obs), 1.0, name = "z_o") * sd_obs
 
+    # Mean
     mu <- intercept + u_p[phylo_idx] + u_o[obs_idx]
-    bf.dist.normal(mu, se, obs = y)
+
+    # Likelihood (Normal with fixed SE)
+    m$dist$normal(mu, se, name = "Y", obs = y)
 }
+
+m$fit(model)
 ```
 
 ## Julia
 
 ``` julia
-@BF function model(y, se, phylo_idx, obs_idx, L):
-    intercept = m.dist.normal(0, 10, name = "Intercept")
-    sd_o = m.dist.half_normal(10, name = "sd_o")
-    sd_p = m.dist.half_normal(10, name = "sd_p")
+using PyBayesForge
+using PythonCall
+using CSV, DataFrames
+m = importBF(platform="cpu")
 
-    u_p = (L * m.dist.normal(zeros(size(L, 1)), 1, name="z_p")) .* sd_p
-    u_o = m.dist.normal(zeros(length(y)), 1, name="z_o") .* sd_o
+# Load and prepare data
+df = CSV.read(pyconvert(String, m.load.phylo_meta(only_path=true).py), DataFrame)
+L_df = CSV.read(pyconvert(String, m.load.phylo_L_meta(only_path=true).py), DataFrame)
+L = Matrix(L_df)
+species = names(L_df)                              # species order = columns of L
+phylo_idx = [findfirst(==(s), species) for s in df.phylo] .- 1  # 0-based indices
+se = sqrt.(1.0 ./ (df.N .- 3.0))
 
-    mu = intercept .+ u_p[phylo_idx] .+ u_o[obs_idx]
-    m.dist.normal(mu, se, obs = y)
+m.data_on_model = pydict(
+    y = jnp.array(df.y),
+    se = jnp.array(se),
+    phylo_idx = jnp.array(phylo_idx; dtype = jnp.int32),
+    obs_idx = jnp.arange(nrow(df); dtype = jnp.int32),
+    L = jnp.array(L)
+)
+
+@BF function model(y, se, phylo_idx, obs_idx, L)
+    # Priors
+    intercept = m.dist.normal(0.0, 10.0; name = "Intercept")
+    sd_obs = m.dist.half_normal(10; name = "sd_obs")
+    sd_phylo = m.dist.half_normal(10; name = "sd_phylo")
+
+    # Effects
+    num_sp = L.shape[0]
+    num_obs = y.shape[0]
+    u_p = jnp.matmul(L, m.dist.normal(jnp.zeros(num_sp), 1.0; name = "z_p")) * sd_phylo
+    u_o = m.dist.normal(jnp.zeros(num_obs), 1.0; name = "z_o") * sd_obs
+
+    # Mean
+    mu = intercept + u_p[phylo_idx] + u_o[obs_idx]
+
+    # Likelihood (Normal with fixed SE)
+    m.dist.normal(mu, se; name = "Y", obs = y)
 end
+
+m.fit(model)
 ```
 :::
 
@@ -588,54 +794,149 @@ m.fit(model)
 ## R
 
 ``` r
-model <- function(y, x, phylo_idx, L_A) {
-    intercept <- bf.dist.normal(0, 10, name = "Intercept")
-    b_x <- bf.dist.normal(0, 10, name = "b_x")
-    sigma <- bf.dist.half_normal(5, name = "sigma")
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
 
-    sd_a <- bf.dist.half_normal(10, name = "sd_a")
-    sd_b <- bf.dist.half_normal(10, name = "sd_b")
-    L_corr <- bf.dist.lkj_cholesky(2, 2.0, name = "L_corr")
-    
-    L_sigma <- diag(c(sd_a, sd_b)) %*% L_corr
-    
-    num_sp <- dim(L_A)[1]
-    z <- bf.dist.normal(matrix(0, num_sp, 2), 1, name = "z")
-    U <- (L_A %*% z) %*% t(L_sigma)
-    
-    u_a <- U[, 1]
-    u_b <- U[, 2]
-    
+# Load and prepare data
+df <- read.csv(m$load$phylo_slopes(only_path = TRUE))
+L_df <- read.csv(m$load$phylo_L_slopes(only_path = TRUE))
+L_A <- as.matrix(L_df)
+species <- colnames(L_df)                         # species order = columns of L_A
+df$phylo_idx <- match(df$phylo, species) - 1L     # 0-based indices
+
+m$data_on_model <- list(
+    y = jnp$array(df$y),
+    x = jnp$array(df$x),
+    phylo_idx = jnp$array(as.integer(df$phylo_idx), dtype = jnp$int32),
+    L_A = jnp$array(L_A)
+)
+
+model <- function(y, x, phylo_idx, L_A) {
+    # Population-level effects
+    intercept <- m$dist$normal(0.0, 10.0, name = "Intercept")
+    b_x <- m$dist$normal(0.0, 10.0, name = "b_x")
+    sigma <- m$dist$half_normal(5, name = "sigma")
+
+    # Group-level sd and correlation
+    sd_a <- m$dist$half_normal(10, name = "sd_a")
+    sd_b <- m$dist$half_normal(10, name = "sd_b")
+    L_corr <- m$dist$lkj_cholesky(2L, concentration = 2.0, name = "L_corr")
+
+    # Combined L_sigma = diag(sds) @ L_corr
+    L_sigma <- jnp$matmul(jnp$diag(jnp$stack(list(sd_a, sd_b))), L_corr)
+
+    # Standardized species effects (M x 2)
+    num_sp <- reticulate::tuple(as.integer(L_A$shape[[1L]]), 2L)
+    z <- m$dist$normal(jnp$zeros(num_sp), 1.0, name = "z")
+    U <- jnp$matmul(jnp$matmul(L_A, z), L_sigma$T)
+
+    u_a <- U$`__getitem__`(reticulate::tuple(reticulate::import_builtins()$slice(NULL), 0L))
+    u_b <- U$`__getitem__`(reticulate::tuple(reticulate::import_builtins()$slice(NULL), 1L))
+
     mu <- intercept + u_a[phylo_idx] + (b_x + u_b[phylo_idx]) * x
-    bf.dist.normal(mu, sigma, name = "obs", obs = y)
+    m$dist$normal(mu, sigma, name = "obs", obs = y)
 }
+
+m$fit(model)
 ```
 
 ## Julia
 
 ``` julia
-@BF function model(y, x, phylo_idx, L_A):
-    intercept = m.dist.normal(0, 10, name = "Intercept")
-    b_x = m.dist.normal(0, 10, name = "b_x")
-    sigma = m.dist.half_normal(5, name = "sigma")
+using PyBayesForge
+using PythonCall
+using CSV, DataFrames
+m = importBF(platform="cpu")
 
-    sd_a = m.dist.half_normal(10, name = "sd_a")
-    sd_b = m.dist.half_normal(10, name = "sd_b")
-    L_cor = m.dist.lkj_cholesky(2, 2.0, name = "L_cor")
-    
-    L_sigma = diagm([sd_a, sd_b]) * L_cor
-    
-    num_sp = size(L_A, 1)
-    z = m.dist.normal(zeros(num_sp, 2), 1, name = "z")
-    U = (L_A * z) * transpose(L_sigma)
-    
-    u_a = U[:, 1]
-    u_b = U[:, 2]
-    
-    mu = intercept .+ u_a[phylo_idx] .+ (b_x .+ u_b[phylo_idx]) .* x
-    m.dist.normal(mu, sigma, name = "obs", obs = y)
+# Load and prepare data
+df = CSV.read(pyconvert(String, m.load.phylo_slopes(only_path=true).py), DataFrame)
+L_df = CSV.read(pyconvert(String, m.load.phylo_L_slopes(only_path=true).py), DataFrame)
+L_A = Matrix(L_df)
+species = names(L_df)                              # species order = columns of L_A
+phylo_idx = [findfirst(==(s), species) for s in df.phylo] .- 1  # 0-based indices
+
+m.data_on_model = pydict(
+    y = jnp.array(df.y),
+    x = jnp.array(df.x),
+    phylo_idx = jnp.array(phylo_idx; dtype = jnp.int32),
+    L_A = jnp.array(L_A)
+)
+
+@BF function model(y, x, phylo_idx, L_A)
+    # Population-level effects
+    intercept = m.dist.normal(0.0, 10.0; name = "Intercept")
+    b_x = m.dist.normal(0.0, 10.0; name = "b_x")
+    sigma = m.dist.half_normal(5; name = "sigma")
+
+    # Group-level sd and correlation
+    sd_a = m.dist.half_normal(10; name = "sd_a")
+    sd_b = m.dist.half_normal(10; name = "sd_b")
+    L_corr = m.dist.lkj_cholesky(2; concentration = 2.0, name = "L_corr")
+
+    # Combined L_sigma = diag(sds) @ L_corr
+    L_sigma = jnp.matmul(jnp.diag(jnp.stack(pylist([sd_a, sd_b]))), L_corr)
+
+    # Standardized species effects (M x 2)
+    num_sp = pytuple([L_A.shape[0], 2])
+    z = m.dist.normal(jnp.zeros(num_sp), 1.0; name = "z")
+    U = jnp.matmul(jnp.matmul(L_A, z), L_sigma.T)
+
+    u_a = U[pybuiltins.slice(nothing), 0]
+    u_b = U[pybuiltins.slice(nothing), 1]
+
+    mu = intercept + u_a[phylo_idx] + (b_x + u_b[phylo_idx]) * x
+    m.dist.normal(mu, sigma; name = "obs", obs = y)
 end
+
+m.fit(model)
 ```
+:::
+
+### Posterior predictive checks
+
+Are the leave-one-out predictive distributions calibrated?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_loo_pit()
+```
+
+#### R
+```r
+m$diag$ppc_loo_pit()
+```
+
+#### Julia
+```julia
+m.diag.ppc_loo_pit()
+```
+:::
+
+For each species, the LOO-PIT value is the rank of the observed value in its leave-one-out predictive distribution; with a calibrated model they are uniform, so the observed curve stays inside the band of uniform curves. A U shape means predictions too narrow, a hump too wide. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals()
+```
+
+#### R
+```r
+m$diag$ppc_intervals()
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals()
+```
+:::
+
+Observed values with their 50 % and 90 % predictive intervals.
 :::
 
 ### Mathematical Details
@@ -664,8 +965,10 @@ Where:
 
 * $\sigma$ is the residual standard deviation capturing intra-specific variance or measurement error.
 
-Here is the drafted notes section, strictly maintaining the rigorous academic tone, precise mathematical terminology, and formal markdown structure we have established for your documentation.
+## Model validation tests
 
+- [Comparison with brms](https://github.com/BGN-for-ASNA/BF/tree/main/Test/9.Phylogenic%20analysis): five phylogenetic multilevel models (simple, Poisson, repeated measures, meta-analysis, varying slopes) fitted with BayesForge and brms, posteriors compared.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes{#notes}
 

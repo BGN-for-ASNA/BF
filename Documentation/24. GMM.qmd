@@ -89,26 +89,36 @@ m.plot(X=data,sampler=m.sampler) # Prebuild plot function for GMM
 
 ## Julia
 ```julia
-@BF function gmm(data, K, initial_means)
-    D = data.shape[1] 
+using PyBayesForge
+using PythonCall
+
+m = importBF(platform="cpu")
+
+# Generate synthetic data
+sk_datasets = pyimport("sklearn.datasets")
+output = sk_datasets.make_blobs(n_samples=500, centers=8, cluster_std=0.8, center_box=(-10, 10), random_state=101)
+data = output[0]
+
+# The model
+@BF function gmm(data, K, initial_means) # Here K is the *exact* number of clusters
+    D = data.shape[1]  # Number of features
     alpha_prior = 0.5 * jnp.ones(K)
-    w = m.dist.dirichlet(concentration=alpha_prior, name="weights") 
+    w = m.dist.dirichlet(concentration=alpha_prior, name="weights")
 
     # We capture the output of the pywith block
     # The block returns a tuple (mu, scale_tril)
-    mu, scale_tril = pywith(m.dist.plate("components", K)) do _
+    mu, scale_tril = pywith(m.dist.plate("components", K)) do _ # Use fixed K
         mu_inner = m.dist.multivariate_normal(
-            loc=initial_means, 
-            covariance_matrix=0.1*jnp.eye(D), 
+            loc=initial_means,
+            covariance_matrix=0.1*jnp.eye(D),
             name="mu"
-        )        
-        
+        )
+
         sigma = m.dist.half_cauchy(1, shape=(D,), event=1, name="sigma")
         Lcorr = m.dist.lkj_cholesky(dimension=D, concentration=1.0, name="Lcorr")
 
-        # FIX: Use expand_dims instead of slicing
         scale_tril_inner = jnp.expand_dims(sigma, -1) * Lcorr
-        
+
         # Return them so they are available outside
         (mu_inner, scale_tril_inner)
     end
@@ -121,9 +131,18 @@ m.plot(X=data,sampler=m.sampler) # Prebuild plot function for GMM
     )
 end
 
-# Run
-m.fit(gmm)
-m.summary()
+# Kmeans clustering to initiate the means
+m.ml.KMEANS(data, n_clusters=8)
+m.data_on_model = pydict(data = data, K = 8)
+m.data_on_model["initial_means"] = m.ml.results["centroids"]
+
+m.fit(gmm, progress_bar=false) # Optimize model parameters through MCMC sampling
+
+# Prebuild plot function for GMM
+# (Julia functions have no __name__, so m.plot cannot dispatch on the model
+#  name; call the GMM plot function directly)
+gmm_module = pyimport("BayesForge.Models.GMM")
+@pyplot gmm_module.plot_gmm(data, sampler=m.sampler)
 ```
 
 :::
@@ -232,6 +251,11 @@ Where :
 
 *   $\pi$ is a vector of $K$ cluster weights.
 
+
+## Model validation tests
+
+- [Comparison with scikit-learn](https://github.com/BGN-for-ASNA/BF/tree/main/Test/11.MGM%20and%20DPMM): `7.MGM_DPM_Similarity_Test.py` compares the BayesForge mixture and Dirichlet-process clusterings with reference clusterings.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 

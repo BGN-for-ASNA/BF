@@ -128,38 +128,32 @@ jnp = reticulate::import('jax.numpy')
 m=importBF(platform='cpu')
 
 # Import data ------------------------------------------------
-m$data(paste(system.file(package = "BayesForge"),"/data/Sim data multivariatenormal.csv", sep = ''), sep=',')
-m$data_to_model(list('cafe', 'wait', 'afternoon'))
-
-# Import data ------------------------------------------------
-m$data(paste(system.file(package = "BayesForge"),"/data/Sim data multivariatenormal.csv", sep = ''), sep=',')
-m$data_to_model(list('cafe', 'wait', 'afternoon'))
-m$data_on_model
+data_path = m$load$sim_multivariate_normal(only_path = TRUE)
+m$data(data_path, sep = ',')
+m$data_on_model <- list(
+  cafe = jnp$array(as.integer(m$df$cafe), dtype = jnp$int32),
+  wait = jnp$array(as.numeric(m$df$wait), dtype = jnp$float32),
+  N_cafes = as.integer(length(unique(m$df$cafe))),
+  afternoon = jnp$array(as.numeric(m$df$afternoon), dtype = jnp$float32)
+)
 
 # Define model ------------------------------------------------
-model <- function(cafe, afternoon, wait, N_cafes = as.integer(20) ){
-  a = bf.dist.normal(5, 2, name = 'a')
-  b = bf.dist.normal(-1, 0.5, name = 'b')
-  sigma_cafe = bf.dist.exponential(1, shape= c(2), name = 'sigma_cafe')
-  sigma = bf.dist.exponential( 1, name = 'sigma')
-  Rho = bf.dist.lkj(as.integer(2), as.integer(2), name = 'Rho')
-  cov = jnp$outer(sigma_cafe, sigma_cafe) * Rho
-  
-  a_cafe_b_cafe = bf.dist.multivariate_normal(
-    jnp$squeeze(jnp$stack(list(a, b))), 
-    cov, 
-    shape = c(N_cafes), name = 'a_cafe')  
-  
-  a_cafe = a_cafe_b_cafe[, 0]
-  b_cafe = a_cafe_b_cafe[, 1]
-  
-  mu = a_cafe[cafe] + b_cafe[cafe] * afternoon
-  
-  bf.dist.normal(mu, sigma, obs=wait)
+model <- function(cafe, wait, N_cafes, afternoon){
+  sigma = m$dist$exponential(1, name = 'sigma')
+
+  veff = m$effects$varying_effects(
+    N_vars = 1L, N_group = N_cafes, group_id = cafe, group_name = 'cafe', centered = FALSE
+  )
+  varying_intercept = veff[[1]]
+  varying_slope = veff[[2]]
+
+  mu = varying_intercept + varying_slope * afternoon
+
+  m$dist$normal(mu, sigma, obs = wait, name = 'wait')
 }
 
 # Run MCMC ------------------------------------------------
-m$fit(model) # Optimize model parameters through MCMC sampling
+m$fit(model, progress_bar = FALSE) # Optimize model parameters through MCMC sampling
 
 # Summary ------------------------------------------------
 m$summary() # Get posterior distribution
@@ -208,6 +202,52 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 # Summary ------------------------------------------------
 m.summary() # Get posterior distributions
 ```
+:::
+
+### Posterior predictive checks
+
+Does each café get its own variability of waiting times right?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd", group="cafe")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd", group = "cafe")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd", group="cafe")
+```
+:::
+
+One panel per café: the vertical line is the observed standard deviation of waiting times in that café, the curve the simulated ones (hover the line for its value; two-sided p-value in the panel title). Several p-values near 0 would mean the model's single residual sigma does not fit all cafés. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals(x="afternoon", group="cafe")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "afternoon", group = "cafe")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="afternoon", group="cafe")
+```
+:::
+
+One panel per café, observed waits in the morning (0) and afternoon (1) with predictive intervals: the varying slopes should follow the morning–afternoon difference of each café.
 :::
 
 ## Mathematical Details
@@ -367,6 +407,11 @@ $$
 $$ 
 
 
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `12.Varying effects.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+
 ## Notes
 
 ::: callout-note
@@ -377,7 +422,7 @@ $$
 
 - We can apply multiple random effects in BayesForge as follows:
 
-```python
+```{.python .no-test}
 def model(cafe, wait, N_cafes, afternoon, state):
     sigma = m.dist.exponential( 1,  name = 'sigma')
     
@@ -406,7 +451,7 @@ def model(cafe, wait, N_cafes, afternoon, state):
     varying_slope = varying_slope_1 + varying_slope_2
 
     mu = varying_intercept + varying_slope[:,0] * afternoon 
-    m.dist.normal(mu, sigma, obs=wait
+    m.dist.normal(mu, sigma, obs=wait)
 
 ```
 
@@ -506,7 +551,7 @@ $$
 
 <br>
 
-``` python
+```{.python .no-test}
 from main import *
 # Setup device------------------------------------------------
 m = bf(platform='cpu')

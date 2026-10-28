@@ -102,19 +102,19 @@ m$data_on_model$admit = jnp$array(as.integer(unlist(m$df["admit"])))
 # Define model ------------------------------------------------
 model <- function(gid, applications, admit){
   # Parameter prior distributions
-  phi = bf.dist.exponential(1, name = 'phi',shape=c(1))
-  alpha = bf.dist.normal(0., 1.5, shape= c(2), name='alpha')
-  t = phi + 2
-  pbar = m$link$inv_logit(alpha[gid])
-  gamma = pbar * t
-  eta = (1 - pbar) * t
+  phi = m$dist$exponential(1, name = 'phi')
+  alpha = m$dist$normal(0., 1.5, shape = reticulate::tuple(2L), name='alpha')
+  theta = phi + 2
+  pbar = m$link$inv_logit(alpha$`__getitem__`(gid))
+  gamma = pbar * theta
+  eta = (1 - pbar) * theta
   # Likelihood
 
-  m$dist$beta_binomial(total_count=applications, concentration1=gamma, concentration0=eta, obs=admit)
+  m$dist$beta_binomial(total_count=applications, concentration1=gamma, concentration0=eta, obs=admit, name = "admit")
 }
 
 # Run MCMC ------------------------------------------------
-m$fit(model) # Optimize model parameters through MCMC sampling
+m$fit(model, progress_bar = FALSE) # Optimize model parameters through MCMC sampling
 
 # Summary ------------------------------------------------
 m$summary() # Get posterior distribution
@@ -174,6 +174,53 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 m.summary() # Get posterior distributions
 ```
 :::
+
+### Posterior predictive checks
+
+Does the model cover the variation in admissions between departments?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals()
+```
+
+#### R
+```r
+m$diag$ppc_intervals()
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals()
+```
+:::
+
+Each point is one row of the data (one department and gender), with the 50 % and 90 % predictive intervals of the number admitted. The beta-binomial lets the admission rate vary between rows, so the intervals are wide; most points should fall inside them. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd")
+```
+:::
+
+The observed standard deviation of the admitted counts (vertical line) should fall inside the simulated ones; a plain binomial model would put it far in the right tail.
+:::
+
 ## Mathematical Details
 ### *Bayesian Model*
 In the Bayesian formulation, we define each parameter with [<span style="color:#0D6EFD">priors 🛈</span>]{#prior}. We can express the Bayesian regression model accounting for prior distributions as follows:
@@ -227,6 +274,11 @@ Where:
 
 - ϕ is a random variable following an Exponential distribution with a rate of 1.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `9.Beta binomial.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)
 ::: {#refs}

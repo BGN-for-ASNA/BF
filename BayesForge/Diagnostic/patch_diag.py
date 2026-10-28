@@ -665,8 +665,17 @@ def _documented(method, target, note, defaults_none=(), drop=()):
     (``defaults_none``).
     """
     sig = inspect.signature(target)
-    params = [p.replace(default=None) if p.name in defaults_none else p
-              for p in sig.parameters.values() if p.name not in drop]
+    params, seen_default = [], False
+    for p in sig.parameters.values():
+        if p.name in drop:
+            continue
+        if p.default is p.empty and (p.name in defaults_none or seen_default):
+            # a required arg after one the binding fills in (e.g. status_y
+            # after y/yrep) must still show a default to keep the signature
+            # valid; the binding raises the function's own error if missing
+            p = p.replace(default=None)
+        seen_default = seen_default or p.default is not p.empty
+        params.append(p)
     method.__signature__ = sig.replace(parameters=params)
     method.__name__ = target.__name__
     doc = inspect.getdoc(target) or ""
@@ -968,6 +977,28 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
             if wants_ll and own_yrep and kw.get("log_likelihood") is None:
                 kw["log_likelihood"], reff = _site_log_likelihood(s, yrep.shape)
                 kw.setdefault("reff", reff)
+            # x=/group= may be given as the name of a model data entry or a
+            # column of m.df; resolve it to the array and use the name as the
+            # axis/group label.
+            import numpy as np
+            for key, label_key in (("x", "x_label"), ("group", "group_name"),
+                                   ("status_y", None)):
+                value = kw.get(key)
+                if isinstance(value, str) and key in params:
+                    data = getattr(m, "data_on_model", None) or {}
+                    if value in data:
+                        arr = np.asarray(data[value])
+                    else:
+                        df = getattr(m, "df", None)
+                        if df is not None and value in getattr(df, "columns", ()):
+                            arr = np.asarray(df[value])
+                        else:
+                            raise ValueError(
+                                f"{key}= '{value}': no such entry in "
+                                "m.data_on_model or column in m.df")
+                    kw[key] = arr
+                    if label_key and label_key in params:
+                        kw.setdefault(label_key, value)
             return plot_fn(y, yrep, **kw)
 
         def method(y=None, yrep=None, site=None, **kw):
@@ -1041,6 +1072,9 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     # PPC — errors
     diag_obj.ppc_error_scatter = _bind_ppc(_ppc.ppc_error_scatter)
     diag_obj.ppc_error_hist  = _bind_ppc(_ppc.ppc_error_hist)
+    diag_obj.ppc_error_binned = _bind_ppc(_ppc.ppc_error_binned)
+    # PPC — survival
+    diag_obj.ppc_km_overlay  = _bind_ppc(_ppc.ppc_km_overlay)
     # PPC — scatter
     diag_obj.ppc_scatter     = _bind_ppc(_ppc.ppc_scatter)
     # PPC — discrete

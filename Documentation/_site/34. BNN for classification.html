@@ -615,6 +615,7 @@ window.Quarto = {
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -684,7 +685,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="0646c258" class="cell" data-execution_count="1">
+<div id="75138006" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -747,20 +748,26 @@ Note
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>xx0, xx1 <span class="op">=</span> jnp.meshgrid(x0, x1)</span>
 <span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>X_grid <span class="op">=</span> jnp.c_[xx0.ravel(), xx1.ravel()]</span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Swap data on model temporarily to predict on the grid</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="bu">dict</span>(X<span class="op">=</span>X_grid, Y<span class="op">=</span>jnp.zeros(X_grid.shape[<span class="dv">0</span>]))</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> m.sample(samples<span class="op">=</span><span class="dv">500</span>)[<span class="st">'Y'</span>]</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>p_mean <span class="op">=</span> jnp.mean(pred, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting the posterior predictive mean</span></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>contour <span class="op">=</span> ax.contourf(xx0, xx1, p_mean.reshape(n_grid, n_grid), cmap<span class="op">=</span><span class="st">"coolwarm"</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>scatter <span class="op">=</span> ax.scatter(X[:, <span class="dv">0</span>], X[:, <span class="dv">1</span>], c<span class="op">=</span>Y, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, edgecolors<span class="op">=</span><span class="st">'k'</span>)</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(title<span class="op">=</span><span class="st">"Posterior Predictive Mean"</span>, xlabel<span class="op">=</span><span class="st">"Feature 1"</span>, ylabel<span class="op">=</span><span class="st">"Feature 2"</span>)</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>fig.colorbar(contour, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict on the grid (the model data stay unchanged)</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> m.sample(data<span class="op">=</span><span class="bu">dict</span>(X<span class="op">=</span>X_grid, Y<span class="op">=</span>jnp.zeros(X_grid.shape[<span class="dv">0</span>])), samples<span class="op">=</span><span class="dv">500</span>)[<span class="st">'Y'</span>]</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>p_mean <span class="op">=</span> jnp.mean(pred, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting the posterior predictive mean</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>contour <span class="op">=</span> ax.contourf(xx0, xx1, p_mean.reshape(n_grid, n_grid), cmap<span class="op">=</span><span class="st">"coolwarm"</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>scatter <span class="op">=</span> ax.scatter(X[:, <span class="dv">0</span>], X[:, <span class="dv">1</span>], c<span class="op">=</span>Y, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, edgecolors<span class="op">=</span><span class="st">'k'</span>)</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(title<span class="op">=</span><span class="st">"Posterior Predictive Mean"</span>, xlabel<span class="op">=</span><span class="st">"Feature 1"</span>, ylabel<span class="op">=</span><span class="st">"Feature 2"</span>)</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>fig.colorbar(contour, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+
+An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
@@ -780,12 +787,6 @@ jax.local_device_count 32
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/BF/BayesForge/Main/main.py:1186: UserWarning:
-
-Sample's batch dimension size 4000 is different from the provided 500 num_samples argument. Defaulting to 4000.
-</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -875,6 +876,13 @@ W_3 &amp; \sim \text{Normal}(0, 1) \\
 <li><span class="math inline">W_2</span> is the weight matrix of the second hidden layer, with a shape of <span class="math inline">D_{H1} \times D_{H2}</span> (i.e., <span class="math inline">4 \times 3</span>).</li>
 <li><span class="math inline">W_3</span> is the final layer weight matrix used to compute the logits, with a shape of <span class="math inline">D_{H2} \times 1</span> (i.e., <span class="math inline">3 \times 1</span>).</li>
 <li>All elements within the weight matrices <span class="math inline">W_1</span>, <span class="math inline">W_2</span>, and <span class="math inline">W_3</span> are assigned independent standard Normal priors.</li>
+</ul>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN">BNN tests</a>: Bayesian neural network tests (regression, covariance estimation).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">

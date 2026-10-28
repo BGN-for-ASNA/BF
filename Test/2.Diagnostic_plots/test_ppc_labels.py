@@ -25,6 +25,10 @@ function gets its own test id, and checks, per function:
   5. labels do not change the data: same traces, same x/y arrays as the
      default call.
 
+Sections 6 to 8 check the label details that are not per-function: ppc_hist's
+shared bins, ppc_bars' whole-number guard, and the discrete-x ticks and
+rounded group levels drawn by ``_discrete_ticks``/``_level_labels``.
+
 Fixtures are the same arrays as test_ppc_vs_bayesplot.py reads from
 fixtures/input.json (continuous y/yrep/log_lik, count y/yrep, x).
 """
@@ -87,11 +91,6 @@ PPC_PLOTS = [
 ]
 PPC_IDS = [name for name, _ in PPC_PLOTS]
 
-# ppc_error_scatter draws the identity diagonal as a trace named "y = x": that
-# is the equation of the line (bayesplot labels it the same way), not the
-# outcome placeholder, so the bare-"y" check exempts exactly this label.
-_IDENTITY_LINE_LABELS = {"y = x"}
-
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -149,7 +148,7 @@ def test_default_labels_name_the_outcome(case):
     for text in texts:
         if re.search(r"\byrep\b", text, re.IGNORECASE):
             leftovers.append((text, "says 'yrep'"))
-        elif re.search(r"\by\b", text) and text.strip() not in _IDENTITY_LINE_LABELS:
+        elif re.search(r"\by\b", text):
             leftovers.append((text, "uses a bare 'y' for the outcome"))
     assert not leftovers, f"{fname}: labels still use the placeholder names: {leftovers}"
 
@@ -242,3 +241,144 @@ def test_labels_do_not_change_the_data(case):
             np.testing.assert_array_equal(
                 a, b, err_msg=f"{fname}: trace {i} attribute {attr!r} changed "
                               "when the labels were set")
+
+
+# ---------------------------------------------------------------------------
+# 6. ppc_hist: one shared x scale and identical bins in every panel
+# ---------------------------------------------------------------------------
+
+def test_ppc_hist_panels_share_x_scale_and_bins():
+    bins = 30
+    fig = ppc.ppc_hist(Y, YREP, bins=bins)
+    # the same seed-0 draw sample ppc_hist takes (n=8 default)
+    idx = np.random.default_rng(0).choice(len(YREP), size=8, replace=False)
+    lo = min(Y.min(), YREP[idx].min())
+    hi = max(Y.max(), YREP[idx].max())
+
+    layout = fig.layout.to_plotly_json()
+    x_keys = sorted((k for k in layout if re.fullmatch(r"xaxis\d*", k)),
+                    key=lambda k: int(k[len("xaxis"):] or 1))
+    assert len(x_keys) >= len(fig.data), "no x axis per histogram panel"
+    for k in x_keys:
+        rng = (layout[k] or {}).get("range")
+        assert rng is not None, f"panel axis {k!r} has no explicit x range"
+        np.testing.assert_allclose([float(rng[0]), float(rng[1])], [lo, hi],
+                                   rtol=1e-12, err_msg=f"{k}: x range not [lo, hi]")
+
+    starts = {t.xbins.start for t in fig.data}
+    ends = {t.xbins.end for t in fig.data}
+    sizes = {t.xbins.size for t in fig.data}
+    assert len(starts) == len(ends) == len(sizes) == 1, \
+        "panels do not share identical xbins"
+    np.testing.assert_allclose(starts.pop(), lo, rtol=1e-12)
+    np.testing.assert_allclose(ends.pop(), hi, rtol=1e-12)
+    np.testing.assert_allclose(sizes.pop(), (hi - lo) / bins, rtol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# 7. ppc_bars: whole-number guard, no cap on the number of categories
+# ---------------------------------------------------------------------------
+
+def test_ppc_bars_many_categories_and_non_integer_guard():
+    # Count data with > 50 distinct values across y and yrep is fine:
+    # bayesplot's ppc_bars only requires whole numbers, not few categories.
+    rng = np.random.default_rng(0)
+    y = np.arange(80)
+    yrep = rng.poisson(40, size=(20, 80))
+    assert len(np.unique(np.concatenate([y, yrep.ravel()]))) > 50
+    fig = ppc.ppc_bars(y, yrep)
+    assert len(fig.data) == 2  # observed bars + median/interval trace
+
+    # Continuous outcomes are still refused.
+    with pytest.raises(ValueError, match="whole numbers"):
+        ppc.ppc_bars(y + 0.5, yrep)
+
+
+# ---------------------------------------------------------------------------
+# 8. discrete x: one tick per level, and levels rounded in panel titles
+#
+# A normalized 1/2/3 design reaches the plot as -1.2018504251546631 / 0 /
+# +1.2018504251546631. Left to plotly, the x axis is labelled -1.0, -0.5,
+# 0.0, 0.5, 1.0: five ticks, none of them under two of the three bars. Same
+# story for the panel titles of a grouped plot. See _discrete_ticks and
+# _level_labels in ppc.py.
+# ---------------------------------------------------------------------------
+
+XD = np.tile([-1.2018504251546631, 0.0, 1.2018504251546631], 10)   # (30,)
+# group must vary independently of x, else each panel holds a single x level
+# and there is nothing to tick.
+GD = np.repeat([-1.2018504251546631, 0.0, 1.2018504251546631], 10)  # (30,)
+LEVEL_TEXTS = ["-1.2", "0", "1.2"]
+
+
+def _ticks(fig, axis="xaxis"):
+    spec = fig.layout.to_plotly_json()[axis] or {}
+    return spec.get("tickmode"), spec.get("tickvals"), spec.get("ticktext")
+
+
+def _x_axes(fig):
+    return sorted((k for k in fig.layout.to_plotly_json()
+                   if re.fullmatch(r"xaxis\d*", k)),
+                  key=lambda k: int(k[len("xaxis"):] or 1))
+
+
+@pytest.mark.parametrize("fname", ["ppc_intervals", "ppc_ribbon"])
+def test_discrete_x_gets_one_tick_per_level(fname):
+    call = getattr(ppc, fname)
+    mode, vals, texts = _ticks(call(Y, YREP, x=XD))
+    assert mode == "array", f"{fname}: discrete x kept plotly's default ticks"
+    np.testing.assert_allclose([float(v) for v in vals], np.unique(XD),
+                               err_msg=f"{fname}: ticks are not the x levels")
+    assert [str(t) for t in texts] == LEVEL_TEXTS, (
+        f"{fname}: tick labels are not the short form of the levels: {texts}")
+
+
+def test_discrete_x_gets_one_tick_per_level_in_every_panel():
+    fig = ppc.ppc_intervals(Y, YREP, x=XD, group=GD, group_name="shade")
+    axes = _x_axes(fig)
+    assert len(axes) == 3, f"expected one x axis per shade level, got {axes}"
+    for axis in axes:
+        mode, vals, texts = _ticks(fig, axis)
+        assert mode == "array", f"panel {axis!r} kept plotly's default ticks"
+        np.testing.assert_allclose([float(v) for v in vals], np.unique(XD))
+        assert [str(t) for t in texts] == LEVEL_TEXTS
+
+
+@pytest.mark.parametrize("fname", ["ppc_intervals", "ppc_ribbon"])
+def test_continuous_x_keeps_default_ticks(fname):
+    mode, _, _ = _ticks(getattr(ppc, fname)(Y, YREP, x=Y + 0.1 * np.arange(len(Y))))
+    assert mode is None, f"{fname}: a continuous x got forced ticks ({mode})"
+
+
+def test_index_x_keeps_default_ticks():
+    # x=None is the observation index: bayesplot's default, untouched.
+    mode, _, _ = _ticks(ppc.ppc_intervals(Y, YREP))
+    assert mode is None, "the observation index got forced ticks"
+
+
+def test_non_numeric_x_keeps_default_ticks():
+    # plotly draws its own categorical axis; numeric tickvals would not match.
+    labels = np.tile(np.array(["low", "mid", "high"]), 10)
+    mode, _, _ = _ticks(ppc.ppc_intervals(Y, YREP, x=labels))
+    assert mode is None, "a string x got numeric tickvals"
+
+
+@pytest.mark.parametrize("fname", ["ppc_density", "ppc_stat", "ppc_intervals"])
+def test_group_levels_are_rounded_in_panel_titles(fname):
+    call = getattr(ppc, fname)
+    fig = call(Y, YREP, group=GD, group_name="shade")
+    titles = [a["text"] for a in fig.layout.to_plotly_json()["annotations"]]
+    want = [f"shade = {lv}" for lv in LEVEL_TEXTS]
+    # ppc_stat appends its per-panel p value to the same title
+    assert [t.split(" (p = ")[0] for t in titles[:3]] == want, (
+        f"{fname}: panel titles are {titles[:3]}, expected {want}")
+
+
+@pytest.mark.parametrize("levels, want", [
+    ([-1.2018504251546631, 0.0, 1.2018504251546631], ["-1.2", "0", "1.2"]),
+    ([1.0, 2.0, 3.0], ["1", "2", "3"]),                    # whole: no decimals
+    ([0.0, 0.01, 0.02], ["0", "0.01", "0.02"]),            # close: enough of them
+    (["a", "b"], ["a", "b"]),                              # not numbers: as-is
+])
+def test_level_labels(levels, want):
+    assert ppc._level_labels(levels) == want

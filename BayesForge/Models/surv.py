@@ -925,6 +925,167 @@ class survival():
         ax.legend(loc="center right")
         return fig, ax
 
+    def _posterior_draws(self, lambda0, beta, n_draws):
+        """Posteriors sliced to ``(S, K)`` baseline rates and ``(S, n)``
+        linear predictors ``cov[i] @ beta[s]`` (zeros with no covariate)."""
+        K = int(self.n_intervals)
+        n = int(self.n_patients)
+        posteriors = self.parent.posteriors
+
+        L0 = np.asarray(posteriors[lambda0], dtype=float).reshape(-1, K)
+
+        cov = np.asarray(self.cov, dtype=float)
+        if cov.size == 0:
+            lp = np.zeros((L0.shape[0], n))
+        else:
+            cov = cov.reshape(n, -1)
+            if beta in posteriors:
+                B = np.asarray(posteriors[beta], dtype=float).reshape(-1, cov.shape[1])
+            elif all(f"Hazard_rate_{name}" in posteriors for name in self.cov_names):
+                cols = [np.asarray(posteriors[f"Hazard_rate_{name}"], dtype=float).reshape(-1, 1)
+                        for name in self.cov_names]
+                B = np.column_stack(cols)
+            else:
+                B = np.asarray(posteriors[beta], dtype=float).reshape(-1, cov.shape[1])
+            lp = (cov @ B.T).T  # (S, n)
+
+        if n_draws is not None:
+            L0 = L0[:int(n_draws)]
+            lp = lp[:int(n_draws)]
+        return L0, lp
+
+    def sample_times(self, lambda0 = 'Baseline_rate', beta = 'beta',
+                     n_draws = None, seed = 0):
+        """Posterior predictive event times, one row per posterior draw.
+
+        Returns a ``(n_draws, n_patients)`` numpy array of replicated event
+        times. For each posterior draw the piecewise-exponential rate is
+        ``rate[s, i, k] = lambda0[s, k] * exp(cov[i] @ beta[s])`` and the event
+        time is the exponential draw inverted through its cumulative hazard.
+
+        The interval indicators in ``yrep`` are not durations, so this is what
+        a bayesplot-style KM overlay needs: ``m.diag.ppc_km_overlay(y=s.time,
+        yrep=s.sample_times(), status_y=s.event)``. Like bayesplot's predicted
+        curves these times carry no censoring: a draw beyond the last interval
+        bound is extrapolated with the last interval's rate, and a zero rate
+        gives ``np.inf``. For one panel per covariate see ``ppc_km_by_cov``.
+        """
+        K = int(self.n_intervals)
+        bounds = np.asarray(self.interval_bounds, dtype=float)
+        widths = np.diff(bounds)  # (K,)
+
+        L0, lp = self._posterior_draws(lambda0, beta, n_draws)
+        S, n = L0.shape[0], lp.shape[1]
+
+        rate = np.exp(lp)[:, :, None] * L0[:, None, :]  # (S, n, K)
+
+        # Cumulative hazard at the interval bounds: H[s, i, 0] = 0.
+        H = np.zeros((S, n, K + 1))
+        H[:, :, 1:] = np.cumsum(rate * widths, axis=2)
+
+        rng = np.random.default_rng(seed)
+        E = rng.exponential(size=(S, n))
+
+        # Interval holding each draw: first k with H[k + 1] >= E. Draws past the
+        # last bound keep the last interval's rate, which continues the hazard
+        # linearly beyond bounds[K].
+        reached = H[:, :, 1:] >= E[:, :, None]
+        k = np.argmax(reached, axis=2)
+        k = np.where(reached.any(axis=2), k, K - 1)
+
+        Hk = np.take_along_axis(H[:, :, :-1], k[:, :, None], axis=2)[:, :, 0]
+        rk = np.take_along_axis(rate, k[:, :, None], axis=2)[:, :, 0]
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            times = bounds[k] + (E - Hk) / rk
+        # A zero rate never reaches E, so such a subject never fails.
+        times = np.where(rk > 0, times, np.inf)
+        return np.asarray(times, dtype=float)
+
+    @staticmethod
+    def _quantile_groups(values, n_groups):
+        """Labels "Q1".."Qn" from quantile bins of ``values`` (ties may leave
+        a bin empty; only nonempty bins get a panel)."""
+        edges = np.quantile(values, np.linspace(0.0, 1.0, n_groups + 1)[1:-1])
+        codes = np.searchsorted(edges, values, side="right")
+        return np.array([f"Q{i + 1}" for i in codes])
+
+    def _cov_groups(self, name, n_groups):
+        """Grouping vector for covariate ``name``: its values when it has at
+        most ``n_groups`` distinct ones, quantile-bin labels otherwise."""
+        col = np.asarray(self.cov, dtype=float)[:, self.cov_names.index(name)]
+        if np.unique(col).size <= n_groups:
+            return col
+        return self._quantile_groups(col, n_groups)
+
+    def ppc_km_by_cov(self, covs = None, n_groups = 3, n_draws = None, seed = 0,
+                      n = 50, extrapolation_factor = 1.2, risk = True,
+                      lambda0 = 'Baseline_rate', beta = 'beta', facet = False):
+        """Grouped KM-overlay PPCs of the replicated times, one figure per
+        covariate.
+
+        Builds on ``sample_times()`` and ``m.diag.ppc_km_overlay(group=...)``:
+        each covariate groups the patients -- at most ``n_groups`` distinct
+        values are grouped as-is, anything more is binned into ``n_groups``
+        quantile bins (Q1..Qn) -- so a multivariate model gets one
+        bayesplot-style grouped KM check per covariate instead of a single
+        pooled curve.
+
+        By default (``facet=False``), each figure overlays the survival curves
+        of all covariate levels on the same plot with distinct colors per level.
+        Setting ``facet=True`` separates the levels into subplots (one panel
+        per level).
+
+        With ``risk=True`` the dict also holds a "risk" figure grouping the
+        patients by quantiles of the posterior-mean linear predictor: one
+        panel per quantile of predicted hazard, which checks all covariates
+        at once (Q1 = lowest predicted hazard).
+
+        Args:
+            covs: Covariate name, list of names, or None for all of
+                ``self.cov_names``.
+            n_groups: Max number of distinct values grouped as-is, and
+                number of quantile bins otherwise.
+            n_draws, seed: Passed to ``sample_times``.
+            n, extrapolation_factor: Passed to ``ppc_km_overlay``.
+            risk: Also build the linear-predictor risk-group figure.
+            lambda0, beta: Posterior names, as in ``sample_times``.
+            facet: When False (the default), overlays groups on a single
+                plot with distinct colors. When True, separates them into
+                subplots (one panel per level).
+        Returns:
+            dict {label: plotly Figure} keyed by covariate name, plus
+            "risk" when ``risk=True``.
+        """
+        if covs is None:
+            covs = list(self.cov_names)
+        elif isinstance(covs, str):
+            covs = [covs]
+        for c in covs:
+            if c not in self.cov_names:
+                raise ValueError(
+                    f"Unknown covariate {c!r}. Available: {self.cov_names}")
+        if not covs and not risk:
+            raise ValueError("No covariate to plot and risk=False.")
+
+        yrep = self.sample_times(lambda0=lambda0, beta=beta,
+                                 n_draws=n_draws, seed=seed)
+        overlay = self.parent.diag.ppc_km_overlay
+        figs = {}
+        for c in covs:
+            figs[c] = overlay(y=self.time, yrep=yrep, status_y=self.event,
+                              n=n, extrapolation_factor=extrapolation_factor,
+                              group=self._cov_groups(c, n_groups),
+                              group_name=c, name="time", facet=facet)
+        if risk:
+            _, lp = self._posterior_draws(lambda0, beta, n_draws)
+            figs["risk"] = overlay(
+                y=self.time, yrep=yrep, status_y=self.event,
+                n=n, extrapolation_factor=extrapolation_factor,
+                group=self._quantile_groups(lp.mean(axis=0), n_groups),
+                group_name="risk", name="time", facet=facet)
+        return figs
+
     def plot_surv(self, lambda0 = 'Baseline_rate', beta = 'beta',
                   xlab='Time', ylab='Survival', covlab = 'treated', title = "Bayesian survival model",
                   hdi_prob = 0.94):

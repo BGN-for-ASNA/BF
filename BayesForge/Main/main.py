@@ -5,6 +5,7 @@ import inspect
 # from jax import vmap
 # from jax import jit
 import jax
+import jax.numpy as jnp
 
 
 from numpyro.infer import Predictive
@@ -81,6 +82,41 @@ def _as_count(value, name):
             raise ValueError(f"{name} must be a whole number, got {value}")
         return int(value)
     return value
+
+
+class _ExpandObserved(numpyro.primitives.Messenger):
+    """Simulate observed sites at the shape of the data they were fitted on.
+
+    During posterior predictive checks or simulations where `obs=None`, sample
+    sites that were originally observed are treated as unobserved (`is_observed=False`).
+    If likelihood parameters are scalars or broadcasted against the original data
+    (e.g., `dist.Poisson(lam, obs=y)` with a scalar `lam`), NumPyro defaults to the
+    distribution's intrinsic batch shape, drawing a single value instead of `len(y)`.
+
+    This messenger intercepts sample messages for sites present in `shapes`,
+    extracts the target batch shape (accounting for `event_shape`), and expands
+    the distribution via `d.expand(...)` so that synthetic draws match the
+    dimensions of the fitted observed data.
+    """
+
+    def __init__(self, fn, shapes):
+        super().__init__(fn)
+        self.shapes = shapes
+
+    def process_message(self, msg):
+        if (msg["type"] != "sample" or msg["name"] not in self.shapes
+                or msg.get("is_observed")):
+            return
+        d = msg["fn"]
+        shape = self.shapes[msg["name"]]
+        n_event = len(d.event_shape)
+        batch = shape[:len(shape) - n_event] if n_event else shape
+        if tuple(d.batch_shape) == tuple(batch):
+            return
+        try:
+            msg["fn"] = d.expand(jnp.broadcast_shapes(tuple(d.batch_shape), tuple(batch)))
+        except (ValueError, TypeError, NotImplementedError):
+            pass   # leave the distribution as it is
 
 
 class bf(manip):
@@ -914,6 +950,12 @@ class bf(manip):
         import inspect as _inspect
         _prob_kw = ("ci_prob" if "ci_prob" in _inspect.signature(az.summary).parameters
                     else "hdi_prob")
+        # Factor sites (m.dist.unit(log_factor=...)) are sampled as empty arrays, which
+        # az.summary cannot reduce: leave them out.
+        _post = self.diag.trace.posterior
+        _empty = [v for v in _post.data_vars if _post[v].size == 0]
+        if _empty and "var_names" not in kwargs:
+            kwargs["var_names"] = [v for v in _post.data_vars if v not in _empty]
         self.tab_summary = az.summary(
             self.diag.trace,
             *args,
@@ -1026,17 +1068,27 @@ class bf(manip):
         sig = inspect.signature(model)
         parameters = []
         seen_default = False
+        kw_only = False
         for name, param in sig.parameters.items():
             if name in obs:
-                param = inspect.Parameter(
-                    name, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None
-                )
-            elif (seen_default and param.default is inspect.Parameter.empty
-                  and param.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD):
-                # A required argument cannot follow an optional one
-                # (e.g. model(y, x) with y observed): make it keyword-only.
-                # BF always passes the data by keyword.
+                # Make observed variables optional (default=None).
+                # If preceding parameters were already forced to KEYWORD_ONLY,
+                # this parameter must also be KEYWORD_ONLY to respect Python signature rules
+                # (positional parameters cannot follow keyword-only parameters).
+                kind = (inspect.Parameter.KEYWORD_ONLY if kw_only
+                        else inspect.Parameter.POSITIONAL_OR_KEYWORD)
+                param = inspect.Parameter(name, kind, default=None)
+            elif (param.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+                  and (kw_only or (seen_default
+                                   and param.default is inspect.Parameter.empty))):
+                # A required argument cannot follow an optional one (e.g., model(y, x) where y is observed).
+                # Furthermore, once any parameter becomes keyword-only, all subsequent positional
+                # parameters must also become keyword-only to preserve a valid inspect.Signature.
+                # Since BayesForge always passes model data by keyword, this conversion is transparent.
                 param = param.replace(kind=inspect.Parameter.KEYWORD_ONLY)
+
+            # Update flags for subsequent parameter iterations
+            kw_only = kw_only or param.kind is inspect.Parameter.KEYWORD_ONLY
             seen_default = seen_default or param.default is not inspect.Parameter.empty
             parameters.append(param)
 
@@ -1064,9 +1116,13 @@ class bf(manip):
                 matrix) to get predictions for unseen points.
             remove_obs: Whether to remove observed data. Defaults to True,
                 which un-conditions the observed sites so that simulated
-                values are returned. With remove_obs=False the observed sites
-                are not returned: the result contains the latent (unobserved)
-                sample sites and the deterministic sites.
+                values are returned. A site whose obs is a computed value
+                rather than a data entry (e.g. obs=y - 1) cannot be
+                un-conditioned: it stays conditioned on the data, its draws
+                are the conditioning values, and a warning names it. With
+                remove_obs=False the observed sites are not returned: the
+                result contains the latent (unobserved) sample sites and the
+                deterministic sites.
                 Forced to False when infer_discrete=True, since exact
                 posterior sampling of discrete sites requires conditioning
                 on the observed data.
@@ -1108,6 +1164,7 @@ class bf(manip):
         if infer_discrete and posterior is not True:
             raise ValueError("infer_discrete=True requires posterior=True (a fitted model).")
 
+        own_data = data is None
         if data is None:
             data = self.data_on_model.copy()
 
@@ -1125,6 +1182,31 @@ class bf(manip):
 
         if infer_discrete:
             remove_obs = False
+
+        if remove_obs:
+            # A site conditioned on a computed value (obs=y - 1) has no data
+            # entry to set to None: it stays conditioned and Predictive
+            # returns the conditioning value, which is not a replicate.
+            computed = [name for name, key in observed_sites.items()
+                        if key is None]
+            if computed:
+                warnings.warn(
+                    f"Observed site(s) {computed} condition on a computed "
+                    "value, not a data entry (e.g. obs=y - 1), so they "
+                    "cannot be simulated: remove_obs=True leaves them "
+                    "conditioned on the data and their draws are the "
+                    "conditioning values. Pass the observed value itself as "
+                    "a data entry (obs=y, name='y') to get replicated draws.",
+                    UserWarning,
+                )
+
+        # Shapes of the fitted data for the observed sites, remembered before
+        # their entries are set to None: with obs=None a likelihood whose
+        # parameters are scalars would simulate a single value per draw.
+        obs_shapes = {}
+        if remove_obs and own_data:
+            obs_shapes = {site: tuple(np.shape(self.data_on_model[key]))
+                          for site, key in observed_sites.items() if key is not None}
 
         if remove_obs:
             observed = [k for k in observed_sites.values() if k is not None]
@@ -1206,8 +1288,9 @@ class bf(manip):
             if not return_sites:
                 return {}
 
+        model_fn = _ExpandObserved(self.model2, obs_shapes) if obs_shapes else self.model2
         predictive = Predictive(
-            self.model2,
+            model_fn,
             posterior_samples=posterior_samples,
             num_samples=num_samples,
             return_sites=return_sites,

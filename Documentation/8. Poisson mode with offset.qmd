@@ -99,18 +99,18 @@ print(paste("True b:", paste(true_b, collapse=" ")))
 # Define model ------------------------------------------------
 model <- function(cid, population, hours, total_tools){
   # Parameter prior distributions
-  a = bf.dist.normal(3, 0.5, name='a', shape = c(2))
-  b = bf.dist.normal(0, 0.2, name='b', shape = c(2))
+  a = bf.dist.normal(3, 0.5, name='a', shape = c(2L))
+  b = bf.dist.normal(0, 0.2, name='b', shape = c(2L))
   l = hours * jnp$exp(a[cid] + b[cid]*population)
   # Likelihood
-  bf.dist.poisson(l, obs=total_tools)
+  bf.dist.poisson(l, obs=total_tools, name = "y")
 }
 
 m$data_on_model = list(
-  cid = as.integer(cid - 1), # Back to 0-based for JAX/BF if needed, check BF convention
-  population = population,
-  hours = hours,
-  total_tools = total_tools
+  cid = jnp$array(as.integer(cid - 1)), # Back to 0-based for JAX/BF
+  population = jnp$array(population),
+  hours = jnp$array(hours),
+  total_tools = jnp$array(as.integer(total_tools))
 )
 
 # Run mcmc ------------------------------------------------
@@ -150,16 +150,16 @@ println("True b: ", true_b)
 @BF function model(cid, population, hours, total_tools)
     a = m.dist.normal(3, 0.5, shape= (2,), name="a")
     b = m.dist.normal(0, 0.2, shape=(2,), name="b")
-    l = hours .* exp.(a[cid] .+ b[cid] .* population)
-    m.dist.poisson(l, obs=total_tools)
+    l = hours * jnp.exp(a[cid] + b[cid] * population)
+    m.dist.poisson(l, obs=total_tools, name="y")
 end
 
 # Pass data to model
-m.data_on_model = Dict(
-    "cid" => cid .- 1, # Back to 0-based for JAX/BF if needed
-    "population" => population, 
-    "hours" => hours, 
-    "total_tools" => total_tools
+m.data_on_model = pydict(
+    cid = jnp.array(Int32.(cid .- 1)), # Back to 0-based for JAX/BF
+    population = jnp.array(population),
+    hours = jnp.array(hours),
+    total_tools = jnp.array(Int32.(total_tools))
 )
 
 # Run mcmc ------------------------------------------------
@@ -169,6 +169,52 @@ m.fit(model, progress_bar=false)  # Optimize model parameters through MCMC sampl
 m.summary() # Get posterior distributions
 ```
 
+:::
+
+### Posterior predictive checks
+
+With exposure (hours) as an offset, does the model predict the counts at every population size and contact level?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_intervals(x="population", group="cid")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "population", group = "cid")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="population", group="cid")
+```
+:::
+
+One panel per contact level; points are observed counts, bars the 50 % and 90 % predictive intervals along population. The points should follow the intervals in both panels. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_stat(stat="sd")
+```
+
+#### R
+```r
+m$diag$ppc_stat(stat = "sd")
+```
+
+#### Julia
+```julia
+m.diag.ppc_stat(stat="sd")
+```
+:::
+
+The observed standard deviation (vertical line) inside the simulated ones means the Poisson spread is adequate once the offset is included.
 :::
 
 ## Mathematical Details
@@ -220,6 +266,10 @@ Where:
 - $\beta$ is the slope coefficient with a unit-normal prior.
 - $X_i$ is the independent variable.
 - $\log(\text{exposure}_i)$ is the offset.
+
+## Model validation tests
+
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 ::: callout-note

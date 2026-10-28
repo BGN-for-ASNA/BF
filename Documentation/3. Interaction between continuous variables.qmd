@@ -64,32 +64,31 @@ m.summary()
 ### R
 ```R
 library(BayesForge)
-m=importBF(platform='cpu')
+m <- importBF(platform = "cpu")
 
 # Load csv file
-m$data(m$load$tulips(only_path = T), sep = ''), sep=';')
+m$data(m$load$tulips(only_path = TRUE), sep = ';')
 m$scale(list('blooms', 'water', 'shade')) # Normalize
 m$data_to_model(list('blooms', 'water', 'shade')) # Send to model (convert to jax array)
 
 # Define model ------------------------------------------------
-model <- function(blooms, water,shade){
+model <- function(blooms, water, shade){
   # Parameter prior distributions
-  alpha = bf.dist.normal( 0.5, 0.25, name = 'a')
-  beta1 = bf.dist.normal( 0,  0.25, name = 'b1')
-  beta2 = bf.dist.normal(  0,  0.25, name = 'b2')
-  beta_interaction_ = bf.dist.normal(  0, 0.25, name = 'bint')
-  sigma = bf.dist.normal(0, 50, name = 's')
+  sigma = m$dist$exponential(1, name = 'sigma', shape = reticulate::tuple(1L))
+  bws = m$dist$normal(0, 0.25, name = 'bws', shape = reticulate::tuple(1L))
+  bs = m$dist$normal(0, 0.25, name = 'bs', shape = reticulate::tuple(1L))
+  bw = m$dist$normal(0, 0.25, name = 'bw', shape = reticulate::tuple(1L))
+  a = m$dist$normal(0.5, 0.25, name = 'a', shape = reticulate::tuple(1L))
+  mu = a + bw*water + bs*shade + bws*water*shade
   # Likelihood
-  m$normal(alpha + beta1*water + beta2*shade + beta_interaction_*water*shade, sigma, obs=blooms)
+  m$dist$normal(mu, sigma, obs = blooms, name = 'blooms')
 }
 
 # Run mcmc ------------------------------------------------
-m$fit(model) # Optimize model parameters through MCMC sampling
+m$fit(model, progress_bar = FALSE) # Optimize model parameters through MCMC sampling
 
 # Summary ------------------------------------------------
 m$summary() # Get posterior distributions
-
-
 ```
 
 ### Julia
@@ -121,6 +120,57 @@ m.fit(model)  # Optimize model parameters through MCMC sampling
 # Summary ------------------------------------------------
 m.summary() # Get posterior distributions
 ```
+:::
+
+### Posterior predictive checks
+
+Does the model capture how the effect of water changes with shade (the interaction)?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+#| output: false
+m.diag.ppc_intervals(x="water", group="shade")
+```
+
+#### R
+```r
+m$diag$ppc_intervals(x = "water", group = "shade")
+```
+
+#### Julia
+```julia
+m.diag.ppc_intervals(x="water", group="shade")
+```
+:::
+
+![Posterior predictive intervals of `blooms`: one panel per `shade` level, `water` on the x axis.](Figures/3-ppc-intervals.png){fig-align="center"}
+
+How to read it: `water` and `shade` were normalized, so the three x ticks (-1.2, 0, 1.2) are the three original water levels (1, 2, 3) and the three panels are the three shade levels. Points are the observed blooms, open points the median prediction, bars the 50 % and 90 % predictive intervals. The design is 3 beds x 3 water x 3 shade, so each panel holds 9 observations stacked on 3 positions: the three points above one tick are the three beds, and their intervals overlap because they share the same predicted mean.
+
+The model passes: in every panel the observed points sit inside the bars, and the slope over `water` changes from panel to panel — steep at `shade = -1.2` (median prediction from about -0.7 to +1.6), already flatter at `shade = 0` (-0.6 to +0.8) and nearly flat at `shade = 1.2` (-0.5 to -0.1). That is the interaction, and it matches the posterior of `bws` (-0.32, 89 % CI -0.49 to -0.15): each unit of shade lowers the effect of water by about 0.3. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+m.diag.ppc_loo_pit()
+```
+
+#### R
+```r
+m$diag$ppc_loo_pit()
+```
+
+#### Julia
+```julia
+m.diag.ppc_loo_pit()
+```
+:::
+
+`ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
 :::
 
 ## Mathematical Details
@@ -185,6 +235,11 @@ Where:
 - $X_{[1,i]}$ and $X_{[2,i]}$ are the two values of the independent continuous variables for observation *i*.
 
 - $\sigma$ is a standard deviation parameter, which here has an Exponential prior that constrains it to be positive.
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `3.Continuous interactions.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes{#Notes}
 ::: callout-note

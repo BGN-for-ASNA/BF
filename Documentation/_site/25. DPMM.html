@@ -635,6 +635,7 @@ window.Quarto = {
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -713,7 +714,7 @@ Caution
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="62d110ab" class="cell" data-execution_count="1">
+<div id="39659cb4" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -767,10 +768,16 @@ Caution
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>m.fit(dpmm, progress_bar<span class="op">=</span><span class="va">False</span>)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>m.plot(X<span class="op">=</span>data,sampler<span class="op">=</span>m.sampler) <span class="co"># Prebuild plot function for GMM</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32
-Model found 8 clusters.
+Model found 7 clusters.
 Computing density across all chains (this might take a moment)...</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -780,14 +787,14 @@ Computing density across all chains (this might take a moment)...</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="25. DPMM_files/figure-html/cell-2-output-3.png" width="950" height="567" class="figure-img"></p>
+<p><img src="25. DPMM_files/figure-html/cell-2-output-4.png" width="950" height="567" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="travaux-routiers.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
@@ -795,61 +802,61 @@ Computing density across all chains (this might take a moment)...</code></pre>
 </div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>numpyro <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"numpyro"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(rand_seed <span class="op">=</span> <span class="cn">false</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate Data</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>sk_datasets <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"sklearn.datasets"</span>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> sk_datasets.<span class="fu">make_blobs</span>(n_samples<span class="op">=</span><span class="fl">500</span>, centers<span class="op">=</span><span class="fl">8</span>, cluster_std<span class="op">=</span><span class="fl">0.8</span>, center_box<span class="op">=</span>(<span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span>), random_state<span class="op">=</span><span class="fl">101</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> output[<span class="fl">0</span>]</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>data_mean <span class="op">=</span> jnp.<span class="fu">mean</span>(data, axis<span class="op">=</span><span class="fl">0</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>data_std <span class="op">=</span> jnp.<span class="fu">std</span>(data, axis<span class="op">=</span><span class="fl">0</span>) <span class="op">*</span> <span class="fl">2</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(data<span class="op">=</span>data, K<span class="op">=</span><span class="fl">10</span>, data_mean <span class="op">=</span> data_mean, data_std <span class="op">=</span> data_std)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">dpmm</span>(data, K, data_mean , data_std)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    N, D <span class="op">=</span> data.shape </span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.<span class="fu">gamma</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>, name<span class="op">=</span><span class="st">"alpha"</span>)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"beta_plate"</span>, K <span class="op">-</span> <span class="fl">1</span>)) <span class="cf">do</span> _</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        m.dist.<span class="fu">beta</span>(<span class="fl">1</span>, alpha, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> numpyro.<span class="fu">deterministic</span>(<span class="st">"w"</span>, m.models.dpmm.<span class="fu">mix_weights</span>(beta))</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    mu, scale_tril <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"components"</span>, K)) <span class="cf">do</span> _</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        mu_val <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>data_mean, </span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>            covariance_matrix<span class="op">=</span>data_std <span class="op">*</span> jnp.<span class="fu">eye</span>(D),</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>            name<span class="op">=</span><span class="st">"mu"</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> m.dist.<span class="fu">log_normal</span>(<span class="fl">0.0</span>, <span class="fl">1.0</span>, shape<span class="op">=</span>(D,), event<span class="op">=</span><span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        Lcorr <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(dimension<span class="op">=</span>D, concentration<span class="op">=</span><span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"Lcorr"</span>)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>        scale_tril_inner <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>) <span class="op">*</span> Lcorr</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>        (mu_val, scale_tril_inner)</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">mixture_same_family</span>(</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>        mixing_distribution<span class="op">=</span>m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>w, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>        component_distribution<span class="op">=</span>m.dist.<span class="fu">multivariate_normal</span>(</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>mu, </span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>            scale_tril<span class="op">=</span>scale_tril, </span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>            create_obj<span class="op">=</span><span class="cn">true</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        obs<span class="op">=</span>data</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Run</span></span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(dpmm) </span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.dpmm.<span class="fu">plot_dpmm</span>(m.data_on_model[<span class="st">"data"</span>], m.sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>numpyro <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"numpyro"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(rand_seed <span class="op">=</span> <span class="cn">false</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Generate Data</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>sk_datasets <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"sklearn.datasets"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>output <span class="op">=</span> sk_datasets.<span class="fu">make_blobs</span>(n_samples<span class="op">=</span><span class="fl">500</span>, centers<span class="op">=</span><span class="fl">8</span>, cluster_std<span class="op">=</span><span class="fl">0.8</span>, center_box<span class="op">=</span>(<span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span>), random_state<span class="op">=</span><span class="fl">101</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> output[<span class="fl">0</span>]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>data_mean <span class="op">=</span> jnp.<span class="fu">mean</span>(data, axis<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>data_std <span class="op">=</span> jnp.<span class="fu">std</span>(data, axis<span class="op">=</span><span class="fl">0</span>) <span class="op">*</span> <span class="fl">2</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(data<span class="op">=</span>data, K<span class="op">=</span><span class="fl">10</span>, data_mean <span class="op">=</span> data_mean, data_std <span class="op">=</span> data_std)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">dpmm</span>(data, K, data_mean , data_std)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    N, D <span class="op">=</span> data.shape </span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.<span class="fu">gamma</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>, name<span class="op">=</span><span class="st">"alpha"</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"beta_plate"</span>, K <span class="op">-</span> <span class="fl">1</span>)) <span class="cf">do</span> _</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        m.dist.<span class="fu">beta</span>(<span class="fl">1</span>, alpha, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> numpyro.<span class="fu">deterministic</span>(<span class="st">"w"</span>, m.models.dpmm.<span class="fu">mix_weights</span>(beta))</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    mu, scale_tril <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"components"</span>, K)) <span class="cf">do</span> _</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        mu_val <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>data_mean, </span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>            covariance_matrix<span class="op">=</span>data_std <span class="op">*</span> jnp.<span class="fu">eye</span>(D),</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>            name<span class="op">=</span><span class="st">"mu"</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> m.dist.<span class="fu">log_normal</span>(<span class="fl">0.0</span>, <span class="fl">1.0</span>, shape<span class="op">=</span>(D,), event<span class="op">=</span><span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>        Lcorr <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(dimension<span class="op">=</span>D, concentration<span class="op">=</span><span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"Lcorr"</span>)</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        scale_tril_inner <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>) <span class="op">*</span> Lcorr</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        (mu_val, scale_tril_inner)</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">mixture_same_family</span>(</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>        mixing_distribution<span class="op">=</span>m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>w, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>        component_distribution<span class="op">=</span>m.dist.<span class="fu">multivariate_normal</span>(</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>mu, </span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>            scale_tril<span class="op">=</span>scale_tril, </span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>            create_obj<span class="op">=</span><span class="cn">true</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>        obs<span class="op">=</span>data</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Run</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(dpmm) </span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.dpmm.<span class="fu">plot_dpmm</span>(m.data_on_model[<span class="st">"data"</span>], m.sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -927,6 +934,13 @@ z_{i} &amp;\sim \text{Categorical}(\pi) \\
 <li><p><span class="math inline">\pi</span> is a vector of <span class="math inline">K</span> cluster weights, some of which may be close to zero if the predicted number of clusters is less than the maximum number of clusters.</p></li>
 <li><p><span class="math inline">\beta_k</span>: The set of <span class="math inline">K</span> Beta-distributed random variables used in the stick-breaking process to construct the mixture weights.</p></li>
 <li><p><span class="math inline">\alpha</span>: The concentration parameter, controlling the effective number of clusters.</p></li>
+</ul>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/11.MGM%20and%20DPMM">Comparison with scikit-learn</a>: <code>7.MGM_DPM_Similarity_Test.py</code> compares the BayesForge mixture and Dirichlet-process clusterings with reference clusterings.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">

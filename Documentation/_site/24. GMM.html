@@ -240,7 +240,7 @@ window.Quarto = {
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./api_dist.html"> 
+    <a class="nav-link" href="./reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -615,6 +615,7 @@ window.Quarto = {
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -693,7 +694,7 @@ Caution
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="3f779b96" class="cell" data-execution_count="1">
+<div id="134fae5a" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -738,14 +739,27 @@ Caution
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>m.plot(X<span class="op">=</span>data,sampler<span class="op">=</span>m.sampler) <span class="co"># Prebuild plot function for GMM</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/3.12venv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning:
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
 
 IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
-jax.local_device_count 32</code></pre>
+<pre><code>bf v 0.0.60 package loaded
+jax.local_device_count 32
+⚠️This function is still in development. Use it with caution. ⚠️
+⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>(&lt;Figure size 960x576 with 1 Axes&gt;,
+ &lt;Axes: title={'center': 'GMM Probability Density Contours'}, xlabel='Feature 1', ylabel='Feature 2'&gt;)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="24. GMM_files/figure-html/cell-2-output-4.png" width="693" height="567" class="figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 </div>
@@ -757,41 +771,41 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">gmm</span>(data, K, initial_means)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    D <span class="op">=</span> data.shape[<span class="fl">1</span>] </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    alpha_prior <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> jnp.<span class="fu">ones</span>(K)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> m.dist.<span class="fu">dirichlet</span>(concentration<span class="op">=</span>alpha_prior, name<span class="op">=</span><span class="st">"weights"</span>) </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We capture the output of the pywith block</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The block returns a tuple (mu, scale_tril)</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    mu, scale_tril <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"components"</span>, K)) <span class="cf">do</span> _</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        mu_inner <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>initial_means, </span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            covariance_matrix<span class="op">=</span><span class="fl">0.1</span><span class="op">*</span>jnp.<span class="fu">eye</span>(D), </span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            name<span class="op">=</span><span class="st">"mu"</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        )        </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> m.dist.<span class="fu">half_cauchy</span>(<span class="fl">1</span>, shape<span class="op">=</span>(D,), event<span class="op">=</span><span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        Lcorr <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(dimension<span class="op">=</span>D, concentration<span class="op">=</span><span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"Lcorr"</span>)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># FIX: Use expand_dims instead of slicing</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        scale_tril_inner <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>) <span class="op">*</span> Lcorr</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Return them so they are available outside</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        (mu_inner, scale_tril_inner)</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">mixture_same_family</span>(</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        mixing_distribution<span class="op">=</span>m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>w, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        component_distribution<span class="op">=</span>m.dist.<span class="fu">multivariate_normal</span>(loc<span class="op">=</span>mu, scale_tril<span class="op">=</span>scale_tril, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span><span class="st">"obs"</span>,</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        obs<span class="op">=</span>data</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(gmm)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">gmm</span>(data, K, initial_means)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    D <span class="op">=</span> data.shape[<span class="fl">1</span>] </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    alpha_prior <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> jnp.<span class="fu">ones</span>(K)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> m.dist.<span class="fu">dirichlet</span>(concentration<span class="op">=</span>alpha_prior, name<span class="op">=</span><span class="st">"weights"</span>) </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We capture the output of the pywith block</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The block returns a tuple (mu, scale_tril)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    mu, scale_tril <span class="op">=</span> <span class="fu">pywith</span>(m.dist.<span class="fu">plate</span>(<span class="st">"components"</span>, K)) <span class="cf">do</span> _</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        mu_inner <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>            loc<span class="op">=</span>initial_means, </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>            covariance_matrix<span class="op">=</span><span class="fl">0.1</span><span class="op">*</span>jnp.<span class="fu">eye</span>(D), </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            name<span class="op">=</span><span class="st">"mu"</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        )        </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> m.dist.<span class="fu">half_cauchy</span>(<span class="fl">1</span>, shape<span class="op">=</span>(D,), event<span class="op">=</span><span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        Lcorr <span class="op">=</span> m.dist.<span class="fu">lkj_cholesky</span>(dimension<span class="op">=</span>D, concentration<span class="op">=</span><span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"Lcorr"</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># FIX: Use expand_dims instead of slicing</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        scale_tril_inner <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(sigma, <span class="op">-</span><span class="fl">1</span>) <span class="op">*</span> Lcorr</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Return them so they are available outside</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        (mu_inner, scale_tril_inner)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">mixture_same_family</span>(</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        mixing_distribution<span class="op">=</span>m.dist.<span class="fu">categorical</span>(probs<span class="op">=</span>w, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        component_distribution<span class="op">=</span>m.dist.<span class="fu">multivariate_normal</span>(loc<span class="op">=</span>mu, scale_tril<span class="op">=</span>scale_tril, create_obj<span class="op">=</span><span class="cn">true</span>),</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span><span class="st">"obs"</span>,</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        obs<span class="op">=</span>data</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(gmm)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -878,6 +892,13 @@ z_{i} \sim \text{Categorical}(\pi)
 <li><p><span class="math inline">\Omega_k</span> is a correlation matrix for the <span class="math inline">k</span>-th cluster.</p></li>
 <li><p><span class="math inline">z_i</span> is a latent variable that maps observation <span class="math inline">i</span> to cluster <span class="math inline">k</span>.</p></li>
 <li><p><span class="math inline">\pi</span> is a vector of <span class="math inline">K</span> cluster weights.</p></li>
+</ul>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/11.MGM%20and%20DPMM">Comparison with scikit-learn</a>: <code>7.MGM_DPM_Similarity_Test.py</code> compares the BayesForge mixture and Dirichlet-process clusterings with reference clusterings.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">

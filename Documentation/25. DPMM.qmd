@@ -156,7 +156,7 @@ end
 
 m.fit(dpmm) 
 
-@pyplot m.models.dpmm.plot_dpmm(m.data_on_model["data"], m.sampler)
+@pyplot m.models.dpmm.plot(m.data_on_model["data"], m.sampler)
 ```
 :::
 
@@ -248,6 +248,11 @@ Where :
 
 *   $\alpha$: The concentration parameter, controlling the effective number of clusters. 
 
+
+## Model validation tests
+
+- [Comparison with scikit-learn](https://github.com/BGN-for-ASNA/BF/tree/main/Test/11.MGM%20and%20DPMM): `7.MGM_DPM_Similarity_Test.py` compares the BayesForge mixture and Dirichlet-process clusterings with reference clusterings.
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Notes
 

@@ -636,8 +636,12 @@ window.Quarto = {
   <ul>
   <li><a href="#general-principles" id="toc-general-principles" class="nav-link active" data-scroll-target="#general-principles">General Principles</a></li>
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
+  <ul class="collapse">
+  <li><a href="#posterior-predictive-checks" id="toc-posterior-predictive-checks" class="nav-link" data-scroll-target="#posterior-predictive-checks">Posterior predictive checks</a></li>
+  </ul></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -705,7 +709,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="cb04d904" class="cell" data-execution_count="1">
+<div id="0c9d1109" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -736,8 +740,14 @@ Note
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagnostic ------------------------------------------------</span></span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
+
+IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
+<pre><code>bf v 0.0.60 package loaded
 jax.local_device_count 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
@@ -750,615 +760,615 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_bar</td>
-<td>1.34</td>
-<td>0.26</td>
-<td>0.92</td>
+<td>1.35</td>
+<td>0.25</td>
+<td>0.96</td>
 <td>1.76</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3321.38</td>
-<td>2639.77</td>
+<td>4113.43</td>
+<td>2761.36</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[0]</td>
-<td>2.12</td>
-<td>0.87</td>
-<td>0.77</td>
-<td>3.43</td>
+<td>2.15</td>
+<td>0.86</td>
+<td>0.92</td>
+<td>3.64</td>
+<td>5325.88</td>
+<td>2963.68</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>5046.50</td>
-<td>2846.70</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[1]</td>
-<td>3.07</td>
-<td>1.10</td>
-<td>1.32</td>
-<td>4.70</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4522.93</td>
-<td>2596.34</td>
+<td>3.08</td>
+<td>1.11</td>
+<td>1.45</td>
+<td>5.02</td>
+<td>5126.52</td>
+<td>2662.46</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[2]</td>
 <td>1.00</td>
-<td>0.66</td>
-<td>-0.06</td>
-<td>2.04</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4674.06</td>
-<td>3035.76</td>
+<td>0.67</td>
+<td>-0.03</td>
+<td>2.13</td>
+<td>5141.62</td>
+<td>2818.64</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[3]</td>
-<td>3.07</td>
-<td>1.12</td>
-<td>1.33</td>
-<td>4.83</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>3847.23</td>
-<td>2780.48</td>
+<td>3.09</td>
+<td>1.14</td>
+<td>1.43</td>
+<td>5.10</td>
+<td>4429.68</td>
+<td>2327.93</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[4]</td>
-<td>2.14</td>
-<td>0.88</td>
-<td>0.65</td>
-<td>3.39</td>
-<td>0.01</td>
-<td>0.02</td>
-<td>4083.40</td>
-<td>2107.43</td>
+<td>2.16</td>
+<td>0.87</td>
+<td>0.90</td>
+<td>3.67</td>
+<td>3757.34</td>
+<td>2528.42</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[5]</td>
 <td>2.14</td>
-<td>0.87</td>
-<td>0.76</td>
-<td>3.45</td>
+<td>0.88</td>
+<td>0.84</td>
+<td>3.65</td>
+<td>4389.66</td>
+<td>2394.59</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>5326.07</td>
-<td>2564.61</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[6]</td>
-<td>3.08</td>
-<td>1.09</td>
-<td>1.31</td>
-<td>4.70</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4177.20</td>
-<td>2302.83</td>
+<td>3.09</td>
+<td>1.11</td>
+<td>1.47</td>
+<td>5.05</td>
+<td>4372.70</td>
+<td>2564.46</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[7]</td>
-<td>2.11</td>
-<td>0.86</td>
-<td>0.72</td>
-<td>3.45</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5067.25</td>
-<td>2754.08</td>
+<td>2.16</td>
+<td>0.90</td>
+<td>0.82</td>
+<td>3.65</td>
+<td>5431.74</td>
+<td>2747.14</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[8]</td>
-<td>-0.18</td>
+<td>-0.19</td>
 <td>0.61</td>
-<td>-1.23</td>
-<td>0.72</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4414.07</td>
-<td>2664.21</td>
+<td>-1.16</td>
+<td>0.77</td>
+<td>5130.23</td>
+<td>2816.62</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[9]</td>
-<td>2.14</td>
+<td>2.15</td>
 <td>0.88</td>
-<td>0.88</td>
-<td>3.60</td>
+<td>0.86</td>
+<td>3.67</td>
+<td>4920.14</td>
+<td>2492.98</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>5085.72</td>
-<td>2346.37</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[10]</td>
-<td>1.00</td>
-<td>0.67</td>
-<td>-0.08</td>
-<td>2.01</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4935.06</td>
-<td>2746.29</td>
+<td>1.01</td>
+<td>0.68</td>
+<td>0.00</td>
+<td>2.17</td>
+<td>4949.54</td>
+<td>2770.57</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[11]</td>
-<td>0.59</td>
-<td>0.63</td>
-<td>-0.38</td>
-<td>1.64</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5317.05</td>
-<td>2527.65</td>
+<td>0.58</td>
+<td>0.62</td>
+<td>-0.37</td>
+<td>1.58</td>
+<td>4866.68</td>
+<td>3008.95</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[12]</td>
-<td>1.01</td>
+<td>1.00</td>
 <td>0.68</td>
-<td>-0.09</td>
-<td>2.10</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5227.71</td>
-<td>2537.13</td>
+<td>-0.02</td>
+<td>2.13</td>
+<td>4738.07</td>
+<td>2825.30</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[13]</td>
 <td>0.19</td>
-<td>0.62</td>
-<td>-0.74</td>
-<td>1.23</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5477.37</td>
-<td>3411.60</td>
+<td>0.63</td>
+<td>-0.78</td>
+<td>1.19</td>
+<td>4992.12</td>
+<td>2860.79</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[14]</td>
 <td>2.14</td>
+<td>0.88</td>
 <td>0.87</td>
-<td>0.74</td>
-<td>3.49</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5458.70</td>
-<td>2698.18</td>
+<td>3.59</td>
+<td>5187.02</td>
+<td>2700.93</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[15]</td>
-<td>2.14</td>
-<td>0.89</td>
-<td>0.84</td>
-<td>3.60</td>
+<td>2.15</td>
+<td>0.88</td>
+<td>0.88</td>
+<td>3.58</td>
+<td>5247.17</td>
+<td>2858.93</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>5463.30</td>
-<td>2549.15</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[16]</td>
-<td>2.91</td>
-<td>0.81</td>
-<td>1.57</td>
-<td>4.09</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>3973.58</td>
-<td>2202.10</td>
+<td>2.92</td>
+<td>0.78</td>
+<td>1.81</td>
+<td>4.25</td>
+<td>4064.36</td>
+<td>2214.70</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[17]</td>
-<td>2.40</td>
+<td>2.39</td>
 <td>0.66</td>
-<td>1.39</td>
-<td>3.45</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4073.73</td>
-<td>2449.13</td>
+<td>1.43</td>
+<td>3.52</td>
+<td>4777.81</td>
+<td>2771.84</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[18]</td>
-<td>2.01</td>
-<td>0.59</td>
-<td>1.04</td>
-<td>2.89</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4491.60</td>
-<td>2735.88</td>
+<td>2.03</td>
+<td>0.60</td>
+<td>1.14</td>
+<td>3.02</td>
+<td>4396.96</td>
+<td>2779.95</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[19]</td>
-<td>3.67</td>
-<td>1.01</td>
-<td>2.05</td>
-<td>5.18</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4002.03</td>
-<td>2296.31</td>
+<td>3.68</td>
+<td>1.00</td>
+<td>2.26</td>
+<td>5.37</td>
+<td>4372.63</td>
+<td>2609.22</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[20]</td>
-<td>2.39</td>
+<td>2.41</td>
 <td>0.66</td>
-<td>1.30</td>
-<td>3.40</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5164.81</td>
-<td>2713.07</td>
+<td>1.43</td>
+<td>3.57</td>
+<td>4880.88</td>
+<td>2430.45</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[21]</td>
-<td>2.37</td>
+<td>2.38</td>
 <td>0.64</td>
-<td>1.37</td>
-<td>3.34</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4288.68</td>
-<td>2462.53</td>
+<td>1.42</td>
+<td>3.45</td>
+<td>5455.01</td>
+<td>2826.08</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[22]</td>
-<td>2.41</td>
-<td>0.67</td>
-<td>1.36</td>
+<td>2.39</td>
+<td>0.65</td>
+<td>1.45</td>
 <td>3.48</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4652.46</td>
-<td>2788.90</td>
+<td>5056.41</td>
+<td>2667.38</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[23]</td>
-<td>1.70</td>
+<td>1.71</td>
 <td>0.53</td>
-<td>0.87</td>
-<td>2.53</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4774.83</td>
-<td>2594.26</td>
+<td>0.90</td>
+<td>2.58</td>
+<td>5507.69</td>
+<td>2932.55</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[24]</td>
-<td>-1.00</td>
+<td>-1.01</td>
 <td>0.44</td>
-<td>-1.72</td>
-<td>-0.31</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5228.28</td>
-<td>2796.81</td>
+<td>-1.73</td>
+<td>-0.33</td>
+<td>4911.62</td>
+<td>2881.77</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[25]</td>
 <td>0.16</td>
-<td>0.40</td>
-<td>-0.48</td>
+<td>0.37</td>
+<td>-0.43</td>
 <td>0.77</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5315.26</td>
-<td>3276.81</td>
+<td>5138.28</td>
+<td>3018.86</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[26]</td>
 <td>-1.43</td>
-<td>0.50</td>
-<td>-2.17</td>
-<td>-0.59</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5246.59</td>
-<td>2709.42</td>
+<td>0.48</td>
+<td>-2.23</td>
+<td>-0.69</td>
+<td>4103.19</td>
+<td>2750.87</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[27]</td>
 <td>-0.47</td>
-<td>0.41</td>
+<td>0.39</td>
 <td>-1.10</td>
-<td>0.19</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5692.90</td>
-<td>2932.22</td>
+<td>0.15</td>
+<td>5341.63</td>
+<td>3050.75</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[28]</td>
-<td>0.16</td>
-<td>0.39</td>
-<td>-0.45</td>
-<td>0.79</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5975.98</td>
-<td>2833.11</td>
+<td>0.17</td>
+<td>0.40</td>
+<td>-0.47</td>
+<td>0.81</td>
+<td>4849.39</td>
+<td>3121.15</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[29]</td>
 <td>1.45</td>
-<td>0.49</td>
-<td>0.66</td>
-<td>2.21</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5941.48</td>
-<td>2634.15</td>
+<td>0.51</td>
+<td>0.68</td>
+<td>2.30</td>
+<td>5478.31</td>
+<td>2930.04</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[30]</td>
-<td>-0.63</td>
-<td>0.41</td>
-<td>-1.27</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4650.72</td>
-<td>2952.50</td>
+<td>-0.65</td>
+<td>0.42</td>
+<td>-1.32</td>
+<td>0.00</td>
+<td>4684.79</td>
+<td>3077.62</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[31]</td>
 <td>-0.31</td>
 <td>0.40</td>
-<td>-0.97</td>
-<td>0.30</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4549.00</td>
-<td>3041.20</td>
+<td>-0.94</td>
+<td>0.31</td>
+<td>5040.03</td>
+<td>2898.02</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[32]</td>
-<td>3.19</td>
-<td>0.75</td>
-<td>2.00</td>
-<td>4.30</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4774.06</td>
-<td>2451.25</td>
+<td>3.18</td>
+<td>0.73</td>
+<td>2.13</td>
+<td>4.47</td>
+<td>4275.87</td>
+<td>2294.05</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[33]</td>
-<td>2.70</td>
-<td>0.63</td>
-<td>1.74</td>
-<td>3.72</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4651.07</td>
-<td>2720.92</td>
+<td>2.71</td>
+<td>0.62</td>
+<td>1.79</td>
+<td>3.76</td>
+<td>4843.23</td>
+<td>2456.56</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[34]</td>
-<td>2.71</td>
+<td>2.72</td>
 <td>0.65</td>
-<td>1.69</td>
-<td>3.70</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4818.52</td>
-<td>2668.70</td>
+<td>1.76</td>
+<td>3.79</td>
+<td>5125.77</td>
+<td>2733.09</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[35]</td>
-<td>2.07</td>
+<td>2.06</td>
 <td>0.51</td>
-<td>1.28</td>
-<td>2.86</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5345.05</td>
-<td>2501.73</td>
+<td>1.30</td>
+<td>2.91</td>
+<td>4823.79</td>
+<td>2516.01</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[36]</td>
 <td>2.08</td>
-<td>0.51</td>
-<td>1.26</td>
-<td>2.90</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4387.29</td>
-<td>3025.43</td>
+<td>0.52</td>
+<td>1.30</td>
+<td>2.95</td>
+<td>5975.92</td>
+<td>2940.94</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[37]</td>
-<td>3.88</td>
+<td>3.89</td>
 <td>0.97</td>
-<td>2.42</td>
-<td>5.37</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4729.41</td>
-<td>2696.61</td>
+<td>2.53</td>
+<td>5.58</td>
+<td>3937.47</td>
+<td>2205.22</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[38]</td>
 <td>2.71</td>
-<td>0.65</td>
-<td>1.64</td>
-<td>3.64</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4585.51</td>
-<td>2734.21</td>
+<td>0.63</td>
+<td>1.77</td>
+<td>3.77</td>
+<td>5042.92</td>
+<td>2922.60</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[39]</td>
-<td>2.35</td>
-<td>0.55</td>
-<td>1.44</td>
-<td>3.16</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4925.61</td>
-<td>2595.30</td>
+<td>2.36</td>
+<td>0.57</td>
+<td>1.52</td>
+<td>3.34</td>
+<td>4553.53</td>
+<td>2523.72</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[40]</td>
 <td>-1.81</td>
-<td>0.49</td>
-<td>-2.58</td>
-<td>-1.05</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4914.53</td>
-<td>2944.31</td>
+<td>0.48</td>
+<td>-2.61</td>
+<td>-1.09</td>
+<td>5585.84</td>
+<td>3094.76</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[41]</td>
-<td>-0.58</td>
-<td>0.34</td>
+<td>-0.57</td>
+<td>0.35</td>
 <td>-1.13</td>
-<td>-0.06</td>
+<td>-0.03</td>
+<td>5131.43</td>
+<td>3034.83</td>
+<td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>4870.29</td>
-<td>2215.64</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[42]</td>
 <td>-0.46</td>
 <td>0.35</td>
-<td>-0.98</td>
-<td>0.12</td>
+<td>-1.01</td>
+<td>0.10</td>
+<td>5165.58</td>
+<td>2950.54</td>
+<td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>5440.37</td>
-<td>3200.09</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[43]</td>
-<td>-0.35</td>
+<td>-0.34</td>
 <td>0.34</td>
-<td>-0.86</td>
-<td>0.24</td>
+<td>-0.89</td>
+<td>0.19</td>
+<td>5103.01</td>
+<td>2991.26</td>
+<td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>4861.71</td>
-<td>2419.52</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[44]</td>
-<td>0.58</td>
+<td>0.57</td>
 <td>0.34</td>
 <td>0.03</td>
-<td>1.12</td>
+<td>1.11</td>
+<td>4944.48</td>
+<td>2795.08</td>
+<td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>5325.40</td>
-<td>3079.62</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[45]</td>
 <td>-0.57</td>
 <td>0.35</td>
-<td>-1.09</td>
-<td>-0.00</td>
-<td>0.00</td>
-<td>0.01</td>
-<td>5149.08</td>
-<td>2961.59</td>
+<td>-1.14</td>
+<td>-0.03</td>
+<td>4577.31</td>
+<td>3032.66</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[46]</td>
-<td>2.07</td>
-<td>0.53</td>
-<td>1.23</td>
-<td>2.86</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5367.90</td>
-<td>2818.22</td>
+<td>2.06</td>
+<td>0.51</td>
+<td>1.29</td>
+<td>2.91</td>
+<td>4986.25</td>
+<td>2906.58</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[47]</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.33</td>
-<td>-0.51</td>
+<td>-0.52</td>
 <td>0.54</td>
+<td>5023.24</td>
+<td>2839.34</td>
+<td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>5362.15</td>
-<td>2870.40</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma</td>
 <td>1.62</td>
-<td>0.21</td>
-<td>1.24</td>
-<td>1.91</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2438.51</td>
-<td>2769.09</td>
+<td>0.22</td>
+<td>1.31</td>
+<td>1.99</td>
+<td>2119.62</td>
+<td>2636.70</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.00</td>
 </tr>
 </tbody>
 </table>
@@ -1368,34 +1378,34 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="86b52173" class="cell" data-execution_count="2">
+<div id="3a0d9d17" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> importlib.resources <span class="im">import</span> files</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span>  m.load.reedfrogs(only_path<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">';'</span>) </span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Manipulate</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">"tank"</span>] <span class="op">=</span> jnp.arange(m.df.shape[<span class="dv">0</span>]) </span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(tank, surv, density):</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.effects.varying_intercept(N_groups<span class="op">=</span><span class="dv">48</span>,group_id<span class="op">=</span>tank, group_name <span class="op">=</span> <span class="st">'tank'</span>)</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    m.dist.binomial(total_count <span class="op">=</span> density, logits <span class="op">=</span> alpha, obs<span class="op">=</span>surv)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) </span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagnostic ------------------------------------------------</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> importlib.resources <span class="im">import</span> files</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span>  m.load.reedfrogs(only_path<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">';'</span>) </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Manipulate</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">"tank"</span>] <span class="op">=</span> jnp.arange(m.df.shape[<span class="dv">0</span>]) </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(tank, surv, density):</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.effects.varying_intercept(N_groups<span class="op">=</span><span class="dv">48</span>,group_id<span class="op">=</span>tank, group_name <span class="op">=</span> <span class="st">'tank'</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    m.dist.binomial(total_count <span class="op">=</span> density, logits <span class="op">=</span> alpha, obs<span class="op">=</span>surv)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagnostic ------------------------------------------------</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>jax.local_device_count 32</code></pre>
@@ -1410,13 +1420,13 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
@@ -1424,601 +1434,601 @@ jax.local_device_count 32</code></pre>
 <td data-quarto-table-cell-role="th">global_intercept_tank</td>
 <td>1.36</td>
 <td>0.25</td>
-<td>0.97</td>
+<td>0.96</td>
 <td>1.75</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3102.70</td>
-<td>2649.51</td>
+<td>3415.29</td>
+<td>2882.49</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[0]</td>
-<td>2.13</td>
-<td>0.87</td>
-<td>0.74</td>
-<td>3.49</td>
-<td>0.01</td>
-<td>0.02</td>
-<td>4203.39</td>
-<td>2225.72</td>
+<td>2.15</td>
+<td>0.88</td>
+<td>0.89</td>
+<td>3.65</td>
+<td>3990.57</td>
+<td>2563.44</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[1]</td>
-<td>3.09</td>
-<td>1.13</td>
-<td>1.27</td>
-<td>4.80</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4095.90</td>
-<td>2458.46</td>
+<td>3.05</td>
+<td>1.09</td>
+<td>1.50</td>
+<td>4.89</td>
+<td>4276.75</td>
+<td>2787.83</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[2]</td>
-<td>1.01</td>
+<td>0.99</td>
 <td>0.68</td>
 <td>-0.04</td>
-<td>2.09</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>6044.47</td>
-<td>3213.13</td>
+<td>2.13</td>
+<td>4596.43</td>
+<td>3182.29</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[3]</td>
-<td>3.08</td>
-<td>1.11</td>
-<td>1.39</td>
-<td>4.81</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>3918.18</td>
-<td>2468.43</td>
+<td>3.07</td>
+<td>1.09</td>
+<td>1.51</td>
+<td>4.96</td>
+<td>3952.78</td>
+<td>2461.45</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[4]</td>
-<td>2.14</td>
-<td>0.87</td>
-<td>0.68</td>
-<td>3.44</td>
+<td>2.13</td>
+<td>0.84</td>
+<td>0.90</td>
+<td>3.55</td>
+<td>4922.72</td>
+<td>2531.83</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>4862.53</td>
-<td>2672.34</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[5]</td>
-<td>2.13</td>
+<td>2.14</td>
+<td>0.87</td>
 <td>0.86</td>
-<td>0.81</td>
-<td>3.52</td>
-<td>0.01</td>
-<td>0.02</td>
-<td>4459.67</td>
-<td>2525.95</td>
+<td>3.59</td>
+<td>5232.49</td>
+<td>2762.75</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[6]</td>
 <td>3.08</td>
 <td>1.10</td>
-<td>1.26</td>
-<td>4.60</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>3795.91</td>
-<td>2696.97</td>
+<td>1.51</td>
+<td>5.00</td>
+<td>3921.00</td>
+<td>2541.90</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[7]</td>
-<td>2.13</td>
-<td>0.87</td>
-<td>0.72</td>
-<td>3.39</td>
-<td>0.01</td>
-<td>0.02</td>
-<td>5156.56</td>
-<td>2639.12</td>
+<td>2.14</td>
+<td>0.86</td>
+<td>0.89</td>
+<td>3.55</td>
+<td>4571.10</td>
+<td>2844.65</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[8]</td>
-<td>-0.16</td>
-<td>0.62</td>
-<td>-1.24</td>
-<td>0.74</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4668.60</td>
-<td>2781.30</td>
+<td>-0.19</td>
+<td>0.61</td>
+<td>-1.18</td>
+<td>0.79</td>
+<td>5145.73</td>
+<td>3243.38</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[9]</td>
 <td>2.13</td>
+<td>0.87</td>
 <td>0.88</td>
-<td>0.82</td>
 <td>3.60</td>
+<td>5271.00</td>
+<td>2690.19</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>4516.77</td>
-<td>2600.37</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[10]</td>
-<td>1.00</td>
+<td>1.01</td>
 <td>0.69</td>
-<td>-0.07</td>
-<td>2.11</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5027.63</td>
-<td>2968.89</td>
+<td>-0.04</td>
+<td>2.15</td>
+<td>5143.47</td>
+<td>3014.53</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[11]</td>
 <td>0.58</td>
-<td>0.64</td>
-<td>-0.48</td>
-<td>1.56</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4743.13</td>
-<td>2322.88</td>
+<td>0.63</td>
+<td>-0.38</td>
+<td>1.60</td>
+<td>5247.58</td>
+<td>2783.29</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[12]</td>
-<td>0.99</td>
+<td>1.00</td>
 <td>0.67</td>
-<td>-0.02</td>
-<td>2.11</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>6034.99</td>
-<td>2937.32</td>
+<td>-0.03</td>
+<td>2.09</td>
+<td>4800.55</td>
+<td>2813.44</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[13]</td>
-<td>0.20</td>
-<td>0.62</td>
-<td>-0.80</td>
-<td>1.19</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4859.69</td>
-<td>3062.71</td>
+<td>0.21</td>
+<td>0.60</td>
+<td>-0.74</td>
+<td>1.17</td>
+<td>5073.60</td>
+<td>3158.70</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[14]</td>
-<td>2.14</td>
-<td>0.88</td>
-<td>0.79</td>
-<td>3.52</td>
+<td>2.13</td>
+<td>0.86</td>
+<td>0.86</td>
+<td>3.55</td>
+<td>4297.19</td>
+<td>2575.43</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>4850.73</td>
-<td>2939.58</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[15]</td>
-<td>2.16</td>
-<td>0.90</td>
-<td>0.74</td>
-<td>3.55</td>
+<td>2.14</td>
+<td>0.89</td>
+<td>0.81</td>
+<td>3.67</td>
+<td>5039.73</td>
+<td>2700.57</td>
+<td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
-<td>4922.68</td>
-<td>2935.56</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[16]</td>
-<td>2.91</td>
-<td>0.78</td>
-<td>1.65</td>
-<td>4.06</td>
-<td>0.01</td>
-<td>0.02</td>
-<td>4032.13</td>
-<td>2395.77</td>
+<td>2.92</td>
+<td>0.77</td>
+<td>1.81</td>
+<td>4.26</td>
+<td>4453.73</td>
+<td>2387.61</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[17]</td>
-<td>2.41</td>
-<td>0.68</td>
-<td>1.34</td>
-<td>3.48</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>3900.70</td>
-<td>2550.22</td>
+<td>2.38</td>
+<td>0.66</td>
+<td>1.43</td>
+<td>3.47</td>
+<td>4479.05</td>
+<td>2308.42</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[18]</td>
 <td>2.02</td>
-<td>0.58</td>
-<td>1.06</td>
-<td>2.89</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4163.80</td>
-<td>2789.68</td>
+<td>0.59</td>
+<td>1.13</td>
+<td>2.99</td>
+<td>4037.64</td>
+<td>2705.47</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[19]</td>
 <td>3.67</td>
 <td>1.01</td>
-<td>2.07</td>
-<td>5.17</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4185.97</td>
-<td>2043.63</td>
+<td>2.26</td>
+<td>5.43</td>
+<td>3760.69</td>
+<td>2359.75</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[20]</td>
-<td>2.40</td>
-<td>0.67</td>
-<td>1.28</td>
-<td>3.37</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4907.49</td>
-<td>2598.55</td>
+<td>2.39</td>
+<td>0.66</td>
+<td>1.43</td>
+<td>3.51</td>
+<td>4015.97</td>
+<td>2736.78</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[21]</td>
 <td>2.41</td>
-<td>0.69</td>
-<td>1.32</td>
-<td>3.45</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4782.79</td>
-<td>2759.72</td>
+<td>0.66</td>
+<td>1.44</td>
+<td>3.53</td>
+<td>4878.37</td>
+<td>2732.84</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[22]</td>
 <td>2.40</td>
 <td>0.66</td>
-<td>1.37</td>
-<td>3.45</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5489.01</td>
-<td>2635.75</td>
+<td>1.41</td>
+<td>3.53</td>
+<td>4908.69</td>
+<td>2344.78</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[23]</td>
-<td>1.70</td>
+<td>1.71</td>
 <td>0.53</td>
-<td>0.85</td>
-<td>2.52</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5594.51</td>
-<td>2754.70</td>
+<td>0.91</td>
+<td>2.59</td>
+<td>4943.54</td>
+<td>2721.57</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[24]</td>
-<td>-1.00</td>
-<td>0.44</td>
-<td>-1.74</td>
-<td>-0.31</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4525.62</td>
-<td>3014.61</td>
+<td>-1.01</td>
+<td>0.45</td>
+<td>-1.75</td>
+<td>-0.32</td>
+<td>4858.90</td>
+<td>2969.15</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[25]</td>
 <td>0.15</td>
-<td>0.41</td>
-<td>-0.51</td>
-<td>0.79</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5195.49</td>
-<td>2874.03</td>
+<td>0.40</td>
+<td>-0.47</td>
+<td>0.81</td>
+<td>5037.27</td>
+<td>3073.73</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[26]</td>
-<td>-1.42</td>
-<td>0.48</td>
-<td>-2.20</td>
-<td>-0.67</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4231.98</td>
-<td>3186.16</td>
+<td>-1.44</td>
+<td>0.49</td>
+<td>-2.24</td>
+<td>-0.70</td>
+<td>4604.51</td>
+<td>2836.45</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[27]</td>
-<td>-0.46</td>
+<td>-0.47</td>
 <td>0.40</td>
-<td>-1.12</td>
-<td>0.15</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4611.31</td>
-<td>3062.65</td>
+<td>-1.13</td>
+<td>0.17</td>
+<td>4680.95</td>
+<td>2854.13</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[28]</td>
 <td>0.16</td>
-<td>0.39</td>
-<td>-0.40</td>
-<td>0.82</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4395.45</td>
-<td>3096.23</td>
+<td>0.40</td>
+<td>-0.46</td>
+<td>0.80</td>
+<td>4882.39</td>
+<td>2735.90</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[29]</td>
-<td>1.44</td>
+<td>1.45</td>
 <td>0.49</td>
-<td>0.66</td>
-<td>2.23</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4266.89</td>
-<td>2795.29</td>
+<td>0.70</td>
+<td>2.26</td>
+<td>4498.06</td>
+<td>3018.46</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[30]</td>
-<td>-0.63</td>
-<td>0.41</td>
-<td>-1.25</td>
-<td>0.04</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5206.19</td>
-<td>3129.66</td>
+<td>-0.64</td>
+<td>0.42</td>
+<td>-1.33</td>
+<td>0.02</td>
+<td>4577.58</td>
+<td>2720.51</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[31]</td>
 <td>-0.31</td>
-<td>0.40</td>
-<td>-0.92</td>
-<td>0.35</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5112.14</td>
-<td>3012.94</td>
+<td>0.41</td>
+<td>-0.96</td>
+<td>0.33</td>
+<td>4334.32</td>
+<td>3159.60</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[32]</td>
 <td>3.20</td>
 <td>0.77</td>
-<td>2.04</td>
-<td>4.46</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4382.97</td>
-<td>2660.81</td>
+<td>2.08</td>
+<td>4.54</td>
+<td>4317.99</td>
+<td>2038.67</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[33]</td>
-<td>2.70</td>
-<td>0.64</td>
-<td>1.70</td>
-<td>3.68</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5122.03</td>
-<td>2281.85</td>
+<td>2.71</td>
+<td>0.66</td>
+<td>1.77</td>
+<td>3.83</td>
+<td>4611.22</td>
+<td>2561.36</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[34]</td>
-<td>2.71</td>
+<td>2.70</td>
 <td>0.64</td>
-<td>1.61</td>
-<td>3.63</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4444.06</td>
-<td>2556.19</td>
+<td>1.76</td>
+<td>3.80</td>
+<td>4313.50</td>
+<td>2629.08</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[35]</td>
-<td>2.06</td>
-<td>0.51</td>
-<td>1.22</td>
-<td>2.83</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5027.89</td>
-<td>2690.96</td>
+<td>2.05</td>
+<td>0.52</td>
+<td>1.27</td>
+<td>2.94</td>
+<td>4850.72</td>
+<td>2814.69</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[36]</td>
-<td>2.05</td>
+<td>2.06</td>
 <td>0.51</td>
-<td>1.24</td>
-<td>2.81</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5981.86</td>
-<td>2841.42</td>
+<td>1.29</td>
+<td>2.87</td>
+<td>4468.91</td>
+<td>2726.32</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[37]</td>
-<td>3.89</td>
-<td>0.99</td>
-<td>2.40</td>
-<td>5.47</td>
-<td>0.02</td>
-<td>0.02</td>
-<td>4233.54</td>
-<td>2351.62</td>
+<td>3.90</td>
+<td>0.98</td>
+<td>2.50</td>
+<td>5.60</td>
+<td>3662.11</td>
+<td>2645.65</td>
 <td>1.0</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[38]</td>
 <td>2.70</td>
-<td>0.63</td>
-<td>1.69</td>
-<td>3.66</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4822.98</td>
-<td>2599.29</td>
+<td>0.65</td>
+<td>1.76</td>
+<td>3.80</td>
+<td>4552.19</td>
+<td>2859.90</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[39]</td>
 <td>2.36</td>
-<td>0.55</td>
-<td>1.50</td>
-<td>3.23</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5633.01</td>
-<td>3142.45</td>
+<td>0.59</td>
+<td>1.49</td>
+<td>3.32</td>
+<td>4654.09</td>
+<td>2769.89</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[40]</td>
-<td>-1.80</td>
-<td>0.46</td>
-<td>-2.53</td>
-<td>-1.05</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4810.67</td>
-<td>3045.82</td>
+<td>-1.81</td>
+<td>0.47</td>
+<td>-2.61</td>
+<td>-1.10</td>
+<td>4785.77</td>
+<td>2901.93</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[41]</td>
-<td>-0.57</td>
-<td>0.35</td>
+<td>-0.56</td>
+<td>0.34</td>
 <td>-1.11</td>
-<td>0.02</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4861.00</td>
-<td>2837.52</td>
+<td>-0.02</td>
+<td>4801.07</td>
+<td>3007.17</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[42]</td>
-<td>-0.44</td>
-<td>0.36</td>
-<td>-1.02</td>
-<td>0.12</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4578.06</td>
-<td>2680.80</td>
+<td>-0.45</td>
+<td>0.35</td>
+<td>-1.00</td>
+<td>0.10</td>
+<td>5536.59</td>
+<td>3204.83</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[43]</td>
-<td>-0.33</td>
-<td>0.34</td>
-<td>-0.83</td>
-<td>0.25</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4135.57</td>
-<td>3072.30</td>
+<td>-0.34</td>
+<td>0.33</td>
+<td>-0.88</td>
+<td>0.19</td>
+<td>4317.01</td>
+<td>2622.25</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[44]</td>
 <td>0.58</td>
 <td>0.35</td>
-<td>0.02</td>
-<td>1.14</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>5037.83</td>
-<td>2776.26</td>
+<td>0.03</td>
+<td>1.13</td>
+<td>5168.11</td>
+<td>3021.95</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[45]</td>
 <td>-0.57</td>
 <td>0.35</td>
-<td>-1.13</td>
-<td>-0.02</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4846.59</td>
-<td>2828.29</td>
+<td>-1.14</td>
+<td>-0.01</td>
+<td>5270.88</td>
+<td>2951.50</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[46]</td>
-<td>2.06</td>
-<td>0.51</td>
-<td>1.27</td>
-<td>2.87</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4489.80</td>
-<td>2753.20</td>
+<td>2.07</td>
+<td>0.52</td>
+<td>1.28</td>
+<td>2.93</td>
+<td>4373.90</td>
+<td>2508.92</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[47]</td>
-<td>0.01</td>
+<td>-0.00</td>
 <td>0.34</td>
-<td>-0.52</td>
-<td>0.56</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>4585.98</td>
-<td>2909.47</td>
+<td>-0.54</td>
+<td>0.54</td>
+<td>4196.53</td>
+<td>3017.55</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sd_tank</td>
 <td>1.62</td>
-<td>0.21</td>
-<td>1.28</td>
-<td>1.93</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>1946.70</td>
-<td>2601.86</td>
+<td>0.22</td>
+<td>1.31</td>
+<td>1.98</td>
+<td>2272.90</td>
+<td>2645.92</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.00</td>
 </tr>
 </tbody>
 </table>
@@ -2028,63 +2038,186 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">reedfrogs</span>(<span class="at">only_path=</span>T), <span class="at">sep=</span><span class="st">';'</span>)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>tank <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df)<span class="sc">-</span><span class="dv">1</span>)) <span class="co"># Manipulate</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'tank'</span>, <span class="st">'surv'</span>, <span class="st">'density'</span>)) <span class="co"># Manipulate</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(tank, surv, density){</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>( <span class="dv">1</span>,  <span class="at">name =</span> <span class="st">'sigma'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  a_bar <span class="ot">=</span>  <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">1.5</span>, <span class="at">name=</span><span class="st">'a_bar'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(a_bar, sigma, <span class="at">name=</span><span class="st">'alpha'</span>, <span class="at">shape =</span><span class="fu">c</span>(<span class="dv">48</span>))</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> alpha[tank]</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> density, <span class="at">logits =</span> p, <span class="at">obs=</span>surv)</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">reedfrogs</span>(<span class="at">only_path=</span>T), <span class="at">sep=</span><span class="st">';'</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>tank <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df)<span class="sc">-</span><span class="dv">1</span>)) <span class="co"># Manipulate</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'tank'</span>, <span class="st">'surv'</span>, <span class="st">'density'</span>)) <span class="co"># Manipulate</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(tank, surv, density){</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>( <span class="dv">1</span>,  <span class="at">name =</span> <span class="st">'sigma'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  a_bar <span class="ot">=</span>  <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">1.5</span>, <span class="at">name=</span><span class="st">'a_bar'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(a_bar, sigma, <span class="at">name=</span><span class="st">'alpha'</span>, <span class="at">shape =</span><span class="fu">c</span>(<span class="dv">48</span>))</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> alpha[tank]</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> density, <span class="at">logits =</span> p, <span class="at">obs=</span>surv)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">reedfrogs</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="ch">';'</span>)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">"tank"</span>] <span class="op">=</span> jnp.<span class="fu">arange</span>(m.df.shape[<span class="fl">0</span>]) </span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(tank, surv, density)</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.effects.<span class="fu">varying_intercept</span>(N_groups<span class="op">=</span><span class="fl">48</span>,group_id<span class="op">=</span>tank, group_name <span class="op">=</span> <span class="st">"tank"</span>)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">binomial</span>(total_count <span class="op">=</span> density, logits <span class="op">=</span> alpha, obs<span class="op">=</span>surv)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">reedfrogs</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="ch">';'</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">"tank"</span>] <span class="op">=</span> jnp.<span class="fu">arange</span>(m.df.shape[<span class="fl">0</span>]) </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(tank, surv, density)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.effects.<span class="fu">varying_intercept</span>(N_groups<span class="op">=</span><span class="fl">48</span>,group_id<span class="op">=</span>tank, group_name <span class="op">=</span> <span class="st">"tank"</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">binomial</span>(total_count <span class="op">=</span> density, logits <span class="op">=</span> alpha, obs<span class="op">=</span>surv)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
+<section id="posterior-predictive-checks" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
+<p>Does the model reproduce the number of survivors in every tank?</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="c59bf6a1" class="cell" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+        <script type="text/javascript">
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        </script>
+        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
+        
+</div>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="49229b3b-db76-4987-9e08-b6ba75b3da50" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("49229b3b-db76-4987-9e08-b6ba75b3da50")) {                    Plotly.newPlot(                        "49229b3b-db76-4987-9e08-b6ba75b3da50",                        [{"hoverinfo":"skip","line":{"color":"rgba(100,149,237,0.6)","width":1.5},"mode":"lines","name":"90% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null],"y":[6.0,10.0,null,7.0,10.0,null,4.0,10.0,null,7.0,10.0,null,6.0,10.0,null,6.0,10.0,null,7.0,10.0,null,6.0,10.0,null,1.0,8.0,null,6.0,10.0,null,4.0,10.0,null,3.0,9.0,null,4.0,10.0,null,2.0,9.0,null,6.0,10.0,null,6.0,10.0,null,20.0,25.0,null,19.0,25.0,null,17.0,25.0,null,22.0,25.0,null,19.0,25.0,null,19.0,25.0,null,19.0,25.0,null,16.0,24.0,null,2.0,12.0,null,8.0,19.0,null,1.0,10.0,null,4.0,15.0,null,8.0,19.0,null,15.0,24.0,null,4.0,14.0,null,5.0,16.049999999999727,null,30.0,35.0,null,29.0,35.0,null,28.0,35.0,null,26.0,34.0,null,26.0,34.0,null,31.0,35.0,null,28.0,35.0,null,27.0,35.0,null,1.0,10.0,null,7.0,19.0,null,7.0,20.0,null,8.0,21.0,null,16.0,28.0,null,6.0,19.0,null,26.0,34.0,null,11.0,24.0,null],"type":"scatter"},{"hoverinfo":"skip","line":{"color":"cornflowerblue","width":5},"mode":"lines","name":"50% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null],"y":[8.0,10.0,null,9.0,10.0,null,6.0,8.0,null,9.0,10.0,null,8.0,10.0,null,8.0,10.0,null,9.0,10.0,null,8.0,10.0,null,3.0,6.0,null,8.0,10.0,null,6.0,9.0,null,5.0,8.0,null,6.0,9.0,null,4.0,7.0,null,8.0,10.0,null,8.0,10.0,null,23.0,25.0,null,21.0,24.0,null,20.0,23.0,null,24.0,25.0,null,21.0,24.0,null,22.0,24.0,null,21.0,24.0,null,19.0,23.0,null,5.0,9.0,null,11.0,16.0,null,3.0,7.0,null,7.0,12.0,null,11.0,16.0,null,18.0,22.0,null,6.0,11.0,null,8.0,13.0,null,32.0,35.0,null,31.0,34.0,null,31.0,34.0,null,29.0,33.0,null,29.0,33.0,null,33.0,35.0,null,31.0,34.0,null,30.0,33.0,null,3.0,7.0,null,10.0,15.0,null,11.0,17.0,null,12.0,17.0,null,20.0,25.0,null,10.0,16.0,null,29.0,33.0,null,15.0,20.0,null],"type":"scatter"},{"marker":{"color":"white","line":{"color":"cornflowerblue","width":1.5},"size":7},"mode":"markers","name":"Median prediction of surv","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v"},"y":{"dtype":"f8","bdata":"AAAAAAAAIkAAAAAAAAAkQAAAAAAAABxAAAAAAAAAJEAAAAAAAAAiQAAAAAAAACJAAAAAAAAAJEAAAAAAAAAiQAAAAAAAABRAAAAAAAAAIkAAAAAAAAAcQAAAAAAAABhAAAAAAAAAHEAAAAAAAAAYQAAAAAAAACJAAAAAAAAAIkAAAAAAAAA4QAAAAAAAADdAAAAAAAAANkAAAAAAAAA5QAAAAAAAADdAAAAAAAAAN0AAAAAAAAA3QAAAAAAAADVAAAAAAAAAHEAAAAAAAAAqQAAAAAAAABRAAAAAAAAAJEAAAAAAAAAsQAAAAAAAADRAAAAAAAAAIkAAAAAAAAAmQAAAAAAAAEFAAAAAAACAQEAAAAAAAIBAQAAAAAAAAD9AAAAAAAAAP0AAAAAAAABBQAAAAAAAgEBAAAAAAAAAQEAAAAAAAAAUQAAAAAAAACpAAAAAAAAALEAAAAAAAAAuQAAAAAAAADZAAAAAAAAAKkAAAAAAAAA\u002fQAAAAAAAADFA"},"type":"scatter"},{"marker":{"color":"black","size":5},"mode":"markers","name":"surv (observed)","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v"},"y":{"dtype":"f8","bdata":"AAAAAAAAIkAAAAAAAAAkQAAAAAAAABxAAAAAAAAAJEAAAAAAAAAiQAAAAAAAACJAAAAAAAAAJEAAAAAAAAAiQAAAAAAAABBAAAAAAAAAIkAAAAAAAAAcQAAAAAAAABhAAAAAAAAAHEAAAAAAAAAUQAAAAAAAACJAAAAAAAAAIkAAAAAAAAA4QAAAAAAAADdAAAAAAAAANkAAAAAAAAA5QAAAAAAAADdAAAAAAAAAN0AAAAAAAAA3QAAAAAAAADVAAAAAAAAAGEAAAAAAAAAqQAAAAAAAABBAAAAAAAAAIkAAAAAAAAAqQAAAAAAAADRAAAAAAAAAIEAAAAAAAAAkQAAAAAAAAEFAAAAAAACAQEAAAAAAAIBAQAAAAAAAAD9AAAAAAAAAP0AAAAAAAIBBQAAAAAAAgEBAAAAAAAAAQEAAAAAAAAAQQAAAAAAAAChAAAAAAAAAKkAAAAAAAAAsQAAAAAAAADZAAAAAAAAAKEAAAAAAAAA\u002fQAAAAAAAADFA"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"title":{"text":"PPC: Predictive intervals — predictions of surv"},"xaxis":{"title":{"text":"Observation"}},"yaxis":{"title":{"text":"surv"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('49229b3b-db76-4987-9e08-b6ba75b3da50');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>One point per tank (observed survivors) with the 50 % and 90 % predictive intervals. Partial pooling pulls extreme tanks toward the average, so a few points may sit at the edge of their interval; many points outside would mean too much shrinkage. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+More checks
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div id="1b1c0080" class="cell" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat(stat<span class="op">=</span><span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="5efb5d75-7290-44e8-8adc-2ca7d4472cff" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("5efb5d75-7290-44e8-8adc-2ca7d4472cff")) {                    Plotly.newPlot(                        "5efb5d75-7290-44e8-8adc-2ca7d4472cff",                        [{"fill":"tozeroy","fillcolor":"rgba(100,149,237,0.3)","line":{"color":"cornflowerblue","width":1.5},"mode":"lines","name":"sd of each prediction of surv","x":{"dtype":"f8","bdata":"Ky4voRIPIUCL9C1RURMhQOy6LAGQFyFATIErsc4bIUCtRyphDSAhQA0OKRFMJCFAbtQnwYooIUDOmiZxySwhQC9hJSEIMSFAjyck0UY1IUDw7SKBhTkhQFC0ITHEPSFAsHog4QJCIUARQR+RQUYhQHEHHkGASiFA0s0c8b5OIUAylBuh\u002fVIhQJNaGlE8VyFA8yAZAXtbIUBU5xexuV8hQLStFmH4YyFAFXQVETdoIUB1OhTBdWwhQNYAE3G0cCFANscRIfN0IUCWjRDRMXkhQPdTD4FwfSFAVxoOMa+BIUC44Azh7YUhQBinC5EsiiFAeW0KQWuOIUDZMwnxqZIhQDr6B6HoliFAmsAGUSebIUD7hgUBZp8hQFtNBLGkoyFAvBMDYeOnIUAc2gERIqwhQHygAMFgsCFA3Wb\u002fcJ+0IUA9Lf4g3rghQJ7z\u002fNAcvSFA\u002frn7gFvBIUBfgPowmsUhQL9G+eDYySFAIA34kBfOIUCA0\u002fZAVtIhQOGZ9fCU1iFAQWD0oNPaIUChJvNQEt8hQALt8QBR4yFAYrPwsI\u002fnIUDDee9gzushQCNA7hAN8CFAhAbtwEv0IUDkzOtwivghQEWT6iDJ\u002fCFApVnp0AcBIkAGIOiARgUiQGbm5jCFCSJAxqzl4MMNIkAnc+SQAhIiQIc540BBFiJA6P\u002fh8H8aIkBIxuCgvh4iQKmM31D9IiJACVPeADwnIkBqGd2weisiQMrf22C5LyJAK6baEPgzIkCLbNnANjgiQOwy2HB1PCJATPnWILRAIkCsv9XQ8kQiQA2G1IAxSSJAbUzTMHBNIkDOEtLgrlEiQC7Z0JDtVSJAj5\u002fPQCxaIkDvZc7wal4iQFAszaCpYiJAsPLLUOhmIkARucoAJ2siQHF\u002fybBlbyJA0kXIYKRzIkAyDMcQ43ciQJLSxcAhfCJA85jEcGCAIkBTX8Mgn4QiQLQlwtDdiCJAFOzAgByNIkB1sr8wW5EiQNV4vuCZlSJANj+9kNiZIkCWBbxAF54iQPbLuvBVoiJAV5K5oJSmIkC3WLhQ06oiQBgftwASryJAeOW1sFCzIkDZq7Rgj7ciQDlysxDOuyJAmjiywAzAIkD6\u002frBwS8QiQFvFryCKyCJAu4uu0MjMIkAcUq2AB9EiQHwYrDBG1SJA3N6q4ITZIkA9pamQw90iQJ1rqEAC4iJA\u002fjGn8EDmIkBe+KWgf+oiQL++pFC+7iJAH4WjAP3yIkCAS6KwO\u002fciQOARoWB6+yJAQdifELn\u002fIkChnp7A9wMjQAJlnXA2CCNAYiucIHUMI0DC8ZrQsxAjQCO4mYDyFCNAg36YMDEZI0DkRJfgbx0jQEQLlpCuISNApdGUQO0lI0AFmJPwKyojQGZekqBqLiNAxiSRUKkyI0Am648A6DYjQIexjrAmOyNA6HeNYGU\u002fI0BIPowQpEMjQKgEi8DiRyNACcuJcCFMI0BpkYggYFAjQMpXh9CeVCNAKh6GgN1YI0CL5IQwHF0jQOuqg+BaYSNATHGCkJllI0CsN4FA2GkjQAz+f\u002fAWbiNAbcR+oFVyI0DNin1QlHYjQC5RfADTeiNAjhd7sBF\u002fI0Dv3XlgUIMjQE+keBCPhyNAsGp3wM2LI0AQMXZwDJAjQHH3dCBLlCNA0b1z0ImYI0AyhHKAyJwjQJJKcTAHoSNA8hBw4EWlI0BT126QhKkjQLOdbUDDrSNAFGRs8AGyI0B0KmugQLYjQNXwaVB\u002fuiNANbdoAL6+I0CWfWew\u002fMIjQPZDZmA7xyNAVwplEHrLI0C30GPAuM8jQBiXYnD30yNAeF1hIDbYI0DYI2DQdNwjQDnqXoCz4CNAmbBdMPLkI0D6dlzgMOkjQFo9W5Bv7SNAuwNaQK7xI0Abyljw7PUjQHyQV6Ar+iNA3FZWUGr+I0A8HVUAqQIkQJ3jU7DnBiRA\u002fqlSYCYLJEBecFEQZQ8kQL42UMCjEyRAH\u002f1OcOIXJEB\u002fw00gIRwkQOCJTNBfICRAQFBLgJ4kJEChFkow3SgkQAHdSOAbLSRAYqNHkFoxJEDCaUZAmTUkQCIwRfDXOSRAg\u002fZDoBY+JEDjvEJQVUIkQESDQQCURiRApElAsNJKJEAFED9gEU8kQGXWPRBQUyRAxpw8wI5XJEAmYztwzVskQIcpOiAMYCRA5+840EpkJEBItjeAiWgkQKh8NjDIbCRACEM14AZxJEBpCTSQRXUkQMnPMkCEeSRAKpYx8MJ9JECKXDCgAYIkQOsiL1BAhiRAS+ktAH+KJECsryywvY4kQAx2K2D8kiRAbDwqEDuXJEDNAinAeZskQC7JJ3C4nyRAjo8mIPejJEDuVSXQNagkQE8cJIB0rCRAr+IiMLOwJEAQqSHg8bQkQHBvIJAwuSRA0TUfQG+9JEAx\u002fB3wrcEkQJLCHKDsxSRA8ogbUCvKJEBSTxoAas4kQLMVGbCo0iRAE9wXYOfWJEB0ohYQJtskQNRoFcBk3yRANS8UcKPjJECV9RIg4uckQPa7EdAg7CRAVoIQgF\u002fwJEC3SA8wnvQkQBcPDuDc+CRAeNUMkBv9JEDYmwtAWgElQDhiCvCYBSVAmSgJoNcJJUD57gdQFg4lQFq1BgBVEiVAunsFsJMWJUAbQgRg0holQHsIAxARHyVA3M4BwE8jJUA8lQBwjiclQJxb\u002fx\u002fNKyVA\u002fSH+zwswJUBe6Px\u002fSjQlQL6u+y+JOCVAHnX638c8JUB\u002fO\u002fmPBkElQN8B+D9FRSVAQMj274NJJUCgjvWfwk0lQAFV9E8BUiVAYRvz\u002fz9WJUDC4fGvflolQCKo8F+9XiVAgm7vD\u002fxiJUDjNO6\u002fOmclQET77G95ayVApMHrH7hvJUAEiOrP9nMlQGVO6X81eCVAxRToL3R8JUAm2+bfsoAlQIah5Y\u002fxhCVA52fkPzCJJUBHLuPvbo0lQKj04Z+tkSVACLvgT+yVJUBogd\u002f\u002fKpolQMlH3q9pniVAKg7dX6iiJUCK1NsP56YlQOqa2r8lqyVAS2HZb2SvJUCrJ9gfo7MlQAzu1s\u002fhtyVAbLTVfyC8JUDMetQvX8AlQC1B09+dxCVAjgfSj9zIJUDuzdA\u002fG80lQE6Uz+9Z0SVAr1rOn5jVJUAPIc1P19klQHDny\u002f8V3iVA0K3Kr1TiJUAxdMlfk+YlQJE6yA\u002fS6iVA8gDHvxDvJUBSx8VvT\u002fMlQLKNxB+O9yVAE1TDz8z7JUB0GsJ\u002fCwAmQNTgwC9KBCZA"},"y":{"dtype":"f8","bdata":"F5\u002fjV\u002f7BZj\u002fz4roIq7tnP+982o9vX2g\u002fOy8AxEGmaD9diI0cFo1oP\u002fgGHaMXFWg\u002farFfophDZz\u002fLvJhHviFmP\u002f2P+o3vu2Q\u002fgzDISRUhYz9vxz1+vWFhPyItdKptHl8\u002ftlhmUnN1Wz95WnO3ZOlXP\u002fMF3195mFQ\u002fsRb8w7OdUT+MIxpmjyFOP3wSPOjfDEo\u002ftzGH3zIiRz\u002f3gEXXfINFP1pxuXuKUUU\u002fbiSSA2mtRj+KjJptJ7lJP4iBhQa0l04\u002fvlKrkNy1Uj\u002f+MHLswCpXP0CPwNcLuFw\u002fUkNWvnuzYT8x8HVKZZ1lP8JEvzu5F2o\u002f3oZ3U1Ecbz\u002f\u002fBgIpbVByP6TjH7ScS3U\u002fjdcKnTh3eD9IpDVvAcp7P\u002foZz2fcOn8\u002f5dSI+e5ggT82IxGosSyDP+NUspWQ\u002f4Q\u002fdav8X4Xahj+BhX2f+sCIP9NVkwrvuIo\u002fXiYwJ+DKjD+rwFnfdgGPP3N\u002fDt16tJA\u002fB7HFZjcHkj9anoAVZ3+TP\u002fZ+9eblIpU\u002f4WryiW72lj\u002fM5QJLIP2YPyyE5JAfOJs\u002f8jUBk1ymnT+WS4xQRCKgP7d2LNmehqE\u002fP840Sqv8oj\u002fqlmNbOICkP9FyagDGDKY\u002fyfz2Ct2dpz++JlOtZi+pP+8ZnIz8vao\u002felC4gitHrD\u002fzvaw+pcmtP0+G1DFfRa8\u002fP6Hom89dsD8cJw7kexexP+6pYgib0bE\u002f6LKHEKKOsj8aSOlDgFGzP+20jfKFHbQ\u002f0TilLkb2tD9FmLt+c9+1P0xudxC43LY\u002feVgz1orxtz9FC8kOBCG5PzfKKba0bbo\u002ffAo494TZuz+iWdupnWW9PxJYEBJgEr8\u002fugA1wLZvwD9PEfws32XBP0dYEOTiasI\u002fj+B8ps59wz+KylgOmZ3EP3EU+Nk2ycU\u002fnU4+56n\u002fxj+GWzDICEDIP2ZHMhR+ick\u002fG2XTBkDbyj\u002frgqhlgjTMP162LdNllM0\u002fqp8wduj5zj\u002fO9pEJ7jHQPx+dyKdy6NA\u002f2strbcOf0T9jYRrcHFfSP1HT8wXJDdM\u002fs3RC5zbD0z\u002fjaRd0FHfUP3PWAFxoKdU\u002fFwWFGqja1T8wliHsxovWP98kGrk6Ptc\u002fXc2J8\u002fTz1z+nW9urTq\u002fYP23wG5Toctk\u002f6xIZG4FB2j\u002f3qR3+wx3bPy7wcX4XCtw\u002fGRUFs2sI3T+EbdQxEBreP7XPI5mTP98\u002fLVygvFc84D8s9vz3IOLgPyDW5owqkOE\u002f3JGkuRlF4j8N7B65Q\u002f\u002fiP7zmigPCvOM\u002fuLeYqol75D\u002ftJTtehDnlP0VveJ+p9OU\u002fruY8sRar5j9SLhP2I1vnP9x68J92A+g\u002fvzB+5Q2j6D9ODbVRSznpP2973iv2xek\u002ffbhvVjpJ6j\u002fwP2ZIo8PqP7r5XeATNus\u002fkZ4xvbuh6z8+M7mMCgjsPyDjtnGhauw\u002fAko7WkLL7D81iyT9vCvtPw+6Ok7Zje0\u002f4dnelD\u002fz7T9ntfbmXl3uP4eOoXxTze4\u002fTIXZ+M5D7z+cVY8zBcHvP3y9CBNQIvA\u002fRvjmnt5m8D91IlnGeq3wP+OTr5Q49fA\u002fAEpIXwI98T9HOMx+q4PxP\u002f2+fUwFyPE\u002fWp\u002fXYvQI8j+TS3cOhEXyP1PBEQ32fPI\u002fpIZgI82u8j93KZOn0dryP6vmOsYPAfM\u002fxVut7c8h8z\u002fbcHNcij3zP8Fi+TzXVPM\u002fEssd\u002fFxo8z8HZsmfvnjzPxfwttCLhvM\u002fnG53EzSS8z\u002f3COZV\u002fpvzPykgm4UFpPM\u002fauWtYDqq8z\u002fEfK4laq7zP8u\u002fvj5JsPM\u002fs2pfjYCv8z9kbl6pu6vzP4ms80O2pPM\u002fUYHF+Uaa8z\u002frPgQ0ZozzPzLhnUAwe\u002fM\u002fIZC1cOJm8z9Nk2i500\u002fzPxi7BuppNvM\u002f1DyE9Awb8z\u002fI9PTxGf7yP+0G23nX3\u002fI\u002fkEJymGzA8j+Gtdk\u002f25\u002fyP+mV9pD+ffI\u002fBDKd4Yxa8j8j0xsHHTXyP5hnby8uDfI\u002f0lfvdzHi8T9EhbRulLPxPzJad7nLgPE\u002fGaLSLl1J8T+755e\u002f6AzxP5O3yJwvy\u002fA\u002fgZGqGBmE8D80CNHdtDfwP1Ho+oh0zO8\u002fhwQCnwkg7z+qvs1SHGvuP\u002fVuhJvMru0\u002fw7ABolXs7D\u002fgKijE\u002fCTsP7XsSD4DWus\u002f7QjRRpyM6j8pgTWo6L3pP28hBef37ug\u002fGj398c0g6D8zwUJra1TnPy0k1fzViuY\u002f4LJDAh7F5T9R8BAtXwTlP12Czp26SeQ\u002f0Y0VGEqW4z9x5ZpHDeviP0lJAkXTSOI\u002fcYT+cCOw4T\u002fJ9K0oKSHhP9VyrrGlm+A\u002fWpxRC+se4D\u002fqJ2piwlPfP64\u002fqPIrdt4\u002fvm\u002fjmayh3T\u002fTqU2AnNLcP8+4tVlZBdw\u002fNumgH4022z\u002fTp8sCbWPaP\u002fatb2jqidk\u002fKb9jndGo2D8xi5oo1L\u002fXP3Azl\u002f1+z9Y\u002ft7Pi8B7Z1T9Qw8d9l97UPx6sE\u002fww4tM\u002fa\u002fDdxGPm0j8xU7R8pe3RPwnF3+I8+tA\u002fM9nUSh8O0D\u002fvOyjxslXOPy0frlsIo8w\u002fAqBw8oYFyz+cBRzWnX3JP5vgbI4AC8g\u002fA7v7Qsysxj\u002f0QI3+r2HFP+vrSQwUKMQ\u002ft\u002f9poD3+wj9zHYgvbeLBP0emXej20sA\u002fX0B7Iaucvz\u002fU4t\u002f9cKa9P12i+Rcbwbs\u002fmYJEcQ\u002fruT\u002fPcl\u002fdRSO4PzHUf9NJabY\u002fcJqmBTa9tD\u002ffv2XlqB+zP6aO+VuxkbE\u002feiQgi7MUsD9lku+vjFStP20HATsXqKo\u002fSFys7gsnqD8yPszE39OlP+iwbowwsKM\u002f2iw1cJC8oT9RhAzB0\u002fCfP5AOaUn+w5w\u002fS5yNKgvtmT+C1dtdsmSXPxN7iZ2EIpU\u002fjA9X2Iodkz\u002fVhZmf50yRP+K0Z6vSUI8\u002fD8sBq\u002f1RjD8Ukx2lCZKJPzbJMRLPCIc\u002fh6eCWzOxhD++rmVpzIiCP8aT0\u002flLj4A\u002fislOrJGLfT\u002ff2+7++Vt6P7N4PX0ck3c\u002fZXGhiOUydT+JClzJ\u002fDpzP2Pwmmk+qHE\u002f+7SyKZV0cD8+jC1CWi5vPxRZ6KTdCW4\u002fjjvoZllibT833g5e1RxtP4c01udOHm0\u002fcxk0giRNbT+CLLeVOZJtP5Hhzhe+2W0\u002fYaK+GpMTbj9\u002fg8AnUjNuP1Lzs+YHMG4\u002f7eSL+LkDbj9G2e1T06ptP+WBariRI20\u002fvxIUSYptbD+veJLwU4lrPzLw\u002fRtdeGo\u002f0+IxIOk8aT\u002fo8lnEKdpnPwD8jT1kVGY\u002f"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"black","width":2.5},"type":"line","x0":9.884774989636572,"x1":9.884774989636572,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"annotations":[{"showarrow":false,"text":"observed sd = 9.88","x":9.884774989636572,"xanchor":"left","xref":"x","y":1,"yanchor":"top","yref":"y domain"}],"title":{"text":"PPC: sd of surv  |  P(predicted ≥ observed) = 0.488  (two-sided p = 0.976)"},"xaxis":{"title":{"text":"sd(surv)"}},"yaxis":{"title":{"text":"Density"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('5efb5d75-7290-44e8-8adc-2ca7d4472cff');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+</div>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_stat</span>(<span class="at">stat =</span> <span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_stat</span>(stat<span class="op">=</span><span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>The observed spread of survivor counts between tanks (vertical line) should fall inside the simulated spreads.</p>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -2116,6 +2249,13 @@ Y_{i} \sim \text{Normal}(\mu_{i}, \sigma)
 <li><p><span class="math inline">\sigma</span> is a standard deviation parameter, which here has an Exponential prior that constrains it to be positive.</p></li>
 <li><p><span class="math inline">\bar{\alpha}</span> is the overall mean intercept.</p></li>
 <li><p><span class="math inline">\varsigma</span> is the variance of the intercepts across groups.</p></li>
+</ul>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>11.Varying intercepts.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">

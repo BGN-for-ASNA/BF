@@ -58,6 +58,7 @@ m.summary()
 ```R
 library(BayesForge)
 jax = reticulate::import('jax')
+jnp <- reticulate::import('jax.numpy')
 # Setup platform------------------------------------------------
 m=importBF(platform='cpu')
 
@@ -67,22 +68,22 @@ keys <- c("income", "career")
 income = unique(m$df$income)
 income = income[order(income)]
 values <- list(jnp$array(as.integer(income)),jnp$array( as.integer(m$df$career)))
-m$data_on_model = py_dict(keys, values, convert = TRUE)
+m$data_on_model = reticulate::py_dict(keys, values, convert = TRUE)
 
 # Define model ------------------------------------------------
 model <- function(income, career){
   # Parameter prior distributions
-  alpha = bf.dist.normal(0, 1, name='alpha', shape = c(2))
-  beta = bf.dist.normal(0.5, name='beta')
+  alpha = m$dist$normal(0, 1, name='a', shape = reticulate::tuple(2L))
+  beta = m$dist$half_normal(0.5, name='b', shape = reticulate::tuple(1L))
   
-  s_1 = alpha[0] + beta * income[0]
-  s_2 = alpha[1] + beta * income[1]
+  s_1 = alpha[0L] + beta * income[0L]
+  s_2 = alpha[1L] + beta * income[1L]
   s_3 = 0 # reference category
   
-  p = jax$nn$softmax(jnp$stack(list(s_1, s_2, s_3)))
+  p = jnp$exp(jnp$stack(list(s_1[0L], s_2[0L], s_3)))
   
   # Likelihood
-  m$dist$multinomial(probs=p[career], obs=career)
+  m$dist$multinomial(probs=p[career], obs=career, name="y")
 }
 
 
@@ -151,6 +152,11 @@ Where:
   
 - Each element of $\phi_i$ is obtained by applying a linear regression model with its own respective intercept $\alpha_k$ and slope coefficient $\beta_k$. To ensure the model is identifiable, one category, *K*, is arbitrarily chosen as a reference or baseline category. The linear predictor for this reference category is set to zero. The coefficients for the other categories then represent the change in the log-odds of being in that category versus the reference category.
 
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `8.Multinomial.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)
 

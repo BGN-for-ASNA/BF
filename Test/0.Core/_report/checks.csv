@@ -1,3 +1,9 @@
 test,quantity,reference,criterion,value,passed
-test_r_matches_python,"R: rows differing from Python (sim, rep, N, b, seed, result)","Python run_simulations, serial",== 0,0.0,True
-test_julia_matches_python,"Julia: rows differing from Python (sim, rep, N, b, seed, result)","Python run_simulations, serial",== 0,0.0,True
+test_nmix_discrete_gibbs_matches_enumeration,lam,NUTS + exact enumeration of N,|z| < 3,0.1140257133530136,True
+test_nmix_discrete_gibbs_matches_enumeration,p,NUTS + exact enumeration of N,|z| < 3,-0.3414931678402875,True
+test_dpmm_latent_recovers_clusters,mean ARI vs simulated clusters,simulated labels,> 0.9,0.9950811633707529,True
+test_mixed_hmc_matches_enumeration,mu_low,NUTS + exact enumeration,|z| < 3,-1.1605198147523021,True
+test_mixed_hmc_matches_enumeration,mu_high,NUTS + exact enumeration,|z| < 3,2.274319041620471,True
+test_mixed_hmc_matches_enumeration,w_high,NUTS + exact enumeration,|z| < 3,1.1083244116947006,True
+test_hmc_gibbs_matches_nuts,x,plain NUTS,|z| < 3,0.028204381442645685,True
+test_hmc_gibbs_matches_nuts,s,plain NUTS,|z| < 3,1.3693598949259551,True
