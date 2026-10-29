@@ -102,7 +102,8 @@ def model(K, J, tech, id, bout, y_prev, s, ps):
 
         # Mixture probability
         prob_mix = (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
-        prob_final = jnp.where(bout_i > 1, prob_mix, prob_individual)
+        has_social_info = jnp.logical_and(bout_i > 1, jnp.sum(s_i) > 0)
+        prob_final = jnp.where(has_social_info, prob_mix, prob_individual)
 
         return AC.at[id_i].set(ac_new), prob_final
 
@@ -190,7 +191,8 @@ model <- function(K, J, tech, id, bout, y_prev, s, ps) {
 
     # Mixture probability
     prob_mix <- (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
-    prob_final <- jnp$where(bout_i > 1L, prob_mix, prob_individual)
+    has_social_info <- jnp$logical_and(bout_i > 1L, jnp$sum(s_i) > 0)
+    prob_final <- jnp$where(has_social_info, prob_mix, prob_individual)
 
     reticulate::tuple(AC$at[id_i]$set(ac_new), prob_final)
   }
@@ -277,7 +279,8 @@ rest(x) = x[pybuiltins.slice(1, nothing)]
 
         # Mixture probability
         prob_mix = (1.0 - gamma_i) * prob_individual + gamma_i * prob_social
-        prob_final = jnp.where(bout_i > 1, prob_mix, prob_individual)
+        has_social_info = jnp.logical_and(bout_i > 1, jnp.sum(s_i) > 0)
+        prob_final = jnp.where(has_social_info, prob_mix, prob_individual)
 
         return (AC.at[id_i].set(ac_new), prob_final)
     end

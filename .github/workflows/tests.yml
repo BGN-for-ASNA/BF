@@ -59,7 +59,7 @@ jobs:
       - name: Install BayesForge (Python)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
           echo "RETICULATE_PYTHON=$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install BayesForge (R, dev branch)
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -68,6 +68,7 @@ jobs:
             github::BGN-for-ASNA/BFR@dev
             any::posterior
             any::bayesplot
+            any::tidyverse
       - name: Run the R examples
         run: python -m pytest Test/3.Documentation/R -q -rA
 
@@ -93,13 +94,13 @@ jobs:
       - name: Install BayesForge (Python)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
           echo "JULIA_PYTHONCALL_EXE=$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install PyBayesForge.jl (dev branch)
         run: |
           julia --project="$BF_JULIA_PROJECT" -e 'using Pkg
             Pkg.add(url = "https://github.com/BGN-for-ASNA/PyBayesForge.jl", rev = "dev")
-            Pkg.add(["PythonCall", "DataFrames", "CSV", "MCMCChains"])'
+            Pkg.add(["PythonCall", "DataFrames", "CSV", "MCMCChains", "Distributions"])'
       - name: Run the Julia examples
         run: python -m pytest Test/3.Documentation/Julia -q -rA
 

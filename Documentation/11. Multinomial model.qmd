@@ -42,9 +42,9 @@ def model(income, career):
     s_1 = alpha[0] + beta * income[0]
     s_2 = alpha[1] + beta * income[1]
     s_3 = [0]
-    p = jnp.exp(jnp.stack([s_1[0], s_2[0], s_3[0]]))
+    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
     # Likelihood
-    m.dist.multinomial(probs = p[career], obs=career)
+    m.dist.categorical(probs=p, obs=career)
     
 # Run sampler ------------------------------------------------ 
 m.fit(model, progress_bar=False)  
@@ -80,10 +80,10 @@ model <- function(income, career){
   s_2 = alpha[1L] + beta * income[1L]
   s_3 = 0 # reference category
   
-  p = jnp$exp(jnp$stack(list(s_1[0L], s_2[0L], s_3)))
+  p = jax$nn$softmax(jnp$stack(list(s_1[0L], s_2[0L], s_3)))
   
   # Likelihood
-  m$dist$multinomial(probs=p[career], obs=career, name="y")
+  m$dist$categorical(probs=p, obs=career, name="career")
 }
 
 
@@ -115,9 +115,9 @@ m.data(data_path, sep=',')
     s_2 = alpha[1] + beta * income[1]
     # ⚠️  Use jnp.array to create a Python object, so [0] indexing works
     s_3 = jnp.array([0.0]) 
-    p = jnp.exp(jnp.stack([s_1[0], s_2[0], s_3[0]]))
+    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
     # Likelihood
-    m.dist.multinomial(probs = p[career], obs=career)
+    m.dist.categorical(probs=p, obs=career)
 end
 
 # Run mcmc ------------------------------------------------
