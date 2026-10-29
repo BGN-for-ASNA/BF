@@ -73,8 +73,8 @@ class manip():
             colCat = list(self.df.select_dtypes(['object']).columns)    
             OHE = pd.get_dummies(self.df, columns=colCat, dtype=int)
         else:
-            if isinstance(cols, list) == False:
-                cols = [cols]
+            # a single name, or any sequence of names (list, tuple, Julia Vector)
+            cols = [cols] if isinstance(cols, str) else [str(c) for c in cols]
             OHE = pd.get_dummies(self.df, columns=cols, dtype=int)
 
         OHE.columns = OHE.columns.str.replace('.', '_')
@@ -109,8 +109,8 @@ class manip():
                 self.df["index_"+ colCat[a]] = self.df["index_"+ colCat[a]].astype(np.int64)
                 self.index_map[colCat[a]] = dict(enumerate(self.df[colCat[a]].astype("category").cat.categories ) )
         else:
-            if isinstance(cols, list) == False:
-                cols = [cols]
+            # a single name, or any sequence of names (list, tuple, Julia Vector)
+            cols = [cols] if isinstance(cols, str) else [str(c) for c in cols]
             for a in range(len(cols)):
                 self.df["index_"+ cols[a]] =  self.df.loc[:,cols[a]].astype("category").cat.codes
                 self.df["index_"+ cols[a]] = self.df["index_"+ cols[a]].astype(np.int64)
