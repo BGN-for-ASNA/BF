@@ -74,4 +74,5 @@ where = ["."]
 markers = [
     "slow: statistical checks that take minutes (run in CI; skip locally with -m 'not slow')",
     "pages: execute every model page of the documentation (weekly CI workflow)",
+    "lang: cross-language model cases, Python vs R vs Julia (Test/**/cases/*.md)",
 ]

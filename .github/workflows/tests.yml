@@ -71,6 +71,10 @@ jobs:
             any::tidyverse
       - name: Run the R examples
         run: python -m pytest Test/3.Documentation/R -q -rA
+      - name: Run the cross-language cases (Python vs R)
+        env:
+          BF_TEST_LANGS: python,r
+        run: python -m pytest Test/test_cross_language.py -m lang -q -rA
 
   # Julia examples of the "Get started" pages (Test/3.Documentation/Julia), run
   # with the dev branch of PyBayesForge.jl against this checkout of
@@ -103,6 +107,10 @@ jobs:
             Pkg.add(["PythonCall", "DataFrames", "CSV", "MCMCChains", "Distributions"])'
       - name: Run the Julia examples
         run: python -m pytest Test/3.Documentation/Julia -q -rA
+      - name: Run the cross-language cases (Python vs Julia)
+        env:
+          BF_TEST_LANGS: python,julia
+        run: python -m pytest Test/test_cross_language.py -m lang -q -rA
 
   # One compatibility matrix (compat.toml) for the Python, R and Julia packages:
   # this repository's pyproject.toml and the dev branches of BFR and
