@@ -76,8 +76,10 @@ def test_case(case, lang, tmp_path, tmp_path_factory, python_ref):
         f"{case_id(case)} [{lang}] failed:\n{proc.stderr[-4000:]}"
     )
 
-    tol = float(front_matter(case).get("tol", 0.25))
-    problems = compare(ref, read_summary(tmp_path), tol)
+    meta = front_matter(case)
+    tol = float(meta.get("tol", 0.25))
+    params = [s.strip() for s in meta["params"].split(",")] if meta.get("params") else None
+    problems = compare(ref, read_summary(tmp_path), tol, params)
     assert not problems, (
         f"{case_id(case)} [{lang}] disagrees with python:\n" + "\n".join(problems)
     )

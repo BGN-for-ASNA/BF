@@ -11,6 +11,7 @@ lines) configures the comparison::
     ---
     tol: 0.25        # agreement tolerance, in python sd units
     timeout: 1800    # seconds per language
+    params: alpha, sigma  # optional: compare only these parameters
     ---
 
 Rules of the case format (see ``Test/CROSS_LANGUAGE.md``):
@@ -184,10 +185,25 @@ def read_summary(workdir: pathlib.Path) -> pd.DataFrame:
     return pd.read_csv(workdir / "bf_summary.csv", index_col=0)
 
 
-def compare(ref: pd.DataFrame, other: pd.DataFrame, tol: float) -> list[str]:
-    """Labels/means of *other* (R or Julia) vs *ref* (Python); [] means agreement."""
+def compare(
+    ref: pd.DataFrame,
+    other: pd.DataFrame,
+    tol: float,
+    params: list[str] | None = None,
+) -> list[str]:
+    """Labels/means of *other* (R or Julia) vs *ref* (Python); [] means agreement.
+
+    *params* (base names, e.g. ``alpha`` for ``alpha`` and ``alpha[0]``) restricts
+    the check.
+    """
     problems: list[str] = []
+    if params:
+        for name in params:
+            if not any(p.split("[")[0] == name for p in ref.index):
+                problems.append(f"{name}: not in python summary")
     for p in ref.index:
+        if params and p.split("[")[0] not in params:
+            continue
         if p not in other.index:
             problems.append(f"{p}: missing in other summary")
             continue
