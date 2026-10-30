@@ -108,6 +108,10 @@ Expected: the first line differs from the other two in the 7th decimal.
 
 * Make chains mix: check `ess_bulk` in the Python summary. On a well-mixed chain the
   libm drift is far below 0.25 sd (the 13 Rethinking cases pass).
+* Use `num_chains=4`: on CPU the chains run in parallel on the host devices, so it costs
+  about the same time as one chain, and the comparison then rests on 4 chains. A single chain
+  can look well mixed (high `ess_bulk`) and still sit away from the others on funnel-shaped
+  models; see `5. Nested effect/1.Nested builtin`.
 * Use `params:` to compare model-level parameters when there are many weakly
   identified ones.
 * A Julia "disagreement" of a few tenths of sd with low ESS is Monte Carlo drift, not
