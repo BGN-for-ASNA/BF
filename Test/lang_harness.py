@@ -65,9 +65,9 @@ JULIA = _find_julia()
 JULIA_PRELUDE = 'ENV["MPLBACKEND"] = "Agg"\n'
 
 EPILOGUE = {
-    "python": '\nm.summary().to_csv("bf_summary.csv")\n',
-    "julia": '\nm.summary().to_csv("bf_summary.csv")\n',
-    "r": '\nbf_sum <- m$summary()\n'
+    "python": '\nm.summary(round_to=6).to_csv("bf_summary.csv")\n',
+    "julia": '\nm.summary(round_to=6).to_csv("bf_summary.csv")\n',
+    "r": '\nbf_sum <- m$summary(round_to = 6L)\n'
     'if (inherits(bf_sum, "data.frame")) write.csv(bf_sum, "bf_summary.csv") '
     'else bf_sum$to_csv("bf_summary.csv")\n',
 }
