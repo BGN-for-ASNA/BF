@@ -101,6 +101,58 @@ ax.set(title="Posterior Predictive Mean", xlabel="Feature 1", ylabel="Feature 2"
 fig.colorbar(contour, ax=ax)
 ```
 
+## R
+
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+sk_datasets <- reticulate::import("sklearn.datasets")
+
+# Generate Synthetic Data using Python's scikit-learn ---------
+# Two interleaving half-moon shapes
+output <- sk_datasets$make_moons(n_samples = 500L, noise = 0.25, random_state = 42L)
+X <- output[[1]]
+Y <- output[[2]]
+
+m$data_on_model <- list(X = X, Y = Y)
+
+# Define model ------------------------------------------------
+model <- function(X, Y, D_H1 = 4L, D_H2 = 3L) {
+  D_X <- dim(X)[2]
+
+  # First hidden layer: 2 input features -> 4 hidden units
+  w1 <- m$bnn$layer_linear(
+    X,
+    dist = m$dist$normal(0, 1, name = "w1", shape = reticulate::tuple(D_X, D_H1)),
+    activation = "tanh"
+  )
+
+  # Second hidden layer: 4 hidden units -> 3 hidden units
+  w2 <- m$bnn$layer_linear(
+    X = w1,
+    dist = m$dist$normal(0, 1, name = "w2", shape = reticulate::tuple(D_H1, D_H2)),
+    activation = "tanh"
+  )
+
+  # Final output layer: 3 hidden units -> 1 output
+  w3 <- m$bnn$layer_linear(
+    X = w2,
+    dist = m$dist$normal(0, 1, name = "w3", shape = reticulate::tuple(D_H2, 1L))
+  )
+
+  # Squeeze the final output to match Y's shape of (N,)
+  logits <- w3$squeeze(-1L)
+
+  # Likelihood mapping the logits to binary outcomes
+  m$dist$binomial(total_count = 1L, logits = logits, obs = Y, name = "Y")
+}
+
+# Run mcmc ------------------------------------------------
+m$fit(model, num_samples = 500L, progress_bar = FALSE) # Approximate posterior distributions
+m$summary()
+```
+
 ## Julia
 
 ```julia
