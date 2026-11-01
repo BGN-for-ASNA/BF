@@ -123,6 +123,220 @@ theta_samps, mu_samps, sigma_samps, labels = m.models.bnnc.predict(data, m.sampl
 # Plot Results
 m.models.bnnc.plot(data, m.sampler)
 ```
+
+## R (Raw)
+
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jax <- reticulate::import("jax")
+jnp <- reticulate::import("jax.numpy")
+numpyro <- reticulate::import("numpyro")
+stats <- reticulate::import("jax.scipy.stats")
+
+# Generate Synthetic Data ------------------------------------
+# 4 distinct underlying true clusters
+sk <- reticulate::import("sklearn.datasets")
+out <- sk$make_blobs(
+  n_samples = 500L, centers = 4L, cluster_std = 0.8,
+  center_box = reticulate::tuple(-10, 10), random_state = 101L
+)
+data <- out[[1]]
+true_labels <- out[[2]]
+
+m$data_on_model <- list(data = data)
+
+# Define raw model ------------------------------------------------
+# BF passes only `data` (an R matrix here); K and D_H1 keep their defaults
+bnn_mixture_model <- function(data, K = 11L, D_H1 = 10L) {
+  # data shape: (N, D)
+  N <- dim(data)[1]
+  D_X <- dim(data)[2]
+
+  # --- BNN Gating Network ---
+  w1 <- m$bnn$layer_linear(
+    data,
+    dist = m$dist$normal(0, 1, name = "w1_weight", shape = reticulate::tuple(D_X, D_H1)),
+    activation = "tanh"
+  )
+
+  w2 <- m$bnn$layer_linear(
+    w1,
+    dist = m$dist$normal(0, 0.05, name = "w2_weight", shape = reticulate::tuple(D_H1, K))
+  )
+
+  # Global parsimony prior: Dirichlet prior on global cluster weights
+  # Alpha < 1 acts as a sparse prior to suppress inactive clusters
+  alpha <- 0.05
+  pi <- numpyro$sample("global_pi", numpyro$distributions$Dirichlet(jnp$ones(K) * (alpha / K)))
+
+  logits <- w2 + jnp$log(pi + 1e-10)
+  log_p <- jax$nn$log_softmax(logits, axis = -1L)
+  theta <- jnp$exp(log_p)
+  numpyro$deterministic("theta", theta)
+
+  # --- Mixture Components ---
+  mu <- m$dist$normal(0, 5, name = "mu", shape = reticulate::tuple(K, D_X))
+  sigma <- m$dist$exponential(1.0, name = "sigma", shape = reticulate::tuple(K, D_X))
+
+  # --- Marginalized Gaussian Mixture ---
+  data_exp <- jnp$expand_dims(data, axis = 1L)   # (N, 1, D_X)
+  mu_exp <- jnp$expand_dims(mu, axis = 0L)       # (1, K, D_X)
+  sigma_exp <- jnp$expand_dims(sigma, axis = 0L) # (1, K, D_X)
+
+  log_pdf_clusters <- jnp$sum(stats$norm$logpdf(data_exp, loc = mu_exp, scale = sigma_exp), axis = -1L) # (N, K)
+  weighted_log_pdf <- log_p + log_pdf_clusters # (N, K)
+
+  # LogSumExp merges K clusters back together
+  total_log_likelihood <- jax$scipy$special$logsumexp(weighted_log_pdf, axis = -1L)
+
+  # Target Likelihood
+  numpyro$factor("mixture_likelihood", jnp$sum(total_log_likelihood))
+}
+
+# Run MCMC
+m$fit(bnn_mixture_model, num_chains = 1L)
+```
+
+## R (Build in function)
+
+```r
+library(BayesForge)
+m <- importBF()
+
+# Generate Synthetic Data ------------------------------------
+sk <- reticulate::import("sklearn.datasets")
+out <- sk$make_blobs(
+  n_samples = 500L, centers = 4L, cluster_std = 0.8,
+  center_box = reticulate::tuple(-10, 10), random_state = 101L
+)
+data <- out[[1]]
+true_labels <- out[[2]]
+
+# K is the maximum component limit, D_H1 is the hidden width
+m$data_on_model <- list(data = data, K = 11L, D_H1 = 10L, empirical_bayes = TRUE) # Enables empirical priors over fixed standards
+
+# Run MCMC
+m$fit(m$models$bnnc, num_chains = 1L)
+
+# Predict cluster targets
+pred <- m$models$bnnc$predict(data, m$sampler)
+theta_samps <- pred[[1]]
+mu_samps <- pred[[2]]
+sigma_samps <- pred[[3]]
+labels <- pred[[4]]
+
+# Plot Results
+m$models$bnnc$plot(data, m$sampler)
+```
+
+## Julia (Raw)
+
+```julia
+using PyBayesForge
+using PythonCall
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+numpyro = pyimport("numpyro")
+stats = pyimport("jax.scipy.stats")
+
+# Generate Synthetic Data ------------------------------------
+# 4 distinct underlying true clusters
+sk = pyimport("sklearn.datasets")
+out = sk.make_blobs(
+    n_samples=500, centers=4, cluster_std=0.8,
+    center_box=(-10, 10), random_state=101
+)
+data = out[0]
+true_labels = out[1]
+
+m.data_on_model = pydict(data = data)
+
+# Define raw model ------------------------------------------------
+# BF calls the model with `data` only, so K and D_H1 are set inside the body
+@BF function bnn_mixture_model(data)
+    K = 11
+    D_H1 = 10
+    # data shape: (N, D)
+    N = data.shape[0]
+    D_X = data.shape[1]
+
+    # --- BNN Gating Network ---
+    w1 = m.bnn.layer_linear(
+        data,
+        dist=m.dist.normal(0, 1, name="w1_weight", shape=(D_X, D_H1)),
+        activation="tanh"
+    )
+
+    w2 = m.bnn.layer_linear(
+        w1,
+        dist=m.dist.normal(0, 0.05, name="w2_weight", shape=(D_H1, K))
+    )
+
+    # Global parsimony prior: Dirichlet prior on global cluster weights
+    # Alpha < 1 acts as a sparse prior to suppress inactive clusters
+    alpha = 0.05
+    pi = numpyro.sample("global_pi", numpyro.distributions.Dirichlet(jnp.ones(K) * (alpha / K)))
+
+    logits = w2 + jnp.log(pi + 1e-10)
+    log_p = jax.nn.log_softmax(logits, axis=-1)
+    theta = jnp.exp(log_p)
+    numpyro.deterministic("theta", theta)
+
+    # --- Mixture Components ---
+    mu = m.dist.normal(0, 5, name="mu", shape=(K, D_X))
+    sigma = m.dist.exponential(1.0, name="sigma", shape=(K, D_X))
+
+    # --- Marginalized Gaussian Mixture ---
+    data_exp = jnp.expand_dims(data, axis=1) # (N, 1, D_X)
+    mu_exp = jnp.expand_dims(mu, axis=0)     # (1, K, D_X)
+    sigma_exp = jnp.expand_dims(sigma, axis=0) # (1, K, D_X)
+
+    log_pdf_clusters = jnp.sum(stats.norm.logpdf(data_exp, loc=mu_exp, scale=sigma_exp), axis=-1) # (N, K)
+    weighted_log_pdf = log_p + log_pdf_clusters # (N, K)
+
+    # LogSumExp merges K clusters back together
+    total_log_likelihood = jax.scipy.special.logsumexp(weighted_log_pdf, axis=-1)
+
+    # Target Likelihood
+    numpyro.factor("mixture_likelihood", jnp.sum(total_log_likelihood))
+end
+
+# Run MCMC
+m.fit(bnn_mixture_model, num_chains=1)
+```
+
+## Julia (Build in function)
+
+```julia
+using PyBayesForge
+using PythonCall
+
+m = importBF()
+
+# Generate Synthetic Data ------------------------------------
+sk = pyimport("sklearn.datasets")
+out = sk.make_blobs(
+    n_samples=500, centers=4, cluster_std=0.8,
+    center_box=(-10, 10), random_state=101
+)
+data = out[0]
+true_labels = out[1]
+
+# K is the maximum component limit, D_H1 is the hidden width
+m.data_on_model = pydict(data = data, K = 11, D_H1 = 10, empirical_bayes = true) # Enables empirical priors over fixed standards
+
+# Run MCMC
+m.fit(m.models.bnnc, num_chains=1)
+
+# Predict cluster targets
+pred = m.models.bnnc.predict(data, m.sampler)
+theta_samps, mu_samps, sigma_samps, labels = pred[0], pred[1], pred[2], pred[3]
+
+# Plot Results
+@pyplot m.models.bnnc.plot(data, m.sampler)
+```
 :::
 
 ## Mathematical Details
