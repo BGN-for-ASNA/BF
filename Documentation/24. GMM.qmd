@@ -84,8 +84,49 @@ m.plot(X=data,sampler=m.sampler) # Prebuild plot function for GMM
 
 ## R
 
-![](travaux-routiers.png){fig-align="center"}
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+sk_datasets <- reticulate::import("sklearn.datasets")
 
+# Generate synthetic data
+output <- sk_datasets$make_blobs(n_samples = 500L, centers = 8L, cluster_std = 0.8,
+                                 center_box = reticulate::tuple(-10, 10), random_state = 101L)
+data <- output[[1]]
+
+#  The model
+gmm <- function(data, K, initial_means) { # Here K is the *exact* number of clusters
+  D <- dim(data)[2]  # Number of features
+  alpha_prior <- 0.5 * jnp$ones(K)
+  w <- m$dist$dirichlet(concentration = alpha_prior, name = "weights")
+
+  with(m$dist$plate("components", K), {
+    mu <- m$dist$multivariate_normal(loc = initial_means, covariance_matrix = 0.1 * jnp$eye(D), name = "mu")
+    sigma <- m$dist$half_cauchy(1, shape = reticulate::tuple(D), event = 1L, name = "sigma")
+    Lcorr <- m$dist$lkj_cholesky(dimension = D, concentration = 1.0, name = "Lcorr")
+    scale_tril <- jnp$expand_dims(sigma, -1L) * Lcorr
+  })
+
+  m$dist$mixture_same_family(
+    mixing_distribution = m$dist$categorical(probs = w, create_obj = TRUE),
+    component_distribution = m$dist$multivariate_normal(loc = mu, scale_tril = scale_tril, create_obj = TRUE),
+    name = "obs",
+    obs = data
+  )
+}
+
+# Kmeans clustering do initiate the means
+m$ml$KMEANS(data, n_clusters = 8L)
+m$data_on_model <- list(data = data, K = 8L)
+m$data_on_model$initial_means <- m$ml$results$centroids
+
+m$fit(gmm, progress_bar = FALSE) # Optimize model parameters through MCMC sampling
+
+# Prebuild plot function for GMM (R functions have no __name__, so call the GMM plot directly)
+gmm_module <- reticulate::import("BayesForge.Models.GMM")
+gmm_module$plot_gmm(data, sampler = m$sampler)
+```
 
 ## Julia
 ```julia
