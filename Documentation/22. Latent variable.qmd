@@ -142,7 +142,52 @@ m$fit(model, progress_bar = FALSE)
 # Summary ------------------------------------------------
 m$summary()
 ```
-![](travaux-routiers.png){fig-align="center"}
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# Setup device ------------------------------------------------
+m = importBF(platform="cpu")
+
+# Data Simulation ------------------------------------------------
+NY = 4  # Number of dependent variables or outcomes (e.g., dimensions for latent variables)
+NV = 8  # Number of observations or individual-level data points (e.g., subjects)
+N = 100
+K = 5
+a = 0.5
+means = m.dist.normal(0, 1, shape=(NY,), sample=true, seed=10)
+offsets = m.dist.normal(0, 1, shape=(NV, 1), sample=true, seed=20)
+noise = m.dist.normal(0, 0.5, shape=(NV, NY), sample=true, seed=30)
+
+Y2 = offsets + means + noise
+
+b_individual = m.dist.normal(0, 1, shape=(N, K), sample=true, seed=0)
+mu = b_individual + a
+
+Y2 = jnp.array(Y2)
+
+# Set data ------------------------------------------------
+m.data_on_model = pydict(NY = NY, NV = NV, Y2 = Y2)
+
+# Define model ------------------------------------------------
+@BF function model(NY, NV, Y2)
+    means = m.dist.normal(0, 1, shape=(NY,), name="means")
+    offset = m.dist.normal(0, 1, shape=(NV, 1), name="offset")
+    sigma = m.dist.exponential(1, shape=(NY,), name="sigma")
+    tmp = jnp.reshape(jnp.tile(means, (NV, 1)), (NV, NY))
+    mu_l = tmp + offset
+    m.dist.normal(mu_l, jnp.tile(sigma, (NV, 1)), obs=Y2, name="y")
+end
+
+# Run sampler ------------------------------------------------
+m.fit(model, progress_bar=false)
+
+# Summary ------------------------------------------------
+m.summary()
+```
+
 :::
 
 ### Posterior predictive checks
@@ -158,6 +203,11 @@ m.diag.ppc_density()
 #### R
 ```r
 m$diag$ppc_density()
+```
+
+#### Julia
+```julia
+m.diag.ppc_density()
 ```
 :::
 
