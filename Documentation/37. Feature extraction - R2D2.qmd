@@ -261,6 +261,54 @@ model <- function(y, x, village_id, N_villages) {
 m$fit(model, progress_bar = FALSE)
 m$summary()
 ```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+m = importBF(platform = "cpu")
+
+np  = pyimport("numpy")
+jnp = pyimport("jax.numpy")
+
+# Simulated data: 200 individuals in 5 villages
+np.random.seed(0)
+N, N_villages = 200, 5
+village_id = np.random.randint(0, N_villages, N).astype("int32")
+x          = np.random.normal(0, 1, N).astype("float32")
+u_true     = np.random.normal(0, 0.6, N_villages)
+y          = 1.2 + 0.8 * x + u_true[village_id] + np.random.normal(0, 0.8, N)
+
+m.data_on_model = pydict(
+  y          = jnp.array(y, dtype = jnp.float32),
+  x          = jnp.array(x, dtype = jnp.float32),
+  village_id = jnp.array(village_id, dtype = jnp.int32),
+  N_villages = N_villages
+)
+
+@BF function model(y, x, village_id, N_villages)
+  sigma = m.dist.exponential(1, name = "sigma")
+
+  # R2D2: 2-component simplex
+  #   phi[0] → fixed predictor x
+  #   phi[1] → village-level varying intercept
+  r2   = m.dist.beta(1 / 3, 3, name = "r2")
+  tau2 = sigma^2 * r2 / (1 - r2)
+  phi  = m.dist.dirichlet(jnp.ones(2), name = "phi")
+  lam2 = tau2 * phi
+
+  alpha     = m.dist.normal(0, 0.5, name = "alpha")
+  beta      = m.dist.normal(0, jnp.sqrt(lam2[0]), name = "beta")
+  u_village = m.dist.normal(0, jnp.sqrt(lam2[1]), shape = (N_villages,), name = "u_village")
+
+  mu = alpha + beta * x + u_village[village_id]
+  m.dist.normal(mu, sigma, obs = y, name = "y_obs")
+end
+
+m.fit(model, progress_bar = false)
+m.summary()
+```
 :::
 
 ::: callout-note
