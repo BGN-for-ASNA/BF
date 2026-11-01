@@ -200,7 +200,9 @@ Where:
 
 -   Below is an example code snippet demonstrating a Bayesian binomial model for multiple categorical variables using the BayesForge (BF) package. The data consist of one binary dependent variable (*pulled_left*), which represents which side individuals pulled, and three independent variables (*actor*, *side*, *cond*). The goal is to evaluate, for each individual, the probability of pulling the left side, accounting for whether the individual is left-handed or right-handed, as well as for the different conditions.
 
-``` python
+::: {.panel-tabset group="language"}
+#### Python
+```python
 from BayesForge import bf
 m = bf(platform='cpu')
 m.data(m.load.chimpanzees(only_path = True), sep=';')
@@ -221,7 +223,8 @@ m.fit(model)
 m.summary()
 ```
 
-``` r
+#### R
+```r
 library(BayesForge)
 
 # setup platform------------------------------------------------
@@ -249,6 +252,29 @@ m$fit(model) # Optimize model parameters through MCMC sampling
 
 # Summary ------------------------------------------------
 m$summary() # Get posterior distribution
+```
+
+#### Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+m.data(m.load.chimpanzees(only_path=true), sep=";")
+m.df["treatment"] = m.df.prosoc_left + 2 * m.df.condition
+m.df["actor"] = m.df["actor"] - 1
+m.data_to_model(["actor", "treatment", "pulled_left"])
+
+@BF function model(actor, treatment, pulled_left)
+    a = m.dist.normal(0, 1.5, shape=(7,), name="a")
+    b = m.dist.normal(0, 0.5, shape=(4,), name="b")
+    p = a[actor] + b[treatment]
+    m.dist.binomial(total_count=1, logits=p, obs=pulled_left, name="pulled_left")
+end
+
+# Run sampler ------------------------------------------------
+m.fit(model)
+# Diagnostic ------------------------------------------------
+m.summary()
 ```
 :::
 
