@@ -154,6 +154,50 @@ model <- function(X, Y, D_H = 5L, D_Y = 1L) {
 m$fit(model, progress_bar = FALSE) # Approximate posterior distributions
 m$summary()
 ```
+
+## Julia
+
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+
+json = pyimport("json")
+data = json.load(pybuiltins.open("BNN.json"))
+X = jnp.array(data["X"]) # Note X shape = (N,2) where first column is the intercept and second column is the predictor
+Y = jnp.array(data["Y"]) # Note Y shape = (N,1) where N is the number of observations
+
+m.data_on_model = pydict(X = X, Y = Y)
+
+# Define model ------------------------------------------------
+@BF function model(X, Y)
+    D_H = 5
+    D_Y = 1
+    D_X = X.shape[1]  # number of columns of X (intercept + predictor); X is a Python array here
+
+    # First hidden layer: Transforms input to N × D_H (hidden units)
+    w1 = m.bnn.layer_linear(
+        X,
+        dist = m.dist.normal(0, 1, name = "w1", shape = (D_X, D_H)),
+        activation = "tanh"
+    )
+
+    # Final layer: linear combination of the hidden units
+    w2 = m.bnn.layer_linear(
+        X = w1,
+        dist = m.dist.normal(0, 1, name = "w2", shape = (D_H, D_Y))
+    )
+
+    sigma = m.dist.exponential(1, name = "sigma")
+
+    m.dist.normal(w2, sigma, obs = Y, name = "Y")
+end
+
+# Run mcmc ------------------------------------------------
+m.fit(model, progress_bar=false) # Approximate posterior distributions
+m.summary()
+```
+
 :::
 
 ## Mathematical Details
