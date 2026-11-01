@@ -96,6 +96,52 @@ ax.set(title="Posterior Predictive Mean", xlabel="Feature 1", ylabel="Feature 2"
 fig.colorbar(contour, ax=ax)
 ```
 
+## R
+
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jax <- reticulate::import("jax")
+jnp <- reticulate::import("jax.numpy")
+
+# Generate Synthetic Data ------------------------------------
+# 3 classes based on a random normal distribution split
+key <- jax$random$PRNGKey(42L)
+X <- jax$random$normal(key, reticulate::tuple(300L, 2L))
+# Rule: Q1=Class 0, Q2/Q3=Class 1, Q4=Class 2
+Y <- jnp$asarray(jnp$where(X[, 0] > 0, jnp$where(X[, 1] > 0, 0, 1), 2), dtype = jnp$int32)
+
+m$data_on_model <- list(X = X, Y = Y)
+
+# Define model ------------------------------------------------
+model <- function(X, Y, D_H1 = 5L, K = 3L) {
+  D_X <- X$shape[[2]] # X is a JAX array here, so read its shape
+
+  # First hidden layer: 2 input features -> 5 hidden units
+  w1 <- m$bnn$layer_linear(
+    X,
+    dist = m$dist$normal(0, 1, name = "w1_weight", shape = reticulate::tuple(D_X, D_H1)),
+    activation = "tanh"
+  )
+
+  # Final output layer: 5 hidden units -> K output units
+  # Note: No activation is applied automatically inside the layer function here
+  w2 <- m$bnn$layer_linear(
+    w1,
+    dist = m$dist$normal(0, 1, name = "w2_weight", shape = reticulate::tuple(D_H1, K))
+  )
+
+  # Apply Softmax across the K dimension (axis=-1) to yield probabilities
+  p <- jax$nn$softmax(w2, axis = -1L)
+
+  # Categorical Likelihood matching indices in Y
+  m$dist$categorical(probs = p, obs = Y)
+}
+
+# Run mcmc ------------------------------------------------
+m$fit(model, num_samples = 500L, progress_bar = FALSE) # Approximate posterior distributions
+```
+
 ## Julia
 
 ```julia
