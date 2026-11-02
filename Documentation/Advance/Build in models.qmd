@@ -4,6 +4,8 @@ sidebar: start
 ---
 
 # PCA
+::: {.panel-tabset group="language"}
+## Python
 ```{python}
 #| warning: false
 from BayesForge import bf
@@ -26,6 +28,54 @@ _ = m.models.pca.plot(
 )
 ```
 
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+np <- reticulate::import("numpy")
+
+d <- read.csv(m$load$iris(only_path = TRUE))
+X <- as.matrix(d[, 1:4])  # all but the last two columns
+m$data_on_model <- list(
+  X = jnp$array(X)
+)
+m$fit(m$models$pca(type = "classic"), progress_bar = FALSE) # or robust, sparse, classic, sparse_robust_ard
+
+m$models$pca$plot(
+  X = X,
+  y = np$array(d$target),
+  feature_names = names(d)[1:4],
+  target_names = unique(d$species),
+  color_var = np$array(d[, 1]),
+  shape_var = np$array(d$target)
+)
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+m = importBF(platform="cpu")
+m.data(m.load.iris(only_path=true))
+X = m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(0, -2)].values  # all but the last two columns
+m.data_on_model = pydict(
+    X=jnp.array(X)
+)
+m.fit(m.models.pca(type="classic"), progress_bar=false) # or robust, sparse, classic, sparse_robust_ard
+
+@pyplot m.models.pca.plot(
+    X=X,
+    y=m.df.iloc[pybuiltins.slice(nothing), -2].values,
+    feature_names=m.df.columns[pybuiltins.slice(0, -2)],
+    target_names=m.df.iloc[pybuiltins.slice(nothing), -1].unique(),
+    color_var=m.df.iloc[pybuiltins.slice(nothing), 0].values,
+    shape_var=m.df.iloc[pybuiltins.slice(nothing), -2].values
+)
+```
+:::
+
 
 # Survival analysis
 
@@ -34,6 +84,8 @@ fixed intervals; `import_time_even` builds the per-interval `death` and
 `exposure` matrices, and censoring is handled by `exposure` dropping to 0
 once a subject leaves the risk set.
 
+::: {.panel-tabset group="language"}
+## Python
 ```{python}
 #| warning: false
 from BayesForge import bf
@@ -81,9 +133,108 @@ m.summary()
 _ = m.models.survival.plot_surv(beta='Hazard_rate_metastasized')
 ```
 
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+np <- reticulate::import("numpy")
+
+data_path <- m$load$mastectomy(only_path = TRUE)
+m$data(data_path, sep = ",")
+met <- np$astype(np$equal(m$df$metastasized, "yes"), np$int64)
+m$df$metastasized <- met
+
+# Discretise follow-up time into intervals and register the event indicator.
+m$models$survival$import_time_even(
+  np$asarray(m$df$time),
+  np$asarray(m$df$event), interval_length = 3L
+)
+
+# Time-fixed (patient-level) covariates.
+m$models$survival$import_covF(
+  met, list("metastasized")
+)
+
+# Time-varying covariates ⚠️ Experimental feature
+# m$models$survival$import_covV
+
+# Censoring plot: one line per subject (follow-up length), red = censored,
+# grey = event observed, dot = metastasized.
+m$models$survival$plot_censoring(cov = "metastasized")
+
+# Priors (shown with their defaults, override before fit):
+#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -> near-flat, one rate/interval
+#   Hazard_rate_<cov> ~ Normal(0, hazard_rate_prior_scale)  -> log-hazard effect
+m$models$survival$baseline_rate_prior <- c(0.01, 0.01)
+m$models$survival$hazard_rate_prior_scale <- 10.0
+
+# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals
+# make the geometry stiff, so a high acceptance target keeps mixing healthy.
+m$fit(m$models$survival$model, num_samples = 2000L, num_warmup = 2000L,
+      num_chains = 4L, target_accept_prob = 0.99, progress_bar = FALSE)
+
+print(m$summary())
+
+# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)
+# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)
+# from m$summary().
+m$models$survival$plot_surv(beta = "Hazard_rate_metastasized")
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+np = pyimport("numpy")
+
+m = importBF(platform="cpu")
+data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+m.data(data_path, sep=",")
+m.df.metastasized = np.astype(np.equal(m.df.metastasized.values, "yes"), np.int64)
+
+# Discretise follow-up time into intervals and register the event indicator.
+m.models.survival.import_time_even(
+    m.df.time.values,
+    m.df.event.values, interval_length=3
+)
+
+# Time-fixed (patient-level) covariates.
+m.models.survival.import_covF(
+    m.df.metastasized.values, ["metastasized"]
+)
+
+# Time-varying covariates ⚠️ Experimental feature
+# m.models.survival.import_covV
+
+# Censoring plot: one line per subject (follow-up length), red = censored,
+# grey = event observed, dot = metastasized.
+@pyplot m.models.survival.plot_censoring(cov="metastasized")
+
+# Priors (shown with their defaults, override before fit):
+#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -> near-flat, one rate/interval
+#   Hazard_rate_<cov> ~ Normal(0, hazard_rate_prior_scale)  -> log-hazard effect
+m.models.survival.baseline_rate_prior = (0.01, 0.01)
+m.models.survival.hazard_rate_prior_scale = 10.0
+
+# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals
+# make the geometry stiff, so a high acceptance target keeps mixing healthy.
+m.fit(m.models.survival.model, num_samples=2000, num_warmup=2000,
+      num_chains=4, target_accept_prob=0.99, progress_bar=false)
+
+println(m.summary())
+
+# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)
+# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)
+# from m.summary().
+@pyplot m.models.survival.plot_surv(beta="Hazard_rate_metastasized")
+```
+:::
+
 
 # Gaussian Mixture Models
 
+::: {.panel-tabset group="language"}
+## Python
 ```{python}
 #| warning: false
 from BayesForge import bf
@@ -101,9 +252,49 @@ m.fit(m.models.gmm, progress_bar=False)  # MCMC over the mixture parameters
 _ = m.plot(X=data, sampler=m.sampler)    # ⚠️ Experimental feature
 ```
 
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+sk_datasets <- reticulate::import("sklearn.datasets")
+
+# Generate synthetic data
+output <- sk_datasets$make_blobs(
+  n_samples = 500L, centers = 8L, cluster_std = 0.8,
+  center_box = reticulate::tuple(-10, 10), random_state = 101L
+)
+data <- output[[1]]
+
+m$data_on_model <- list(data = data, K = 8L)
+m$fit(m$models$gmm, progress_bar = FALSE)  # MCMC over the mixture parameters
+m$plot(X = data, sampler = m$sampler)      # ⚠️ Experimental feature
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+
+# Generate synthetic data
+sk_datasets = pyimport("sklearn.datasets")
+output = sk_datasets.make_blobs(
+    n_samples=500, centers=8, cluster_std=0.8,
+    center_box=(-10, 10), random_state=101
+)
+data = output[0]
+
+m.data_on_model = pydict(data=data, K=8)
+m.fit(m.models.gmm, progress_bar=false)  # MCMC over the mixture parameters
+@pyplot m.plot(X=data, sampler=m.sampler) # ⚠️ Experimental feature
+```
+:::
+
 
 # Dirichlet Process Mixture Models
 
+::: {.panel-tabset group="language"}
+## Python
 ```{python}
 #| warning: false
 from BayesForge import bf
@@ -124,8 +315,54 @@ m.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,
 _ = m.plot(data, m.sampler)
 ```
 
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+sk_datasets <- reticulate::import("sklearn.datasets")
+
+# Generate synthetic data
+output <- sk_datasets$make_blobs(
+  n_samples = 500L, centers = 8L, cluster_std = 0.8,
+  center_box = reticulate::tuple(-10, 10), random_state = 101L
+)
+data <- output[[1]]
+# T = truncation level (max clusters). method='marginal' integrates out the
+# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.
+# DPMM priors are already centred on the data mean/scale - no flag needed.
+m$data_on_model <- list(data = data, T = 10L, method = "marginal")
+m$fit(m$models$dpmm, num_samples = 500L, num_warmup = 500L, num_chains = 2L,
+      progress_bar = FALSE)
+m$plot(data, m$sampler)
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+
+# Generate synthetic data
+sk_datasets = pyimport("sklearn.datasets")
+output = sk_datasets.make_blobs(
+    n_samples=500, centers=8, cluster_std=0.8,
+    center_box=(-10, 10), random_state=101
+)
+data = output[0]
+# T = truncation level (max clusters). method='marginal' integrates out the
+# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.
+# DPMM priors are already centred on the data mean/scale - no flag needed.
+m.data_on_model = pydict(data=data, T=10, method="marginal")
+m.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,
+      progress_bar=false)
+@pyplot m.plot(data, m.sampler)
+```
+:::
+
 # Network Models
 
+::: {.panel-tabset group="language"}
+## Python
 ```{python}
 #| warning: false
 from BayesForge import bf
@@ -158,3 +395,68 @@ network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
 m.net.viz(m.net.edgl_to_mat(network))
 ```
 
+## R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+
+# Setup device------------------------------------------------
+m <- importBF(platform = "cpu")
+# Simulate data ------------------------------------------------
+N <- 50L
+individual_predictor <- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)
+
+kinship <- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)
+diag <- jnp$diag_indices(N)  # (rows, cols)
+kinship <- kinship$at[diag[[1]], diag[[2]]]$set(0L)
+
+sim_network <- function(kinship, individual_predictor) {
+  # Intercept
+  alpha <- -8
+
+  # SR
+  sr <- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)
+
+  # D
+  DR <- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)
+
+  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)
+}
+
+network <- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)
+
+m$net$viz(m$net$edgl_to_mat(network))
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+# Simulate data ------------------------------------------------
+N = 50
+individual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)
+
+kinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)
+kinship = kinship.at[jnp.diag_indices(N)].set(0)
+
+function sim_network(kinship, individual_predictor)
+    # Intercept
+    alpha = -8
+
+    # SR
+    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)
+
+    # D
+    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)
+
+    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)
+end
+
+network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
+
+@pyplot m.net.viz(m.net.edgl_to_mat(network))
+```
+:::
