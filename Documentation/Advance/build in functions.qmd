@@ -5,8 +5,11 @@ sidebar: start
 
 # Varying effects
 
+::: {.panel-tabset}
+## Varying intercepts
+
 ::: {.panel-tabset group="language"}
-## Varying intercepts 
+### Python
 ```python
 from BayesForge import bf
 import numpy as np
@@ -16,63 +19,221 @@ m = bf(platform='cpu')
 
 # Import Data & Data Manipulation ------------------------------------------------
 # Import
-from importlib.resources import files
-data_path = files('BayesForge.Resources') / 'reedfrogs.csv'
-m.data(data_path, sep=';') 
+data_path = m.load.reedfrogs(only_path=True)
+m.data(data_path, sep=';')
 # Manipulate
-m.df["tank"] = np.arange(m.df.shape[0]) 
+m.df["tank"] = np.arange(m.df.shape[0])
+N_tanks = m.df.shape[0]
 
 # Define model ------------------------------------------------
 def model(tank, surv, density):
-    alpha = m.effects.varying_intercept(group=tank,group_name = 'tank')
-    m.dist.binomial(total_count = density, logits = alpha, obs=surv)
+    alpha = m.effects.varying_intercept(N_groups=N_tanks, group_id=tank, group_name='tank')
+    m.dist.binomial(total_count=density, logits=alpha, obs=surv)
 
 # Run sampler ------------------------------------------------
-m.fit(model) 
+m.fit(model)
 
 # Diagnostic ------------------------------------------------
 m.summary()
 ```
 
-## Varying slopes 
-```python
-```
+### R
+```r
+library(BayesForge)
 
-## Varying intercepts and slopes 
-``` python
-from BayesForge import bf
 # Setup device------------------------------------------------
-m = bf(platform='cpu')
+m <- importBF(platform = "cpu")
 
 # Import Data & Data Manipulation ------------------------------------------------
 # Import
-from importlib.resources import files
-data_path = files('BayesForge.Resources') / 'Sim data multivariatenormal.csv'
-m.data(data_path, sep=',') 
+data_path <- m$load$reedfrogs(only_path = TRUE)
+m$data(data_path, sep = ";")
+# Manipulate
+m$df$tank <- 0:(nrow(m$df) - 1)
+N_tanks <- nrow(m$df)
+jnp <- reticulate::import("jax.numpy")
+m$data_on_model <- list(
+  tank    = jnp$array(as.integer(m$df$tank)),
+  surv    = jnp$array(as.integer(m$df$surv)),
+  density = jnp$array(as.integer(m$df$density))
+)
 
 # Define model ------------------------------------------------
-def model(cafe, wait, N_cafes, afternoon):
-    a = m.dist.normal(5, 2,  name = 'a')
-    b = m.dist.normal(-1, 0.5, name = 'b')
-    sigma = m.dist.exponential( 1,  name = 'sigma')
+model <- function(tank, surv, density) {
+  alpha <- m$effects$varying_intercept(N_groups = N_tanks, group_id = tank, group_name = "tank")
+  m$dist$binomial(total_count = density, logits = alpha, obs = surv)
+}
 
-    varying_intercept, varying_slope = m.effects.varying_effects(
-        N_group = N_cafes,
-        group = cafe,
-        global_intercept= a,
-        global_slope= b,
-        group_name = 'cafe')
-    
+# Run sampler ------------------------------------------------
+m$fit(model)
 
-    mu = varying_intercept + varying_slope* afternoon
-    m.dist.normal(mu, sigma, obs=wait)
+# Diagnostic ------------------------------------------------
+m$summary()
+```
+
+### Julia
+```julia
+using PyBayesForge
+using PythonCall
+np = pyimport("numpy")
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+# Import
+data_path = m.load.reedfrogs(only_path=true)
+m.data(data_path, sep=";")
+# Manipulate
+m.df["tank"] = np.arange(m.df.shape[0])
+N_tanks = m.df.shape[0]
+
+# Define model ------------------------------------------------
+@BF function model(tank, surv, density)
+    alpha = m.effects.varying_intercept(N_groups=N_tanks, group_id=tank, group_name="tank")
+    m.dist.binomial(total_count=density, logits=alpha, obs=surv)
+end
 
 # Run sampler ------------------------------------------------
 m.fit(model)
 
+# Diagnostic ------------------------------------------------
+m.summary()
+```
+:::
+
+## Varying intercepts and slopes
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+from BayesForge import bf
+import jax.numpy as jnp
+from importlib.resources import files
+
+# Setup device------------------------------------------------
+m = bf(platform='cpu')
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = files('BayesForge.Resources') / 'Sim data multivariatenormal.csv'
+m.data(data_path, sep=',')
+m.data_on_model = dict(
+    cafe=jnp.array(m.df.cafe.values, dtype=jnp.int32),
+    wait=jnp.array(m.df.wait.values, dtype=jnp.float32),
+    N_cafes=len(m.df.cafe.unique()),
+    afternoon=jnp.array(m.df.afternoon.values, dtype=jnp.float32),
+)
+
+# Define model ------------------------------------------------
+def model(cafe, wait, N_cafes, afternoon):
+    a = m.dist.normal(5, 2, shape=(1,), name='a')
+    b = m.dist.normal(-1, 0.5, shape=(1,), name='b')
+    sigma = m.dist.exponential(1, name='sigma')
+
+    varying_intercept, varying_slope = m.effects.varying_effects(
+        N_vars=1,              # one slope (afternoon)
+        N_group=N_cafes,
+        group_id=cafe,
+        group_name='cafe',
+        alpha_bar=a,           # global intercept
+        beta_bar=b)            # global slope
+
+    mu = varying_intercept + varying_slope * afternoon
+    m.dist.normal(mu, sigma, obs=wait)
+
+# Run sampler ------------------------------------------------
+m.fit(model)
 ```
 
+### R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+resources <- reticulate::import("importlib.resources")
+
+# Setup device------------------------------------------------
+m <- importBF(platform = "cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path <- resources$files("BayesForge.Resources")$joinpath("Sim data multivariatenormal.csv")
+m$data(data_path, sep = ",")
+m$data_on_model <- list(
+  cafe = jnp$array(as.integer(m$df$cafe), dtype = jnp$int32),
+  wait = jnp$array(as.numeric(m$df$wait), dtype = jnp$float32),
+  N_cafes = length(unique(m$df$cafe)),
+  afternoon = jnp$array(as.numeric(m$df$afternoon), dtype = jnp$float32)
+)
+
+# Define model ------------------------------------------------
+model <- function(cafe, wait, N_cafes, afternoon) {
+  a <- m$dist$normal(5, 2, shape = reticulate::tuple(1L), name = "a")
+  b <- m$dist$normal(-1, 0.5, shape = reticulate::tuple(1L), name = "b")
+  sigma <- m$dist$exponential(1, name = "sigma")
+
+  effects <- m$effects$varying_effects(
+    N_vars = 1L,             # one slope (afternoon)
+    N_group = N_cafes,
+    group_id = cafe,
+    group_name = "cafe",
+    alpha_bar = a,           # global intercept
+    beta_bar = b)            # global slope
+  varying_intercept <- effects[[1]]
+  varying_slope <- effects[[2]]
+
+  mu <- varying_intercept + varying_slope * afternoon
+  m$dist$normal(mu, sigma, obs = wait)
+}
+
+# Run sampler ------------------------------------------------
+m$fit(model)
+```
+
+### Julia
+```julia
+using PyBayesForge
+using PythonCall
+resources = pyimport("importlib.resources")
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = resources.files("BayesForge.Resources").joinpath("Sim data multivariatenormal.csv")
+m.data(data_path, sep=",")
+m.data_on_model = pydict(
+    cafe = jnp.array(m.df.cafe.values, dtype=jnp.int32),
+    wait = jnp.array(m.df.wait.values, dtype=jnp.float32),
+    N_cafes = pybuiltins.len(m.df.cafe.unique()),
+    afternoon = jnp.array(m.df.afternoon.values, dtype=jnp.float32),
+)
+
+# Define model ------------------------------------------------
+@BF function model(cafe, wait, N_cafes, afternoon)
+    a = m.dist.normal(5, 2, shape=(1,), name="a")
+    b = m.dist.normal(-1, 0.5, shape=(1,), name="b")
+    sigma = m.dist.exponential(1, name="sigma")
+
+    varying_intercept, varying_slope = m.effects.varying_effects(
+        N_vars=1,              # one slope (afternoon)
+        N_group=N_cafes,
+        group_id=cafe,
+        group_name="cafe",
+        alpha_bar=a,           # global intercept
+        beta_bar=b)            # global slope
+
+    mu = varying_intercept + varying_slope * afternoon
+    m.dist.normal(mu, sigma, obs=wait)
+end
+
+# Run sampler ------------------------------------------------
+m.fit(model)
+```
+:::
+
 ## Nested varying effects
+
+::: {.panel-tabset group="language"}
+### Python
 ```python
 from BayesForge import bf
 
@@ -106,108 +267,420 @@ m.fit(model)
 m.summary()
 ```
 
+### R
+```r
+library(BayesForge)
+
+# Setup device------------------------------------------------
+m <- importBF(platform = "cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+# group_id / region_id are one obs-level index array per level (top to bottom).
+# The parent structure (which region each group belongs to) is derived automatically.
+data_path <- m$load$sim_nested_effects(only_path = TRUE)
+m$data(data_path)
+jnp <- reticulate::import("jax.numpy")
+m$data_on_model <- list(
+  y         = jnp$array(m$df$y),
+  x         = jnp$array(m$df$x),
+  group_id  = jnp$array(as.integer(m$df$group_id)),
+  region_id = jnp$array(as.integer(m$df$region_id))
+)
+
+# Define model ------------------------------------------------
+# N_vars = intercept + slopes; it is independent of the number of levels.
+model <- function(y, x, group_id, region_id, N_groups = 20L, N_regions = 5L) {
+  sigma <- m$dist$exponential(1, name = "sigma")
+
+  effects <- m$effects$nested_varying_effects(
+    N_vars    = 2L,                            # intercept + 1 slope
+    names     = list("region", "group"),       # levels, top to bottom
+    N_groups  = list(N_regions, N_groups),     # units at each level
+    group_ids = list(region_id, group_id),     # obs-level index per level
+    centered  = FALSE                          # non-centered (recommended)
+  )
+  a_est <- effects[[1]]
+  b_est <- effects[[2]]
+
+  mu <- a_est + b_est * x
+  m$dist$normal(mu, sigma, obs = y, name = "y")
+}
+
+# Run sampler ------------------------------------------------
+m$fit(model)
+m$summary()
+```
+
+### Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+# group_id / region_id are one obs-level index array per level (top to bottom).
+# The parent structure (which region each group belongs to) is derived automatically.
+data_path = m.load.sim_nested_effects(only_path=true)
+m.data(data_path)
+
+# Define model ------------------------------------------------
+# N_vars = intercept + slopes; it is independent of the number of levels.
+@BF function model(y, x, group_id, region_id)
+    N_groups = 20
+    N_regions = 5
+    sigma = m.dist.exponential(1, name="sigma")
+
+    a_est, b_est = m.effects.nested_varying_effects(
+        N_vars    = 2,                         # intercept + 1 slope
+        names     = ["region", "group"],       # levels, top to bottom
+        N_groups  = [N_regions, N_groups],     # units at each level
+        group_ids = [region_id, group_id],     # obs-level index per level
+        centered  = false,                     # non-centered (recommended)
+    )
+
+    mu = a_est + b_est * x
+    m.dist.normal(mu, sigma, obs=y, name="y")
+end
+
+# Run sampler ------------------------------------------------
+m.fit(model)
+m.summary()
+```
+:::
+
 `m.effects.nested_varying_effects` generalizes to any depth (add levels to `names`, `N_groups`,
 `group_ids`) and any number of variables (`N_vars` = intercept + number of slopes, returned as
 `a_est, b1, b2, ...`). Pass `centered=True` for the centered parameterization, or supply per-level
 `sigma` / `L_corr` / `corr` priors to override the defaults. See
 [Nested varying effects](../17. Nested varying effects.qmd) for the full model and math.
 
-
 :::
 
 
 # Gaussian processes
 
-::: {.panel-tabset group="language"}
+::: {.panel-tabset}
 ## Squared Exponential Kernel
-``` python
+
+::: {.panel-tabset group="language"}
+### Python
+```python
 from BayesForge import bf
 # Setup device------------------------------------------------
 m = bf(platform='cpu')
 m.gaussian.kernel_sq_exp
-
 ```
+
+### R
+```r
+library(BayesForge)
+# Setup device------------------------------------------------
+m <- importBF(platform = "cpu")
+m$gaussian$kernel_sq_exp
+```
+
+### Julia
+```julia
+using PyBayesForge
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+m.gaussian.kernel_sq_exp
+```
+:::
 
 ## Periodic Kernel
-``` python
-from BayesForge import bf
-# Setup device------------------------------------------------
-m = bf(platform='cpu')
-m.gaussian.kernel_periodic
 
+::: {.panel-tabset group="language"}
+### Python
+```python
+m.gaussian.kernel_periodic
 ```
+
+### R
+```r
+m$gaussian$kernel_periodic
+```
+
+### Julia
+```julia
+m.gaussian.kernel_periodic
+```
+:::
 
 ## Locally Periodic Kernel
-``` python
-from BayesForge import bf
-# Setup device------------------------------------------------
-m = bf(platform='cpu')
-m.gaussian.kernel_periodic_local
 
+::: {.panel-tabset group="language"}
+### Python
+```python
+m.gaussian.kernel_periodic_local
 ```
 
+### R
+```r
+m$gaussian$kernel_periodic_local
+```
+
+### Julia
+```julia
+m.gaussian.kernel_periodic_local
+```
 :::
+
+:::
+
+See [Gaussian processes](../19. Gaussian processes.qmd) for a full model.
 
 
 # Networks effects
+
+These functions are called inside a model; the snippets show their call shape. See
+[Network model](../26. Network model.qmd) for full models.
+
+::: {.panel-tabset}
+## Sender receiver
+
 ::: {.panel-tabset group="language"}
-## Sender receiver 
-``` python
-sr =  m.net.sender_receiver(focal_individual_predictors,target_individual_predictors)
-
+### Python
+```{.python .no-test}
+sr = m.net.sender_receiver(sender_predictors, receiver_predictors)
 ```
 
-## Dyadic 
-``` python
-m.net.dyadic_effect(dyadic_predictors)
+### R
+```{.r .no-test}
+sr <- m$net$sender_receiver(sender_predictors, receiver_predictors)
 ```
 
-
-## Block model 
-``` python
-m.net.block_model(Merica: vector[integer],3)
+### Julia
+```{.julia .no-test}
+sr = m.net.sender_receiver(sender_predictors, receiver_predictors)
 ```
+:::
+
+## Dyadic
+
+::: {.panel-tabset group="language"}
+### Python
+```{.python .no-test}
+dr = m.net.dyadic_effect(dyadic_predictors)
+```
+
+### R
+```{.r .no-test}
+dr <- m$net$dyadic_effect(dyadic_predictors)
+```
+
+### Julia
+```{.julia .no-test}
+dr = m.net.dyadic_effect(dyadic_predictors)
+```
+:::
+
+## Block model
+
+::: {.panel-tabset group="language"}
+### Python
+```{.python .no-test}
+b = m.net.block_model(group, N_group, N_by_group)
+```
+
+### R
+```{.r .no-test}
+b <- m$net$block_model(group, N_group, N_by_group)
+```
+
+### Julia
+```{.julia .no-test}
+b = m.net.block_model(group, N_group, N_by_group)
+```
+:::
 :::
 
 # Network metrics
+
+All metrics take an adjacency matrix (a JAX array) and can be used inside any model. See
+[Network Metrics](../30. Network Metrics.qmd) for definitions. The examples below use this small
+4-node network:
+
 ::: {.panel-tabset group="language"}
-## Degree (undirected, out-degree, in-degree)
-``` python
-m.net.degree(adj_matrix_jax)
-m.net.indegree(adj_matrix_jax)
-m.net.outdegree(adj_matrix_jax)
+### Python
+```python
+from BayesForge import bf
+import jax.numpy as jnp
+m = bf(platform='cpu')
+adj_matrix_jax = jnp.array([[0, 1, 1, 0],
+                            [1, 0, 1, 0],
+                            [1, 1, 0, 1],
+                            [0, 0, 1, 0]], dtype=jnp.float32)
 ```
 
-## Strength (undirected, out-strength , in-strength)
-``` python
-m.net.strength(adj_matrix_jax)
-m.net.instrength(adj_matrix_jax)
-m.net.outstrength(adj_matrix_jax)
+### R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+m <- importBF(platform = "cpu")
+adj_matrix_jax <- jnp$array(rbind(c(0, 1, 1, 0),
+                                  c(1, 0, 1, 0),
+                                  c(1, 1, 0, 1),
+                                  c(0, 0, 1, 0)), dtype = jnp$float32)
 ```
 
-## Eigenvector 
-``` python
-m.net.eigen(adj_matrix_jax)
-```
-
-## Clustering coefficient 
-``` python
-m.net.eigen(adj_matrix_jax)
-```
-
-## Density
-``` python
-m.net.eigen(adj_matrix_jax)
-```
-
-## Geodesic_distance
-``` python
-m.net.eigen(adj_matrix_jax)
-```
-
-## Diameter
-``` python
-m.net.eigen(adj_matrix_jax)
+### Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+adj_matrix_jax = jnp.array([0 1 1 0;
+                            1 0 1 0;
+                            1 1 0 1;
+                            0 0 1 0], dtype=jnp.float32)
 ```
 :::
 
+::: {.panel-tabset}
+## Degree (undirected, out-degree, in-degree)
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.degree(adj_matrix_jax))
+print(m.net.indegree(adj_matrix_jax))
+print(m.net.outdegree(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$degree(adj_matrix_jax))
+print(m$net$indegree(adj_matrix_jax))
+print(m$net$outdegree(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.degree(adj_matrix_jax))
+println(m.net.indegree(adj_matrix_jax))
+println(m.net.outdegree(adj_matrix_jax))
+```
+:::
+
+## Strength (undirected, out-strength, in-strength)
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.strength(adj_matrix_jax))
+print(m.net.instrength(adj_matrix_jax))
+print(m.net.outstrength(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$strength(adj_matrix_jax))
+print(m$net$instrength(adj_matrix_jax))
+print(m$net$outstrength(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.strength(adj_matrix_jax))
+println(m.net.instrength(adj_matrix_jax))
+println(m.net.outstrength(adj_matrix_jax))
+```
+:::
+
+## Eigenvector
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.eigenvector(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$eigenvector(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.eigenvector(adj_matrix_jax))
+```
+:::
+
+## Clustering coefficient
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.cc(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$cc(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.cc(adj_matrix_jax))
+```
+:::
+
+## Density
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.density(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$density(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.density(adj_matrix_jax))
+```
+:::
+
+## Geodesic distance
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.geodesic_distance(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$geodesic_distance(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.geodesic_distance(adj_matrix_jax))
+```
+:::
+
+## Diameter
+
+::: {.panel-tabset group="language"}
+### Python
+```python
+print(m.net.diameter(adj_matrix_jax))
+```
+
+### R
+```r
+print(m$net$diameter(adj_matrix_jax))
+```
+
+### Julia
+```julia
+println(m.net.diameter(adj_matrix_jax))
+```
+:::
+:::

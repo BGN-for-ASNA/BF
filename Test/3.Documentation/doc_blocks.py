@@ -20,6 +20,11 @@ DOCS = ROOT / "Documentation"
 START_PAGES = sorted((DOCS / "start").glob("*.qmd"))
 _NOT_MODEL_PAGES = {"index", "get started", "0.Introduction"}
 MODEL_PAGES = sorted(p for p in DOCS.glob("*.qmd") if p.stem not in _NOT_MODEL_PAGES)
+# "Advance" pages of the Get started sidebar (API reference with examples).
+# Work-in-progress pages (title marked 🚧) are left out.
+_WIP_ADVANCE = {"BNN layers", "Data sharding"}
+ADVANCE_PAGES = sorted(p for p in (DOCS / "Advance").glob("*.qmd") if p.stem not in _WIP_ADVANCE)
+MODEL_PAGES = MODEL_PAGES + ADVANCE_PAGES
 
 # Data files the examples read from the working directory (e.g. 'BNN.json'):
 # copied into the temporary directory each page runs in.
