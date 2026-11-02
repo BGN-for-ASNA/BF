@@ -422,6 +422,8 @@ $$
 
 - We can apply multiple random effects in BayesForge as follows:
 
+::: {.panel-tabset group="language"}
+#### Python
 ```{.python .no-test}
 def model(cafe, wait, N_cafes, afternoon, state):
     sigma = m.dist.exponential( 1,  name = 'sigma')
@@ -440,7 +442,7 @@ def model(cafe, wait, N_cafes, afternoon, state):
     varying_intercept_2, varying_slope_2 = m.effects.varying_effects(
         N_vars = 1,
         N_group = 4,
-        group_id = states, 
+        group_id = state, 
         group_name='states',
         alpha_bar = jnp.array([0]),
         beta_bar = jnp.array([0]),
@@ -450,10 +452,79 @@ def model(cafe, wait, N_cafes, afternoon, state):
     varying_intercept = varying_intercept_1 + varying_intercept_2
     varying_slope = varying_slope_1 + varying_slope_2
 
-    mu = varying_intercept + varying_slope[:,0] * afternoon 
+    mu = varying_intercept + varying_slope * afternoon 
     m.dist.normal(mu, sigma, obs=wait)
 
 ```
+
+#### R
+```{.r .no-test}
+model <- function(cafe, wait, N_cafes, afternoon, state) {
+  sigma <- m$dist$exponential(1, name = "sigma")
+
+  # ⚠️ Note: `alpha_bar` and `beta_bar` are set to zero to ensure the same intercepts for all varying effects. ⚠️
+  veff_1 <- m$effects$varying_effects(
+    N_vars = 1L,
+    N_group = N_cafes,
+    group_id = cafe,
+    group_name = "cafe",
+    alpha_bar = jnp$array(list(0)),
+    beta_bar = jnp$array(list(0)),
+    centered = TRUE
+  )
+
+  veff_2 <- m$effects$varying_effects(
+    N_vars = 1L,
+    N_group = 4L,
+    group_id = state,
+    group_name = "states",
+    alpha_bar = jnp$array(list(0)),
+    beta_bar = jnp$array(list(0)),
+    centered = TRUE
+  )
+
+  varying_intercept <- veff_1[[1]] + veff_2[[1]]
+  varying_slope <- veff_1[[2]] + veff_2[[2]]
+
+  mu <- varying_intercept + varying_slope * afternoon
+  m$dist$normal(mu, sigma, obs = wait)
+}
+```
+
+#### Julia
+```{.julia .no-test}
+@BF function model(cafe, wait, N_cafes, afternoon, state)
+    sigma = m.dist.exponential(1, name="sigma")
+
+    # ⚠️ Note: `alpha_bar` and `beta_bar` are set to zero to ensure the same intercepts for all varying effects. ⚠️
+    varying_intercept_1, varying_slope_1 = m.effects.varying_effects(
+        N_vars=1,
+        N_group=N_cafes,
+        group_id=cafe,
+        group_name="cafe",
+        alpha_bar=jnp.array([0]),
+        beta_bar=jnp.array([0]),
+        centered=true,
+    )
+
+    varying_intercept_2, varying_slope_2 = m.effects.varying_effects(
+        N_vars=1,
+        N_group=4,
+        group_id=state,
+        group_name="states",
+        alpha_bar=jnp.array([0]),
+        beta_bar=jnp.array([0]),
+        centered=true,
+    )
+
+    varying_intercept = varying_intercept_1 + varying_intercept_2
+    varying_slope = varying_slope_1 + varying_slope_2
+
+    mu = varying_intercept + varying_slope * afternoon
+    m.dist.normal(mu, sigma, obs=wait)
+end
+```
+:::
 
 Where `state` is a second varying effect, representing cafes clustered by state.
 

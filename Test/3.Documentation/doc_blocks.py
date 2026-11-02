@@ -108,29 +108,49 @@ def language_tabs(page):
     """
     lines = pathlib.Path(page).read_text().splitlines()
     out = []
-    stack = []          # open divs: [is_tabset, line, current_tab]
+    stack = []          # open divs: [is_tabset, line, current_tab, tab_level]
     in_code = None
+    in_comment = False  # inside <!-- ... -->: not rendered, not counted
     for n, line in enumerate(lines, 1):
+        if in_comment:
+            in_comment = "-->" not in line
+            continue
         if in_code is not None:
             if re.match(r"^```+\s*$", line):
-                lang, start = in_code
-                tabset = next((d for d in reversed(stack) if d[0]), None)
-                if lang is not None:
+                lang, start, info = in_code
+                tabsets = [d for d in reversed(stack) if d[0]]
+                # The enclosing language tab, even when a topic tabset sits
+                # inside it (e.g. Python > "Explicit model" / "Built-in model").
+                tabset = next((d for d in tabsets
+                               if (d[2] or "").split(" (")[0] in LANGS), None)
+                tabset = tabset or (tabsets[0] if tabsets else None)
+                # ``.lang-only``: a note about one language (e.g. an R indexing caveat).
+                if lang is not None and "lang-only" not in info:
                     out.append((lang, tabset[2] if tabset else None,
                                 tabset[1] if tabset else None, start))
                 in_code = None
             continue
+        if re.match(r"^\s*<!--", line) and "-->" not in line:
+            in_comment = True
+            continue
         fence = _FENCE_OPEN.match(line)
         if fence:
-            in_code = (_fence_lang((fence.group(1) or "").strip()), n)
+            info = (fence.group(1) or "").strip()
+            in_code = (_fence_lang(info), n, info)
             continue
         if re.match(r"^:::+\s*$", line):
             if stack:
                 stack.pop()
         elif re.match(r"^:::+\s*\S", line):
-            stack.append([".panel-tabset" in line, n, None])
-        elif stack and re.match(r"^##\s+\S", line):
+            stack.append([".panel-tabset" in line, n, None, None])
+        elif stack and re.match(r"^#+\s+\S", line):
+            # Like Quarto: the tabs of a tabset are the headings at the level
+            # of the first heading inside it (##, ###, #####, ...).
             tabset = next((d for d in reversed(stack) if d[0]), None)
+            level = len(line) - len(line.lstrip("#"))
             if tabset is not None:
-                tabset[2] = line.lstrip("#").strip().lower()
+                if tabset[3] is None:
+                    tabset[3] = level
+                if level == tabset[3]:
+                    tabset[2] = line.lstrip("#").strip().lower()
     return out
