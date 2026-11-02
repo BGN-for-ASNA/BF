@@ -9,12 +9,32 @@ Every distribution in `m.dist` can be sampled **directly**, outside of a model, 
 `sample=True`. This is useful for prior predictive checks, simulating data, or quickly inspecting a
 distribution's shape.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 from BayesForge import bf
 m = bf()
 # Draw 1000 samples from a standard normal
 m.dist.normal(0, 1, shape=(4,), sample=True)
 ```
+
+##### R
+```r
+library(BayesForge)
+m <- importBF()
+# Draw 1000 samples from a standard normal
+m$dist$normal(0, 1, shape = reticulate::tuple(4L), sample=TRUE)
+```
+
+##### Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF()
+# Draw 1000 samples from a standard normal
+m.dist.normal(0, 1, shape = (4,), sample=true)
+```
+:::
 
 By using (`to_jax=False`), a direct sample is returned as a **`SampledData`** object — a thin wrapper
 around a JAX array. It behaves like a JAX array everywhere (arithmetic, indexing, `jnp.*` functions,
@@ -36,81 +56,250 @@ The available methods depend on the **shape** of the sampled array.
 
 ::: {.panel-tabset}
 #### histogram
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,), sample=True, to_jax=False).hist() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L), sample=TRUE, to_jax=FALSE)$hist()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000,), sample=true, to_jax=false).hist()
+```
+:::
+
 #### kernel
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,), sample=True, to_jax=False).density()
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L), sample=TRUE, to_jax=FALSE)$density()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000,), sample=true, to_jax=false).density()
+```
+:::
+
 #### PPC
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1,shape=(100,4),sample=True, to_jax=False).ppc_plot(m.dist.normal(0,1,shape=(100,),sample=True, to_jax=False))
 ```
+
+##### R
+```r
+m$dist$normal(0,1,shape = reticulate::tuple(100L, 4L),sample=TRUE, to_jax=FALSE)$ppc_plot(m$dist$normal(0,1,shape = reticulate::tuple(100L),sample=TRUE, to_jax=FALSE))
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1,shape = (100, 4),sample=true, to_jax=false).ppc_plot(m.dist.normal(0,1,shape = (100,),sample=true, to_jax=false))
+```
+:::
 
 #### Time series — `(n_samples, n_time)`
 
 Treat the second axis as time and summarise across draws.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.gaussian_random_walk(scale=0.5, num_steps=50, shape=(500,), sample=True, to_jax=False).timeseries(credible_interval=0.9)
 ```
+
+##### R
+```r
+m$dist$gaussian_random_walk(scale=0.5, num_steps = 50L, shape = reticulate::tuple(500L), sample=TRUE, to_jax=FALSE)$timeseries(credible_interval=0.9)
+```
+
+##### Julia
+```julia
+m.dist.gaussian_random_walk(scale=0.5, num_steps=50, shape = (500,), sample=true, to_jax=false).timeseries(credible_interval=0.9)
+```
+:::
 :::
 
 ### 2D-(n_samples, n_variables)
 ::: {.panel-tabset}
 #### histogram
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).hist() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$hist()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).hist()
+```
+:::
+
 #### kernel
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).density() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$density()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).density()
+```
+:::
+
 #### boxplot
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).boxplot() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$boxplot()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).boxplot()
+```
+:::
+
 #### violinplot
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).violinplot() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$violinplot()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).violinplot()
+```
+:::
+
 #### pairplot
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).pairplot() 
 ```
 
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$pairplot()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).pairplot()
+```
+:::
+
 #### corr_heatmap
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.lkj_cholesky(4, 2, name = 'a', sample = True, to_jax=False).corr_heatmap() 
 ```
 
+##### R
+```r
+m$dist$lkj_cholesky(4L, 2, name = 'a', sample = TRUE, to_jax=FALSE)$corr_heatmap()
+```
+
+##### Julia
+```julia
+m.dist.lkj_cholesky(4, 2, name = "a", sample = true, to_jax=false).corr_heatmap()
+```
+:::
+
 #### traceplot
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).traceplot() 
 ```
+
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$traceplot()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).traceplot()
+```
+:::
 
 #### surface_3d
 
 Computes a 2D Kernel Density Estimate (KDE) using the first two variables. It plots a 3D surface where the X and Y axes represent the variables and the Z axis represents the estimated probability density.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).surface_3d() 
 ```
+
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$surface_3d()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).surface_3d()
+```
+:::
 
 #### scatter3d
 
 Takes the first three variables (columns) and plots them directly as points in a 3D space (X, Y, and Z axes). Requires the array to have at least 3 variables (columns).
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4), sample=True, to_jax=False).scatter3d() 
 ```
+
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L), sample=TRUE, to_jax=FALSE)$scatter3d()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4), sample=true, to_jax=false).scatter3d()
+```
+:::
 #### Posterior predictive
 
 Compare draws against observed data.
@@ -120,17 +309,43 @@ Compare draws against observed data.
 ::: {.panel-tabset}
 
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0, 1, shape=(1000,4, 3), sample=True, to_jax=False).hist() 
 ```
+
+##### R
+```r
+m$dist$normal(0, 1, shape = reticulate::tuple(1000L, 4L, 3L), sample=TRUE, to_jax=FALSE)$hist()
+```
+
+##### Julia
+```julia
+m.dist.normal(0, 1, shape = (1000, 4, 3), sample=true, to_jax=false).hist()
+```
+:::
 
 
 
 #### 3D scatter — `(n_samples, >=3)`
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).hist()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)$hist()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false).hist()
+```
+:::
 
 :::
 
@@ -139,105 +354,354 @@ m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).hi
 In addition to plot helper functions, there are several other helper functions that can be used to compute summaries or transform the sampled array. For reduction operations (like `mean`, `std`, `sum`), you can pass an `axis` argument to reduce along specific dimensions. For example, passing `axis=0` will reduce across the sample dimension.
 
 ### mean
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).mean(axis=0)
 ```
 
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$mean(axis = 0L)
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).mean(axis=0)
+```
+:::
+
 ### std
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).std()
 ```
 
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$std()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).std()
+```
+:::
+
 ### variance
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).var()
 ```
 
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$var()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).var()
+```
+:::
+
 ### hdi
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).hdi(cred_mass=0.95)
 ```
 
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$hdi(cred_mass=0.95)
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).hdi(cred_mass=0.95)
+```
+:::
+
 ### sum
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).sum()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$sum()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).sum()
+```
+:::
 ### prod
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).prod()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$prod()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).prod()
+```
+:::
 ### min
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).min()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$min()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).min()
+```
+:::
 ### max
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).max()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)$max()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false).max()
+```
+:::
 ### argmin
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).argmin()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$argmin()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).argmin()
+```
+:::
 ### argmax
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).argmax()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$argmax()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).argmax()
+```
+:::
 ### all
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).all()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)$all()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false).all()
+```
+:::
 ### any
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).any()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$any()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).any()
+```
+:::
 ### cumsum
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).cumsum()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$cumsum()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).cumsum()
+```
+:::
 ### round
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).round()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)$round()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false).round()
+```
+:::
 ### clip
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).clip(0, 1)
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$clip(0, 1)
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).clip(0, 1)
+```
+:::
 ### ptp
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).ptp()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$ptp()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).ptp()
+```
+:::
 ### sort
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4), sample = True, to_jax=False).sort()
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L), sample = TRUE, to_jax=FALSE)$sort()
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4), sample = true, to_jax=false).sort()
+```
+:::
 
 ### .at[]
 
 Since the sampled object wraps a JAX array, you can use JAX's `.at[]` syntax for in-place style updates (which return a new object):
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 s = m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False)
 s_new = s.at[0, 0, 0].set(0.0)
 ```
 
+##### R
+```r
+s <- m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)
+s_new <- s$at[0L, 0L, 0L]$set(0.0)
+```
+
+##### Julia
+```julia
+s = m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false)
+s_new = s.at[0, 0, 0].set(0.0)
+```
+:::
+
 ### reshape
 
+::: {.panel-tabset group="language"}
+##### Python
 ```{python}
 m.dist.normal(0,1, name = 'a', shape=(100,4, 5), sample = True, to_jax=False).reshape((100, 20))
 ```
+
+##### R
+```r
+m$dist$normal(0,1, name = 'a', shape = reticulate::tuple(100L, 4L, 5L), sample = TRUE, to_jax=FALSE)$reshape(reticulate::tuple(100L, 20L))
+```
+
+##### Julia
+```julia
+m.dist.normal(0,1, name = "a", shape = (100, 4, 5), sample = true, to_jax=false).reshape((100, 20))
+```
+:::
 
 And many other standard NumPy/JAX array methods like `.flatten()`, `.squeeze()`, `.astype()`, etc., are also available directly on the sampled object.
 
