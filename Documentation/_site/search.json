@@ -264,7 +264,7 @@
     "crumbs": [
       "Models",
       "Generalized Linear Models",
-      "Gamma-Poisson Model"
+      "Multinomial Model"
     ]
   },
   {
@@ -304,23 +304,11 @@
     ]
   },
   {
-    "objectID": "9. Gamma-Poisson.html#mathematical-details",
-    "href": "9. Gamma-Poisson.html#mathematical-details",
-    "title": "Gamma-Poisson Model",
+    "objectID": "11. Multinomial model.html#mathematical-details",
+    "href": "11. Multinomial model.html#mathematical-details",
+    "title": "Multinomial Model",
     "section": "Mathematical Details",
-    "text": "Mathematical Details\n\nBayesian model\nIn the Bayesian formulation, we define each parameter with priors 🛈. We can express the Bayesian regression model accounting for prior distributions as follows:\n\nY_i \\sim \\text{Poisson}(\\lambda_i)\n\n\n\\lambda_i \\sim \\text{Gamma}(\\mu_i \\phi, \\phi)\n\n\n\\log(\\mu_i) = \\text{rates}_i + \\alpha + \\beta X_i\n\n\n\\alpha \\sim \\text{Normal}(0,1)\n\n\n\\beta \\sim \\text{Normal}(0,1)\n\n\n\\phi \\sim \\text{Exponential}(1)\n\nWhere:\n\nY_i is the dependent variable for observation i.\n\\lambda_i is the rate parameter of the Poisson distribution for observation i, assuming that each Poisson count observation has its own rate_i.\n\\mu_i is the mean rate parameter.\n\n\\phi controls the level of overdispersion in the rates.\n\\alpha is the intercept term.\n\\beta is the regression coefficient.\nX_i is the value of the predictor variable for observation i.",
-    "crumbs": [
-      "Models",
-      "Generalized Linear Models",
-      "Multinomial Model"
-    ]
-  },
-  {
-    "objectID": "9. Gamma-Poisson.html#notes",
-    "href": "9. Gamma-Poisson.html#notes",
-    "title": "Gamma-Poisson Model",
-    "section": "Notes",
-    "text": "Notes\n\n\n\n\n\n\nNote\n\n\n\n\nWe can apply multiple variables similarly as in chapter 2.\nWe can apply interaction terms similarly as in 3. Interaction between continuous variables.\nWe can apply categorical variables similarly as in chapter 4.",
+    "text": "Mathematical Details\nWe can model a vector of frequencies using a Dirichlet distribution. For an outcome variable Y_i with K categories, the Dirichlet likelihood function is:\n\nY_i \\sim \\text{Multinomial}(\\theta_i) \\\\\n\\theta_i = \\text{Softmax}(\\phi_i) \\\\\n\\phi_{[i,1]} = \\alpha_1 + \\beta_1 X_i \\\\\n\\phi_{[i,2]} = \\alpha_2 + \\beta_2 X_i \\\\\n... \\\\\n\\phi_{[i,k]} = 0 \\\\\n\\alpha_{k} \\sim \\text{Normal}(0,1) \\\\\n\\beta_{k} \\sim \\text{Normal}(0.1)\n\nWhere:\n\nY_i is the outcome (i.e. the vector of frequencies for each k categories) for observation i.\n\\theta_i is a vector unique to each observation, i, which gives the probability of observing i in category k.\n\\phi_i give the linear model for each of the k categories. Note that we use the softmax function to ensure that that the probabilities \\theta_i form a simplex 🛈.\nEach element of \\phi_i is obtained by applying a linear regression model with its own respective intercept \\alpha_k and slope coefficient \\beta_k. To ensure the model is identifiable, one category, K, is arbitrarily chosen as a reference or baseline category. The linear predictor for this reference category is set to zero. The coefficients for the other categories then represent the change in the log-odds of being in that category versus the reference category.",
     "crumbs": [
       "Models",
       "Generalized Linear Models",
@@ -1078,15 +1066,15 @@
     ]
   },
   {
-    "objectID": "5. Binomial model.html#considerations",
-    "href": "5. Binomial model.html#considerations",
-    "title": "Binomial Model",
-    "section": "Considerations",
-    "text": "Considerations\n\n\n\n\n\n\nNote\n\n\n\n\nWe have the same considerations as for Linear Regression for continuous variable.\nThis is the first model for which we need a link function: e.g., the logit function. The logit link function converts the linear combination of predictor variables into probabilities, making it suitable for modeling the probability of binary outcomes. It helps to estimate the relationship between predictors and the probability of success, ensuring that model predictions fall within the bounds of the binomial distribution’s success parameter \\in(0,1).",
+    "objectID": "2. Multiple continuous variables.html#mathematical-details",
+    "href": "2. Multiple continuous variables.html#mathematical-details",
+    "title": "Multivariate Linear Regression",
+    "section": "Mathematical Details",
+    "text": "Mathematical Details\n\nFrequentist formulation\nWe model the relationship between the independent variables (X_{1i}, X_{2i}, ..., X_{[K,i]}) and the dependent variable Y using the following equation:\n\n𝑌_i = \\alpha +\\beta_1  𝑋_{[1,i]} + \\beta_2  𝑋_{[2,i]} + ... + \\beta_n  𝑋_{[K,i]} + \\epsilon_i\n\nWhere:\n\nY_i is the dependent variable for observation i.\n\\alpha is the intercept term.\nX_{[1,i]}, X_{[2,i]}, …, X_{[K,i]} are the values of the independent variables for observation i.\n\\beta_1, \\beta_2, …, \\beta_K are the regression coefficients.\n\\epsilon_i is the error term for observation i, and the vector of the error terms, \\epsilon, are assumed to be independent and identically distributed.\n\n\n\nBayesian formulation\nIn the Bayesian formulation, we define each parameter with priors 🛈. We can express the Bayesian model as follows:\n\n𝑌_i \\sim \\text{Normal}(\\alpha + \\sum_{k=1}^K  \\beta_k  X_{[K,i]}, σ)\n\n\n\\alpha \\sim \\text{Normal}(178, 20)\n\n\n\\beta_k \\sim \\text{Normal}(0, 0.5)\n\n\nσ \\sim \\text{Uniform}(0, 50)\n\nWhere:\n\nY_i is the dependent variable for observation i.\n\\alpha is the intercept term, with a Normal(178, 20) prior centred on a plausible adult height (height is not scaled).\n\\beta_k are slope coefficients for the K distinct independent variables, with Normal(0, 0.5) priors (the predictors are scaled).\nX_{[1,i]}, X_{[2,i]}, …, X_{[K,i]} are the values of the independent variables for observation i.\n\\sigma is a standard deviation parameter, which here has a Uniform prior that constrains it to be positive.",
     "crumbs": [
       "Models",
-      "Generalized Linear Models",
-      "Binomial Model"
+      "Linear Models",
+      "Multivariate Linear Regression"
     ]
   },
   {
@@ -1102,15 +1090,15 @@
     ]
   },
   {
-    "objectID": "5. Binomial model.html#example",
-    "href": "5. Binomial model.html#example",
-    "title": "Binomial Model",
-    "section": "Example",
-    "text": "Example\nBelow is an example code snippet that demonstrates Bayesian binomial regression using the BayesForge (BF) package. The data consist of one binary dependent variable (pulled_left), which represents which lever each chimpanzee pulled in an experimental setup. The goal is to evaluate the probability of pulling the left side. This example is based on McElreath (2018).\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\n\n# setup platform------------------------------------------------\nm = bf(platform='cpu')\n# import data ------------------------------------------------\n# Import\nfrom importlib.resources import files\ndata_path = m.load.chimpanzees(only_path = True)\nm.data(data_path, sep=';')\nm.data_to_model(['pulled_left'])\n\n# Define model ------------------------------------------------\ndef model(pulled_left):\n    alpha = m.dist.normal( 0, 10,  name = 'alpha')\n    m.dist.binomial(total_count = 1, logits=alpha, obs=pulled_left)\n\n# Run sampler ------------------------------------------------\nm.fit(model, progress_bar=False)\n\n# Diagnostic ------------------------------------------------\nm.summary()\n\n\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\n\n\nbf v 0.0.60 package loaded\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\nmean\nsd\neti89_lb\neti89_ub\ness_bulk\ness_tail\nr_hat\nmcse_mean\nmcse_sd\n\n\n\n\nalpha\n0.32\n0.09\n0.17\n0.46\n1355.6\n1496.63\n1.01\n0.0\n0.0\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\n\n# setup platform------------------------------------------------\nm=importBF(platform='cpu')\n\n# import data ------------------------------------------------\nm$data(m$load$chimpanzees(only_path = T), sep=';')\nm$data_to_model(list('pulled_left')) # Send to model (convert to jax array)\n\n# Define model ------------------------------------------------\nmodel &lt;- function(pulled_left){\n  # Parameters priors distributions\n  alpha = m$dist$normal( 0, 10, name = 'alpha')\n  # Likelihood\n  m$dist$binomial(total_count = 1L, logits = alpha, obs = pulled_left, name = 'pulled_left')\n}\n\n\n# Run MCMC ------------------------------------------------\nm$fit(model) # Optimize model parameters through MCMC sampling\n\n# Summary ------------------------------------------------\nm$summary() # Get posterior distribution\n\n\nusing PyBayesForge\n\n# Setup device------------------------------------------------\nm = importBF(platform=\"cpu\")\n\n# Import Data & Data Manipulation ------------------------------------------------\n# Import\ndata_path = m.load.chimpanzees(only_path = true)\nm.data(data_path, sep=';')\n\n# Define model ------------------------------------------------\n@BF function model(pulled_left)\n    a = m.dist.normal( 0, 10, shape=(1,), name = \"a\")\n    m.dist.binomial(total_count = 1, logits=a[0], obs=pulled_left)\nend\n\n# Run mcmc ------------------------------------------------\nm.fit(model)  # Optimize model parameters through MCMC sampling\n\n# Summary ------------------------------------------------\nm.summary() # Get posterior distributions",
+    "objectID": "2. Multiple continuous variables.html#references",
+    "href": "2. Multiple continuous variables.html#references",
+    "title": "Multivariate Linear Regression",
+    "section": "Reference(s)",
+    "text": "Reference(s)\n\n\nMcElreath, Richard. 2018. Statistical Rethinking: A Bayesian course with examples in R and Stan. Chapman; Hall/CRC.",
     "crumbs": [
       "Models",
-      "Generalized Linear Models",
-      "Binomial Model"
+      "Linear Models",
+      "Multivariate Linear Regression"
     ]
   },
   {
@@ -1765,7 +1753,7 @@
     "crumbs": [
       "Models",
       "Networks models",
-      "Stochastic Block Models"
+      "Network Models"
     ]
   },
   {
@@ -2054,7 +2042,7 @@
     "crumbs": [
       "Models",
       "Networks models",
-      "Network Edges Inference"
+      "Network Metrics"
     ]
   },
   {
@@ -2572,7 +2560,7 @@
     "crumbs": [
       "Models",
       "Linear Models",
-      "Multivariate Linear Regression"
+      "Regression with a Categorical Independent Variable"
     ]
   },
   {
@@ -2584,7 +2572,7 @@
     "crumbs": [
       "Models",
       "Linear Models",
-      "Multivariate Linear Regression"
+      "Regression with a Categorical Independent Variable"
     ]
   },
   {
@@ -2612,27 +2600,27 @@
     ]
   },
   {
-    "objectID": "2. Multiple continuous variables.html#mathematical-details",
-    "href": "2. Multiple continuous variables.html#mathematical-details",
-    "title": "Multivariate Linear Regression",
-    "section": "Mathematical Details",
-    "text": "Mathematical Details\n\nFrequentist formulation\nWe model the relationship between the independent variables (X_{1i}, X_{2i}, ..., X_{[K,i]}) and the dependent variable Y using the following equation:\n\n𝑌_i = \\alpha +\\beta_1  𝑋_{[1,i]} + \\beta_2  𝑋_{[2,i]} + ... + \\beta_n  𝑋_{[K,i]} + \\epsilon_i\n\nWhere:\n\nY_i is the dependent variable for observation i.\n\\alpha is the intercept term.\nX_{[1,i]}, X_{[2,i]}, …, X_{[K,i]} are the values of the independent variables for observation i.\n\\beta_1, \\beta_2, …, \\beta_K are the regression coefficients.\n\\epsilon_i is the error term for observation i, and the vector of the error terms, \\epsilon, are assumed to be independent and identically distributed.\n\n\n\nBayesian formulation\nIn the Bayesian formulation, we define each parameter with priors 🛈. We can express the Bayesian model as follows:\n\n𝑌_i \\sim \\text{Normal}(\\alpha + \\sum_{k=1}^K  \\beta_k  X_{[K,i]}, σ)\n\n\n\\alpha \\sim \\text{Normal}(178, 20)\n\n\n\\beta_k \\sim \\text{Normal}(0, 0.5)\n\n\nσ \\sim \\text{Uniform}(0, 50)\n\nWhere:\n\nY_i is the dependent variable for observation i.\n\\alpha is the intercept term, with a Normal(178, 20) prior centred on a plausible adult height (height is not scaled).\n\\beta_k are slope coefficients for the K distinct independent variables, with Normal(0, 0.5) priors (the predictors are scaled).\nX_{[1,i]}, X_{[2,i]}, …, X_{[K,i]} are the values of the independent variables for observation i.\n\\sigma is a standard deviation parameter, which here has a Uniform prior that constrains it to be positive.",
+    "objectID": "5. Binomial model.html#considerations",
+    "href": "5. Binomial model.html#considerations",
+    "title": "Binomial Model",
+    "section": "Considerations",
+    "text": "Considerations\n\n\n\n\n\n\nNote\n\n\n\n\nWe have the same considerations as for Linear Regression for continuous variable.\nThis is the first model for which we need a link function: e.g., the logit function. The logit link function converts the linear combination of predictor variables into probabilities, making it suitable for modeling the probability of binary outcomes. It helps to estimate the relationship between predictors and the probability of success, ensuring that model predictions fall within the bounds of the binomial distribution’s success parameter \\in(0,1).",
     "crumbs": [
       "Models",
-      "Linear Models",
-      "Regression with a Categorical Independent Variable"
+      "Generalized Linear Models",
+      "Binomial Model"
     ]
   },
   {
-    "objectID": "2. Multiple continuous variables.html#references",
-    "href": "2. Multiple continuous variables.html#references",
-    "title": "Multivariate Linear Regression",
-    "section": "Reference(s)",
-    "text": "Reference(s)\n\n\nMcElreath, Richard. 2018. Statistical Rethinking: A Bayesian course with examples in R and Stan. Chapman; Hall/CRC.",
+    "objectID": "5. Binomial model.html#example",
+    "href": "5. Binomial model.html#example",
+    "title": "Binomial Model",
+    "section": "Example",
+    "text": "Example\nBelow is an example code snippet that demonstrates Bayesian binomial regression using the BayesForge (BF) package. The data consist of one binary dependent variable (pulled_left), which represents which lever each chimpanzee pulled in an experimental setup. The goal is to evaluate the probability of pulling the left side. This example is based on McElreath (2018).\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\n\n# setup platform------------------------------------------------\nm = bf(platform='cpu')\n# import data ------------------------------------------------\n# Import\nfrom importlib.resources import files\ndata_path = m.load.chimpanzees(only_path = True)\nm.data(data_path, sep=';')\nm.data_to_model(['pulled_left'])\n\n# Define model ------------------------------------------------\ndef model(pulled_left):\n    alpha = m.dist.normal( 0, 10,  name = 'alpha')\n    m.dist.binomial(total_count = 1, logits=alpha, obs=pulled_left)\n\n# Run sampler ------------------------------------------------\nm.fit(model, progress_bar=False)\n\n# Diagnostic ------------------------------------------------\nm.summary()\n\n\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\n\n\nbf v 0.0.60 package loaded\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\nmean\nsd\neti89_lb\neti89_ub\ness_bulk\ness_tail\nr_hat\nmcse_mean\nmcse_sd\n\n\n\n\nalpha\n0.32\n0.09\n0.17\n0.46\n1355.6\n1496.63\n1.01\n0.0\n0.0\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\n\n# setup platform------------------------------------------------\nm=importBF(platform='cpu')\n\n# import data ------------------------------------------------\nm$data(m$load$chimpanzees(only_path = T), sep=';')\nm$data_to_model(list('pulled_left')) # Send to model (convert to jax array)\n\n# Define model ------------------------------------------------\nmodel &lt;- function(pulled_left){\n  # Parameters priors distributions\n  alpha = m$dist$normal( 0, 10, name = 'alpha')\n  # Likelihood\n  m$dist$binomial(total_count = 1L, logits = alpha, obs = pulled_left, name = 'pulled_left')\n}\n\n\n# Run MCMC ------------------------------------------------\nm$fit(model) # Optimize model parameters through MCMC sampling\n\n# Summary ------------------------------------------------\nm$summary() # Get posterior distribution\n\n\nusing PyBayesForge\n\n# Setup device------------------------------------------------\nm = importBF(platform=\"cpu\")\n\n# Import Data & Data Manipulation ------------------------------------------------\n# Import\ndata_path = m.load.chimpanzees(only_path = true)\nm.data(data_path, sep=';')\n\n# Define model ------------------------------------------------\n@BF function model(pulled_left)\n    a = m.dist.normal( 0, 10, shape=(1,), name = \"a\")\n    m.dist.binomial(total_count = 1, logits=a[0], obs=pulled_left)\nend\n\n# Run mcmc ------------------------------------------------\nm.fit(model)  # Optimize model parameters through MCMC sampling\n\n# Summary ------------------------------------------------\nm.summary() # Get posterior distributions",
     "crumbs": [
       "Models",
-      "Linear Models",
-      "Regression with a Categorical Independent Variable"
+      "Generalized Linear Models",
+      "Binomial Model"
     ]
   },
   {
@@ -3624,36 +3612,36 @@
     ]
   },
   {
-    "objectID": "reference/load.html#returns-8",
-    "href": "reference/load.html#returns-8",
-    "title": "Example data (m.load)",
-    "section": "Returns:",
-    "text": "Returns:\nbunch : Bunch Dataset with patient survival data",
+    "objectID": "reference/diag.html#influence",
+    "href": "reference/diag.html#influence",
+    "title": "Diagnostics (m.diag)",
+    "section": "m.diag.influence",
+    "text": "m.diag.influence\nm.diag.influence(\n    log_likelihood=None,\n    x=None,\n    y=None,\n    good_k=None,\n    title='LOO Influence: Pareto-k Diagnostics',\n    x_label=None,\n    y_label=None,\n)\nScatter of Pareto-k values per observation.\nThe fitted model m is supplied automatically.\nHigh k values (k &gt; 0.7) indicate influential observations where the model is sensitive — potential outliers or model misspecification.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\nm\n\nFitted BF model. Used to auto-compute log_likelihood if not given.\n\n\nlog_likelihood\n\nPre-computed log-likelihood array, shape (C, S, N) or (S, N). If None, computed from m.model + m.data_on_model.\n\n\nx\n\nOptional 1D array of x-axis values (e.g. predictor). Defaults to 1..N.\n\n\ny\n\nOptional 1D array of observed values for hover text.\n\n\ngood_k\n\nThreshold for flagging bad k (default 0.7).\n\n\ntitle\n\nPlot title.\n\n\nx_label\n\nX-axis title (a list gives one per subplot, in order). Defaults to the plot’s own label.\n\n\ny_label\n\nY-axis title, as x_label.\n\n\n\nReturns\n\nplotly Figure with horizontal reference lines at k=0.5, 0.7.",
     "crumbs": [
       "Get started",
-      "Example data (`m.load`)"
+      "Diagnostics (`m.diag`)"
     ]
   },
   {
-    "objectID": "reference/load.html#milk",
-    "href": "reference/load.html#milk",
-    "title": "Example data (m.load)",
-    "section": "m.load.milk",
-    "text": "m.load.milk\nm.load.milk(frame=True, only_path=False)\nLoad the milk dataset.\nPrimate milk composition data.",
+    "objectID": "reference/diag.html#loo",
+    "href": "reference/diag.html#loo",
+    "title": "Diagnostics (m.diag)",
+    "section": "m.diag.loo",
+    "text": "m.diag.loo\nm.diag.loo(log_likelihood=None, pointwise=False, scale='log', reff=None, var_name=None)\nPareto-smoothed importance-sampling leave-one-out cross-validation (PSIS-LOO).\nEstimates the expected log pointwise predictive density (ELPD) of the fitted model. Use m.diag.compare({\"m1\": m1, \"m2\": m2}) to rank models.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\nlog_likelihood\narray\nPointwise log-likelihood (chains, draws, observations). Computed from the model by default.\n\n\npointwise\nbool\nAlso return per-observation values and Pareto k. Defaults to False.\n\n\nscale\nstr\n\"log\" (default), \"negative_log\" or \"deviance\".\n\n\nreff\nfloat\nRelative MCMC efficiency; estimated from the chains by default.\n\n\nvar_name\nstr\nObserved variable to use when the model has several.\n\n\n\nReturns\n\nELPD estimate, its standard error and the effective number of parameters (p_loo).",
     "crumbs": [
       "Get started",
-      "Example data (`m.load`)"
+      "Diagnostics (`m.diag`)"
     ]
   },
   {
-    "objectID": "reference/load.html#returns-9",
-    "href": "reference/load.html#returns-9",
-    "title": "Example data (m.load)",
-    "section": "Returns:",
-    "text": "Returns:\nbunch : Bunch Dataset with milk composition data for various primate species Features: clade, species, kcal.per.g, perc.fat, perc.protein, perc.lactose, mass, neocortex.perc",
+    "objectID": "reference/diag.html#mcse",
+    "href": "reference/diag.html#mcse",
+    "title": "Diagnostics (m.diag)",
+    "section": "m.diag.mcse",
+    "text": "m.diag.mcse\nm.diag.mcse(include=None, exclude=None, kind='mean', filtered=True)\nMonte Carlo standard error of each parameter’s posterior summary.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ninclude\nstr or list of str\nParameters to check (default: all).\n\n\nexclude\nstr or list of str\nParameters to leave out.\n\n\nkind\nstr\nSummary whose error is estimated: \"mean\" (default), \"sd\" or a quantile.\n\n\nfiltered\nbool\nUse m.posteriors (True) or m.posteriors_full (False).\n\n\n\nReturns\n\nMCSE per parameter.",
     "crumbs": [
       "Get started",
-      "Example data (`m.load`)"
+      "Diagnostics (`m.diag`)"
     ]
   },
   {

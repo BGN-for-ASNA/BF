@@ -1721,30 +1721,89 @@ Running chain 1:  10%|█         | 200/2000 [00:03&lt;00:10, 178.09it/s]</code>
 </div>
 </div>
 <div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
-<div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y, se, phylo_idx, obs_idx, L) {</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    intercept <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">10</span>, <span class="at">name =</span> <span class="st">"Intercept"</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    sd_o <span class="ot">&lt;-</span> <span class="fu">bf.dist.half_normal</span>(<span class="dv">10</span>, <span class="at">name =</span> <span class="st">"sd_o"</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    sd_p <span class="ot">&lt;-</span> <span class="fu">bf.dist.half_normal</span>(<span class="dv">10</span>, <span class="at">name =</span> <span class="st">"sd_p"</span>)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    u_p <span class="ot">&lt;-</span> (L <span class="sc">%*%</span> <span class="fu">bf.dist.normal</span>(<span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">dim</span>(L)[<span class="dv">1</span>]), <span class="dv">1</span>, <span class="at">name=</span><span class="st">"z_p"</span>)) <span class="sc">*</span> sd_p</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    u_o <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">length</span>(y)), <span class="dv">1</span>, <span class="at">name=</span><span class="st">"z_o"</span>) <span class="sc">*</span> sd_o</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    mu <span class="ot">&lt;-</span> intercept <span class="sc">+</span> u_p[phylo_idx] <span class="sc">+</span> u_o[obs_idx]</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf.dist.normal</span>(mu, se, <span class="at">obs =</span> y)</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load and prepare data</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">phylo_meta</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>L_df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">phylo_L_meta</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>L <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(L_df)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">colnames</span>(L_df)                          <span class="co"># species order = columns of L</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>phylo_idx <span class="ot">&lt;-</span> <span class="fu">match</span>(df<span class="sc">$</span>phylo, species) <span class="sc">-</span> <span class="dv">1</span>L      <span class="co"># 0-based indices</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>se <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> (df<span class="sc">$</span>N <span class="sc">-</span> <span class="dv">3</span>))</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> jnp<span class="sc">$</span><span class="fu">array</span>(df<span class="sc">$</span>y),</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">se =</span> jnp<span class="sc">$</span><span class="fu">array</span>(df<span class="sc">$</span>se),</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">phylo_idx =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(df<span class="sc">$</span>phylo_idx), <span class="at">dtype =</span> jnp<span class="sc">$</span>int32),</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">obs_idx =</span> jnp<span class="sc">$</span><span class="fu">arange</span>(<span class="fu">as.integer</span>(<span class="fu">nrow</span>(df)), <span class="at">dtype =</span> jnp<span class="sc">$</span>int32),</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">L =</span> jnp<span class="sc">$</span><span class="fu">array</span>(L)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y, se, phylo_idx, obs_idx, L) {</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    intercept <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="fl">0.0</span>, <span class="fl">10.0</span>, <span class="at">name =</span> <span class="st">"Intercept"</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    sd_obs <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">half_normal</span>(<span class="dv">10</span>, <span class="at">name =</span> <span class="st">"sd_obs"</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    sd_phylo <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">half_normal</span>(<span class="dv">10</span>, <span class="at">name =</span> <span class="st">"sd_phylo"</span>)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Effects</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    num_sp <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(L<span class="sc">$</span>shape[[<span class="dv">1</span>L]])</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    num_obs <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(y<span class="sc">$</span>shape[[<span class="dv">1</span>L]])</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    u_p <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">matmul</span>(L, m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(jnp<span class="sc">$</span><span class="fu">zeros</span>(num_sp), <span class="fl">1.0</span>, <span class="at">name =</span> <span class="st">"z_p"</span>)) <span class="sc">*</span> sd_phylo</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    u_o <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(jnp<span class="sc">$</span><span class="fu">zeros</span>(num_obs), <span class="fl">1.0</span>, <span class="at">name =</span> <span class="st">"z_o"</span>) <span class="sc">*</span> sd_obs</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mean</span></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    mu <span class="ot">&lt;-</span> intercept <span class="sc">+</span> u_p[phylo_idx] <span class="sc">+</span> u_o[obs_idx]</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Likelihood (Normal with fixed SE)</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, se, <span class="at">name =</span> <span class="st">"Y"</span>, <span class="at">obs =</span> y)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
-<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y, se, phylo_idx, obs_idx, L)<span class="op">:</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    intercept <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">10</span>, name <span class="op">=</span> <span class="st">"Intercept"</span>)</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    sd_o <span class="op">=</span> m.dist.<span class="fu">half_normal</span>(<span class="fl">10</span>, name <span class="op">=</span> <span class="st">"sd_o"</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    sd_p <span class="op">=</span> m.dist.<span class="fu">half_normal</span>(<span class="fl">10</span>, name <span class="op">=</span> <span class="st">"sd_p"</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    u_p <span class="op">=</span> (L <span class="op">*</span> m.dist.<span class="fu">normal</span>(<span class="fu">zeros</span>(<span class="fu">size</span>(L, <span class="fl">1</span>)), <span class="fl">1</span>, name<span class="op">=</span><span class="st">"z_p"</span>)) <span class="op">.*</span> sd_p</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    u_o <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fu">zeros</span>(<span class="fu">length</span>(y)), <span class="fl">1</span>, name<span class="op">=</span><span class="st">"z_o"</span>) <span class="op">.*</span> sd_o</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> intercept <span class="op">.+</span> u_p[phylo_idx] <span class="op">.+</span> u_o[obs_idx]</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, se, obs <span class="op">=</span> y)</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">CSV</span>, <span class="bu">DataFrames</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Load and prepare data</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> CSV.<span class="fu">read</span>(<span class="fu">pyconvert</span>(<span class="dt">String</span>, m.load.<span class="fu">phylo_meta</span>(only_path<span class="op">=</span><span class="cn">true</span>).py), DataFrame)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>L_df <span class="op">=</span> CSV.<span class="fu">read</span>(<span class="fu">pyconvert</span>(<span class="dt">String</span>, m.load.<span class="fu">phylo_L_meta</span>(only_path<span class="op">=</span><span class="cn">true</span>).py), DataFrame)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>L <span class="op">=</span> <span class="fu">Matrix</span>(L_df)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>species <span class="op">=</span> <span class="fu">names</span>(L_df)                              <span class="co"># species order = columns of L</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>phylo_idx <span class="op">=</span> [<span class="fu">findfirst</span>(<span class="op">==</span>(s), species) for s <span class="kw">in</span> df.phylo] <span class="op">.-</span> <span class="fl">1</span>  <span class="co"># 0-based indices</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>se <span class="op">=</span> <span class="fu">sqrt</span>.(<span class="fl">1.0</span> <span class="op">./</span> (df.N <span class="op">.-</span> <span class="fl">3.0</span>))</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> jnp.<span class="fu">array</span>(df.y),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    se <span class="op">=</span> jnp.<span class="fu">array</span>(se),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    phylo_idx <span class="op">=</span> jnp.<span class="fu">array</span>(phylo_idx; dtype <span class="op">=</span> jnp.int32),</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    obs_idx <span class="op">=</span> jnp.<span class="fu">arange</span>(<span class="fu">nrow</span>(df); dtype <span class="op">=</span> jnp.int32),</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> jnp.<span class="fu">array</span>(L)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y, se, phylo_idx, obs_idx, L)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    intercept <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0.0</span>, <span class="fl">10.0</span>; name <span class="op">=</span> <span class="st">"Intercept"</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    sd_obs <span class="op">=</span> m.dist.<span class="fu">half_normal</span>(<span class="fl">10</span>; name <span class="op">=</span> <span class="st">"sd_obs"</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    sd_phylo <span class="op">=</span> m.dist.<span class="fu">half_normal</span>(<span class="fl">10</span>; name <span class="op">=</span> <span class="st">"sd_phylo"</span>)</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Effects</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    num_sp <span class="op">=</span> L.shape[<span class="fl">0</span>]</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    num_obs <span class="op">=</span> y.shape[<span class="fl">0</span>]</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    u_p <span class="op">=</span> jnp.<span class="fu">matmul</span>(L, m.dist.<span class="fu">normal</span>(jnp.<span class="fu">zeros</span>(num_sp), <span class="fl">1.0</span>; name <span class="op">=</span> <span class="st">"z_p"</span>)) <span class="op">*</span> sd_phylo</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    u_o <span class="op">=</span> m.dist.<span class="fu">normal</span>(jnp.<span class="fu">zeros</span>(num_obs), <span class="fl">1.0</span>; name <span class="op">=</span> <span class="st">"z_o"</span>) <span class="op">*</span> sd_obs</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Mean</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> intercept <span class="op">+</span> u_p[phylo_idx] <span class="op">+</span> u_o[obs_idx]</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Likelihood (Normal with fixed SE)</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, se; name <span class="op">=</span> <span class="st">"Y"</span>, obs <span class="op">=</span> y)</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
