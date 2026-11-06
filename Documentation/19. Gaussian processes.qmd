@@ -56,9 +56,12 @@ def model(Dmat, population, society, total_tools):
     # non-centered Gaussian Process prior
     etasq = m.dist.exponential(2, name = 'etasq')
     rhosq = m.dist.exponential(0.5, name = 'rhosq')
+    n = Dmat.shape[0]
     SIGMA = etasq * jnp.exp(-rhosq * jnp.square(Dmat))
-    SIGMA = SIGMA.at[jnp.diag_indices(Dmat.shape[0])].add(0.001)
-    k = m.dist.multivariate_normal(0, SIGMA, name = 'k')
+    SIGMA = SIGMA.at[jnp.diag_indices(n)].add(0.01)
+    L_chol = jnp.linalg.cholesky(SIGMA)
+    z = m.dist.multivariate_normal(jnp.zeros(n), jnp.eye(n), name = 'z')
+    k = jnp.matmul(L_chol, z)
 
     lambda_ = a * population**b / g * jnp.exp(k[society])
 
@@ -176,9 +179,12 @@ m.data_on_model["Dmat"] = jnp.array(islandsDistMatrix) # Distance matrix
     # non-centered Gaussian Process prior
     etasq = m.dist.exponential(2, name = "etasq")
     rhosq = m.dist.exponential(0.5, name = "rhosq")
+    n = Dmat.shape[0]
     SIGMA = etasq * jnp.exp(jnp.negative(rhosq) * jnp.square(Dmat))
-    SIGMA = SIGMA.at[jnp.diag_indices(Dmat.shape[0])].add(0.001)
-    k = m.dist.multivariate_normal(0, SIGMA, name = "k")
+    SIGMA = SIGMA.at[jnp.diag_indices(n)].add(0.01)
+    L_chol = jnp.linalg.cholesky(SIGMA)
+    z = m.dist.multivariate_normal(jnp.zeros(n), jnp.eye(n), name = "z")
+    k = jnp.matmul(L_chol, z)
 
     lambda_ = a * population^b / g * jnp.exp(k[society])
 
@@ -194,6 +200,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model predict the number of tools of each society?
@@ -201,17 +208,17 @@ Does the model predict the number of tools of each society?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals(x="population")
+# m.diag.ppc_intervals(x="population")
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals(x = "population")
+# m$diag$ppc_intervals(x = "population")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals(x="population")
+# m.diag.ppc_intervals(x="population")
 ```
 :::
 
@@ -223,22 +230,23 @@ Points are observed tool counts, bars the 50 % and 90 % predictive intervals alo
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 
 #### R
 ```r
-m$diag$ppc_rootogram()
+# m$diag$ppc_rootogram()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 :::
 
 `ppc_rootogram`: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten societies the bars are sparse).
 :::
+-->
 
 ## Mathematical Details
 ### *Formula*

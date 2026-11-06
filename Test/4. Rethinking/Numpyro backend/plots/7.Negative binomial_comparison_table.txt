@@ -1,24 +1,27 @@
 Comparison Table for 7.Negative binomial
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-        a  0.3913    0.3882  0.0032 0.0678
-        b -1.0280   -1.0194 -0.0086 0.0511
+   phi[0] 12.5952   12.5946  0.0005 0.0850
+     b[0] -1.1422   -1.1410 -0.0012 0.0860
+     a[0]  0.4098    0.4100 -0.0003 0.0902
 ============================================================
 
 ================================================================
 WAIC cross-check  -  7.Negative binomial
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -547.272686    p_waic = 1.871060
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -547.272686  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -5402.898471    p_waic = 224.804491
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -5402.898471    p_waic = 224.804491
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=3400)
 ----------------------------------------------------------------
 LOO cross-check  -  7.Negative binomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -547.276648    p_loo  = 1.875022
+      elpd_loo  = -5405.131453    p_loo  = 227.037473
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -547.276178    p_loo  = 1.874552
-|delta elpd_loo| = 4.706e-04      |delta p_loo| = 4.706e-04
+      elpd_loo  = -5405.147083    p_loo  = 227.053103
+|delta elpd_loo| = 1.563e-02      |delta p_loo| = 1.563e-02
 RESULT: PASS
 ================================================================

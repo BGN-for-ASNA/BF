@@ -3,6 +3,23 @@ import arviz as az
 import seaborn as sns
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+import contextlib
+import inspect
+import warnings
+import numpy as np
+
+@contextlib.contextmanager
+def _quiet_float_summary():
+    """Silence the float-division artifacts az.summary/rhat/ess raise when a
+    chain is degenerate (all-equal draws give ESS = 0 and r_hat = NaN). The
+    information stays visible as NaNs in the result; only the noise is gone."""
+    with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="invalid value encountered in (scalar )?divide",
+            category=RuntimeWarning,
+        )
+        yield
 
 # Shared ArviZ-1.x-compatible helpers (NumPy-backed idata for LOO + native,
 # ArviZ-free WAIC computed from the NumPyro log-likelihood).
@@ -62,7 +79,7 @@ class diag():
 
         raise ValueError(f"unknown backend {backend!r}; expected 'numpyro' or 'tfp'")
 
-    def summary(self, round_to=2, kind="stats", hdi_prob=0.89, *args, **kwargs):
+    def summary(self, *args, round_to=2, kind="stats", hdi_prob=0.89, **kwargs):
         """Calculate summary statistics for the posterior distribution.
 
         Args:
@@ -77,12 +94,12 @@ class diag():
         trace = self._ensure_trace()
         # arviz renamed this argument: 0.x takes hdi_prob=, 1.x takes ci_prob=.
         # Hard-coding ci_prob raised TypeError on every arviz 0.x install.
-        import inspect as _inspect
-        params = _inspect.signature(az.summary).parameters
+        params = inspect.signature(az.summary).parameters
         prob_kw = "ci_prob" if "ci_prob" in params else "hdi_prob"
-        self.tab_summary = az.summary(
-            trace, *args, round_to=round_to, kind=kind,
-            **{prob_kw: hdi_prob}, **kwargs)
+        with _quiet_float_summary():
+            self.tab_summary = az.summary(
+                trace, *args, round_to=round_to, kind=kind,
+                **{prob_kw: hdi_prob}, **kwargs)
         return self.tab_summary
 
     def plot_trace(self, var_names= None, kind="rank_bars", *args, **kwargs):
@@ -177,7 +194,8 @@ class diag():
         """        
         # Stored under a private name: assigning to self.rhat replaced this
         # bound method with its own result, breaking every later call.
-        self._rhat_result = az.rhat(self._ensure_trace(), *args, **kwargs)
+        with _quiet_float_summary():
+            self._rhat_result = az.rhat(self._ensure_trace(), *args, **kwargs)
         return self._rhat_result
 
     def ess(self, *args, **kwargs):
@@ -189,7 +207,8 @@ class diag():
         Returns:
             ess: Effective sample sizes
         """        
-        self._ess_result = az.ess(self._ensure_trace(), *args, **kwargs)
+        with _quiet_float_summary():
+            self._ess_result = az.ess(self._ensure_trace(), *args, **kwargs)
         return self._ess_result
 
     def pair(self, var_names = None,

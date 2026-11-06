@@ -4,6 +4,7 @@ from jax import jit
 from jax import vmap
 import numpyro
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Utils.dev_warning import warn_dev
 
 dist = dist()
 
@@ -27,7 +28,8 @@ def _parent_ids(child_obs_ids, parent_obs_ids, n_child):
 
     Fully JAX-traceable — no Python-level loops over traced values.
     """
-    return jnp.zeros(n_child, dtype=jnp.int32).at[child_obs_ids].set(parent_obs_ids)
+    parent_obs_ids = jnp.asarray(parent_obs_ids)
+    return jnp.zeros(n_child, dtype=parent_obs_ids.dtype).at[child_obs_ids].set(parent_obs_ids)
 
 
 class effects:
@@ -233,7 +235,7 @@ class effects:
                 - varying_intercepts (array): The intercept for each observation.
                 - varying_slopes (array): The slope for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors.
         if group_std is None:
             group_std = dist.exponential(
@@ -408,7 +410,7 @@ class effects:
                 - varying_intercepts (array): The intercept for each observation.
                 - varying_slopes (array): The slope for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors for scale (sigma) and correlation (L_Rho).
         if sigma is None:
             sigma = dist.exponential(
@@ -450,7 +452,7 @@ class effects:
     ):
         """Generates hierarchical varying effects for CATEGORIES using a non-centered parameterization."""
 
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Define default hyperpriors if not provided by the user.
         if L_Rho is None:
             L_Rho = m.dist.lkj_cholesky(
@@ -492,7 +494,7 @@ class effects:
         Returns:
             array: An array of the appropriate group-level intercepts for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors for the mean (a_bar) and scale (sigma).
         if a_bar is None:
             a_bar = dist.normal(

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -31,17 +31,18 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../reference/session.html" rel="next">
-<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -92,14 +93,10 @@ ul.task-list li input[type="checkbox"] {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -135,7 +132,167 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="../MyStyles_v1.css">
 </head>
 
-<body class="nav-sidebar floating nav-fixed">
+<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -272,6 +429,7 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">API reference</h1>
@@ -292,6 +450,546 @@ ul.task-list li input[type="checkbox"] {
 
 
 <!-- Generated by tools/build_api_reference.py; do not edit. -->
+<style>
+.bf-obj-explorer {
+  margin: 1rem 0 2.25rem 0;
+  border-radius: 14px;
+  border: 1px solid rgba(181, 137, 0, 0.35);
+  background: rgba(0, 43, 54, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  padding: 1.25rem 1.4rem 1.4rem 1.4rem;
+  position: relative;
+}
+body.quarto-light .bf-obj-explorer,
+html.quarto-light .bf-obj-explorer,
+[data-bs-theme="light"] .bf-obj-explorer {
+  background: #f8fafc;
+  border-color: rgba(13, 110, 253, 0.25);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+}
+.bf-obj-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.bf-obj-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bf-obj-subtitle {
+  font-size: 0.82rem;
+  opacity: 0.8;
+  margin: 0.15rem 0 0 0;
+}
+.bf-obj-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.bf-filter-btn {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.bf-filter-btn:hover,
+.bf-filter-btn.active {
+  background: #B58900;
+  border-color: #B58900;
+  color: #fff;
+}
+body.quarto-light .bf-filter-btn:hover,
+body.quarto-light .bf-filter-btn.active,
+[data-bs-theme="light"] .bf-filter-btn:hover,
+[data-bs-theme="light"] .bf-filter-btn.active {
+  background: #0D6EFD;
+  border-color: #0D6EFD;
+  color: #fff;
+}
+.bf-graph-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+.bf-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.bf-svg-wrap svg {
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+  display: block;
+  user-select: none;
+}
+.bf-edge {
+  fill: none;
+  stroke-width: 1.8;
+  opacity: 0.45;
+  transition: opacity 0.2s ease, stroke-width 0.2s ease;
+}
+.bf-edge.dimmed {
+  opacity: 0.08;
+}
+.bf-edge.highlighted {
+  opacity: 0.95;
+  stroke-width: 2.8;
+}
+.bf-node {
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.18s ease;
+}
+.bf-node.dimmed {
+  opacity: 0.2;
+}
+.bf-node rect,
+.bf-node circle {
+  transition: stroke-width 0.18s ease, filter 0.18s ease;
+}
+.bf-node:hover rect,
+.bf-node.selected rect {
+  stroke-width: 2.6px;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+}
+.bf-node-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  fill: #f8fafc;
+  pointer-events: none;
+}
+body.quarto-light .bf-node-label,
+[data-bs-theme="light"] .bf-node-label {
+  fill: #0f172a;
+}
+.bf-node-sub {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  fill: #94a3b8;
+  pointer-events: none;
+}
+body.quarto-light .bf-node-sub,
+[data-bs-theme="light"] .bf-node-sub {
+  fill: #475569;
+}
+.bf-group-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.bf-popup-card {
+  border-radius: 10px;
+  padding: 0.95rem 1.15rem;
+  background: rgba(7, 54, 66, 0.92);
+  border: 1px solid rgba(181, 137, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 112px;
+  transition: border-color 0.2s ease;
+}
+body.quarto-light .bf-popup-card,
+[data-bs-theme="light"] .bf-popup-card {
+  background: #ffffff;
+  border-color: rgba(13, 110, 253, 0.3);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+.bf-popup-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.bf-popup-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #eab308;
+}
+body.quarto-light .bf-popup-name,
+[data-bs-theme="light"] .bf-popup-name {
+  color: #0d6efd;
+}
+.bf-popup-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.bf-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.18);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.bf-badge-stage {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: rgba(181, 137, 0, 0.22);
+  color: #fde047;
+}
+body.quarto-light .bf-badge-stage,
+[data-bs-theme="light"] .bf-badge-stage {
+  background: rgba(13, 110, 253, 0.12);
+  color: #0d6efd;
+}
+.bf-popup-desc {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0.1rem 0;
+}
+.bf-popup-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+.bf-popup-link {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  text-decoration: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+}
+.bf-popup-link:hover {
+  background: rgba(56, 189, 248, 0.28);
+  text-decoration: none;
+}
+body.quarto-light .bf-popup-link,
+[data-bs-theme="light"] .bf-popup-link {
+  background: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+</style>
+
+<div class="bf-obj-explorer" id="bf-obj-explorer">
+  <div class="bf-obj-header">
+    <div>
+      <div class="bf-obj-title">Interactive Map of BF session object</div>
+      <p class="bf-obj-subtitle">Hover or click any attribute/submodule of <code>m</code> to inspect its role, type, and the methods that create or update it.</p>
+    </div>
+    <div class="bf-obj-filters">
+      <button class="bf-filter-btn active" data-cat="all">All objects</button>
+      <button class="bf-filter-btn" data-cat="submodules">Submodules</button>
+      <button class="bf-filter-btn" data-cat="data">Data &amp; Prep</button>
+      <button class="bf-filter-btn" data-cat="engine">Model &amp; Sampler</button>
+      <button class="bf-filter-btn" data-cat="posteriors">Posteriors &amp; Diagnostics</button>
+    </div>
+  </div>
+
+  <div class="bf-graph-layout">
+    <div class="bf-svg-wrap">
+      <svg id="bf-obj-svg" viewbox="0 0 880 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="bf-popup-card" id="bf-popup-card">
+      <div class="bf-popup-top">
+        <span class="bf-popup-name" id="bf-popup-name">m = bf(...)</span>
+        <div class="bf-popup-badges">
+          <span class="bf-badge" id="bf-popup-type">BayesForge.bf</span>
+          <span class="bf-badge bf-badge-stage" id="bf-popup-stage">Session Root</span>
+        </div>
+      </div>
+      <div class="bf-popup-desc" id="bf-popup-desc">
+        Central BayesForge session object holding your dataset (<code>m.df</code>, <code>m.data_on_model</code>), modeling building blocks (<code>m.dist</code>, <code>m.effects</code>, <code>m.link</code>, <code>m.net</code>), persistence &amp; datasets (<code>m.save()</code>, <code>m.load()</code>), fitted sampler state (<code>m.model</code>, <code>m.sampler</code>), posterior draws (<code>m.posteriors</code>, <code>m.posteriors_full</code>), and diagnostics (<code>m.diag</code>, <code>m.tab_summary</code>).
+      </div>
+      <div class="bf-popup-links" id="bf-popup-links">
+        <span>Created / updated by:</span>
+        <a class="bf-popup-link" href="session.html#fit">m.fit()</a>
+        <a class="bf-popup-link" href="session.html#svi">m.svi()</a>
+        <a class="bf-popup-link" href="data.html#data">m.data()</a>
+        <a class="bf-popup-link" href="session.html#save">m.save()</a>
+        <a class="bf-popup-link" href="session.html#load">m.load()</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const COLORS = {
+    root:       { stroke: "#eab308", fill: "rgba(234, 179, 8, 0.18)" },
+    submodules: { stroke: "#38bdf8", fill: "rgba(56, 189, 248, 0.13)", label: "Submodules (at init)" },
+    data:       { stroke: "#34d399", fill: "rgba(52, 211, 153, 0.13)", label: "Data & Preprocessing" },
+    engine:     { stroke: "#a78bfa", fill: "rgba(167, 139, 250, 0.13)", label: "Model & Sampler" },
+    posteriors: { stroke: "#fb7185", fill: "rgba(251, 113, 133, 0.13)", label: "Posteriors & Diagnostics" }
+  };
+
+  const NODES = [
+    // Root
+    {
+      id: "m", label: "m = bf()", sub: "Session Root", cat: "root", x: 440, y: 210, w: 126, h: 48,
+      type: "BayesForge.bf", stage: "Created by bf()",
+      desc: "Central BayesForge session object holding your dataset, modeling building blocks, MCMC/SVI sampler, persistence (save/load), posterior samples, and diagnostic tools.",
+      links: [{ text: "Session API (m.*)", href: "session.html" }, { text: "m.fit()", href: "session.html#fit" }, { text: "m.save()", href: "session.html#save" }, { text: "m.load()", href: "session.html#load" }]
+    },
+
+    // 1. Submodules (Top-Left)
+    {
+      id: "dist", label: "m.dist", sub: "Distributions", cat: "submodules", x: 135, y: 52, w: 185, h: 36,
+      type: "DistProxy (UnifiedDist)", stage: "Available at bf()",
+      desc: "50+ probability distributions (normal, binomial, poisson, lkj_cholesky, ...) used to declare priors (name=), likelihoods (obs=), or simulate data (sample=True).",
+      links: [{ text: "Distributions API (m.dist.*)", href: "dist.html" }]
+    },
+    {
+      id: "effects", label: "m.effects", sub: "Random effects", cat: "submodules", x: 135, y: 96, w: 185, h: 36,
+      type: "effects", stage: "Available at bf()",
+      desc: "Building blocks for hierarchical / varying effects (centered and non-centered varying intercepts and slopes, correlated LKJ blocks).",
+      links: [{ text: "Random effects API (m.effects.*)", href: "effects.html" }]
+    },
+    {
+      id: "link", label: "m.link", sub: "Link functions", cat: "submodules", x: 135, y: 140, w: 185, h: 36,
+      type: "link", stage: "Available at bf()",
+      desc: "Inverse link functions and parameter transforms (inv_logit, exp, softmax, cloglog, ...) for Generalized Linear Models.",
+      links: [{ text: "Link functions API (m.link.*)", href: "link.html" }]
+    },
+    {
+      id: "net", label: "m.net", sub: "Network models", cat: "submodules", x: 135, y: 184, w: 185, h: 36,
+      type: "net", stage: "Available at bf()",
+      desc: "Social network analysis toolkit: Social Relations Model (sender_receiver, dyadic_effect), Stochastic Block Models (block_model), and JAX graph metrics.",
+      links: [{ text: "Networks API (m.net.*)", href: "net.html" }]
+    },
+    {
+      id: "load", label: "m.save() / m.load()", sub: "Save, load & datasets", cat: "submodules", x: 135, y: 228, w: 185, h: 36,
+      type: "Persistence & Datasets", stage: "Available at bf()",
+      desc: "Save the fitted BF session to disk with m.save(path), reload a saved session with m.load(path), or load bundled benchmark datasets via m.load.<dataset>() (howell1, reedfrogs, chimpanzees, ...).",
+      links: [{ text: "m.save()", href: "session.html#save" }, { text: "m.load()", href: "session.html#load" }, { text: "Example data (m.load.*)", href: "load.html" }]
+    },
+
+    // 2. Data & Preprocessing (Bottom-Left)
+    {
+      id: "df", label: "m.df", sub: "Pandas DataFrame", cat: "data", x: 135, y: 294, w: 185, h: 36,
+      type: "pandas.DataFrame", stage: "Created by m.data()",
+      desc: "In-memory DataFrame holding the loaded dataset. Modified in-place when you call m.scale(), m.index(), m.OHE(), m.to_float(), or m.to_int().",
+      links: [{ text: "m.data()", href: "data.html#data" }, { text: "m.scale()", href: "data.html#scale" }, { text: "m.index()", href: "data.html#index" }, { text: "m.OHE()", href: "data.html#OHE" }]
+    },
+    {
+      id: "data_on_model", label: "m.data_on_model", sub: "JAX model inputs", cat: "data", x: 135, y: 338, w: 185, h: 36,
+      type: "dict[str, jax.Array]", stage: "Set by m.data_to_model() / m.fit()",
+      desc: "Dictionary of JAX arrays passed as arguments to your model function. Populated explicitly by m.data_to_model(cols) or obs=..., or automatically from m.df via m.pd_to_jax().",
+      links: [{ text: "m.data_to_model()", href: "data.html#data_to_model" }, { text: "m.pd_to_jax()", href: "data.html#pd_to_jax" }, { text: "m.fit()", href: "session.html#fit" }]
+    },
+    {
+      id: "index_map", label: "m.index_map", sub: "Category code map", cat: "data", x: 135, y: 382, w: 185, h: 36,
+      type: "dict[str, dict[int, str]]", stage: "Created by m.index()",
+      desc: "Maps each categorical column encoded by m.index() to its 0-based integer lookup dictionary {code: category_label}, and m.data_modification tracks all column transforms.",
+      links: [{ text: "m.index()", href: "data.html#index" }, { text: "Data API", href: "data.html" }]
+    },
+
+    // 3. Engine & Fit State (Top-Right)
+    {
+      id: "model", label: "m.model", sub: "Fitted model fn", cat: "engine", x: 745, y: 52, w: 195, h: 36,
+      type: "callable", stage: "Set by m.fit() / m.svi()",
+      desc: "The probabilistic model function most recently passed to m.fit() or m.svi(). Used by m.sample(), m.latex(), m.graph(), and m.diag PPC/LOO helpers.",
+      links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.latex()", href: "session.html#latex" }, { text: "m.graph()", href: "session.html#graph" }, { text: "m.sample()", href: "session.html#sample" }]
+    },
+    {
+      id: "sampler", label: "m.sampler", sub: "MCMC / SVI engine", cat: "engine", x: 745, y: 96, w: 195, h: 36,
+      type: "mcmc_numpyro / svi_numpyro", stage: "Set by m.fit() / m.svi()",
+      desc: "Underlying sampler wrapper holding the NUTS/HMC/Gibbs kernel or SVI state, warmup adaptation state, and raw chain samples.",
+      links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.svi()", href: "session.html#svi" }, { text: "m.sampler_stats()", href: "session.html#sampler_stats" }]
+    },
+    {
+      id: "seed", label: "m.seed / m._rng", sub: "PRNG key manager", cat: "engine", x: 745, y: 140, w: 195, h: 36,
+      type: "int | bool / RNG", stage: "Set at bf() / m.set_seed()",
+      desc: "Controls reproducibility across prior simulation, MCMC warmup/sampling, and posterior predictive draws via a deterministic JAX PRNGKey stream.",
+      links: [{ text: "m.get_seed()", href: "session.html#get_seed" }, { text: "m.set_seed()", href: "session.html#set_seed" }]
+    },
+    {
+      id: "mesh", label: "m.n_devices / m.mesh", sub: "Multi-CPU/GPU sharding", cat: "engine", x: 745, y: 184, w: 195, h: 36,
+      type: "int / jax.sharding.Mesh", stage: "Set at bf(cores=...)",
+      desc: "Device count and XLA mesh for parallel chains and axis-0 data sharding. Placement decisions from m.fit(shard=True) are inspected via m.shard_report().",
+      links: [{ text: "m.shard()", href: "session.html#shard" }, { text: "m.replicate()", href: "session.html#replicate" }, { text: "m.shard_report()", href: "session.html#shard_report" }]
+    },
+
+    // 4. Posteriors & Diagnostics (Bottom-Right)
+    {
+      id: "posteriors", label: "m.posteriors", sub: "Pooled draws (active)", cat: "posteriors", x: 745, y: 244, w: 195, h: 34,
+      type: "dict[str, jax.Array]", stage: "Set by m.fit() · Updated by m.filter_posteriors()",
+      desc: "Dictionary of posterior draws pooled across chains {param: Array(n_draws, ...)}. Updated in-place when m.filter_posteriors() or m.summary(include=/exclude=) is called.",
+      links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }, { text: "m.get_posterior_means()", href: "session.html#get_posterior_means" }]
+    },
+    {
+      id: "posteriors_chain", label: "m.posteriors_by_chain", sub: "Per-chain draws (C, S, ...)", cat: "posteriors", x: 745, y: 284, w: 195, h: 34,
+      type: "dict[str, jax.Array]", stage: "Set by m.fit() · Updated by m.filter_posteriors()",
+      desc: "Posterior draws preserving the leading chain axis (n_chains, n_samples, ...). Used by trace plots, rank plots, R-hat, and ESS calculations.",
+      links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }]
+    },
+    {
+      id: "posteriors_full", label: "m.posteriors_full", sub: "Unfiltered backup draws", cat: "posteriors", x: 745, y: 324, w: 195, h: 34,
+      type: "dict[str, jax.Array]", stage: "Set by m.fit() (read-only baseline)",
+      desc: "Unfiltered copy of all sampled parameters (alongside m.posteriors_by_chain_full). Ensures repeated calls to m.filter_posteriors() always filter from the full model rather than stacking.",
+      links: [{ text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }, { text: "m.diag (filtered=False)", href: "diag.html" }]
+    },
+    {
+      id: "tab_summary", label: "m.tab_summary", sub: "Summary DataFrame", cat: "posteriors", x: 745, y: 364, w: 195, h: 34,
+      type: "pandas.DataFrame", stage: "Set by m.summary()",
+      desc: "Cached summary table (mean, sd, HDI bounds, mcse, ess_bulk, ess_tail, r_hat) produced by the most recent call to m.summary() or m.summary_jax().",
+      links: [{ text: "m.summary()", href: "session.html#summary" }, { text: "m.summary_jax()", href: "session.html#summary_jax" }]
+    },
+    {
+      id: "diag", label: "m.diag (& .trace)", sub: "Diagnostics & plots", cat: "posteriors", x: 745, y: 402, w: 195, h: 34,
+      type: "diagWIP", stage: "Set by m.fit() / m.svi()",
+      desc: "Interactive diagnostics suite bound to m: convergence metrics (rhat, ess, loo, waic), Plotly plots (plot_trace, posterior, forest, pair, ppc_*), and ArviZ InferenceData (m.diag.trace).",
+      links: [{ text: "Diagnostics API (m.diag.*)", href: "diag.html" }, { text: "m.diag.to_az()", href: "diag.html#to_az" }, { text: "m.sampler_stats()", href: "session.html#sampler_stats" }]
+    }
+  ];
+
+  const svg = document.getElementById("bf-obj-svg");
+  if (!svg) return;
+  const NS = "http://www.w3.org/2000/svg";
+
+  // Group headers
+  const headers = [
+    { text: "1. Submodules (at init)", x: 135, y: 22, color: COLORS.submodules.stroke },
+    { text: "2. Data & Preprocessing", x: 135, y: 268, color: COLORS.data.stroke },
+    { text: "3. Model & Sampler", x: 745, y: 22, color: COLORS.engine.stroke },
+    { text: "4. Posteriors & Diagnostics", x: 745, y: 218, color: COLORS.posteriors.stroke }
+  ];
+  headers.forEach(h => {
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", h.x);
+    t.setAttribute("y", h.y);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("fill", h.color);
+    t.setAttribute("class", "bf-group-label");
+    t.textContent = h.text;
+    svg.appendChild(t);
+  });
+
+  const root = NODES[0];
+  const edgeElements = [];
+  const nodeElements = [];
+
+  // Draw curved edges from root to each node
+  NODES.slice(1).forEach(n => {
+    const path = document.createElementNS(NS, "path");
+    const isLeft = n.x < root.x;
+    const x1 = isLeft ? root.x - root.w / 2 : root.x + root.w / 2;
+    const y1 = root.y;
+    const x2 = isLeft ? n.x + n.w / 2 : n.x - n.w / 2;
+    const y2 = n.y;
+    const cx1 = x1 + (x2 - x1) * 0.45;
+    const cx2 = x1 + (x2 - x1) * 0.55;
+    path.setAttribute("d", `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`);
+    path.setAttribute("stroke", COLORS[n.cat].stroke);
+    path.setAttribute("class", "bf-edge");
+    path.dataset.id = n.id;
+    path.dataset.cat = n.cat;
+    svg.appendChild(path);
+    edgeElements.push(path);
+  });
+
+  function showPopup(node) {
+    document.getElementById("bf-popup-name").textContent = node.label;
+    document.getElementById("bf-popup-type").textContent = node.type;
+    document.getElementById("bf-popup-stage").textContent = node.stage;
+    document.getElementById("bf-popup-desc").textContent = node.desc;
+    const linksWrap = document.getElementById("bf-popup-links");
+    linksWrap.innerHTML = "<span>Related API:</span>";
+    (node.links || []).forEach(l => {
+      const a = document.createElement("a");
+      a.className = "bf-popup-link";
+      a.href = l.href;
+      a.textContent = l.text;
+      linksWrap.appendChild(a);
+    });
+    const card = document.getElementById("bf-popup-card");
+    card.style.borderColor = COLORS[node.cat].stroke;
+
+    nodeElements.forEach(el => {
+      el.classList.toggle("selected", el.dataset.id === node.id);
+    });
+    edgeElements.forEach(ed => {
+      ed.classList.toggle("highlighted", ed.dataset.id === node.id);
+    });
+  }
+
+  // Draw nodes
+  NODES.forEach(n => {
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("class", "bf-node" + (n.id === "m" ? " selected" : ""));
+    g.dataset.id = n.id;
+    g.dataset.cat = n.cat;
+
+    const rect = document.createElementNS(NS, "rect");
+    rect.setAttribute("x", n.x - n.w / 2);
+    rect.setAttribute("y", n.y - n.h / 2);
+    rect.setAttribute("width", n.w);
+    rect.setAttribute("height", n.h);
+    rect.setAttribute("rx", n.id === "m" ? 12 : 8);
+    rect.setAttribute("fill", COLORS[n.cat].fill);
+    rect.setAttribute("stroke", COLORS[n.cat].stroke);
+    rect.setAttribute("stroke-width", n.id === "m" ? "2.4" : "1.5");
+    g.appendChild(rect);
+
+    const label = document.createElementNS(NS, "text");
+    label.setAttribute("x", n.x);
+    label.setAttribute("y", n.y - 3);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("class", "bf-node-label");
+    label.textContent = n.label;
+    g.appendChild(label);
+
+    const sub = document.createElementNS(NS, "text");
+    sub.setAttribute("x", n.x);
+    sub.setAttribute("y", n.y + 11);
+    sub.setAttribute("text-anchor", "middle");
+    sub.setAttribute("class", "bf-node-sub");
+    sub.textContent = n.sub;
+    g.appendChild(sub);
+
+    g.addEventListener("mouseenter", () => showPopup(n));
+    g.addEventListener("click", () => showPopup(n));
+    svg.appendChild(g);
+    nodeElements.push(g);
+  });
+
+  // Category filter buttons
+  document.querySelectorAll("#bf-obj-explorer .bf-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#bf-obj-explorer .bf-filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const cat = btn.dataset.cat;
+      nodeElements.forEach(el => {
+        const match = cat === "all" || el.dataset.cat === cat || el.dataset.cat === "root";
+        el.classList.toggle("dimmed", !match);
+      });
+      edgeElements.forEach(ed => {
+        const match = cat === "all" || ed.dataset.cat === cat;
+        ed.classList.toggle("dimmed", !match);
+      });
+      if (cat !== "all") {
+        const first = NODES.find(n => n.cat === cat);
+        if (first) showPopup(first);
+      } else {
+        showPopup(root);
+      }
+    });
+  });
+})();
+</script>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -303,7 +1001,7 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><a href="../reference/session.html">Session (<code>m</code>)</a></td>
-<td>23</td>
+<td>24</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -1103,383 +1801,255 @@ An activation function is a nonlinear transformation applied to the pre-activati
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
     }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const disableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'prefetch';
-    }
-  }
-  const enableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'stylesheet';
-    }
-  }
-  const manageTransitions = (selector, allowTransitions) => {
-    const els = window.document.querySelectorAll(selector);
-    for (let i=0; i < els.length; i++) {
-      const el = els[i];
-      if (allowTransitions) {
-        el.classList.remove('notransition');
-      } else {
-        el.classList.add('notransition');
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-  }
-  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-    let newTheme = '';
-    if(darkModeDefault) {
-      newTheme = isAlternate ? baseTheme : alternateTheme;
-    } else {
-      newTheme = isAlternate ? alternateTheme : baseTheme;
-    }
-    const changeGiscusTheme = () => {
-      // From: https://github.com/giscus/giscus/issues/336
-      const sendMessage = (message) => {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
-      sendMessage({
-        setConfig: {
-          theme: newTheme
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
       });
     }
-    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-    if (isGiscussLoaded) {
-      changeGiscusTheme();
-    }
-  }
-  const toggleColorMode = (alternate) => {
-    // Switch the stylesheets
-    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-    manageTransitions('#quarto-margin-sidebar .nav-link', false);
-    if (alternate) {
-      enableStylesheet(alternateStylesheets);
-      for (const sheetNode of alternateStylesheets) {
-        if (sheetNode.id === "quarto-bootstrap") {
-          toggleBodyColorMode(sheetNode);
-        }
-      }
-    } else {
-      disableStylesheet(alternateStylesheets);
-      toggleBodyColorPrimary();
-    }
-    manageTransitions('#quarto-margin-sidebar .nav-link', true);
-    // Switch the toggles
-    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-    for (let i=0; i < toggles.length; i++) {
-      const toggle = toggles[i];
-      if (toggle) {
-        if (alternate) {
-          toggle.classList.add("alternate");     
-        } else {
-          toggle.classList.remove("alternate");
-        }
-      }
-    }
-    // Hack to workaround the fact that safari doesn't
-    // properly recolor the scrollbar when toggling (#1455)
-    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-      manageTransitions("body", false);
-      window.scrollTo(0, 1);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        manageTransitions("body", true);
-      }, 40);  
-    }
-  }
-  const isFileUrl = () => { 
-    return window.location.protocol === 'file:';
-  }
-  const hasAlternateSentinel = () => {  
-    let styleSentinel = getColorSchemeSentinel();
-    if (styleSentinel !== null) {
-      return styleSentinel === "alternate";
-    } else {
-      return false;
-    }
-  }
-  const setStyleSentinel = (alternate) => {
-    const value = alternate ? "alternate" : "default";
-    if (!isFileUrl()) {
-      window.localStorage.setItem("quarto-color-scheme", value);
-    } else {
-      localAlternateSentinel = value;
-    }
-  }
-  const getColorSchemeSentinel = () => {
-    if (!isFileUrl()) {
-      const storageValue = window.localStorage.getItem("quarto-color-scheme");
-      return storageValue != null ? storageValue : localAlternateSentinel;
-    } else {
-      return localAlternateSentinel;
-    }
-  }
-  const darkModeDefault = true;
-  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-  // Dark / light mode switch
-  window.quartoToggleColorScheme = () => {
-    // Read the current dark / light value 
-    let toAlternate = !hasAlternateSentinel();
-    toggleColorMode(toAlternate);
-    setStyleSentinel(toAlternate);
-    toggleGiscusIfUsed(toAlternate, darkModeDefault);
-  };
-  // Ensure there is a toggle, if there isn't float one in the top right
-  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-    const a = window.document.createElement('a');
-    a.classList.add('top-right');
-    a.classList.add('quarto-color-scheme-toggle');
-    a.href = "";
-    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-    const i = window.document.createElement("i");
-    i.classList.add('bi');
-    a.appendChild(i);
-    window.document.body.appendChild(a);
-  }
-  // Switch to dark mode if need be
-  if (hasAlternateSentinel()) {
-    toggleColorMode(true);
-  } else {
-    toggleColorMode(false);
-  }
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
-    });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
         }
-        return container.innerHTML
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -1487,185 +2057,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
   </div>

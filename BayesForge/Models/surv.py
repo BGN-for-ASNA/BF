@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import arviz as az
 import numpyro
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Utils.dev_warning import warn_dev
 dist = dist()
 
 import jax
@@ -509,10 +510,10 @@ class survival():
         - Exposure is capped by the interval bounds, and the last interval reflects the remaining time to the event or censoring.
 
         """
-        self.time = time
-        self.event = event
+        self.time = np.asarray(time)
+        self.event = np.asarray(event)
         self.n_patients = self.time.shape[0]
-        self.patients = jnp.arange(self.n_patients)  # Array of patient indices
+        self.patients = np.arange(self.n_patients)  # Array of patient indices
         self.interval_length = interval_length
         
         # Define interval bounds and calculate the number of intervals
@@ -846,7 +847,7 @@ class survival():
         self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
     
     def model(self, death, cov,exposure, censoring = None):
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("survival")
 
         if self.cov_all.ndim == 2:
             if self.cov_all.shape[1] == 1: 
@@ -970,6 +971,8 @@ class survival():
         bound is extrapolated with the last interval's rate, and a zero rate
         gives ``np.inf``. For one panel per covariate see ``ppc_km_by_cov``.
         """
+        warn_dev("ppc")
+
         K = int(self.n_intervals)
         bounds = np.asarray(self.interval_bounds, dtype=float)
         widths = np.diff(bounds)  # (K,)
@@ -1057,6 +1060,7 @@ class survival():
             dict {label: plotly Figure} keyed by covariate name, plus
             "risk" when ``risk=True``.
         """
+        warn_dev("ppc")
         if covs is None:
             covs = list(self.cov_names)
         elif isinstance(covs, str):

@@ -1,0 +1,28 @@
+Comparison Table for 6b.Poisson with offset
+============================================================
+Parameter BF Mean Stan Mean    Diff KL Div
+     a[0]  2.4891    2.4888  0.0003 0.0735
+     b[1]  0.1884    0.1880  0.0004 0.0522
+     a[1]  3.4878    3.4876  0.0002 0.0404
+     b[0] -0.0983   -0.0982 -0.0001 0.0518
+============================================================
+
+================================================================
+WAIC cross-check  -  6b.Poisson with offset
+================================================================
+[A] NumPyro direct (numpyro.infer.log_likelihood)
+      elpd_waic = -391.412204    p_waic = 6.451763
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -391.412204    p_waic = 6.451763
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=100)
+----------------------------------------------------------------
+LOO cross-check  -  6b.Poisson with offset
+----------------------------------------------------------------
+[A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
+      elpd_loo  = -391.474794    p_loo  = 6.514353
+[B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
+      elpd_loo  = -391.474351    p_loo  = 6.513910
+|delta elpd_loo| = 4.424e-04      |delta p_loo| = 4.424e-04
+RESULT: PASS
+================================================================

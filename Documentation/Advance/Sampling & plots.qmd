@@ -91,23 +91,25 @@ m.dist.normal(0, 1, shape = (1000,), sample=true, to_jax=false).density()
 ```
 :::
 
+<!--
 #### PPC
 ::: {.panel-tabset group="language"}
 ##### Python
 ```{python}
-m.dist.normal(0,1,shape=(100,4),sample=True, to_jax=False).ppc_plot(m.dist.normal(0,1,shape=(100,),sample=True, to_jax=False))
+# m.dist.normal(0,1,shape=(100,4),sample=True, to_jax=False).ppc_plot(m.dist.normal(0,1,shape=(100,),sample=True, to_jax=False))
 ```
 
 ##### R
 ```r
-m$dist$normal(0,1,shape = reticulate::tuple(100L, 4L),sample=TRUE, to_jax=FALSE)$ppc_plot(m$dist$normal(0,1,shape = reticulate::tuple(100L),sample=TRUE, to_jax=FALSE))
+# m$dist$normal(0,1,shape = reticulate::tuple(100L, 4L),sample=TRUE, to_jax=FALSE)$ppc_plot(m$dist$normal(0,1,shape = reticulate::tuple(100L),sample=TRUE, to_jax=FALSE))
 ```
 
 ##### Julia
 ```julia
-m.dist.normal(0,1,shape = (100, 4),sample=true, to_jax=false).ppc_plot(m.dist.normal(0,1,shape = (100,),sample=true, to_jax=false))
+# m.dist.normal(0,1,shape = (100, 4),sample=true, to_jax=false).ppc_plot(m.dist.normal(0,1,shape = (100,),sample=true, to_jax=false))
 ```
 :::
+-->
 
 #### Time series — `(n_samples, n_time)`
 

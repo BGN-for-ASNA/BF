@@ -401,18 +401,18 @@ m.fit(model)
 
 ## Mathematical Details
 
-We assume the observed data matrix $X$ is centered and arranged with features as rows and samples as columns, $X \in \mathbb{R}^{N \times V}$ where $N$ is the number of observations and $V$ the number of variables. The generative model projects the data into a lower-dimensional space with $K$ latent variables, $K \leq V$, using the following equation:
+We assume the observed data matrix $X$ is centered and arranged with features as rows and samples as columns, $X \in \mathbb{R}^{V \times N}$ where $V$ is the number of variables and $N$ the number of observations. The generative model projects the data into a lower-dimensional space with $K$ latent variables, $K \leq V$, using the following equation:
 $$
-X \sim \text{Normal}(Z \cdot W, \sigma)
+X \sim \text{Normal}(W \cdot Z, \sigma)
 $$
 
 where :
 
 - $X$ is the observed data matrix.
 
-- $Z \in \mathbb{R}^{N \times K}$ is the latent variable matrix (latent features) with $K \ll D$. $Z$ is defined by a Normal distribution with mean 0 and variance 1.
+- $W \in \mathbb{R}^{V \times K}$ is the matrix of principal components (*projection matrix*). $W$ is defined by a Normal distribution with mean 0 and variance 1.
 
-- $W \in \mathbb{R}^{K \times V}$ is the matrix of principal components (*projection matrix*). $W$ is defined by a Normal distribution with mean 0 and variance 1.
+- $Z \in \mathbb{R}^{K \times N}$ is the latent variable matrix (latent features) with $K \leq V$. $Z$ is defined by a Normal distribution with mean 0 and variance 1.
 
 - $\sigma$ is the standard deviation of the normal distribution.
 
@@ -422,7 +422,7 @@ The likelihood and priors are defined element-wise for $v=1...V$, $n=1...N$, and
 
 
 $$
-X \sim \text{Normal}(Z \cdot W, \sigma)
+X \sim \text{Normal}(W \cdot Z, \sigma)
 $$
 $$
 Z \sim \text{Normal}(0, 1)

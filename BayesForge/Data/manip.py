@@ -42,7 +42,8 @@ class manip():
             - * **kwargs*: Additional arguments for pd.read_csv (CSV paths only)
 
         ### Returns:
-            pd.DataFrame: Loaded dataframe
+            - *pd.DataFrame*: Loaded dataframe (`m.df`).
+            - **Updates on `m`**: sets `m.df` (copy of the loaded table), `m.data_original_path`, `m.data_args`, and resets `m.data_modification = {}`.
         """
         if isinstance(path, (str, os.PathLike)):
             self.data_original_path = path
@@ -67,7 +68,8 @@ class manip():
             - *cols* (str or list): Columns to encode. Use 'all' for all object-type columns
             
         ### Returns:
-            - *pd.DataFrame*: DataFrame with encoded columns
+            - *pd.DataFrame*: DataFrame containing the newly created one-hot encoded columns.
+            - **Updates on `m`**: appends the one-hot encoded columns in-place to `m.df` (`pd.concat([m.df, OHE], axis=1)`) and records `m.data_modification['OHE'] = cols`.
         """
         if cols == 'all':
             colCat = list(self.df.select_dtypes(['object']).columns)    
@@ -97,7 +99,8 @@ class manip():
         ``m.index_map[col]`` maps each code to its level.
 
         ### Returns:
-            - *pd.DataFrame*: DataFrame with encoded columns
+            - *pd.DataFrame*: Updated dataframe `m.df` with added `index_<col>` columns.
+            - **Updates on `m`**: adds 0-based integer columns `index_<col>` (`int64`) to `m.df`, replaces `.` and spaces in `m.df.columns` with `_`, populates `m.index_map[col]` (`{code: category_label}`), and records `m.data_modification['index'] = cols`.
         """
         self.index_map = {}
         if cols == 'all':
@@ -126,7 +129,14 @@ class manip():
     
     @jax.jit
     def scale_var(self, x):
-        """## JAX-jitted function to scale/standardize a single variable"""
+        """## JAX-jitted function to scale/standardize a single variable
+
+        ### Args:
+            - *x* (array-like): Input array to standardize.
+
+        ### Returns:
+            - *jax.Array*: Standardized array `(x - x.mean()) / x.std()`. Does not modify `m.df`.
+        """
         return (x - x.mean()) / x.std()
 
     def scale(self, data = 'all'):
@@ -136,7 +146,8 @@ class manip():
             - *data* (str or list): Columns to standardize. Use 'all' for all columns
             
         ### Returns:
-            - *pd.DataFrame*: Standardized dataframe
+            - *pd.DataFrame*: Standardized dataframe `m.df`.
+            - **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit standard deviation) and records `m.data_modification['scale'] = data`.
         """        
         if type(data) == str:
             return self.scale_var(data)
@@ -188,7 +199,8 @@ class manip():
             - *type* (str): Float type to convert to (default: float32)
             
         ### Returns:
-            - *pd.DataFrame*: Converted dataframe
+            - *pd.DataFrame*: Converted dataframe `m.df`.
+            - **Updates on `m`**: casts the specified columns of `m.df` in-place to `type` and records `m.data_modification['float'] = cols`.
         """        
         if cols == 'all':
             for col in self.df.columns:                
@@ -211,7 +223,8 @@ class manip():
             - *type* (str): Integer type to convert to (default: int32)
             
         ### Returns:
-            - *pd.DataFrame*: Converted dataframe
+            - *None* (modifies `m.df` in-place).
+            - **Updates on `m`**: casts the specified columns of `m.df` in-place to `type` and records `m.data_modification['int'] = cols`.
         """
         if cols == 'all':
             for col in self.df.columns:                
@@ -232,7 +245,7 @@ class manip():
             - *bit* (str): Bit precision for numbers (default: 32)
             
         ### Returns:
-            - *dict*: JAX formatted dictionary
+            - *dict*: Dictionary mapping model argument names to JAX arrays (extracted from `m.df`) or static default values. Called automatically by `m.fit()` and `m.svi()` to populate `m.data_on_model` when `m.data_on_model is None`.
         """        
         params = inspect.signature(model).parameters
         args_without_defaults = []
@@ -276,7 +289,8 @@ class manip():
             - *cols* (list): List of columns to include in model data
             
         ### Returns:
-            - *dict*: JAX formatted dictionary
+            - *None* (populates `m.data_on_model` in-place).
+            - **Updates on `m`**: sets `m.data_on_model` to the dictionary `{col: jnp.array(m.df[col].values)}` and records `m.data_modification['data_on_model'] = cols`.
         """       
         jax_dict = {}
         for col in cols:

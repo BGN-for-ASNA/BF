@@ -754,6 +754,9 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
 
         Returns:
             pandas.DataFrame: One row per parameter element.
+            Updates on m: when using the ``"arviz"`` backend, initializes and
+                caches ``m._az_diag`` (including ``m._az_diag.trace`` and
+                ``m._az_diag.tab_summary``) if not already built.
         """
         if backend == ARVIZ:
             var_names = _as_var_names(include)
@@ -830,11 +833,19 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         """
         if backend == ARVIZ:
             import arviz as az
+            import numpy as _np
+            import warnings as _warnings
             var_names = _as_var_names(include)
             kw = {"method": kind}
             if var_names is not None:
                 kw["var_names"] = var_names
-            return az.mcse(_az_diag_for(m)._ensure_trace(), **kw)
+            with _np.errstate(divide="ignore", invalid="ignore"), _warnings.catch_warnings():
+                _warnings.filterwarnings(
+                    "ignore",
+                    message="invalid value encountered in scalar divide",
+                    category=RuntimeWarning,
+                )
+                return az.mcse(_az_diag_for(m)._ensure_trace(), **kw)
         return jd.mcse(_source(m, filtered=filtered, by_chain=True),
                        include=include, exclude=exclude, kind=kind)
 
@@ -1091,4 +1102,4 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.multimodality   = _multimodality
     # A staticmethod object stored on an INSTANCE is not unwrapped by the
     # descriptor protocol; it is only callable at all on Python >= 3.10.
-    diag_obj.prior_sensitivity = _sens.prior_sensitivity_plot
+    diag_obj.prior_sensitivity = _sens.prior_sensitivity

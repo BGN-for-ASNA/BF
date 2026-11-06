@@ -61,6 +61,11 @@ class load:
     def __init__(self):
         """Initialize the dataset loader with the data directory path."""
         self.data_dir = Path(__file__).parent
+
+    def __call__(self, path=None):
+        """Load a saved ``bf`` session object from disk (alias for ``bf.load(path)``)."""
+        from BayesForge.Main.main import bf
+        return bf.load(path=path)
     
     def _load_csv(self, filename, description="", frame=True, only_path=False):
         """

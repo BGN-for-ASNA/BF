@@ -109,7 +109,7 @@ def setup_device(platform='cpu', cores=None, gpu_index=None, deallocate=False,
         print('jax.local_device_count', jax.local_device_count(backend=None))
 
 
-def setup_multi_device(platform='cpu'):
+def setup_multi_device(platform='cpu', cores=None):
     """Set up a JAX device mesh across all available devices for the given platform.
 
     Works on **both CPU and GPU**:
@@ -178,11 +178,13 @@ def setup_multi_device(platform='cpu'):
     from jax.experimental import mesh_utils
 
     devices = jax.devices(platform)
+    if cores is not None and int(cores) > 0 and len(devices) > int(cores):
+        devices = devices[:int(cores)]
     n = len(devices)
     if n < 2:
         return None, None, None   # single device — sharding unavailable
 
-    device_mesh = mesh_utils.create_device_mesh((n,))
+    device_mesh = mesh_utils.create_device_mesh((n,), devices=devices)
     mesh = Mesh(device_mesh, axis_names=('device',))
 
     # Shard along the leading (observation) axis across devices

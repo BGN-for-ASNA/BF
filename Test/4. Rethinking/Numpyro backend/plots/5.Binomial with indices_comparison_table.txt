@@ -1,31 +1,35 @@
 Comparison Table for 5.Binomial with indices
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-     a[2] -1.0517   -1.0473 -0.0045 0.0852
-     a[3] -1.0528   -1.0532  0.0004 0.1015
-      bpc -0.1389   -0.1321 -0.0068 0.0629
-       bp  0.8409    0.8373  0.0037 0.0459
-     a[0] -0.7396   -0.7374 -0.0022 0.0742
-     a[4] -0.7385   -0.7371 -0.0014 0.1136
-     a[5]  0.2167    0.2189 -0.0022 0.0580
-     a[1] 10.8932   10.9603 -0.0671 0.0460
-     a[6]  1.8050    1.8081 -0.0031 0.0311
+     a[6]  1.9513    1.9513 -0.0001 0.0435
+     a[4] -0.4555   -0.4559  0.0004 0.0594
+     b[1]  0.4889    0.4888  0.0001 0.0574
+     a[2] -0.7557   -0.7552 -0.0006 0.0584
+     b[2] -0.3766   -0.3770  0.0004 0.0629
+     a[0] -0.4535   -0.4569  0.0034 0.0590
+     a[5]  0.4720    0.4735 -0.0014 0.0641
+     a[3] -0.7576   -0.7570 -0.0006 0.0367
+     b[0] -0.0367   -0.0316 -0.0051 0.0240
+     a[1]  3.8823    3.8672  0.0151 0.0392
+     b[3]  0.3774    0.3754  0.0020 0.0654
 ============================================================
 
 ================================================================
 WAIC cross-check  -  5.Binomial with indices
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -264.872706    p_waic = 8.268164
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -264.872706  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -266.158603    p_waic = 8.527491
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -266.158603    p_waic = 8.527491
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=504)
 ----------------------------------------------------------------
 LOO cross-check  -  5.Binomial with indices
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -264.893822    p_loo  = 8.289281
+      elpd_loo  = -266.177737    p_loo  = 8.546625
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -264.893533    p_loo  = 8.288992
-|delta elpd_loo| = 2.892e-04      |delta p_loo| = 2.892e-04
+      elpd_loo  = -266.178587    p_loo  = 8.547474
+|delta elpd_loo| = 8.497e-04      |delta p_loo| = 8.497e-04
 RESULT: PASS
 ================================================================

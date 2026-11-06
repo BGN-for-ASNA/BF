@@ -7,6 +7,7 @@ from scipy.cluster.hierarchy import fcluster, linkage
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from BayesForge.Utils.dev_warning import warn_dev
 
 class bnnc:
     def __init__(self, parent):
@@ -30,7 +31,7 @@ class bnnc:
         """
         BNNC marginal mixture model definition.
         """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
+        warn_dev("bnnc")
         m = self.parent
         N, D_X = data.shape
         
@@ -101,7 +102,7 @@ class bnnc:
         """
         Performs Consensus Clustering.
         """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
+        warn_dev("bnnc")
         posterior_samples = sampler.get_samples(group_by_chain=False)
 
         theta_samps = posterior_samples['theta']
@@ -148,7 +149,7 @@ class bnnc:
         averaged over posterior draws of (global_pi, mu, sigma). The contour
         shows sum_k k * p(k | x); the colour bar is that expected index.
         """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
+        warn_dev("bnnc")
 
         ps = sampler.get_samples(group_by_chain=False)
         pi_s = np.asarray(ps['global_pi'])   # (S, K)

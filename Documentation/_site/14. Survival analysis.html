@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,8 +22,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +35,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -67,17 +68,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <link href="./15. Varying intercepts.html" rel="next">
 <link href="./13. Zero inflated.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -128,14 +130,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -217,7 +215,167 @@ window.Quarto = {
 <link rel="stylesheet" href="MyStyles_v1.css">
 </head>
 
-<body class="nav-sidebar floating nav-fixed">
+<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -610,7 +768,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -632,6 +790,7 @@ window.Quarto = {
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
+
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./5. Binomial model.html">Generalized Linear Models</a></li><li class="breadcrumb-item"><a href="./14. Survival analysis.html">Survival Analysis</a></li></ol></nav>
 <div class="quarto-title">
@@ -698,40 +857,40 @@ Note
 <h2 class="anchored" data-anchor-id="example">Example</h2>
 <p>Here’s an example of a Bayesian survival analysis using the <strong>BayesForge (BF)</strong> package. The data come from a clinical trial of mastectomy for breast cancer. The goal is to estimate the effect of the <code>metastasized</code> covariate, coded as 0 (no metastasis) and 1 (metastasis), on the survival outcome <code>event</code> for each patient. Time is continuous and censoring is indicated by the event variable.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
-<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
 <p><strong>Data and discrete-time setup</strong> (shared by both approaches below).</p>
-<div id="75c2bb7d" class="cell" data-execution_count="1">
+<div id="393f6f00" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Data ------------------------------------------------------------</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># death was observed, 0 if the patient was censored (left the study</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># event-free), `metastasized` = "yes"/"no".</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.mastectomy(only_path<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">','</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>m.df.metastasized <span class="op">=</span> (m.df.metastasized.values <span class="op">==</span> <span class="st">"yes"</span>).astype(np.int64)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Piecewise-constant hazard setup -------------------------------</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut follow-up time into fixed intervals of length 3. For every</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># (subject, interval) this builds two matrices:</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">#   death[i, k]    -&gt; 1 if subject i had the event in interval k</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   exposure[i, k] -&gt; time subject i spent at risk in interval k</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Censoring is encoded here: after a subject leaves (event OR censoring)</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># its exposure is 0 in every later interval, so it stops contributing</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># to the likelihood without being counted as a death.</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_time_even(m.df.time.values, m.df.event.values,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Data ------------------------------------------------------------</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># death was observed, 0 if the patient was censored (left the study</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># event-free), `metastasized` = "yes"/"no".</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.mastectomy(only_path<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">','</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>m.df.metastasized <span class="op">=</span> jnp.asarray(m.df.metastasized <span class="op">==</span> <span class="st">"yes"</span>, dtype<span class="op">=</span>jnp.int64)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Piecewise-constant hazard setup -------------------------------</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut follow-up time into fixed intervals of length 3. For every</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># (subject, interval) this builds two matrices:</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   death[i, k]    -&gt; 1 if subject i had the event in interval k</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">#   exposure[i, k] -&gt; time subject i spent at risk in interval k</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Censoring is encoded here: after a subject leaves (event OR censoring)</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># its exposure is 0 in every later interval, so it stops contributing</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># to the likelihood without being counted as a death.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_time_even(jnp.asarray(m.df.time.values),</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                                   jnp.asarray(m.df.event.values),</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                                   interval_length<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Register `metastasized` as a patient-level (time-invariant) covariate.</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_covF(m.df.metastasized.values, [<span class="st">"metastasized"</span>])</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_covF(jnp.asarray(m.df.metastasized.values), [<span class="st">"metastasized"</span>])</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Censoring plot -----------------------------------------------</span></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># One horizontal line per subject = observed follow-up. Red = censored</span></span>
@@ -741,14 +900,11 @@ Note
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>m.models.survival.plot_censoring(cov<span class="op">=</span><span class="st">"metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 32
+jax.local_device_count 16
 ------------------------------------------------------------------------------
 Survival concern 44 individuals in 76 intervals.
 26.0 individuals experienced the event.
@@ -759,7 +915,7 @@ Surv object now has 1 covariates: ['metastasized']</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14. Survival analysis_files/figure-html/cell-2-output-3.png" width="633" height="503" class="figure-img"></p>
+<p><img src="14. Survival analysis_files/figure-html/cell-2-output-3.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -769,7 +925,7 @@ Surv object now has 1 covariates: ['metastasized']</code></pre>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <p>The full model written out, to show every prior and the likelihood.</p>
-<div id="75fa1f2c" class="cell" data-execution_count="2">
+<div id="70afbf36" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(death, cov, exposure, censoring<span class="op">=</span><span class="va">None</span>):</span>
@@ -810,31 +966,31 @@ Surv object now has 1 covariates: ['metastasized']</code></pre>
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>m.models.survival.plot_surv(beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>                             mean    sd  eti89_lb  eti89_ub  ess_bulk  \
-Baseline_rate[0]             0.00  0.00      0.00      0.00   1857.03   
-Baseline_rate[1]             0.00  0.01      0.00      0.01   3574.68   
-Baseline_rate[2]             0.00  0.01      0.00      0.01   3736.31   
-Baseline_rate[3]             0.00  0.01      0.00      0.01   3738.95   
-Baseline_rate[4]             0.00  0.01      0.00      0.02   3485.69   
-...                           ...   ...       ...       ...       ...   
-Baseline_rate[72]            0.00  0.01      0.00      0.00   2379.19   
-Baseline_rate[73]            0.00  0.01      0.00      0.00   1755.64   
-Baseline_rate[74]            0.00  0.01      0.00      0.00   2090.09   
-Baseline_rate[75]            0.90  7.80      0.00      0.27   2131.48   
-Hazard_rate_metastasized[0]  0.79  0.50      0.04      1.62   1783.17   
+<pre><code>                             mean     sd  eti89_lb  eti89_ub  ess_bulk  \
+Baseline_rate[0]             0.00   0.00      0.00      0.00   1924.26   
+Baseline_rate[1]             0.00   0.01      0.00      0.01   5077.79   
+Baseline_rate[2]             0.00   0.01      0.00      0.01   4536.28   
+Baseline_rate[3]             0.00   0.01      0.00      0.01   4525.28   
+Baseline_rate[4]             0.00   0.01      0.00      0.02   4497.56   
+...                           ...    ...       ...       ...       ...   
+Baseline_rate[72]            0.00   0.01      0.00      0.00   2149.02   
+Baseline_rate[73]            0.00   0.01      0.00      0.00   2232.02   
+Baseline_rate[74]            0.00   0.01      0.00      0.00   2088.05   
+Baseline_rate[75]            0.87  10.08      0.00      0.07   2169.18   
+Hazard_rate_metastasized[0]  0.78   0.49      0.04      1.58   2076.74   
 
                              ess_tail  r_hat  mcse_mean  mcse_sd  
-Baseline_rate[0]              1656.86    1.0       0.00     0.00  
-Baseline_rate[1]              3156.53    1.0       0.00     0.00  
-Baseline_rate[2]              2808.63    1.0       0.00     0.00  
-Baseline_rate[3]              3448.38    1.0       0.00     0.00  
-Baseline_rate[4]              3007.60    1.0       0.00     0.00  
+Baseline_rate[0]              2143.69    1.0       0.00     0.00  
+Baseline_rate[1]              3818.99    1.0       0.00     0.00  
+Baseline_rate[2]              3306.43    1.0       0.00     0.00  
+Baseline_rate[3]              3608.69    1.0       0.00     0.00  
+Baseline_rate[4]              3490.96    1.0       0.00     0.00  
 ...                               ...    ...        ...      ...  
-Baseline_rate[72]             2215.50    1.0       0.00     0.00  
-Baseline_rate[73]             1828.11    1.0       0.00     0.00  
-Baseline_rate[74]             2259.53    1.0       0.00     0.00  
-Baseline_rate[75]             2273.73    1.0       0.09     0.69  
-Hazard_rate_metastasized[0]   2193.42    1.0       0.01     0.01  
+Baseline_rate[72]             2539.78    1.0       0.00     0.00  
+Baseline_rate[73]             2257.22    1.0       0.00     0.00  
+Baseline_rate[74]             2054.06    1.0       0.00     0.00  
+Baseline_rate[75]             2369.11    1.0       0.11     1.53  
+Hazard_rate_metastasized[0]   2419.06    1.0       0.01     0.01  
 
 [77 rows x 9 columns]</code></pre>
 </div>
@@ -846,7 +1002,7 @@ Hazard_rate_metastasized[0]   2193.42    1.0       0.01     0.01
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14. Survival analysis_files/figure-html/cell-3-output-3.png" width="1272" height="561" class="figure-img"></p>
+<p><img src="14. Survival analysis_files/figure-html/cell-3-output-3.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -854,7 +1010,7 @@ Hazard_rate_metastasized[0]   2193.42    1.0       0.01     0.01
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <p>Same model, assembled by BF from the imported survival object. Priors are attributes you can override before <code>fit</code>.</p>
-<div id="5ee22e4f" class="cell" data-execution_count="3">
+<div id="efe8673a" class="cell" data-execution_count="3">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: change the default priors (shown with their defaults).</span></span>
@@ -1062,7 +1218,7 @@ log_Baseline_rate[75]   1.00       2.96     3.51
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14. Survival analysis_files/figure-html/cell-4-output-7.png" width="1272" height="561" class="figure-img"></p>
+<p><img src="14. Survival analysis_files/figure-html/cell-4-output-8.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1072,11 +1228,96 @@ log_Baseline_rate[75]   1.00       2.96     3.51
 </div>
 <p><strong>Survival plot.</strong> Left: posterior cumulative hazard <span class="math inline">\Lambda(t) = \sum_k \lambda_0^{(k)}\Delta_k</span> per covariate group; right: the implied survival <span class="math inline">S(t) = e^{-\Lambda(t)}</span>. Solid line = posterior mean, shaded band = 94% credible interval, blue = not metastasized, orange = metastasized. The size and direction of the effect are read from <span class="math inline">\beta</span> (equivalently the hazard ratio <span class="math inline">e^{\beta}</span>) in <code>m.summary()</code>; here <span class="math inline">\beta &gt; 0</span>, i.e.&nbsp;metastasis raises the hazard.</p>
 </div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<p><strong>Data and discrete-time setup</strong> (shared by both approaches below).</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Data ------------------------------------------------------------</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># death was observed, 0 if the patient was censored (left the study</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># event-free), `metastasized` = "yes"/"no".</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>data_path <span class="ot">&lt;-</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">mastectomy</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(data_path, <span class="at">sep =</span> <span class="st">","</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>met <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">asarray</span>(m<span class="sc">$</span>df<span class="sc">$</span>metastasized <span class="sc">==</span> <span class="st">"yes"</span>, <span class="at">dtype =</span> jnp<span class="sc">$</span>int64)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>metastasized <span class="ot">&lt;-</span> met</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Piecewise-constant hazard setup -------------------------------</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut follow-up time into fixed intervals of length 3. For every</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co"># (subject, interval) this builds two matrices:</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   death[i, k]    -&gt; 1 if subject i had the event in interval k</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co">#   exposure[i, k] -&gt; time subject i spent at risk in interval k</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Censoring is encoded here: after a subject leaves (event OR censoring)</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="co"># its exposure is 0 in every later interval, so it stops contributing</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="co"># to the likelihood without being counted as a death.</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span><span class="fu">import_time_even</span>(jnp<span class="sc">$</span><span class="fu">asarray</span>(m<span class="sc">$</span>df<span class="sc">$</span>time),</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>                                   jnp<span class="sc">$</span><span class="fu">asarray</span>(m<span class="sc">$</span>df<span class="sc">$</span>event),</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">interval_length =</span> <span class="dv">3</span>L)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Register `metastasized` as a patient-level (time-invariant) covariate.</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span><span class="fu">import_covF</span>(met, <span class="fu">list</span>(<span class="st">"metastasized"</span>))</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Censoring plot -----------------------------------------------</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="co"># One horizontal line per subject = observed follow-up. Red = censored</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="co"># (event never seen), grey = event observed, black dot = metastasized.</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Reading it: metastasized patients tend to have shorter lines ending</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a><span class="co"># in an event -&gt; a first visual clue of a positive hazard effect.</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span><span class="fu">plot_censoring</span>(<span class="at">cov =</span> <span class="st">"metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Explicit model</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">Built-in model</a></li></ul>
+<div class="tab-content">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<p>The full model written out, to show every prior and the likelihood.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(death, cov, exposure, <span class="at">censoring =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- Priors ---------------------------------------------------</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Baseline hazard: ONE positive rate per time interval. A</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Gamma(0.01, 0.01) prior is almost flat on (0, inf), so the shape</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># of the hazard over time is driven by the data, not by a</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># parametric family (Weibull, Gompertz, ...). This is what makes</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the model semi-parametric.</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  lambda0 <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">gamma</span>(</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="fu">dim</span>(exposure)[<span class="dv">2</span>]),</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Baseline_rate"</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Covariate effect on the LOG hazard. Normal(0, 10) is weakly</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># informative: centred on 0 (no effect) but wide enough to let the</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data move it. exp(beta) is the hazard ratio for metastasized.</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span>, <span class="dv">10</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">1</span>L),</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Hazard_rate_metastasized"</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- Likelihood -------------------------------------------------</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Proportional hazards: lambda[i,k] = lambda0[k] * exp(beta * x_i).</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Expected event count mu = lambda * exposure; the 0/1 event</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># indicator is modelled as Poisson (equivalent to the piecewise</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># exponential survival likelihood).</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  lambda_ <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(jnp<span class="sc">$</span><span class="fu">exp</span>(beta <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">squeeze</span>(cov)), <span class="dv">1</span>L) <span class="sc">*</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    jnp<span class="sc">$</span><span class="fu">expand_dims</span>(lambda0, <span class="dv">0</span>L)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">multiply</span>(exposure, lambda_)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">poisson</span>(mu <span class="sc">+</span> jnp<span class="sc">$</span><span class="fu">finfo</span>(mu<span class="sc">$</span>dtype)<span class="sc">$</span>tiny, <span class="at">obs =</span> death)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 chains and target_accept_prob=0.99: the many near-empty late</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="co"># baseline intervals make the geometry awkward, so a higher acceptance</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="co"># target keeps the step size small enough to mix well.</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">num_samples =</span> <span class="dv">2000</span>L, <span class="at">num_warmup =</span> <span class="dv">2000</span>L, <span class="at">num_chains =</span> <span class="dv">4</span>L,</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">target_accept_prob =</span> <span class="fl">0.99</span>, <span class="at">progress_bar =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m<span class="sc">$</span><span class="fu">summary</span>())</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Posterior cumulative hazard and survival curves, by covariate group.</span></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span><span class="fu">plot_surv</span>(<span class="at">beta =</span> <span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="travaux-routiers.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
+<p>Same model, assembled by BF from the imported survival object. Priors are attributes you can override before <code>fit</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: change the default priors (shown with their defaults).</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span>baseline_rate_prior <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="fl">0.01</span>)  <span class="co"># Gamma(conc, rate)</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span>hazard_rate_prior_scale <span class="ot">&lt;-</span> <span class="fl">10.0</span>        <span class="co"># Normal(0, scale)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span>model)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m<span class="sc">$</span><span class="fu">summary</span>())</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>survival<span class="sc">$</span><span class="fu">plot_surv</span>(<span class="at">beta =</span> <span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -1148,8 +1389,65 @@ if (outputEl) {{
 </div>
 </div>
 </div>
-<p>The black step curve is the Kaplan–Meier estimate of the observed data (censored patients included); each blue curve is the Kaplan–Meier curve of one set of survival times simulated from the posterior hazard (no censoring). The black curve should stay inside the blue band. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
-</section>
+<!--
+### Posterior predictive checks
+
+Do survival times simulated from the fitted hazard reproduce the observed survival curve?
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#b2e3c31b .cell execution_count=4}
+``` {.python .cell-code}
+# s = m.models.survival
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+:::
+
+
+#### R
+```r
+# library(BayesForge)
+# m <- importBF(platform = "cpu")
+# jnp <- reticulate::import("jax.numpy")
+# # Fit the survival model of this page (see the Python example above)
+# data_path <- m$load$mastectomy(only_path = TRUE)
+# m$data(data_path, sep = ",")
+# met <- jnp$asarray(m$df$metastasized == "yes", dtype = jnp$int64)
+# m$df$metastasized <- met
+# s <- m$models$survival
+# s$import_time_even(jnp$asarray(m$df$time), jnp$asarray(m$df$event), interval_length = 3L)
+# s$import_covF(met, list("metastasized"))
+# s$baseline_rate_prior <- c(0.01, 0.01)
+# s$hazard_rate_prior_scale <- 10.0
+# m$fit(s$model)
+# times_rep = s$sample_times(lambda0 = "Baseline_rate", beta = "Hazard_rate_metastasized", n_draws = 100L)
+# m$diag$ppc_km_overlay(y = s$time, yrep = times_rep, status_y = s$event, name = "time")
+```
+
+#### Julia
+```julia
+# using PyBayesForge
+# using PythonCall
+# m = importBF(platform="cpu")
+# # Fit the survival model of this page (see the Python example above)
+# data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+# m.data(data_path, sep=",")
+# m.df.metastasized = jnp.asarray(m.df.metastasized.eq("yes").values, dtype=jnp.int64)
+# s = m.models.survival
+# s.import_time_even(jnp.asarray(m.df.time.values), jnp.asarray(m.df.event.values), interval_length=3)
+# s.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
+# s.baseline_rate_prior = (0.01, 0.01)
+# s.hazard_rate_prior_scale = 10.0
+# m.fit(s.model)
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+:::
+
+The black step curve is the Kaplan–Meier estimate of the observed data (censored patients included); each blue curve is the Kaplan–Meier curve of one set of survival times simulated from the posterior hazard (no censoring). The black curve should stay inside the blue band. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -1200,7 +1498,7 @@ S_i(t_K) = \exp\!\left(-\Lambda_i(t_K)\right)
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
 <li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/7.Survival%20analysis">Comparison with PyMC</a>: <code>Survival_analysis_verify.py</code> fits the mastectomy survival model with BayesForge and PyMC and checks that the baseline rates and the hazard ratio agree.</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="references" class="level2">
@@ -2293,57 +2591,69 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -2351,185 +2661,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./13. Zero inflated.html" class="pagination-link" aria-label="Zero-Inflated Models">

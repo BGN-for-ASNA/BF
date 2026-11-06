@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="quarto-1.7.32" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+<meta name="description" content="Likelihood-free Bayesian inference: estimate parameters of models you can simulate from but whose likelihood you cannot write down." />
+
+<title>Approximate Bayesian Computation – BayesForge (BF)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+<!-- htmldependencies:E3FAD763 -->
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<!-- header-scripts.html -->
+<script>
+  (function() {
+    const isFileUrl = () => window.location.protocol === 'file:';
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : "alternate"; // Default to dark/alternate
+      } else {
+        return "alternate";
+      }
+    };
+    
+    const alternate = (getColorSchemeSentinel() === "alternate");
+    
+    if (alternate) {
+      // Instantly add dark classes to prevent FOUC (flash of unstyled content)
+      document.documentElement.classList.add("quarto-dark");
+      document.documentElement.classList.remove("quarto-light");
+      
+      // Function to instantly swap a stylesheet node to dark
+      const makeNodeDark = (node) => {
+        if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
+          node.removeAttribute('disabled');
+        }
+      };
+
+      // Check already parsed nodes in head
+      if (document.head) {
+        document.head.querySelectorAll('link.quarto-color-alternate').forEach(makeNodeDark);
+      }
+
+      // Set up MutationObserver to catch nodes appended later in head
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(makeNodeDark);
+        });
+      });
+      
+      // Wait for head to exist or observe documentElement if head is loading
+      const target = document.head || document.documentElement;
+      observer.observe(target, { childList: true, subtree: true });
+      
+      // Clean up observer and run final safety check on DOMContentLoaded
+      document.addEventListener("DOMContentLoaded", function() {
+        observer.disconnect();
+        document.querySelectorAll('link.quarto-color-alternate').forEach(makeNodeDark);
+      });
+    } else {
+      document.documentElement.classList.add("quarto-light");
+      document.documentElement.classList.remove("quarto-dark");
+    }
+  })();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous" data-relocate-top="true"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script defer="" src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="MyStyles_v1.css" />
+</head>
+
+<body>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="/index.html">
+    <span class="navbar-title">BayesForge (BF)</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+  aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation"
+  onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="/start/Installation.html"> 
+<span class="menu-text">Get started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="/0.Introduction.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="/reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-help" role="link" data-bs-toggle="dropdown" aria-expanded="false" >
+ <span class="menu-text">Help</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-help">    
+        <li>
+    <a class="dropdown-item" href="https://github.com/BGN-for-ASNA/BF/issues"><i 
+  class="bi bi-bug" 
+  role="img" 
+>
+</i> 
+ <span class="dropdown-text">Report a Bug</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://github.com/BGN-for-ASNA/BF/discussions"><i 
+  class="bi bi-chat-dots" 
+  role="img" 
+>
+</i> 
+ <span class="dropdown-text">Ask a Question</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://twitter.com"  title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+    <a href="https://github.com/BGN-for-ASNA/BF"  title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <div id="quarto-toc-target"></div>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+<script id = "quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Approximate Bayesian Computation</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Simulation-based inference</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Likelihood-free Bayesian inference: estimate parameters of models you can simulate from but whose likelihood you cannot write down.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#general-principles" id="toc-general-principles">General Principles</a></li>
+  <li><a href="#considerations" id="toc-considerations">Considerations</a></li>
+  <li><a href="#example" id="toc-example">Example</a></li>
+  <li><a href="#mathematical-details" id="toc-mathematical-details">Mathematical Details</a>
+  <ul>
+  <li><a href="#model" id="toc-model"><em>Model</em></a></li>
+  <li><a href="#abc-posterior" id="toc-abc-posterior"><em>ABC posterior</em></a></li>
+  <li><a href="#from-a-bf-model-to-a-simulator" id="toc-from-a-bf-model-to-a-simulator"><em>From a BF model to a simulator</em></a></li>
+  <li><a href="#summary-statistics" id="toc-summary-statistics"><em>Summary statistics</em></a></li>
+  <li><a href="#distance" id="toc-distance"><em>Distance</em></a></li>
+  <li><a href="#unconstrained-parameterisation" id="toc-unconstrained-parameterisation"><em>Unconstrained parameterisation</em></a></li>
+  <li><a href="#rejection-abc" id="toc-rejection-abc"><em>Rejection ABC</em></a></li>
+  <li><a href="#abc-smc-population-monte-carlo" id="toc-abc-smc-population-monte-carlo"><em>ABC-SMC (Population Monte Carlo)</em></a></li>
+  </ul></li>
+  <li><a href="#notes" id="toc-notes">Notes</a></li>
+  <li><a href="#references" id="toc-references">Reference(s)</a></li>
+  </ul>
+</nav>
+<section id="general-principles" class="level2">
+<h2>General Principles</h2>
+<p>Every model in the previous chapters needs a <span id="likelihood"><span style="color:#0D6EFD">likelihood 🛈</span></span>: a formula giving the probability of the data for given parameter values. Many scientific models do not have one. Individual-based simulations, stochastic population dynamics, agent-based models or distributions defined only through their quantile function can easily be <em>simulated</em>, but their likelihood is intractable, so MCMC cannot be used.</p>
+<p>Approximate Bayesian Computation (ABC) replaces the likelihood by simulation. The idea is simple:</p>
+<ol type="1">
+<li><p>Draw parameter values <span class="math inline">\theta</span> from the prior.</p></li>
+<li><p>Simulate a dataset <span class="math inline">x_{sim}</span> from the model with those parameters.</p></li>
+<li><p>Keep <span class="math inline">\theta</span> if the simulated data <em>look like</em> the observed data, i.e., if the distance between their summary statistics, <span class="math inline">d(s(x_{sim}), s(x_{obs}))</span>, is smaller than a tolerance <span class="math inline">\epsilon</span>.</p></li>
+</ol>
+<p>The accepted values of <span class="math inline">\theta</span> are draws from an approximation of the posterior distribution, which becomes exact when <span class="math inline">\epsilon \to 0</span> and the summary statistics are <span id="sufficient"><span style="color:#0D6EFD">sufficient 🛈</span></span>.</p>
+<p>In BF, the model is written exactly as in any other chapter. <code>m.abc()</code> uses it only as a <em>simulator</em> and never evaluates its likelihood.</p>
+</section>
+<section id="considerations" class="level2">
+<h2>Considerations</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class='callout-icon'></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>ABC needs three ingredients that MCMC does not:</p>
+<ul>
+<li><p><strong>Summary statistics</strong> <span class="math inline">s(x)</span>: low-dimensional descriptions of a dataset (means, quantiles, regression coefficients…). Comparing raw datasets point by point is hopeless in high dimension: two datasets simulated with the <em>same</em> parameters are already far apart. The quality of the ABC posterior depends on how informative these statistics are. <code>summary_stats</code> accepts a function or one of the built-in sets: <code>"identity"</code>, <code>"moments"</code>, <code>"quantiles"</code> and <code>"robust"</code> (octile-based location, scale, skewness and kurtosis).</p></li>
+<li><p><strong>A distance</strong> <span class="math inline">d(\cdot,\cdot)</span>: by default an Euclidean distance on statistics rescaled by their median absolute deviation, so that every statistic counts equally.</p></li>
+<li><p><strong>A tolerance</strong> <span class="math inline">\epsilon</span>: small values give more accurate posteriors but require more simulations. With too large a tolerance, the ABC posterior is wider than the true posterior.</p></li>
+</ul></li>
+<li><p>Two algorithms are available:</p>
+<ul>
+<li><p><code>method="rejection"</code>: simulate <code>num_simulations</code> datasets from the prior and keep the closest fraction <code>quantile</code>. Simple, but most simulations are wasted when the prior is wide. <code>regression_adjust=True</code> applies the local-linear correction of <span class="citation" data-cites="beaumont2002approximate">(<a href="#ref-beaumont2002approximate" role="doc-biblioref"><strong>beaumont2002approximate?</strong></a>)</span>.</p></li>
+<li><p><code>method="smc"</code>: ABC Population Monte Carlo <span class="citation" data-cites="beaumont2009adaptive">(<a href="#ref-beaumont2009adaptive" role="doc-biblioref"><strong>beaumont2009adaptive?</strong></a>)</span>. The tolerance shrinks over successive rounds and new particles are proposed around the previously accepted ones, which focuses simulations where the posterior is. This is the recommended default.</p></li>
+</ul></li>
+<li><p>Prior distributions are declared as usual. Particles are moved in the unconstrained space of each parameter, so supports (e.g., <span class="math inline">\sigma &gt; 0</span>) are always respected.</p></li>
+<li><p>The output behaves like any BF fit: <code>m.summary()</code>, <code>m.posteriors</code> and the <code>m.diag</code> plots work as after <code>m.fit()</code>.</p></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="example" class="level2">
+<h2>Example</h2>
+<p>Below is an example code snippet demonstrating <em>Approximate Bayesian Computation</em> using the BayesForge (<strong>BF</strong>) package. To check that ABC recovers the right answer, we use a model whose likelihood <em>is</em> available: the linear regression of height on weight of <a href="1.%20Linear%20Regression%20for%20continuous%20variable.qmd">chapter 1</a> <span class="citation" data-cites="mcelreath2018statistical">(<a href="#ref-mcelreath2018statistical" role="doc-biblioref">McElreath 2018</a>)</span>. The exact posterior is computed with MCMC (<code>m.fit()</code>), then ABC estimates it again <em>without ever evaluating the likelihood</em>, only by simulating heights. The summary statistics are the least-squares intercept, slope and residual standard deviation, which are sufficient for this model.</p>
+<p>The <em>From scratch</em> tab writes the ABC-SMC algorithm step by step with BF distributions (<code>m.dist</code>); the <em>Built-in function</em> tab obtains the same result with <code>m.abc()</code>. A parameter-recovery study of all simulation-based approaches on the g-and-k distribution, a model with an intractable likelihood, is available in the <code>Test/16.SBI/g-and-k</code> folder of the repository.</p>
+<div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div id="b579dbc7" class="cell" data-execution_count="1">
+<details open class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python cell-code"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">&quot;cpu&quot;</span>, rand_seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.howell1(only_path<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">&quot;;&quot;</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>m.df <span class="op">=</span> m.df[m.df.age <span class="op">&gt;</span> <span class="dv">18</span>]  <span class="co"># Subset data to adults</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>m.scale([<span class="st">&quot;weight&quot;</span>])  <span class="co"># Normalize</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(weight, height):</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.normal(<span class="dv">178</span>, <span class="dv">20</span>, name<span class="op">=</span><span class="st">&quot;a&quot;</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.log_normal(<span class="dv">0</span>, <span class="dv">1</span>, name<span class="op">=</span><span class="st">&quot;b&quot;</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.uniform(<span class="dv">0</span>, <span class="dv">50</span>, name<span class="op">=</span><span class="st">&quot;s&quot;</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(a <span class="op">+</span> b <span class="op">*</span> weight, s, obs<span class="op">=</span>height)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics ------------------------------------------------</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>weight <span class="op">=</span> jnp.asarray(m.df.weight.values)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>height_obs <span class="op">=</span> jnp.asarray(m.df.height.values)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> jnp.stack([jnp.ones_like(weight), weight], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ols(height):</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Least-squares intercept, slope and residual sd: sufficient for this model.&quot;&quot;&quot;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    coef <span class="op">=</span> jnp.linalg.lstsq(X, height)[<span class="dv">0</span>]</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jnp.array([coef[<span class="dv">0</span>], coef[<span class="dv">1</span>], jnp.std(height <span class="op">-</span> X <span class="op">@</span> coef)])</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Reference: exact posterior with MCMC ------------------------------------------------</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>nuts <span class="op">=</span> <span class="bu">dict</span>(m.posteriors)</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>bf v 0.0.48 package loaded
+jax.local_device_count 32</code></pre>
+</div>
+</div>
+<div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">From scratch</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Built-in function</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>ABC-SMC written out step by step with BF distributions: each line of the model becomes a draw with <code>sample=True</code> (for thousands of parameter values at once), and <code>create_obj=True</code> gives the prior densities needed for the importance weights.</p>
+<div id="60bf5f6e" class="cell" data-execution_count="2">
+<details open class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python cell-code"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Simulator: one dataset of heights per parameter draw ------------------------------</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>batch_ols <span class="op">=</span> jax.jit(jax.vmap(ols))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulate(theta):</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;theta (n, 3) = (a, b, s) -&gt; summary statistics (n, 3).&quot;&quot;&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    a, b, s <span class="op">=</span> theta[:, :<span class="dv">1</span>], theta[:, <span class="dv">1</span>:<span class="dv">2</span>], theta[:, <span class="dv">2</span>:]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    height <span class="op">=</span> m.dist.normal(a <span class="op">+</span> b <span class="op">*</span> weight, s, sample<span class="op">=</span><span class="va">True</span>)              <span class="co"># (n, n_obs)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> batch_ols(height)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_prior(theta):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;log p(a) + log p(b) + log p(s); -inf outside the support.&quot;&quot;&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    a, b, s <span class="op">=</span> theta[:, <span class="dv">0</span>], theta[:, <span class="dv">1</span>], theta[:, <span class="dv">2</span>]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    inside <span class="op">=</span> (b <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> (s <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> (s <span class="op">&lt;</span> <span class="dv">50</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    lp <span class="op">=</span> (m.dist.normal(<span class="dv">178</span>, <span class="dv">20</span>, create_obj<span class="op">=</span><span class="va">True</span>).log_prob(a)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>          <span class="op">+</span> m.dist.log_normal(<span class="dv">0</span>, <span class="dv">1</span>, create_obj<span class="op">=</span><span class="va">True</span>).log_prob(jnp.where(inside, b, <span class="fl">1.0</span>))</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>          <span class="op">+</span> m.dist.uniform(<span class="dv">0</span>, <span class="dv">50</span>, create_obj<span class="op">=</span><span class="va">True</span>).log_prob(jnp.where(inside, s, <span class="fl">1.0</span>)))</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jnp.where(inside, lp, <span class="op">-</span>jnp.inf)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>s_obs <span class="op">=</span> ols(height_obs)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Round 0: rejection ABC from the prior ---------------------------------------------</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>n_particles, n0, budget <span class="op">=</span> <span class="dv">1000</span>, <span class="dv">100_000</span>, <span class="dv">1_000_000</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>theta <span class="op">=</span> jnp.stack([m.dist.normal(<span class="dv">178</span>, <span class="dv">20</span>, sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(n0,)),</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                   m.dist.log_normal(<span class="dv">0</span>, <span class="dv">1</span>, sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(n0,)),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                   m.dist.uniform(<span class="dv">0</span>, <span class="dv">50</span>, sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(n0,))], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> simulate(theta)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>scale <span class="op">=</span> <span class="fl">1.4826</span> <span class="op">*</span> jnp.median(jnp.<span class="bu">abs</span>(s <span class="op">-</span> jnp.median(s, <span class="dv">0</span>)), <span class="dv">0</span>)          <span class="co"># MAD of each statistic</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>distance <span class="op">=</span> <span class="kw">lambda</span> s: jnp.sqrt(jnp.<span class="bu">sum</span>(((s <span class="op">-</span> s_obs) <span class="op">/</span> scale) <span class="op">**</span> <span class="dv">2</span>, axis<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> distance(s)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>keep <span class="op">=</span> jnp.argsort(d)[:n_particles]                                     <span class="co"># closest 1%</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>theta, d, w <span class="op">=</span> theta[keep], d[keep], jnp.full(n_particles, <span class="dv">1</span> <span class="op">/</span> n_particles)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>n_sims <span class="op">=</span> n0</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Rounds 1, 2, ...: population Monte Carlo ------------------------------------------</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>batch <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">20</span>):</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> jnp.quantile(d, <span class="fl">0.5</span>)                                          <span class="co"># smaller tolerance</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> w <span class="op">@</span> theta</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> ((theta <span class="op">-</span> mean).T <span class="op">*</span> w) <span class="op">@</span> (theta <span class="op">-</span> mean)                   <span class="co"># 2 x weighted covariance</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> jnp.linalg.cholesky(cov)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    new_theta, new_d, n_acc, n_prop <span class="op">=</span> [], [], <span class="dv">0</span>, <span class="dv">0</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> n_acc <span class="op">&lt;</span> n_particles <span class="kw">and</span> n_sims <span class="op">+</span> n_prop <span class="op">&lt;</span> budget:</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        parents <span class="op">=</span> m.dist.categorical(probs<span class="op">=</span>w, sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(batch,))            <span class="co"># resample</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>        prop <span class="op">=</span> m.dist.multivariate_normal(theta[parents], scale_tril<span class="op">=</span>L, sample<span class="op">=</span><span class="va">True</span>)  <span class="co"># perturb</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>        dp <span class="op">=</span> distance(simulate(prop))                                                  <span class="co"># simulate</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>        accepted <span class="op">=</span> jnp.isfinite(log_prior(prop)) <span class="op">&amp;</span> (dp <span class="op">&lt;=</span> eps)                         <span class="co"># accept</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>        new_theta.append(prop[accepted])</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>        new_d.append(dp[accepted])</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>        n_acc <span class="op">+=</span> <span class="bu">int</span>(accepted.<span class="bu">sum</span>())</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>        n_prop <span class="op">+=</span> batch</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    n_sims <span class="op">+=</span> n_prop</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n_acc <span class="op">&lt;</span> n_particles:                                             <span class="co"># budget exhausted</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    new_theta <span class="op">=</span> jnp.concatenate(new_theta)[:n_particles]</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    new_d <span class="op">=</span> jnp.concatenate(new_d)[:n_particles]</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. Importance weights: prior / mixture of kernels around the previous particles</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    log_kernel <span class="op">=</span> jax.vmap(<span class="kw">lambda</span> th: jax.scipy.stats.multivariate_normal.logpdf(th, theta, cov)</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>                          <span class="op">+</span> jnp.log(w))(new_theta)</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    log_w <span class="op">=</span> log_prior(new_theta) <span class="op">-</span> jax.scipy.special.logsumexp(log_kernel, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> jnp.exp(log_w <span class="op">-</span> log_w.<span class="bu">max</span>())</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>    theta, d, w <span class="op">=</span> new_theta, new_d, w <span class="op">/</span> w.<span class="bu">sum</span>()</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>    acceptance <span class="op">=</span> n_acc <span class="op">/</span> n_prop</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;round </span><span class="sc">{</span>t<span class="sc">}</span><span class="ss">: epsilon = </span><span class="sc">{</span>eps<span class="sc">:.3f}</span><span class="ss">, acceptance = </span><span class="sc">{</span>acceptance<span class="sc">:.4f}</span><span class="ss">&quot;</span>)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> acceptance <span class="op">&lt;</span> <span class="fl">0.005</span>:</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Posterior: resample the weighted particles ----------------------------------------</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>draws <span class="op">=</span> theta[m.dist.categorical(probs<span class="op">=</span>w, sample<span class="op">=</span><span class="va">True</span>, shape<span class="op">=</span>(<span class="dv">1000</span>,))]</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>abc_raw <span class="op">=</span> {<span class="st">&quot;a&quot;</span>: draws[:, <span class="dv">0</span>], <span class="st">&quot;b&quot;</span>: draws[:, <span class="dv">1</span>], <span class="st">&quot;s&quot;</span>: draws[:, <span class="dv">2</span>]}</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>n_sims<span class="sc">}</span><span class="ss"> simulations&quot;</span>)</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p <span class="kw">in</span> [<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;s&quot;</span>]:</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>p<span class="sc">}</span><span class="ss">: mean = </span><span class="sc">{</span>abc_raw[p]<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">, sd = </span><span class="sc">{</span>abc_raw[p]<span class="sc">.</span>std()<span class="sc">:.2f}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>round 1: epsilon = 0.908, acceptance = 0.1624
+round 2: epsilon = 0.681, acceptance = 0.1444
+round 3: epsilon = 0.503, acceptance = 0.1508
+round 4: epsilon = 0.376, acceptance = 0.1283
+round 5: epsilon = 0.285, acceptance = 0.1210
+round 6: epsilon = 0.218, acceptance = 0.1006
+round 7: epsilon = 0.168, acceptance = 0.0903
+round 8: epsilon = 0.131, acceptance = 0.0697
+round 9: epsilon = 0.100, acceptance = 0.0571
+round 10: epsilon = 0.077, acceptance = 0.0473
+round 11: epsilon = 0.060, acceptance = 0.0371
+round 12: epsilon = 0.047, acceptance = 0.0255
+round 13: epsilon = 0.036, acceptance = 0.0158
+round 14: epsilon = 0.029, acceptance = 0.0122
+round 15: epsilon = 0.022, acceptance = 0.0076
+round 16: epsilon = 0.018, acceptance = 0.0046
+815000 simulations
+a: mean = 154.66, sd = 0.29
+b: mean = 5.81, sd = 0.27
+s: mean = 5.13, sd = 0.25</code></pre>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<p>The same analysis with <code>m.abc()</code>, which turns the model into the simulator above, scales the distance and runs the SMC rounds.</p>
+<div id="4182342f" class="cell" data-execution_count="3">
+<details open class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python cell-code"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run ABC ------------------------------------------------</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m.abc(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">&quot;smc&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    summary_stats<span class="op">=</span>ols,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    num_simulations<span class="op">=</span><span class="dv">1_000_000</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    num_rounds<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    min_acceptance<span class="op">=</span><span class="fl">0.005</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    progress_bar<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+<table class="dataframe caption-top" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header" style="text-align: right;">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">mean</th>
+<th data-quarto-table-cell-role="th">sd</th>
+<th data-quarto-table-cell-role="th">hdi_5.5%</th>
+<th data-quarto-table-cell-role="th">hdi_94.5%</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">ess_bulk</th>
+<th data-quarto-table-cell-role="th">ess_tail</th>
+<th data-quarto-table-cell-role="th">r_hat</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">a</td>
+<td>154.62</td>
+<td>0.31</td>
+<td>154.15</td>
+<td>155.11</td>
+<td>0.01</td>
+<td>0.01</td>
+<td>1072.63</td>
+<td>1023.39</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">b</td>
+<td>5.81</td>
+<td>0.27</td>
+<td>5.38</td>
+<td>6.25</td>
+<td>0.01</td>
+<td>0.01</td>
+<td>1017.73</td>
+<td>1046.39</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">s</td>
+<td>5.15</td>
+<td>0.24</td>
+<td>4.74</td>
+<td>5.50</td>
+<td>0.01</td>
+<td>0.01</td>
+<td>1027.06</td>
+<td>942.36</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="a5e319fb" class="cell" data-execution_count="4">
+<details open class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python cell-code"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ABC vs exact posterior ------------------------------------------------</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">3</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, p <span class="kw">in</span> <span class="bu">zip</span>(axes, [<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;s&quot;</span>]):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    ax.hist(nuts[p], bins<span class="op">=</span><span class="dv">40</span>, density<span class="op">=</span><span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.4</span>, label<span class="op">=</span><span class="st">&quot;MCMC (NUTS)&quot;</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ax.hist(m.posteriors[p], bins<span class="op">=</span><span class="dv">40</span>, density<span class="op">=</span><span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.4</span>, label<span class="op">=</span><span class="st">&quot;m.abc()&quot;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    ax.hist(abc_raw[p], bins<span class="op">=</span><span class="dv">40</span>, density<span class="op">=</span><span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.4</span>, label<span class="op">=</span><span class="st">&quot;from scratch&quot;</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    ax.set_title(p)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Tolerance schedule of ABC-SMC ------------------------------------------------</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>m.sampler.plot_history()</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img src="38.%20Approximate%20Bayesian%20Computation_files/figure-html/cell-5-output-1.png" width="1163" height="299" /></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure>
+<p><img src="38.%20Approximate%20Bayesian%20Computation_files/figure-html/cell-5-output-2.png" width="593" height="356" /></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">&quot;cpu&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">howell1</span>(<span class="at">only_path =</span> T), <span class="at">sep =</span> <span class="st">&quot;;&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df <span class="ot">&lt;-</span> m<span class="sc">$</span>df[m<span class="sc">$</span>df<span class="sc">$</span>age <span class="sc">&gt;</span> <span class="dv">18</span>, ] <span class="co"># Subset data to adults</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">&quot;weight&quot;</span>)) <span class="co"># Normalize</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">&quot;weight&quot;</span>, <span class="st">&quot;height&quot;</span>))</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(height, weight) {</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    a <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">178</span>, <span class="dv">20</span>, <span class="at">name =</span> <span class="st">&quot;a&quot;</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">&lt;-</span> <span class="fu">bf.dist.log_normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">name =</span> <span class="st">&quot;b&quot;</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    s <span class="ot">&lt;-</span> <span class="fu">bf.dist.uniform</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="at">name =</span> <span class="st">&quot;s&quot;</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf.dist.normal</span>(a <span class="sc">+</span> b <span class="sc">*</span> weight, s, <span class="at">obs =</span> height)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics ------------------------------------------------</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">stack</span>(<span class="fu">list</span>(jnp<span class="sc">$</span><span class="fu">ones_like</span>(m<span class="sc">$</span>data_on_model<span class="sc">$</span>weight), m<span class="sc">$</span>data_on_model<span class="sc">$</span>weight), <span class="at">axis =</span> <span class="dv">1</span>L)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>ols <span class="ot">&lt;-</span> <span class="cf">function</span>(height) {</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    coef <span class="ot">&lt;-</span> jnp<span class="sc">$</span>linalg<span class="sc">$</span><span class="fu">lstsq</span>(X, height)[[<span class="dv">1</span>]]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    jnp<span class="sc">$</span><span class="fu">stack</span>(<span class="fu">list</span>(coef[<span class="dv">0</span>], coef[<span class="dv">1</span>], jnp<span class="sc">$</span><span class="fu">std</span>(height <span class="sc">-</span> jnp<span class="sc">$</span><span class="fu">matmul</span>(X, coef))))</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run ABC ------------------------------------------------</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">abc</span>(model, <span class="at">method =</span> <span class="st">&quot;smc&quot;</span>, <span class="at">summary_stats =</span> ols,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">num_simulations =</span> <span class="dv">1000000</span>L, <span class="at">num_rounds =</span> <span class="dv">20</span>L, <span class="at">min_acceptance =</span> <span class="fl">0.005</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb8"><pre class="sourceCode julia"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">BayesForge</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">&quot;cpu&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">howell1</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="ch">&#39;;&#39;</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>m.df <span class="op">=</span> m.df[m.df.age <span class="op">&gt;</span> <span class="fl">18</span>] <span class="co"># Subset data to adults</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">&quot;weight&quot;</span>]) <span class="co"># Normalize</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(weight, height)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">178</span>, <span class="fl">20</span>, name <span class="op">=</span> <span class="ch">&#39;a&#39;</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.<span class="fu">log_normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name <span class="op">=</span> <span class="ch">&#39;b&#39;</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">uniform</span>(<span class="fl">0</span>, <span class="fl">50</span>, name <span class="op">=</span> <span class="ch">&#39;s&#39;</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(a <span class="op">+</span> b <span class="op">*</span> weight, s, obs <span class="op">=</span> height)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics ------------------------------------------------</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> jnp.<span class="fu">stack</span>([jnp.<span class="fu">ones</span>(<span class="fu">length</span>(m.df.weight)), jnp.<span class="fu">array</span>(m.df.weight)], axis <span class="op">=</span> <span class="fl">1</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">ols</span>(height)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    coef <span class="op">=</span> jnp.linalg.<span class="fu">lstsq</span>(X, height)[<span class="fl">1</span>]</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    jnp.<span class="fu">stack</span>([coef[<span class="fl">1</span>], coef[<span class="fl">2</span>], jnp.<span class="fu">std</span>(height <span class="op">-</span> X <span class="op">*</span> coef)])</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Run ABC ------------------------------------------------</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">abc</span>(model, method <span class="op">=</span> <span class="st">&quot;smc&quot;</span>, summary_stats <span class="op">=</span> ols,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      num_simulations <span class="op">=</span> <span class="fl">1_000_000</span>, num_rounds <span class="op">=</span> <span class="fl">20</span>, min_acceptance <span class="op">=</span> <span class="fl">0.005</span>)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="mathematical-details" class="level2">
+<h2>Mathematical Details</h2>
+<section id="model" class="level3">
+<h3><em>Model</em></h3>
+<p>The model is the linear regression of <a href="1.%20Linear%20Regression%20for%20continuous%20variable.qmd">chapter 1</a>:</p>
+<p><span class="math display">
+Y_i \sim \text{Normal}(\alpha + \beta X_i, \sigma)
+</span></p>
+<p><span class="math display">
+\alpha \sim \text{Normal}(178, 20), \qquad \beta \sim \text{LogNormal}(0, 1), \qquad \sigma \sim \text{Uniform}(0, 50)
+</span></p>
+<p>ABC only uses it to <em>simulate</em>: for a parameter draw <span class="math inline">(\alpha, \beta, \sigma)</span>, a dataset is <span class="math inline">Y_i = \alpha + \beta X_i + \sigma \varepsilon_i</span> with <span class="math inline">\varepsilon_i \sim \text{Normal}(0, 1)</span>, for the observed weights <span class="math inline">X_i</span>.</p>
+<p>The summary statistics are the least-squares estimates</p>
+<p><span class="math display">
+s(Y) = \left(\hat\alpha,\; \hat\beta,\; \hat\sigma\right), \qquad (\hat\alpha, \hat\beta) = \arg\min_{\alpha, \beta} \sum_i (Y_i - \alpha - \beta X_i)^2, \qquad \hat\sigma = \sqrt{\tfrac{1}{n}\sum_i (Y_i - \hat\alpha - \hat\beta X_i)^2}
+</span></p>
+<p>which are sufficient statistics for the Normal linear model: <span class="math inline">p(\theta \mid s(Y)) = p(\theta \mid Y)</span>, so ABC can reach the exact posterior when <span class="math inline">\epsilon \to 0</span>.</p>
+</section>
+<section id="abc-posterior" class="level3">
+<h3><em>ABC posterior</em></h3>
+<p>ABC replaces the posterior <span class="math inline">p(\theta \mid x_{obs}) \propto p(\theta)\, p(x_{obs} \mid \theta)</span> by</p>
+<p><span class="math display">
+p_\epsilon(\theta \mid x_{obs}) \propto p(\theta) \int \mathbb{1}\left[d\big(s(x), s(x_{obs})\big) \le \epsilon\right] p(x \mid \theta)\, dx
+</span></p>
+<p>Where:</p>
+<ul>
+<li><p><span class="math inline">s(\cdot)</span> are the summary statistics and <span class="math inline">d(\cdot,\cdot)</span> the distance.</p></li>
+<li><p><span class="math inline">\epsilon</span> is the tolerance; <span class="math inline">p_\epsilon(\theta \mid x_{obs}) \to p(\theta \mid s(x_{obs}))</span> as <span class="math inline">\epsilon \to 0</span>, which equals the true posterior when <span class="math inline">s</span> is sufficient.</p></li>
+<li><p>The integral is never computed: drawing <span class="math inline">x \sim p(x \mid \theta)</span> and checking the indicator gives an unbiased Monte Carlo estimate, which is all rejection sampling needs.</p></li>
+</ul>
+</section>
+<section id="from-a-bf-model-to-a-simulator" class="level3">
+<h3><em>From a BF model to a simulator</em></h3>
+<p><code>m.abc()</code> runs the model forward: every prior is sampled, and every observed site (<code>obs=...</code>, or the site named in <code>observed=</code>) is <em>simulated</em> instead of being conditioned on the data. When a likelihood such as <code>m.dist.normal(mu, s, obs=y)</code> has fewer dimensions than <code>y</code>, it is expanded to the shape of the data, so that one draw is a complete dataset. Latent variables that are not listed in <code>params</code> are nuisance variables: they are drawn and discarded, which integrates them out. Simulations run in vectorised, compiled batches of <code>batch_size</code>.</p>
+</section>
+<section id="summary-statistics" class="level3">
+<h3><em>Summary statistics</em></h3>
+<p>For one simulated dataset <span class="math inline">y_{1:n}</span>, the built-in sets are:</p>
+<ul>
+<li><p><code>"identity"</code>: <span class="math inline">s(y) = y</span>.</p></li>
+<li><p><code>"moments"</code>: <span class="math inline">s(y) = \big(\bar y,\; \hat\sigma,\; \tfrac{1}{n}\sum_i z_i^3,\; \tfrac{1}{n}\sum_i z_i^4\big)</span> with <span class="math inline">z_i = (y_i - \bar y)/\hat\sigma</span>.</p></li>
+<li><p><code>"quantiles"</code>: the octiles <span class="math inline">E_1, \dots, E_7</span> (<span class="math inline">E_j</span> is the <span class="math inline">j/8</span> empirical quantile).</p></li>
+<li><p><code>"robust"</code> <span class="citation" data-cites="drovandi2011likelihood">(<a href="#ref-drovandi2011likelihood" role="doc-biblioref"><strong>drovandi2011likelihood?</strong></a>)</span>: location <span class="math inline">E_4</span>, scale <span class="math inline">S = E_6 - E_2</span>, skewness <span class="math inline">(E_6 + E_2 - 2E_4)/S</span> and kurtosis <span class="math inline">(E_7 - E_5 + E_3 - E_1)/S</span>.</p></li>
+</ul>
+<p>A function of one dataset, such as <code>ols</code> above, can be passed instead.</p>
+</section>
+<section id="distance" class="level3">
+<h3><em>Distance</em></h3>
+<p>Statistics live on different scales, so the default Euclidean distance divides each one by its median absolute deviation (MAD) over the simulations from the prior:</p>
+<p><span class="math display">
+d(s, s_{obs}) = \sqrt{\sum_{q=1}^{Q} \left(\frac{s_q - s_{obs,q}}{\text{MAD}_q}\right)^2}, \qquad \text{MAD}_q = 1.4826\; \text{median}_j \left|s_{jq} - \text{median}_i\, s_{iq}\right|
+</span></p>
+<p>(the standard deviation is used if a MAD is zero). <code>distance="mahalanobis"</code> uses <span class="math inline">\sqrt{(s - s_{obs})^\top \hat\Sigma_s^{-1}(s - s_{obs})}</span>, where <span class="math inline">\hat\Sigma_s</span> is the covariance of the simulated statistics.</p>
+</section>
+<section id="unconstrained-parameterisation" class="level3">
+<h3><em>Unconstrained parameterisation</em></h3>
+<p><code>m.abc()</code> maps each parameter to the real line by the bijection of its prior support, <span class="math inline">u = T^{-1}(\theta)</span> (here <span class="math inline">u = (\alpha,\ \log\beta,\ \text{logit}(\sigma/50))</span>). ABC-SMC moves particles in <span class="math inline">u</span>, where any value is valid, and uses the prior density of <span class="math inline">u</span>, which includes the Jacobian of the transform:</p>
+<p><span class="math display">
+p_U(u) = p\big(T(u)\big)\, \left|\det \frac{\partial T(u)}{\partial u}\right|
+</span></p>
+</section>
+<section id="rejection-abc" class="level3">
+<h3><em>Rejection ABC</em></h3>
+<ol type="1">
+<li><p>Draw <span class="math inline">\theta_j \sim p(\theta)</span> and <span class="math inline">x_j \sim p(x \mid \theta_j)</span>, for <span class="math inline">j = 1, \dots, M</span> (<code>num_simulations</code>).</p></li>
+<li><p>Compute <span class="math inline">d_j = d(s(x_j), s(x_{obs}))</span>.</p></li>
+<li><p>Keep the <span class="math inline">\lceil q M \rceil</span> smallest distances (<code>quantile</code> <span class="math inline">= q</span>), so <span class="math inline">\epsilon = d_{(\lceil qM \rceil)}</span>; or keep all <span class="math inline">d_j \le \epsilon</span> when <code>epsilon</code> is given.</p></li>
+</ol>
+<p>With <code>regression_adjust=True</code> <span class="citation" data-cites="beaumont2002approximate">(<a href="#ref-beaumont2002approximate" role="doc-biblioref"><strong>beaumont2002approximate?</strong></a>)</span>, the accepted parameters are corrected for the remaining discrepancy <span class="math inline">s_j - s_{obs}</span>. A weighted linear regression of <span class="math inline">u_j</span> on <span class="math inline">s_j - s_{obs}</span>, with Epanechnikov weights <span class="math inline">K_j = 1 - (d_j/\epsilon)^2</span>, gives</p>
+<p><span class="math display">
+(\hat a, \hat B) = \arg\min_{a, B} \sum_j K_j \,\big\| u_j - a - B^\top (s_j - s_{obs}) \big\|^2, \qquad u_j^{*} = u_j - \hat B^\top (s_j - s_{obs})
+</span></p>
+<p>and the adjusted <span class="math inline">u_j^{*}</span> are mapped back to <span class="math inline">\theta_j^* = T(u_j^*)</span>.</p>
+</section>
+<section id="abc-smc-population-monte-carlo" class="level3">
+<h3><em>ABC-SMC (Population Monte Carlo)</em></h3>
+<p>ABC-SMC <span class="citation" data-cites="beaumont2009adaptive">(<a href="#ref-beaumont2009adaptive" role="doc-biblioref"><strong>beaumont2009adaptive?</strong></a>)</span> runs a sequence of decreasing tolerances <span class="math inline">\epsilon_0 &gt; \epsilon_1 &gt; \dots</span>, each population of <span class="math inline">P</span> particles (<code>num_particles</code>) serving as a proposal for the next.</p>
+<ol type="1">
+<li><p><strong>Round 0.</strong> Rejection ABC with <span class="math inline">M_0 = \min(P/q,\ \text{budget}/4)</span> simulations, keeping the <span class="math inline">P</span> closest: particles <span class="math inline">u_j^{(0)}</span>, weights <span class="math inline">w_j^{(0)} = 1/P</span>, tolerance <span class="math inline">\epsilon_0 = \max_j d_j</span>.</p></li>
+<li><p><strong>Round <span class="math inline">t</span>.</strong> Set <span class="math inline">\epsilon_t</span> to the <span class="math inline">\alpha</span>-quantile of the distances of the previous population (<code>alpha</code> <span class="math inline">= 0.5</span>). Repeat until <span class="math inline">P</span> particles are accepted:</p>
+<ul>
+<li>pick a parent <span class="math inline">u_j^{(t-1)}</span> with probability <span class="math inline">w_j^{(t-1)}</span>,</li>
+<li>perturb it: <span class="math inline">u^\star \sim \text{Normal}\big(u_j^{(t-1)}, \Sigma_t\big)</span> with <span class="math inline">\Sigma_t = 2\,\widehat{\text{Cov}}_w\big(u^{(t-1)}\big) = L_t L_t^\top</span>, twice the weighted covariance of the population,</li>
+<li>discard it if <span class="math inline">p_U(u^\star) = 0</span>, otherwise simulate <span class="math inline">x^\star \sim p\big(x \mid T(u^\star)\big)</span>,</li>
+<li>accept it if <span class="math inline">d(s(x^\star), s(x_{obs})) \le \epsilon_t</span>.</li>
+</ul></li>
+<li><p><strong>Weights.</strong> Each accepted particle is weighted by its prior density over the density of the proposal that generated it, a mixture of kernels around the previous particles:</p></li>
+</ol>
+<p><span class="math display">
+w_i^{(t)} \propto \frac{p_U\big(u_i^{(t)}\big)}{\sum_{j=1}^{P} w_j^{(t-1)}\; \text{Normal}\big(u_i^{(t)} \mid u_j^{(t-1)}, \Sigma_t\big)}
+</span></p>
+<ol start="4" type="1">
+<li><p><strong>Stop</strong> when <code>num_rounds</code> is reached, when the acceptance rate falls below <code>min_acceptance</code>, when the simulation budget (<code>num_simulations</code>) is spent, or when <code>epsilon</code> is reached. The effective sample size <span class="math inline">1/\sum_i (w_i^{(t)})^2</span> is reported for each round.</p></li>
+<li><p><strong>Output.</strong> <code>num_samples</code> draws are resampled from the final weighted population and mapped back to <span class="math inline">\theta = T(u)</span>.</p></li>
+</ol>
+<p>The from-scratch code follows the same steps but moves the particles directly in <span class="math inline">\theta = (\alpha, \beta, \sigma)</span>: proposals outside the support (<span class="math inline">\beta \le 0</span> or <span class="math inline">\sigma \notin (0, 50)</span>) have prior density zero and are discarded, and the numerator of the weights is <span class="math inline">p(\alpha)\,p(\beta)\,p(\sigma)</span>.</p>
+</section>
+</section>
+<section id="notes" class="level2">
+<h2>Notes</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class='callout-icon'></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>ABC posteriors are always <em>at least as wide</em> as the true posterior: information is lost in the tolerance <span class="math inline">\epsilon</span>, and in the summary statistics when they are not sufficient. Here, with sufficient statistics, ABC-SMC matches NUTS after about a million simulations; MCMC remains the method of choice when the likelihood is available.</p></li>
+<li><p>The number of simulations needed grows quickly with the number of summary statistics (the <em>curse of dimensionality</em>). Keep the statistics few and informative.</p></li>
+<li><p>Choosing summary statistics, a distance and a tolerance can be avoided with <a href="39.%20ABC%20random%20forests.qmd">ABC random forests</a>. When simulations are expensive, or the same model must be fitted to many datasets, <a href="40.%20Neural%20Posterior%20Estimation.qmd">Neural Posterior Estimation</a> usually needs far fewer simulations.</p></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="references" class="level2">
+<h2>Reference(s)</h2>
+<p><span class="citation" data-cites="pritchard1999population">(<a href="#ref-pritchard1999population" role="doc-biblioref"><strong>pritchard1999population?</strong></a>)</span>; <span class="citation" data-cites="beaumont2002approximate">(<a href="#ref-beaumont2002approximate" role="doc-biblioref"><strong>beaumont2002approximate?</strong></a>)</span>; <span class="citation" data-cites="beaumont2009adaptive">(<a href="#ref-beaumont2009adaptive" role="doc-biblioref"><strong>beaumont2009adaptive?</strong></a>)</span>; <span class="citation" data-cites="cranmer2020frontier">(<a href="#ref-cranmer2020frontier" role="doc-biblioref"><strong>cranmer2020frontier?</strong></a>)</span></p>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-mcelreath2018statistical" class="csl-entry" role="listitem">
+McElreath, Richard. 2018. <em><span class="nocase">Statistical Rethinking: A Bayesian course with examples in R and Stan</span></em>. Chapman; Hall/CRC.
+</div>
+</div>
+<div id="quarto-navigation-envelope" class="hidden">
+<p><span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1zaWRlYmFyLXRpdGxl">BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXItdGl0bGU=">BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6R2V0IHN0YXJ0ZWQ=">Get started</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6L3N0YXJ0L0luc3RhbGxhdGlvbi5odG1s">/start/Installation.html</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6TW9kZWxz">Models</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6LzAuSW50cm9kdWN0aW9uLmh0bWw=">/0.Introduction.html</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6QVBJIFJlZmVyZW5jZQ==">API Reference</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6L3JlZmVyZW5jZS9pbmRleC5odG1s">/reference/index.html</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6SGVscA==">Help</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6UmVwb3J0IGEgQnVn">Report a Bug</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL0JHTi1mb3ItQVNOQS9CRi9pc3N1ZXM=">https://github.com/BGN-for-ASNA/BF/issues</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6QXNrIGEgUXVlc3Rpb24=">Ask a Question</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLWludC1uYXZiYXI6aHR0cHM6Ly9naXRodWIuY29tL0JHTi1mb3ItQVNOQS9CRi9kaXNjdXNzaW9ucw==">https://github.com/BGN-for-ASNA/BF/discussions</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW5hdmJhci10b29sczpodHRwczovL3R3aXR0ZXIuY29t">https://twitter.com</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW5hdmJhci10b29sczpodHRwczovL2dpdGh1Yi5jb20vQkdOLWZvci1BU05BL0JG">https://github.com/BGN-for-ASNA/BF</span></p>
+</div>
+<div id="quarto-meta-markdown" class="hidden">
+<p><span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW1ldGF0aXRsZQ==">Approximate Bayesian Computation – BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLXR3aXR0ZXJjYXJkdGl0bGU=">Approximate Bayesian Computation – BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW9nY2FyZHRpdGxl">Approximate Bayesian Computation – BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW1ldGFzaXRlbmFtZQ==">BayesForge (BF)</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLXR3aXR0ZXJjYXJkZGVzYw==">Likelihood-free Bayesian inference: estimate parameters of models you can simulate from but whose likelihood you cannot write down.</span> <span class="hidden quarto-markdown-envelope-contents" data-render-id="cXVhcnRvLW9nY2FyZGRkZXNj">Likelihood-free Bayesian inference: estimate parameters of models you can simulate from but whose likelihood you cannot write down.</span></p>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+function convertMarkdownToHTML(markdown) {
+  const options = {
+    breaks: true,
+    gfm: true,
+  };
+  const htmlContent = marked.parse(markdown, options);
+  return htmlContent;
+}
+
+tippy('#Elasticity', {
+  content: convertMarkdownToHTML('The elasticity of the response variable with respect to the exposure is the percent change in the response with respect to a percent change in the exposure. For example, an elasticity of 1.0 means that doubling the exposure time will double the response'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+
+tippy('#Uncertainty', {
+  content: convertMarkdownToHTML('Bayesian analysis provides a complete probability distribution for each parameter. This full distribution (rather than a single point estimate) allows you to assess uncertainty in a natural and intuitive way.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#priorKnowledge', {
+  content: convertMarkdownToHTML('When data are sparse or noisy, incorporating prior knowledge through the prior distribution can improve the model’s performance. This is especially useful in fields where previous research or expert opinion is available.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#Flexibility', {
+  content: convertMarkdownToHTML('Bayesian approaches naturally extend to complex settings such as hierarchical models, models with latent variables, or situations with missing data. Their ability to blend different sources of information makes them ideal for modern, data-rich applications.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#PPCs', {
+  content: convertMarkdownToHTML('PPCs involve generating *dummy data* (or simulated observations) from the posterior predictive distribution and comparing these simulated datasets with the actual observed data.By comparing summary statistics (e.g., means, variances) or visualizations (e.g., histograms, scatter plots) between \( y^{\text{rep}} \) and the observed data, we can assess if our model is capable of reproducing key features of the data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#HPDI', {
+  content: convertMarkdownToHTML('HPDI is a metric that describe the distribution of a parameter. The Highest Posterior Density Interval is the narrowest interval that contains a specified proportion (e.g., 95%) of the posterior probability. HPDIs are especially useful when the posterior distribution is skewed or multimodal as it help in understanding the uncertainty of parameter estimates and in communicating the degree of uncertainty in predictions.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#convDiag', {
+  content: convertMarkdownToHTML('Convergence diagnostics are statistical tools and methods used to assess whether a Markov Chain Monte Carlo (MCMC) algorithm has sufficiently explored the target posterior distribution in Bayesian analysis. They help ensure that the chain has stabilized and that samples are reliable for inference.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#ESS', {
+  content: convertMarkdownToHTML('ESS estimates how many independent samples our MCMC chain is equivalent to. Low ESS values indicate that samples are highly correlated, which might affect the reliability of posterior summaries.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#Rhat', {
+  content: convertMarkdownToHTML('Rhat compares the variance between multiple chains to the variance within each chain. Values close to 1 (typically below 1.1) indicate good convergence.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+  tippy('#TP', {
+    content: convertMarkdownToHTML('Trace plots are graphical tools used in MCMC diagnostics to visualize the sampled values of a parameter over iterations. They help assess the convergence and mixing behavior of the Markov chain.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+  tippy('#AutoCor', {
+    content: convertMarkdownToHTML('Autocorrelation plots visualize the correlation between samples in an MCMC chain as a function of the lag (distance between samples). They help assess how dependent the samples are and whether the chain is mixing efficiently.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+  tippy('#DesPlot', {
+    content: convertMarkdownToHTML('Density plots visualize the estimated posterior distribution of a parameter based on MCMC samples. They provide a smoothed representation of the distribution, helping assess central tendency, spread, and shape.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+
+
+tippy('#DP', {
+  content: convertMarkdownToHTML('A dependent variable  is the variable being measured or observed in an analysis. It represents the outcome whose variation depends on changes in one or morepredictor. In statistical models, it is often denoted as Y.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#IP', {
+  content: convertMarkdownToHTML('An independent variable is the variable that is manipulated or controlled in an analysis to observe its effect on a dependent variable. It represents the input or cause in a cause-and-effect relationship and is often denoted as X in statistical models.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#lk', {
+  content: convertMarkdownToHTML('Likelihood is a statistical concept representing the probability of observing a given set of data, assuming specific values of the *parameters* in a model.It is not the same as probability; instead, it measures how well a model with certain parameters explains the observed data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#pdist', {
+  content: convertMarkdownToHTML('A probability distribution is a mathematical function that describes the likelihood of different outcomes in a random process. It specifies how probabilities are assigned to values or ranges of a random variable. Distributions can be discrete (e.g.,Binomial, Poisson) or continuous (e.g., Normal, Exponential), depending on whether the variable takes finite or infinite values.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#intercept ', {
+  content: convertMarkdownToHTML('An intercept is the value of the dependent variable when all independent variables are equal to zero in a regression model. It represents the starting point or baseline level of the outcome variable and is often denoted as α in linear models.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#slope ', {
+  content: convertMarkdownToHTML('A slope is the rate of change in the dependent variable for a one-unit change in an independent variable in a regression model. It represents the strength and direction of the relationship and is often denoted as β in linear models. A positive slope indicates an increasing relationship, while a negative slope indicates a decreasing relationship.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+
+tippy('#prior', {
+  content: convertMarkdownToHTML('Priors are distributions that represent the value of the parameter before conditioning it on the data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#BT', {
+  content: '<span style="color: white;">Bayes\' Theorem describes how to update the probability of a hypothesis given new evidence. It states that the posterior probability of a parameter is proportional to the product of the prior probability and the likelihood of the data given the parameter. This approach allows for the incorporation of prior knowledge and the use ofBayesian updating to improve the accuracy of the model.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#BUpdating', {
+    content: '<span style="color: white;">Bayesian updating is the iterative process of refining beliefs by applying Bayes\' Theorem as new data becomes available.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+
+
+tippy('#overdispersion', {
+  content: '<span style="color: white;">Overdispersion refers to a situation in statistical modeling where the variability of the data exceeds what is expected under the assumed model. In this case, by the binomial distribution.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#linkF', {
+    content: '<span style="color: white;">The link function is a key component of the generalized linear model (GLM) and it is used to transform the mean of the response variable so that it can be modeled as a linear combination of the predictors. Different types of response data(continuous, binary, counts, etc.) have different natural ranges. For example, probabilities must lie between 0 and 1, and a logarithmic link ensures a positive mean for count data. The choice of link function influences how we interpret the regression coefficients.For instance, with a logit link (used in logistic regression), the coefficients relate to the log - odds of the outcome.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#simplex', {
+  content: '<span style="color: white;">A simplex is a vector of k−1 probabilities that sum to one.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+  
+tippy('#triptych', {
+    content: '<span style="color: white;">Three panels arranged side by side to compare multiple datasets or conditions simultaneously. Each panel often represents a different aspect of the data or a different dataset, allowing for easy comparison and analysis. They are particularly useful for displaying complex relationships or patterns across multiple variables or experimental conditions.") plots are very handy for understanding the impact of interactions.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+    
+tippy('#hyperP', {
+  content: '<span style="color: white;">A hyperprior is a prior distribution placed on the parameters (called hyperparameters) of another prior distribution. Essentially, it introduces a second layer of uncertainty by modeling the parameters of the prior as random variables, allowing for more flexibility and robustness in the Bayesian model.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#cov', {
+    content: '<span style="color: white;">A covariance matrix is a square matrix that contains the covariances between pairs of elements in a random vector. Each element in the matrix represents the covariance between two variables. The diagonal elements represent the variances of each variable, and the off-diagonal elements represent the covariance between different variables.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#centerRF', {
+  content: "<span style='color: white;'>The centered version of the varying intercept model is a statistical approach where the intercepts of a regression model vary across groups or clusters, and these intercepts are centered around a global mean. In this model, each group has its own intercept, but the differences between these intercepts and the global mean are what are explicitly estimated. This helps in understanding how each group's baseline differs from an overall average, making it easier to interpret variations between groups.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#NodeF', {
+    content: "<span style='color: white;'>Nodal categorical (e.g., sex) or continuous (e.g., age) characteristics</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#DyadicF', {
+    content: "<span style='color: white;'>Link-related categorical (e.g., same group membership) or continuous (e.g., genetic distances) characteristics between nodes</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#senderF', {
+    content: "<span style='color: white;'>Node <i>i</i>'s propensity to emit a link.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#receiverF', {
+    content: "<span style='color: white;'>Node <i>j</i>'s propensity to receive a link.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#DyadicF2', {
+    content: "<span style='color: white;'>Propensity of node <i>i</i> and <i>j</i> to receive from each other.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#expoB', {
+    content: "<span style='color: white;'>Heterogeneity in observations between individuals leading to over- and under-sampling of some individuals.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#censoB', {
+    content: "<span style='color: white;'>Missing interactions within observation leading to over- and under-estimation of interactions (e.g., Females birds may have cryptic phenotype compare to male birds, leading to higher probability to miss interactions during observations).</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#assor', {
+    content: "<span style='color: white;'>The tendency of nodes to connect with similar nodes.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#disassor', {
+    content: "<span style='color: white;'>The tendency of nodes to connect with dissimilar nodes.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+
+tippy('#chol', {
+  content: "<span style='color: white;'>This matrix is special because it encodes correlations between the variables but in a computationally stable way.In multivariate normal distributions, correlation matrices are positive definite and symmetric, but they can be tricky to work with directly. The Cholesky decomposition makes computation easier and more stable because it's lower triangular and simplifies matrix operations.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#uncertainty', {
+  content: "<span style='color: white;'>Model parameter uncertainty refers to the inherent variability in the parameter estimates due to limited or noisy data, represented as probability distributions rather than fixed values. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#posterior', {
+  content: "<span style='color: white;'> Probability distribution of the model parameters after observing the data. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#scaled', {
+  content: "<span style='color: white;'> Scaled data is data that has been transformed to fit within a specific range or to have specific statistical properties, such as a normal distribution with a mean of zero and a standard deviation of one. This transformation helps improve the performance of algorithms and ensures that features contribute equally to the analysis. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#grandMean', {
+  content: "<span style='color: white;'> The average value of the outcome when all predictor variables are at their mean levels. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#ohe', {
+  content: "<span style='color: white;'>Convert categorical variables into binary vectors, where each category is represented by a unique vector with all elements set to zero except for one element, which is set to one.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#indices', {
+  content: "<span style='color: white;'>Process of mapping each unique category of a categorical variable to a corresponding integer index, where each category is assigned a distinct numerical value.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#softmax', {
+  content: `
+  <span style='color: white;'>
+    takes a vector of 𝑛 real-valued scores (logits) and exponentiates each score, 
+    then normalizes them by dividing each exponentiated score by the sum of all exponentiated scores. 
+    The resulting output values lie in the range (0, 1) and sum to 1, making them interpretable as probabilities.<br><br>
+    <strong>Formula:</strong><br>
+    $$softmax(z<sub>i</sub>) = [ \\frac{e^{z_i}}{\\sum_{j=1}^{n} e^{z_j}} ]$$
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#kernel', {
+  content: `
+  <span style='color: white;'>
+    A kernel k(x,x') is a function that computes the similarity/covariance between any two points x and x'
+    in a higher-dimensional feature space without explicitly transforming them. 
+    The kernel function allows for non-linear relationships by mapping input space to feature space, 
+    where linear techniques can then be applied. 
+    Mathematically, like for the covariance matrix it must be symmetric and positive semi-definite.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#kernelMean0', {
+  content: `
+  <span style='color: white;'>
+    GP mean is usually set to zero as by setting the mean to zero, 
+    we center the distribution around the origin. 
+    This helps in interpreting the model, as the values of <i>𝑓(𝑥)<\\i> 
+    can be thought of as deviations from this mean.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#signAmbiguity', {
+  content: `
+  <span style='color: white;'>
+    PCA identifies directions (principal components) that capture the maximum variance in the data. However, the orientation of these components is not unique; both a vector and its negation represent the same principal direction. This means that if 𝑤 is a principal component, −𝑤 is equally valid.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#MatCov', {
+  content: `
+  <span style='color: white;'>
+    A covariance matrix is a square matrix Σ of size $n×n$ for n random variables $X₁, X₂, ..., Xₙ$, where each element $σ_ij$ represents the covariance between variables $X_i$ and $X_j$. The diagonal elements $σ_ii$ are the variances of each variable $X_i$.
+  </span>
+  `, allowHTML: true,
+    interactive: true,
+    delay: 100,
+    onShow(instance) {
+      MathJax.typesetPromise([instance.reference]).then(() => {
+        // Optional: if you want to do something after the typesetting
+      });
+    },
+});
+
+tippy('#RFcentered', {
+  content: `
+  <span style='color: white;'>
+    The centered version of the varying intercept in mixed effects models is a transformation where each group's intercept is expressed as a deviation from the fixed intercept. This results in zero-mean random effects ensures that the random effects are balanced around zero, enhancing model interpretability and estimation efficiency.
+  </span>
+  `, allowHTML: true,
+    interactive: true,
+    delay: 100,
+    onShow(instance) {
+      MathJax.typesetPromise([instance.reference]).then(() => {
+        // Optional: if you want to do something after the typesetting
+      });
+    },
+});
+
+tippy('#LKJcorr', {
+      content: `
+  <span style='color: white;'>
+    The Cholesky Factor is a lower triangular matrix ( $L$ ) with positive diagonal entries such that $( A = LL^T )$ for a given symmetric positive-definite matrix ( $A$ ).
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#unsupervised', {
+      content: `
+  <span style='color: white;'>
+    An unsupervised algorithm is a method that processes unlabeled data to automatically uncover patterns, groupings, or structures without predefined output targets.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#stickProcess', {
+      content: `
+  <span style='color: white;'>
+The stick-breaking process is a way to generate a random distribution by imagining a unit-length stick that gets broken into pieces one step at a time. At each step, a random fraction of whatever stick remains is snapped off to form a new weight, and the rest is left for future breaks. Each weight is paired with a randomly chosen parameter value. Repeating this indefinitely yields a distribution made of infinitely many weighted parameter, where earlier pieces tend to be larger and later ones smaller.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Neurons', {
+      content: `
+  <span style='color: white;'>
+ In a neural network, a neuron (or node) is a fundamental computational unit. It receives inputs, applies a weighted sum and an activation function to these inputs, and produces an output. It's analogous to a biological neuron, processing and transmitting signals.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Layers', {
+      content: `
+  <span style='color: white;'>
+Layers are groups of neurons organized in a 2D array. Each layer processes the output from the previous layer and passes its output to the next. Common layer types include input layers, hidden layers (where the main computation occurs), and output layers (which produce the final predictions).
+</span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+
+tippy('#Dropout', {
+      content: `
+  <span style='color: white;'>
+ Dropout is a regularization technique where, during training, a random subset of neurons (and their connections) are temporarily ignored or "dropped out" for each training iteration. This prevents neurons from co-adapting too much and encourages the network to learn more robust features, thus reducing overfitting.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#L2', {
+      content: `
+  <span style='color: white;'>
+L2 regularization (also known as weight decay) is a technique to prevent overfitting by adding a penalty term to the loss function. This penalty is proportional to the sum of the squares of the network's weights. It encourages the model to use smaller weights, leading to a simpler and more generalized model.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+
+tippy('#Overfitting', {
+      content: `
+  <span style='color: white;'>
+Overfitting occurs when a machine learning model learns the training data too well, including its noise and random fluctuations. As a result, the model performs very poorly on new, unseen data because it has failed to generalize the underlying patterns.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#VI', {
+      content: `
+  <span style='color: white;'>
+An optimization-based method for approximating complex, intractable posterior distributions. Instead of sampling (as in MCMC), VI posits a parameterized family of simpler distributions (e.g., Gaussians) and optimizes their parameters to minimize the Kullback-Leibler (KL) divergence between the approximation and the true posterior. This effectively converts an integration problem into an optimization problem
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+    
+tippy('#SG-MCMC', {
+      content: `
+  <span style='color: white;'>
+A class of algorithms designed to scale Markov Chain Monte Carlo methods to large datasets. It approximates the gradient of the log-posterior using mini-batches (subsets) of data rather than the full dataset. To ensure convergence to the true posterior distribution despite the noise introduced by subsampling, these methods (such as Stochastic Gradient Langevin Dynamics) introduce specific noise injection and step-size schedules.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Activation', {
+      content: `
+  <span style='color: white;'>
+An activation function is a nonlinear transformation applied to the pre-activation output of a neuron in a neural network. It enables the network to learn nonlinear relationships between inputs and outputs. Common activation functions include ReLU, tanh, and sigmoid, Softmax, GELU, Swish.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+</script>
+<script>
+  // Synchronize body theme class to html/document element for root scrollbar styling
+  function syncThemeClass() {
+    const isDark = document.body.classList.contains('quarto-dark');
+    document.documentElement.classList.toggle('quarto-dark', isDark);
+    document.documentElement.classList.toggle('quarto-light', !isDark);
+  }
+  
+  if (document.body) {
+    syncThemeClass();
+  }
+  document.addEventListener("DOMContentLoaded", syncThemeClass);
+  
+  const themeObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        syncThemeClass();
+      }
+    });
+  });
+  
+  if (document.body) {
+    themeObserver.observe(document.body, { attributes: true });
+  } else {
+    document.addEventListener("DOMContentLoaded", function() {
+      themeObserver.observe(document.body, { attributes: true });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Set the global if Quarto respects it
+    window.quartoDisableCodeFolding = true;
+    
+    // Manually hide any fold buttons that might have been rendered
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .quarto-code-tools-menu, 
+      .quarto-code-collapse-toggle { 
+        display: none !important; 
+      }
+    `;
+    document.head.appendChild(style);
+  });
+
+  // Dynamic sidebar folding: fold everything except the current and NEXT section with smooth transitions
+  (function() {
+    function adjustSidebarFolding(useTransition) {
+      const sidebar = document.querySelector('#quarto-sidebar');
+      if (!sidebar) return;
+
+      const sections = Array.from(sidebar.querySelectorAll('li.sidebar-item-section'));
+      if (sections.length === 0) return;
+
+      // Find the active link
+      const activeLink = sidebar.querySelector('a.active');
+      let currentSectionLi = null;
+      if (activeLink) {
+        currentSectionLi = activeLink.closest('li.sidebar-item-section');
+      }
+
+      // Determine the index of the current section
+      const currentIndex = currentSectionLi ? sections.indexOf(currentSectionLi) : -1;
+
+      sections.forEach((sectionLi, index) => {
+        const shouldOpen = (currentIndex !== -1 && (index === currentIndex || index === currentIndex + 1));
+        
+        const ul = sectionLi.querySelector('ul.sidebar-section');
+        if (ul) {
+          if (useTransition && window.bootstrap && window.bootstrap.Collapse) {
+            try {
+              const bsCollapse = bootstrap.Collapse.getOrCreateInstance(ul, { toggle: false });
+              if (shouldOpen) {
+                bsCollapse.show();
+              } else {
+                bsCollapse.hide();
+              }
+            } catch (e) {
+              toggleDOMDirectly(ul, shouldOpen);
+              toggleTogglesDirectly(sectionLi, shouldOpen);
+            }
+          } else {
+            toggleDOMDirectly(ul, shouldOpen);
+            toggleTogglesDirectly(sectionLi, shouldOpen);
+          }
+        }
+      });
+    }
+
+    function toggleDOMDirectly(ul, shouldOpen) {
+      if (shouldOpen) {
+        ul.classList.add('show');
+      } else {
+        ul.classList.remove('show');
+      }
+    }
+
+    function toggleTogglesDirectly(sectionLi, shouldOpen) {
+      const toggles = sectionLi.querySelectorAll('[data-bs-toggle="collapse"]');
+      toggles.forEach(toggle => {
+        toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        if (!shouldOpen) {
+          toggle.classList.add('collapsed');
+        } else {
+          toggle.classList.remove('collapsed');
+        }
+      });
+    }
+
+    // Save the current active section index before leaving the page
+    window.addEventListener('beforeunload', function() {
+      const activeLink = document.querySelector('#quarto-sidebar a.active');
+      if (activeLink) {
+        const currentSectionLi = activeLink.closest('li.sidebar-item-section');
+        const sections = Array.from(document.querySelectorAll('#quarto-sidebar li.sidebar-item-section'));
+        const currentIndex = sections.indexOf(currentSectionLi);
+        if (currentIndex !== -1) {
+          sessionStorage.setItem('prevActiveSectionIndex', currentIndex);
+        }
+      }
+    });
+
+    // Helper to restore previous page's sidebar state instantly before DOMContentLoaded/paint
+    function restorePreviousSidebarState() {
+      const prevActiveIndexStr = sessionStorage.getItem('prevActiveSectionIndex');
+      if (prevActiveIndexStr !== null) {
+        const prevActiveIndex = parseInt(prevActiveIndexStr, 10);
+        const sidebar = document.querySelector('#quarto-sidebar');
+        if (!sidebar) return;
+        
+        const sections = Array.from(sidebar.querySelectorAll('li.sidebar-item-section'));
+        sections.forEach((sectionLi, index) => {
+          const shouldStartOpen = (index === prevActiveIndex || index === prevActiveIndex + 1);
+          const ul = sectionLi.querySelector('ul.sidebar-section');
+          if (ul) {
+            toggleDOMDirectly(ul, shouldStartOpen);
+          }
+          toggleTogglesDirectly(sectionLi, shouldStartOpen);
+        });
+      }
+    }
+
+    // Try restoring immediately if the DOM elements are already available
+    restorePreviousSidebarState();
+
+    // Trigger smooth sliding folding animation shortly after DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Restore again here just in case the elements weren't loaded when the script parsed
+      restorePreviousSidebarState();
+      
+      setTimeout(function() {
+        adjustSidebarFolding(true);
+      }, 50);
+    });
+  })();
+</script>
+<script id = "quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+</body>
+
+</html>

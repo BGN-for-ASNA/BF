@@ -160,6 +160,7 @@ format:
     highlight-style: monokai
     toc: true
     toc-location: right
+    toc-expand: true
     html-math-method: katex
     grid:
       body-width: 1000px

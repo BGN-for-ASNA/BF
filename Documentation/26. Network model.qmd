@@ -206,20 +206,20 @@ Event if you don't have dyadic effect, or block model effect, they need to be de
 
 ### *Main Formula*
 
-The simple model that can be built to model link weights between nodes *i* and *j* can be defined using a Poisson distribution:
+The model built in the example above to model binary ties between nodes *i* and *j* is defined using a Bernoulli distribution (for weighted counts, a Poisson distribution with log link $\log(Y_{ij})$ can be used analogously):
 
 $$
-G_{ij} \sim \text{Poisson}(Y_{ij})
+G_{ij} \sim \text{Bernoulli}(p_{ij})
 $$ 
 
 $$
-log(Y_{ij}) = \alpha +  \lambda_i + \pi_j + \delta_{ij}  + \beta_1 X_i + \beta_2 X_j + \beta_3 Q_{ij}
+\text{logit}(p_{ij}) = \alpha +  \lambda_i + \pi_j + \delta_{ij}  + \beta_1 X_i + \beta_2 X_j + \beta_3 Q_{ij}
 $$
 
 
 where:
 
-- $Y_{ij}$ is the weight of the link between *i* and *j*.
+- $p_{ij}$ is the probability of a link between *i* and *j*.
 
   
 - $\lambda_i$ is the [<span style="color:#0D6EFD">sender random effect 🛈</span>]{#senderF}.

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,8 +22,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +35,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -65,17 +66,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -126,14 +128,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -212,7 +210,167 @@ window.Quarto = {
 <link rel="stylesheet" href="MyStyles_v1.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -273,7 +431,7 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -291,6 +449,7 @@ window.Quarto = {
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
+
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -352,7 +511,7 @@ Note
 <section id="simulated-data" class="level3">
 <h3 class="anchored" data-anchor-id="simulated-data">Simulated Data</h3>
 <div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">R (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false">Julia (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-6" role="tab" aria-controls="tabset-1-6" aria-selected="false">Julia (Build in function)</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -422,7 +581,7 @@ Note
 <span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>m.fit(bnn_mixture_model, num_chains<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="2a3290c2" class="cell" data-execution_count="1">
+<div id="fd013f99" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -447,42 +606,22 @@ Note
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Results</span></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>m.models.bnnc.plot(data, m.sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>bf v 0.0.60 package loaded</code></pre>
+</div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/3.12venv/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
-An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.58 package loaded
-jax.local_device_count 32
-⚠️This function is still in development. Use it with caution.⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution.⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution.⚠️
+<pre><code>jax.local_device_count 16
 ⚠️This function is still in development. Use it with caution. ⚠️
 ⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/2000 [00:00&lt;?, ?it/s]</code></pre>
+<pre><code>  0%|          | 0/2000 [00:00&lt;?, ?it/s]warmup:   0%|          | 0/2000 [00:19&lt;?, ?it/s, 1023 steps of size 3.73e-02. acc. prob=0.75]warmup:   3%|▎         | 53/2000 [00:20&lt;12:23,  2.62it/s, 1023 steps of size 1.07e-02. acc. prob=0.74]warmup:   3%|▎         | 54/2000 [00:20&lt;12:25,  2.61it/s, 1023 steps of size 1.56e-02. acc. prob=0.75]warmup:   3%|▎         | 55/2000 [00:21&lt;12:29,  2.59it/s, 1023 steps of size 2.56e-02. acc. prob=0.75]warmup:   3%|▎         | 56/2000 [00:21&lt;12:32,  2.58it/s, 1023 steps of size 2.89e-02. acc. prob=0.75]warmup:   3%|▎         | 57/2000 [00:21&lt;12:38,  2.56it/s, 1023 steps of size 4.26e-02. acc. prob=0.76]warmup:   3%|▎         | 58/2000 [00:22&lt;12:41,  2.55it/s, 1023 steps of size 6.23e-02. acc. prob=0.76]warmup:   3%|▎         | 60/2000 [00:22&lt;11:35,  2.79it/s, 1023 steps of size 1.59e-02. acc. prob=0.75]warmup:   3%|▎         | 61/2000 [00:23&lt;11:57,  2.70it/s, 1023 steps of size 2.37e-02. acc. prob=0.75]warmup:   3%|▎         | 62/2000 [00:23&lt;12:14,  2.64it/s, 1023 steps of size 2.83e-02. acc. prob=0.76]warmup:   3%|▎         | 63/2000 [00:24&lt;12:32,  2.57it/s, 1023 steps of size 3.87e-02. acc. prob=0.76]warmup:   3%|▎         | 64/2000 [00:24&lt;12:52,  2.51it/s, 1023 steps of size 1.78e-02. acc. prob=0.75]warmup:   3%|▎         | 65/2000 [00:25&lt;13:21,  2.42it/s, 1023 steps of size 2.71e-02. acc. prob=0.76]warmup:   3%|▎         | 66/2000 [00:25&lt;13:51,  2.33it/s, 1023 steps of size 1.07e-02. acc. prob=0.75]warmup:   3%|▎         | 67/2000 [00:26&lt;14:23,  2.24it/s, 1023 steps of size 1.64e-02. acc. prob=0.75]warmup:   3%|▎         | 68/2000 [00:26&lt;14:41,  2.19it/s, 1023 steps of size 1.41e-02. acc. prob=0.75]warmup:   3%|▎         | 69/2000 [00:27&lt;15:14,  2.11it/s, 1023 steps of size 2.06e-02. acc. prob=0.76]warmup:   4%|▎         | 70/2000 [00:27&lt;15:07,  2.13it/s, 1023 steps of size 1.73e-02. acc. prob=0.76]warmup:   4%|▎         | 71/2000 [00:27&lt;15:09,  2.12it/s, 1023 steps of size 2.65e-02. acc. prob=0.76]warmup:   4%|▎         | 72/2000 [00:28&lt;15:19,  2.10it/s, 1023 steps of size 1.79e-02. acc. prob=0.76]warmup:   4%|▎         | 73/2000 [00:28&lt;15:35,  2.06it/s, 1023 steps of size 2.10e-02. acc. prob=0.76]warmup:   4%|▎         | 74/2000 [00:29&lt;15:28,  2.08it/s, 1023 steps of size 2.09e-02. acc. prob=0.76]warmup:   4%|▍         | 75/2000 [00:30&lt;20:21,  1.58it/s, 1023 steps of size 2.85e-02. acc. prob=0.76]warmup:   4%|▍         | 76/2000 [00:31&lt;20:01,  1.60it/s, 1023 steps of size 2.31e-02. acc. prob=0.76]warmup:   4%|▍         | 77/2000 [00:31&lt;18:59,  1.69it/s, 1023 steps of size 3.20e-02. acc. prob=0.76]warmup:   4%|▍         | 78/2000 [00:31&lt;17:30,  1.83it/s, 1023 steps of size 3.18e-02. acc. prob=0.76]warmup:   4%|▍         | 79/2000 [00:32&lt;16:49,  1.90it/s, 1023 steps of size 1.72e-02. acc. prob=0.76]warmup:   4%|▍         | 80/2000 [00:33&lt;17:58,  1.78it/s, 1023 steps of size 2.06e-02. acc. prob=0.76]warmup:   4%|▍         | 81/2000 [00:33&lt;17:05,  1.87it/s, 1023 steps of size 2.58e-02. acc. prob=0.76]warmup:   4%|▍         | 82/2000 [00:34&lt;16:16,  1.96it/s, 1023 steps of size 2.77e-02. acc. prob=0.76]warmup:   4%|▍         | 83/2000 [00:34&lt;15:39,  2.04it/s, 1023 steps of size 2.65e-02. acc. prob=0.76]warmup:   4%|▍         | 84/2000 [00:34&lt;15:08,  2.11it/s, 1023 steps of size 2.35e-02. acc. prob=0.76]warmup:   4%|▍         | 85/2000 [00:35&lt;15:02,  2.12it/s, 1023 steps of size 2.84e-02. acc. prob=0.76]warmup:   4%|▍         | 86/2000 [00:35&lt;14:34,  2.19it/s, 1023 steps of size 2.24e-02. acc. prob=0.76]warmup:   4%|▍         | 87/2000 [00:36&lt;14:09,  2.25it/s, 1023 steps of size 2.42e-02. acc. prob=0.76]warmup:   4%|▍         | 88/2000 [00:36&lt;14:03,  2.27it/s, 1023 steps of size 3.59e-02. acc. prob=0.77]warmup:   4%|▍         | 89/2000 [00:37&lt;14:05,  2.26it/s, 1023 steps of size 3.05e-02. acc. prob=0.77]warmup:   4%|▍         | 90/2000 [00:37&lt;14:01,  2.27it/s, 1023 steps of size 3.30e-02. acc. prob=0.77]warmup:   5%|▍         | 91/2000 [00:37&lt;13:57,  2.28it/s, 1023 steps of size 1.84e-02. acc. prob=0.76]warmup:   5%|▍         | 92/2000 [00:38&lt;13:47,  2.31it/s, 1023 steps of size 2.57e-02. acc. prob=0.77]warmup:   5%|▍         | 93/2000 [00:38&lt;13:45,  2.31it/s, 1023 steps of size 1.70e-02. acc. prob=0.76]warmup:   5%|▍         | 94/2000 [00:39&lt;14:21,  2.21it/s, 1023 steps of size 2.10e-02. acc. prob=0.76]warmup:   5%|▍         | 95/2000 [00:39&lt;14:12,  2.24it/s, 1023 steps of size 1.78e-02. acc. prob=0.76]warmup:   5%|▍         | 96/2000 [00:40&lt;13:59,  2.27it/s, 1023 steps of size 2.27e-02. acc. prob=0.77]warmup:   5%|▍         | 97/2000 [00:40&lt;14:03,  2.26it/s, 1023 steps of size 2.84e-02. acc. prob=0.77]warmup:   5%|▍         | 98/2000 [00:41&lt;14:40,  2.16it/s, 1023 steps of size 1.44e-02. acc. prob=0.76]warmup:   5%|▍         | 99/2000 [00:41&lt;14:35,  2.17it/s, 1023 steps of size 2.04e-02. acc. prob=0.77]warmup:   5%|▌         | 100/2000 [00:42&lt;14:21,  2.21it/s, 1023 steps of size 2.99e-02. acc. prob=0.77]warmup:   5%|▌         | 104/2000 [00:42&lt;05:53,  5.36it/s, 63 steps of size 3.42e-02. acc. prob=0.76]  warmup:   5%|▌         | 106/2000 [00:42&lt;04:38,  6.81it/s, 127 steps of size 8.03e-02. acc. prob=0.77]warmup:   6%|▌         | 110/2000 [00:42&lt;03:37,  8.67it/s, 511 steps of size 2.17e-02. acc. prob=0.76]warmup:   6%|▌         | 111/2000 [00:42&lt;03:41,  8.51it/s, 255 steps of size 4.06e-02. acc. prob=0.77]warmup:   6%|▌         | 113/2000 [00:42&lt;03:09,  9.97it/s, 63 steps of size 1.14e-02. acc. prob=0.76] warmup:   6%|▌         | 114/2000 [00:43&lt;04:05,  7.68it/s, 511 steps of size 2.16e-02. acc. prob=0.76]warmup:   6%|▌         | 115/2000 [00:43&lt;04:19,  7.26it/s, 255 steps of size 3.75e-02. acc. prob=0.77]warmup:   6%|▌         | 117/2000 [00:43&lt;03:21,  9.34it/s, 63 steps of size 1.04e-01. acc. prob=0.77] warmup:   6%|▌         | 119/2000 [00:43&lt;02:45, 11.37it/s, 127 steps of size 7.71e-02. acc. prob=0.77]warmup:   6%|▌         | 122/2000 [00:43&lt;02:57, 10.59it/s, 511 steps of size 1.93e-02. acc. prob=0.77]warmup:   6%|▌         | 123/2000 [00:43&lt;03:06, 10.04it/s, 255 steps of size 3.53e-02. acc. prob=0.77]warmup:   6%|▋         | 125/2000 [00:44&lt;02:36, 11.94it/s, 63 steps of size 7.69e-02. acc. prob=0.77] warmup:   6%|▋         | 128/2000 [00:44&lt;02:14, 13.88it/s, 255 steps of size 3.49e-02. acc. prob=0.77]warmup:   6%|▋         | 130/2000 [00:44&lt;02:08, 14.54it/s, 127 steps of size 8.61e-02. acc. prob=0.77]warmup:   7%|▋         | 133/2000 [00:44&lt;01:46, 17.57it/s, 127 steps of size 4.34e-02. acc. prob=0.77]warmup:   7%|▋         | 136/2000 [00:44&lt;01:36, 19.35it/s, 63 steps of size 3.05e-02. acc. prob=0.77] warmup:   7%|▋         | 138/2000 [00:44&lt;01:38, 18.84it/s, 127 steps of size 5.39e-02. acc. prob=0.77]warmup:   7%|▋         | 141/2000 [00:44&lt;01:28, 20.98it/s, 31 steps of size 2.31e-02. acc. prob=0.77] warmup:   7%|▋         | 142/2000 [00:44&lt;01:50, 16.76it/s, 255 steps of size 3.87e-02. acc. prob=0.77]warmup:   7%|▋         | 144/2000 [00:45&lt;01:48, 17.05it/s, 63 steps of size 1.02e-01. acc. prob=0.77] warmup:   7%|▋         | 147/2000 [00:45&lt;01:37, 19.06it/s, 63 steps of size 6.20e-02. acc. prob=0.77]warmup:   8%|▊         | 150/2000 [00:45&lt;01:28, 21.00it/s, 63 steps of size 1.18e-01. acc. prob=0.78]warmup:   8%|▊         | 155/2000 [00:45&lt;01:13, 24.96it/s, 127 steps of size 6.12e-02. acc. prob=0.77]warmup:   8%|▊         | 158/2000 [00:45&lt;01:43, 17.77it/s, 511 steps of size 1.98e-02. acc. prob=0.77]warmup:   8%|▊         | 159/2000 [00:45&lt;01:56, 15.86it/s, 255 steps of size 3.62e-02. acc. prob=0.77]warmup:   8%|▊         | 162/2000 [00:45&lt;01:42, 17.92it/s, 63 steps of size 1.30e-01. acc. prob=0.77] warmup:   8%|▊         | 165/2000 [00:46&lt;01:29, 20.39it/s, 63 steps of size 1.14e-02. acc. prob=0.77]warmup:   8%|▊         | 166/2000 [00:46&lt;02:12, 13.85it/s, 511 steps of size 2.16e-02. acc. prob=0.77]warmup:   8%|▊         | 167/2000 [00:46&lt;02:25, 12.63it/s, 255 steps of size 2.36e-02. acc. prob=0.77]warmup:   8%|▊         | 169/2000 [00:46&lt;02:28, 12.30it/s, 255 steps of size 3.62e-02. acc. prob=0.77]warmup:   9%|▊         | 172/2000 [00:46&lt;01:54, 16.00it/s, 31 steps of size 5.81e-02. acc. prob=0.77] warmup:   9%|▉         | 177/2000 [00:46&lt;01:16, 23.87it/s, 63 steps of size 1.45e-01. acc. prob=0.78]warmup:   9%|▉         | 180/2000 [00:46&lt;01:17, 23.58it/s, 63 steps of size 7.07e-02. acc. prob=0.77]warmup:   9%|▉         | 181/2000 [00:46&lt;01:30, 20.06it/s, 63 steps of size 8.80e-02. acc. prob=0.77]warmup:   9%|▉         | 184/2000 [00:47&lt;01:23, 21.74it/s, 63 steps of size 1.33e-01. acc. prob=0.78]warmup:   9%|▉         | 187/2000 [00:47&lt;01:22, 21.92it/s, 63 steps of size 9.44e-02. acc. prob=0.78]warmup:  10%|▉         | 190/2000 [00:47&lt;01:27, 20.64it/s, 255 steps of size 3.25e-02. acc. prob=0.77]warmup:  10%|▉         | 193/2000 [00:47&lt;01:26, 20.87it/s, 127 steps of size 7.44e-02. acc. prob=0.78]warmup:  10%|▉         | 197/2000 [00:47&lt;01:15, 23.86it/s, 63 steps of size 8.60e-02. acc. prob=0.78] warmup:  10%|█         | 201/2000 [00:47&lt;01:08, 26.37it/s, 127 steps of size 6.44e-02. acc. prob=0.78]warmup:  10%|█         | 205/2000 [00:47&lt;01:02, 28.91it/s, 63 steps of size 1.33e-01. acc. prob=0.78] warmup:  10%|█         | 208/2000 [00:48&lt;01:02, 28.59it/s, 63 steps of size 9.17e-02. acc. prob=0.78]warmup:  11%|█         | 212/2000 [00:48&lt;00:56, 31.40it/s, 63 steps of size 4.97e-02. acc. prob=0.78]warmup:  11%|█         | 215/2000 [00:48&lt;00:59, 30.13it/s, 63 steps of size 5.62e-02. acc. prob=0.78]warmup:  11%|█         | 219/2000 [00:48&lt;00:58, 30.47it/s, 127 steps of size 6.34e-02. acc. prob=0.78]warmup:  11%|█         | 222/2000 [00:48&lt;01:00, 29.34it/s, 63 steps of size 8.71e-02. acc. prob=0.78] warmup:  11%|█▏        | 226/2000 [00:48&lt;00:55, 31.98it/s, 31 steps of size 5.23e-02. acc. prob=0.78]warmup:  12%|█▏        | 230/2000 [00:48&lt;00:55, 31.82it/s, 127 steps of size 5.19e-02. acc. prob=0.78]warmup:  12%|█▏        | 234/2000 [00:48&lt;00:55, 32.08it/s, 63 steps of size 1.04e-01. acc. prob=0.78] warmup:  12%|█▏        | 238/2000 [00:48&lt;00:54, 32.16it/s, 127 steps of size 4.32e-02. acc. prob=0.78]warmup:  12%|█▏        | 240/2000 [00:49&lt;01:02, 27.95it/s, 63 steps of size 9.25e-02. acc. prob=0.78] warmup:  12%|█▏        | 243/2000 [00:49&lt;01:02, 28.15it/s, 63 steps of size 1.20e-01. acc. prob=0.78]warmup:  12%|█▏        | 246/2000 [00:49&lt;01:08, 25.57it/s, 127 steps of size 3.96e-02. acc. prob=0.78]warmup:  12%|█▏        | 248/2000 [00:49&lt;01:15, 23.32it/s, 127 steps of size 1.98e-02. acc. prob=0.78]warmup:  12%|█▏        | 249/2000 [00:49&lt;01:30, 19.25it/s, 255 steps of size 2.85e-02. acc. prob=0.78]warmup:  13%|█▎        | 251/2000 [00:49&lt;02:41, 10.81it/s, 127 steps of size 5.96e-01. acc. prob=0.78]warmup:  13%|█▎        | 253/2000 [00:50&lt;02:24, 12.13it/s, 31 steps of size 1.38e-01. acc. prob=0.78] warmup:  13%|█▎        | 256/2000 [00:50&lt;02:27, 11.81it/s, 255 steps of size 4.10e-02. acc. prob=0.78]warmup:  13%|█▎        | 259/2000 [00:50&lt;02:00, 14.47it/s, 31 steps of size 5.55e-02. acc. prob=0.78] warmup:  13%|█▎        | 262/2000 [00:50&lt;01:45, 16.50it/s, 127 steps of size 7.86e-02. acc. prob=0.78]warmup:  13%|█▎        | 267/2000 [00:50&lt;01:18, 21.97it/s, 127 steps of size 7.54e-02. acc. prob=0.78]warmup:  13%|█▎        | 269/2000 [00:50&lt;01:24, 20.54it/s, 127 steps of size 7.57e-02. acc. prob=0.78]warmup:  14%|█▎        | 272/2000 [00:50&lt;01:20, 21.43it/s, 31 steps of size 6.52e-02. acc. prob=0.78] warmup:  14%|█▎        | 274/2000 [00:51&lt;01:24, 20.37it/s, 63 steps of size 1.21e-01. acc. prob=0.78]warmup:  14%|█▍        | 278/2000 [00:51&lt;01:09, 24.67it/s, 31 steps of size 4.33e-02. acc. prob=0.78]warmup:  14%|█▍        | 281/2000 [00:51&lt;01:15, 22.75it/s, 127 steps of size 5.06e-02. acc. prob=0.78]warmup:  14%|█▍        | 284/2000 [00:51&lt;01:12, 23.76it/s, 63 steps of size 9.32e-02. acc. prob=0.78] warmup:  14%|█▍        | 287/2000 [00:51&lt;01:08, 24.86it/s, 127 steps of size 8.98e-02. acc. prob=0.78]warmup:  14%|█▍        | 290/2000 [00:51&lt;01:12, 23.55it/s, 127 steps of size 8.04e-02. acc. prob=0.78]warmup:  15%|█▍        | 294/2000 [00:51&lt;01:02, 27.31it/s, 63 steps of size 8.16e-02. acc. prob=0.78] warmup:  15%|█▌        | 300/2000 [00:51&lt;00:49, 34.28it/s, 31 steps of size 3.15e-02. acc. prob=0.78]warmup:  15%|█▌        | 303/2000 [00:52&lt;00:54, 31.39it/s, 63 steps of size 1.24e-01. acc. prob=0.78]warmup:  16%|█▌        | 310/2000 [00:52&lt;00:45, 37.15it/s, 127 steps of size 6.34e-02. acc. prob=0.78]warmup:  16%|█▌        | 315/2000 [00:52&lt;00:44, 37.99it/s, 63 steps of size 1.29e-01. acc. prob=0.78] warmup:  16%|█▌        | 320/2000 [00:52&lt;00:41, 40.26it/s, 63 steps of size 1.15e-01. acc. prob=0.78]warmup:  16%|█▋        | 325/2000 [00:52&lt;00:39, 42.54it/s, 31 steps of size 1.48e-01. acc. prob=0.78]warmup:  17%|█▋        | 331/2000 [00:52&lt;00:36, 45.50it/s, 31 steps of size 3.58e-02. acc. prob=0.78]warmup:  17%|█▋        | 333/2000 [00:52&lt;00:45, 36.68it/s, 127 steps of size 7.81e-02. acc. prob=0.78]warmup:  17%|█▋        | 336/2000 [00:52&lt;00:51, 32.21it/s, 127 steps of size 4.03e-02. acc. prob=0.78]warmup:  17%|█▋        | 339/2000 [00:53&lt;00:55, 29.86it/s, 63 steps of size 1.21e-01. acc. prob=0.78] warmup:  17%|█▋        | 344/2000 [00:53&lt;00:48, 34.48it/s, 31 steps of size 1.20e-01. acc. prob=0.78]warmup:  17%|█▋        | 348/2000 [00:53&lt;00:46, 35.42it/s, 63 steps of size 1.08e-01. acc. prob=0.78]warmup:  18%|█▊        | 352/2000 [00:53&lt;00:45, 36.22it/s, 127 steps of size 6.90e-02. acc. prob=0.78]warmup:  18%|█▊        | 357/2000 [00:53&lt;00:46, 35.06it/s, 127 steps of size 5.58e-02. acc. prob=0.78]warmup:  18%|█▊        | 361/2000 [00:53&lt;00:45, 36.21it/s, 63 steps of size 9.03e-02. acc. prob=0.78] warmup:  18%|█▊        | 364/2000 [00:53&lt;00:52, 31.14it/s, 127 steps of size 6.68e-02. acc. prob=0.78]warmup:  18%|█▊        | 368/2000 [00:53&lt;00:48, 33.35it/s, 63 steps of size 9.76e-02. acc. prob=0.78] warmup:  19%|█▊        | 372/2000 [00:53&lt;00:48, 33.76it/s, 127 steps of size 4.18e-02. acc. prob=0.78]warmup:  19%|█▉        | 375/2000 [00:54&lt;00:52, 30.95it/s, 63 steps of size 4.89e-02. acc. prob=0.78] warmup:  19%|█▉        | 378/2000 [00:54&lt;00:54, 29.52it/s, 63 steps of size 3.28e-02. acc. prob=0.78]warmup:  19%|█▉        | 380/2000 [00:54&lt;01:01, 26.20it/s, 127 steps of size 6.33e-02. acc. prob=0.78]warmup:  19%|█▉        | 385/2000 [00:54&lt;00:49, 32.54it/s, 31 steps of size 3.27e-02. acc. prob=0.78] warmup:  19%|█▉        | 387/2000 [00:54&lt;00:57, 28.30it/s, 127 steps of size 5.99e-02. acc. prob=0.78]warmup:  20%|█▉        | 392/2000 [00:54&lt;00:50, 32.09it/s, 63 steps of size 9.92e-02. acc. prob=0.78] warmup:  20%|█▉        | 396/2000 [00:54&lt;00:48, 33.30it/s, 63 steps of size 1.14e-01. acc. prob=0.78]warmup:  20%|██        | 402/2000 [00:54&lt;00:41, 38.28it/s, 63 steps of size 6.76e-02. acc. prob=0.78]warmup:  20%|██        | 407/2000 [00:54&lt;00:39, 39.96it/s, 31 steps of size 1.89e-01. acc. prob=0.79]warmup:  21%|██        | 413/2000 [00:55&lt;00:36, 43.80it/s, 63 steps of size 8.37e-02. acc. prob=0.78]warmup:  21%|██        | 417/2000 [00:55&lt;00:40, 39.33it/s, 63 steps of size 1.10e-01. acc. prob=0.78]warmup:  21%|██        | 422/2000 [00:55&lt;00:38, 40.95it/s, 31 steps of size 1.33e-01. acc. prob=0.79]warmup:  21%|██▏       | 428/2000 [00:55&lt;00:36, 43.34it/s, 63 steps of size 9.10e-02. acc. prob=0.78]warmup:  22%|██▏       | 432/2000 [00:55&lt;00:38, 40.99it/s, 63 steps of size 1.03e-01. acc. prob=0.79]warmup:  22%|██▏       | 437/2000 [00:55&lt;00:37, 42.05it/s, 31 steps of size 8.61e-02. acc. prob=0.78]warmup:  22%|██▏       | 441/2000 [00:55&lt;00:39, 39.65it/s, 63 steps of size 1.29e-01. acc. prob=0.79]warmup:  22%|██▏       | 445/2000 [00:55&lt;00:40, 38.08it/s, 63 steps of size 8.79e-02. acc. prob=0.79]warmup:  22%|██▎       | 450/2000 [00:56&lt;00:40, 38.15it/s, 63 steps of size 6.35e-02. acc. prob=0.78]warmup:  23%|██▎       | 454/2000 [00:56&lt;00:46, 33.04it/s, 255 steps of size 2.20e-02. acc. prob=0.78]warmup:  23%|██▎       | 455/2000 [00:56&lt;00:57, 26.74it/s, 255 steps of size 3.43e-02. acc. prob=0.78]warmup:  23%|██▎       | 457/2000 [00:56&lt;01:05, 23.53it/s, 127 steps of size 8.31e-02. acc. prob=0.78]warmup:  23%|██▎       | 462/2000 [00:56&lt;01:06, 23.09it/s, 255 steps of size 2.41e-02. acc. prob=0.78]warmup:  23%|██▎       | 463/2000 [00:56&lt;01:19, 19.22it/s, 255 steps of size 4.43e-02. acc. prob=0.78]warmup:  23%|██▎       | 465/2000 [00:56&lt;01:23, 18.41it/s, 63 steps of size 1.47e-01. acc. prob=0.78] warmup:  23%|██▎       | 468/2000 [00:57&lt;01:23, 18.24it/s, 255 steps of size 3.57e-02. acc. prob=0.78]warmup:  24%|██▎       | 471/2000 [00:57&lt;01:16, 19.98it/s, 31 steps of size 2.57e-02. acc. prob=0.78] warmup:  24%|██▎       | 473/2000 [00:57&lt;01:17, 19.70it/s, 63 steps of size 4.97e-02. acc. prob=0.78]warmup:  24%|██▍       | 477/2000 [00:57&lt;01:02, 24.24it/s, 31 steps of size 2.15e-02. acc. prob=0.78]warmup:  24%|██▍       | 478/2000 [00:57&lt;01:15, 20.19it/s, 255 steps of size 3.84e-02. acc. prob=0.78]warmup:  24%|██▍       | 481/2000 [00:57&lt;01:07, 22.58it/s, 31 steps of size 7.15e-02. acc. prob=0.78] warmup:  24%|██▍       | 486/2000 [00:57&lt;00:57, 26.43it/s, 127 steps of size 4.12e-02. acc. prob=0.78]warmup:  24%|██▍       | 489/2000 [00:57&lt;00:56, 26.98it/s, 31 steps of size 1.49e-01. acc. prob=0.78] warmup:  25%|██▍       | 493/2000 [00:57&lt;00:52, 28.84it/s, 63 steps of size 7.63e-02. acc. prob=0.78]warmup:  25%|██▍       | 495/2000 [00:58&lt;00:57, 26.30it/s, 127 steps of size 5.37e-02. acc. prob=0.78]warmup:  25%|██▌       | 500/2000 [00:58&lt;00:47, 31.36it/s, 31 steps of size 1.92e-01. acc. prob=0.79] warmup:  25%|██▌       | 503/2000 [00:58&lt;00:53, 27.96it/s, 127 steps of size 7.98e-02. acc. prob=0.78]warmup:  25%|██▌       | 507/2000 [00:58&lt;00:49, 30.22it/s, 31 steps of size 7.87e-02. acc. prob=0.78] warmup:  25%|██▌       | 509/2000 [00:58&lt;01:06, 22.54it/s, 255 steps of size 6.39e-03. acc. prob=0.78]warmup:  26%|██▌       | 510/2000 [00:58&lt;01:43, 14.37it/s, 511 steps of size 1.02e-02. acc. prob=0.78]warmup:  26%|██▌       | 511/2000 [00:59&lt;02:26, 10.17it/s, 511 steps of size 1.62e-02. acc. prob=0.78]warmup:  26%|██▌       | 512/2000 [00:59&lt;02:39,  9.35it/s, 255 steps of size 2.56e-02. acc. prob=0.78]warmup:  26%|██▌       | 514/2000 [00:59&lt;02:21, 10.52it/s, 127 steps of size 6.04e-02. acc. prob=0.78]warmup:  26%|██▌       | 517/2000 [00:59&lt;01:48, 13.73it/s, 127 steps of size 5.19e-02. acc. prob=0.78]warmup:  26%|██▌       | 520/2000 [00:59&lt;01:26, 17.10it/s, 63 steps of size 1.28e-01. acc. prob=0.79] warmup:  26%|██▌       | 523/2000 [00:59&lt;01:18, 18.92it/s, 127 steps of size 3.81e-02. acc. prob=0.78]warmup:  26%|██▋       | 525/2000 [00:59&lt;01:20, 18.43it/s, 63 steps of size 8.59e-02. acc. prob=0.79] warmup:  26%|██▋       | 530/2000 [01:00&lt;01:03, 23.11it/s, 127 steps of size 5.22e-02. acc. prob=0.78]warmup:  27%|██▋       | 534/2000 [01:00&lt;00:54, 26.97it/s, 63 steps of size 7.10e-02. acc. prob=0.79] warmup:  27%|██▋       | 539/2000 [01:00&lt;00:47, 30.46it/s, 63 steps of size 1.22e-01. acc. prob=0.79]warmup:  27%|██▋       | 544/2000 [01:00&lt;00:42, 34.28it/s, 31 steps of size 4.69e-02. acc. prob=0.78]warmup:  27%|██▋       | 546/2000 [01:00&lt;00:48, 30.07it/s, 63 steps of size 9.48e-02. acc. prob=0.79]warmup:  28%|██▊       | 550/2000 [01:00&lt;00:49, 29.54it/s, 127 steps of size 5.42e-02. acc. prob=0.79]warmup:  28%|██▊       | 554/2000 [01:00&lt;00:45, 31.70it/s, 31 steps of size 1.43e-01. acc. prob=0.79] warmup:  28%|██▊       | 557/2000 [01:00&lt;00:48, 29.81it/s, 63 steps of size 6.93e-02. acc. prob=0.79]warmup:  28%|██▊       | 560/2000 [01:01&lt;00:50, 28.32it/s, 63 steps of size 7.32e-02. acc. prob=0.79]warmup:  28%|██▊       | 565/2000 [01:01&lt;00:43, 33.19it/s, 31 steps of size 9.23e-02. acc. prob=0.79]warmup:  28%|██▊       | 567/2000 [01:01&lt;00:50, 28.63it/s, 127 steps of size 4.78e-02. acc. prob=0.79]warmup:  28%|██▊       | 570/2000 [01:01&lt;00:53, 26.49it/s, 63 steps of size 9.32e-02. acc. prob=0.79] warmup:  29%|██▊       | 574/2000 [01:01&lt;00:49, 29.03it/s, 63 steps of size 1.11e-01. acc. prob=0.79]warmup:  29%|██▉       | 577/2000 [01:01&lt;01:01, 23.31it/s, 255 steps of size 3.09e-02. acc. prob=0.78]warmup:  29%|██▉       | 579/2000 [01:01&lt;01:10, 20.27it/s, 127 steps of size 6.00e-02. acc. prob=0.79]warmup:  29%|██▉       | 582/2000 [01:01&lt;01:05, 21.68it/s, 63 steps of size 5.94e-02. acc. prob=0.79] warmup:  29%|██▉       | 586/2000 [01:02&lt;00:55, 25.55it/s, 31 steps of size 4.64e-02. acc. prob=0.79]warmup:  29%|██▉       | 589/2000 [01:02&lt;00:54, 25.76it/s, 63 steps of size 6.91e-02. acc. prob=0.79]warmup:  30%|██▉       | 593/2000 [01:02&lt;00:50, 27.74it/s, 63 steps of size 7.56e-02. acc. prob=0.79]warmup:  30%|██▉       | 595/2000 [01:02&lt;00:58, 24.05it/s, 63 steps of size 7.85e-02. acc. prob=0.79]warmup:  30%|██▉       | 598/2000 [01:02&lt;00:55, 25.28it/s, 63 steps of size 1.09e-01. acc. prob=0.79]warmup:  30%|███       | 601/2000 [01:02&lt;00:57, 24.34it/s, 63 steps of size 6.89e-02. acc. prob=0.79]warmup:  30%|███       | 604/2000 [01:02&lt;00:58, 23.83it/s, 63 steps of size 8.27e-02. acc. prob=0.79]warmup:  30%|███       | 609/2000 [01:02&lt;00:49, 28.28it/s, 63 steps of size 7.46e-02. acc. prob=0.79]warmup:  31%|███       | 614/2000 [01:03&lt;00:45, 30.78it/s, 63 steps of size 9.30e-02. acc. prob=0.79]warmup:  31%|███       | 618/2000 [01:03&lt;00:43, 31.85it/s, 31 steps of size 1.33e-01. acc. prob=0.79]warmup:  31%|███       | 623/2000 [01:03&lt;00:39, 35.18it/s, 31 steps of size 1.18e-01. acc. prob=0.79]warmup:  31%|███▏      | 627/2000 [01:03&lt;00:37, 36.14it/s, 63 steps of size 1.07e-01. acc. prob=0.79]warmup:  32%|███▏      | 632/2000 [01:03&lt;00:35, 38.09it/s, 63 steps of size 1.01e-01. acc. prob=0.79]warmup:  32%|███▏      | 638/2000 [01:03&lt;00:32, 42.00it/s, 63 steps of size 6.34e-02. acc. prob=0.79]warmup:  32%|███▏      | 642/2000 [01:03&lt;00:35, 38.55it/s, 127 steps of size 6.37e-02. acc. prob=0.79]warmup:  32%|███▏      | 646/2000 [01:03&lt;00:35, 37.62it/s, 63 steps of size 1.11e-01. acc. prob=0.79] warmup:  33%|███▎      | 651/2000 [01:03&lt;00:33, 40.73it/s, 63 steps of size 7.61e-02. acc. prob=0.79]warmup:  33%|███▎      | 656/2000 [01:04&lt;00:33, 40.29it/s, 63 steps of size 8.87e-02. acc. prob=0.79]warmup:  33%|███▎      | 662/2000 [01:04&lt;00:30, 43.77it/s, 63 steps of size 1.12e-01. acc. prob=0.79]warmup:  33%|███▎      | 667/2000 [01:04&lt;00:29, 45.32it/s, 31 steps of size 1.32e-01. acc. prob=0.79]warmup:  34%|███▎      | 671/2000 [01:04&lt;00:33, 40.22it/s, 127 steps of size 5.16e-02. acc. prob=0.79]warmup:  34%|███▍      | 675/2000 [01:04&lt;00:34, 38.20it/s, 63 steps of size 4.97e-02. acc. prob=0.79] warmup:  34%|███▍      | 679/2000 [01:04&lt;00:35, 37.67it/s, 63 steps of size 1.04e-01. acc. prob=0.79]warmup:  34%|███▍      | 684/2000 [01:04&lt;00:32, 40.55it/s, 31 steps of size 9.35e-02. acc. prob=0.79]warmup:  34%|███▍      | 689/2000 [01:04&lt;00:31, 41.07it/s, 63 steps of size 6.79e-02. acc. prob=0.79]warmup:  35%|███▍      | 694/2000 [01:05&lt;00:31, 41.50it/s, 31 steps of size 6.73e-02. acc. prob=0.79]warmup:  35%|███▍      | 699/2000 [01:05&lt;00:30, 43.18it/s, 31 steps of size 1.37e-01. acc. prob=0.79]warmup:  35%|███▌      | 703/2000 [01:05&lt;00:31, 41.73it/s, 63 steps of size 6.94e-02. acc. prob=0.79]warmup:  35%|███▌      | 706/2000 [01:05&lt;00:37, 34.24it/s, 127 steps of size 5.01e-02. acc. prob=0.79]warmup:  35%|███▌      | 709/2000 [01:05&lt;00:39, 32.34it/s, 63 steps of size 8.19e-02. acc. prob=0.79] warmup:  36%|███▌      | 714/2000 [01:05&lt;00:36, 35.72it/s, 63 steps of size 9.33e-02. acc. prob=0.79]warmup:  36%|███▌      | 719/2000 [01:05&lt;00:32, 39.15it/s, 31 steps of size 6.87e-02. acc. prob=0.79]warmup:  36%|███▌      | 723/2000 [01:05&lt;00:33, 37.93it/s, 63 steps of size 6.21e-02. acc. prob=0.79]warmup:  36%|███▋      | 727/2000 [01:05&lt;00:34, 37.33it/s, 31 steps of size 1.27e-01. acc. prob=0.79]warmup:  37%|███▋      | 732/2000 [01:06&lt;00:31, 39.99it/s, 63 steps of size 8.62e-02. acc. prob=0.79]warmup:  37%|███▋      | 735/2000 [01:06&lt;00:34, 36.49it/s, 63 steps of size 8.24e-02. acc. prob=0.79]warmup:  37%|███▋      | 739/2000 [01:06&lt;00:34, 36.48it/s, 63 steps of size 9.07e-02. acc. prob=0.79]warmup:  37%|███▋      | 744/2000 [01:06&lt;00:32, 38.40it/s, 63 steps of size 1.09e-01. acc. prob=0.79]warmup:  37%|███▋      | 748/2000 [01:06&lt;00:34, 36.45it/s, 63 steps of size 5.40e-02. acc. prob=0.79]warmup:  38%|███▊      | 752/2000 [01:06&lt;00:34, 36.06it/s, 63 steps of size 9.02e-02. acc. prob=0.79]warmup:  38%|███▊      | 758/2000 [01:06&lt;00:29, 42.09it/s, 31 steps of size 1.19e-01. acc. prob=0.79]warmup:  38%|███▊      | 763/2000 [01:06&lt;00:29, 41.94it/s, 63 steps of size 7.09e-02. acc. prob=0.79]warmup:  38%|███▊      | 767/2000 [01:06&lt;00:31, 39.70it/s, 31 steps of size 8.80e-02. acc. prob=0.79]warmup:  39%|███▊      | 771/2000 [01:07&lt;00:32, 38.06it/s, 63 steps of size 6.15e-02. acc. prob=0.79]warmup:  39%|███▉      | 775/2000 [01:07&lt;00:33, 36.15it/s, 63 steps of size 8.24e-02. acc. prob=0.79]warmup:  39%|███▉      | 778/2000 [01:07&lt;00:37, 32.84it/s, 63 steps of size 6.45e-02. acc. prob=0.79]warmup:  39%|███▉      | 782/2000 [01:07&lt;00:36, 33.60it/s, 63 steps of size 6.31e-02. acc. prob=0.79]warmup:  39%|███▉      | 786/2000 [01:07&lt;00:34, 35.29it/s, 31 steps of size 8.85e-02. acc. prob=0.79]warmup:  40%|███▉      | 791/2000 [01:07&lt;00:32, 37.20it/s, 63 steps of size 1.08e-01. acc. prob=0.79]warmup:  40%|███▉      | 798/2000 [01:07&lt;00:26, 45.45it/s, 31 steps of size 6.48e-02. acc. prob=0.79]warmup:  40%|████      | 802/2000 [01:07&lt;00:28, 41.69it/s, 63 steps of size 8.95e-02. acc. prob=0.79]warmup:  40%|████      | 806/2000 [01:07&lt;00:29, 39.81it/s, 63 steps of size 5.71e-02. acc. prob=0.79]warmup:  40%|████      | 810/2000 [01:08&lt;00:30, 39.63it/s, 31 steps of size 5.06e-02. acc. prob=0.79]warmup:  41%|████      | 814/2000 [01:08&lt;00:31, 37.93it/s, 63 steps of size 8.47e-02. acc. prob=0.79]warmup:  41%|████      | 818/2000 [01:08&lt;00:31, 37.43it/s, 63 steps of size 6.10e-02. acc. prob=0.79]warmup:  41%|████      | 822/2000 [01:08&lt;00:32, 36.22it/s, 63 steps of size 7.47e-02. acc. prob=0.79]warmup:  41%|████▏     | 826/2000 [01:08&lt;00:31, 36.79it/s, 31 steps of size 7.77e-02. acc. prob=0.79]warmup:  42%|████▏     | 830/2000 [01:08&lt;00:31, 36.68it/s, 63 steps of size 7.64e-02. acc. prob=0.79]warmup:  42%|████▏     | 834/2000 [01:08&lt;00:31, 37.60it/s, 31 steps of size 6.38e-02. acc. prob=0.79]warmup:  42%|████▏     | 838/2000 [01:08&lt;00:31, 37.24it/s, 31 steps of size 8.23e-02. acc. prob=0.79]warmup:  42%|████▏     | 842/2000 [01:08&lt;00:31, 36.34it/s, 63 steps of size 6.87e-02. acc. prob=0.79]warmup:  42%|████▏     | 846/2000 [01:09&lt;00:32, 35.66it/s, 63 steps of size 9.28e-02. acc. prob=0.79]warmup:  42%|████▎     | 850/2000 [01:09&lt;00:33, 34.79it/s, 63 steps of size 1.00e-01. acc. prob=0.79]warmup:  43%|████▎     | 855/2000 [01:09&lt;00:30, 36.99it/s, 63 steps of size 7.13e-02. acc. prob=0.79]warmup:  43%|████▎     | 859/2000 [01:09&lt;00:31, 36.66it/s, 63 steps of size 6.35e-02. acc. prob=0.79]warmup:  43%|████▎     | 863/2000 [01:09&lt;00:31, 36.12it/s, 63 steps of size 7.45e-02. acc. prob=0.79]warmup:  43%|████▎     | 866/2000 [01:09&lt;00:39, 28.79it/s, 63 steps of size 1.14e-01. acc. prob=0.79]warmup:  43%|████▎     | 868/2000 [01:09&lt;00:44, 25.49it/s, 31 steps of size 1.21e-01. acc. prob=0.79]warmup:  44%|████▎     | 870/2000 [01:09&lt;00:50, 22.23it/s, 31 steps of size 1.22e-01. acc. prob=0.79]warmup:  44%|████▎     | 873/2000 [01:10&lt;00:51, 22.03it/s, 63 steps of size 9.53e-02. acc. prob=0.79]warmup:  44%|████▍     | 876/2000 [01:10&lt;00:47, 23.64it/s, 31 steps of size 6.96e-02. acc. prob=0.79]warmup:  44%|████▍     | 879/2000 [01:10&lt;00:44, 25.06it/s, 63 steps of size 7.96e-02. acc. prob=0.79]warmup:  44%|████▍     | 882/2000 [01:10&lt;00:43, 25.47it/s, 63 steps of size 1.01e-01. acc. prob=0.79]warmup:  44%|████▍     | 886/2000 [01:10&lt;00:38, 29.14it/s, 63 steps of size 7.21e-02. acc. prob=0.79]warmup:  44%|████▍     | 889/2000 [01:10&lt;00:38, 28.64it/s, 63 steps of size 9.55e-02. acc. prob=0.79]warmup:  45%|████▍     | 894/2000 [01:10&lt;00:36, 30.34it/s, 63 steps of size 5.48e-02. acc. prob=0.79]warmup:  45%|████▍     | 897/2000 [01:10&lt;00:41, 26.68it/s, 63 steps of size 6.97e-02. acc. prob=0.79]warmup:  45%|████▌     | 900/2000 [01:11&lt;00:42, 25.61it/s, 63 steps of size 5.21e-02. acc. prob=0.79]warmup:  45%|████▌     | 903/2000 [01:11&lt;00:43, 25.08it/s, 63 steps of size 8.96e-02. acc. prob=0.79]warmup:  45%|████▌     | 908/2000 [01:11&lt;00:37, 29.17it/s, 63 steps of size 8.57e-02. acc. prob=0.79]warmup:  46%|████▌     | 912/2000 [01:11&lt;00:34, 31.85it/s, 63 steps of size 7.22e-02. acc. prob=0.79]warmup:  46%|████▌     | 916/2000 [01:11&lt;00:33, 32.44it/s, 63 steps of size 1.02e-01. acc. prob=0.79]warmup:  46%|████▌     | 921/2000 [01:11&lt;00:29, 36.99it/s, 31 steps of size 8.03e-02. acc. prob=0.79]warmup:  46%|████▋     | 926/2000 [01:11&lt;00:27, 38.70it/s, 63 steps of size 1.00e-01. acc. prob=0.79]warmup:  46%|████▋     | 930/2000 [01:11&lt;00:29, 36.81it/s, 63 steps of size 8.57e-02. acc. prob=0.79]warmup:  47%|████▋     | 934/2000 [01:11&lt;00:28, 37.29it/s, 63 steps of size 9.20e-02. acc. prob=0.79]warmup:  47%|████▋     | 939/2000 [01:12&lt;00:27, 38.27it/s, 63 steps of size 8.65e-02. acc. prob=0.79]warmup:  47%|████▋     | 942/2000 [01:12&lt;00:29, 35.54it/s, 127 steps of size 4.82e-02. acc. prob=0.79]warmup:  47%|████▋     | 945/2000 [01:12&lt;00:32, 32.44it/s, 63 steps of size 7.11e-02. acc. prob=0.79] warmup:  47%|████▋     | 949/2000 [01:12&lt;00:32, 32.03it/s, 63 steps of size 6.39e-02. acc. prob=0.79]warmup:  48%|████▊     | 954/2000 [01:12&lt;00:32, 32.47it/s, 127 steps of size 3.98e-02. acc. prob=0.79]warmup:  48%|████▊     | 956/2000 [01:12&lt;00:36, 28.58it/s, 63 steps of size 9.78e-02. acc. prob=0.79] warmup:  48%|████▊     | 960/2000 [01:12&lt;00:33, 31.32it/s, 31 steps of size 1.04e-01. acc. prob=0.79]warmup:  48%|████▊     | 962/2000 [01:12&lt;00:41, 24.84it/s, 255 steps of size 3.27e-02. acc. prob=0.79]warmup:  48%|████▊     | 964/2000 [01:13&lt;00:44, 23.38it/s, 63 steps of size 1.02e-01. acc. prob=0.79] warmup:  48%|████▊     | 968/2000 [01:13&lt;00:37, 27.25it/s, 31 steps of size 1.54e-02. acc. prob=0.79]warmup:  48%|████▊     | 969/2000 [01:13&lt;00:48, 21.17it/s, 255 steps of size 2.90e-02. acc. prob=0.79]warmup:  49%|████▊     | 972/2000 [01:13&lt;00:44, 23.10it/s, 31 steps of size 4.87e-02. acc. prob=0.79] warmup:  49%|████▉     | 976/2000 [01:13&lt;00:38, 26.94it/s, 31 steps of size 1.05e-01. acc. prob=0.79]warmup:  49%|████▉     | 979/2000 [01:13&lt;00:41, 24.82it/s, 255 steps of size 3.61e-02. acc. prob=0.79]warmup:  49%|████▉     | 982/2000 [01:13&lt;00:44, 23.05it/s, 63 steps of size 9.33e-02. acc. prob=0.79] warmup:  49%|████▉     | 985/2000 [01:13&lt;00:42, 23.90it/s, 63 steps of size 1.32e-01. acc. prob=0.79]warmup:  49%|████▉     | 988/2000 [01:14&lt;00:40, 25.27it/s, 63 steps of size 7.16e-02. acc. prob=0.79]warmup:  50%|████▉     | 991/2000 [01:14&lt;00:49, 20.40it/s, 255 steps of size 3.09e-02. acc. prob=0.79]warmup:  50%|████▉     | 994/2000 [01:14&lt;00:54, 18.40it/s, 255 steps of size 2.33e-02. acc. prob=0.79]warmup:  50%|████▉     | 996/2000 [01:14&lt;00:55, 18.18it/s, 127 steps of size 6.37e-02. acc. prob=0.79]warmup:  50%|█████     | 1000/2000 [01:14&lt;00:53, 18.76it/s, 255 steps of size 4.94e-02. acc. prob=0.79]sample:  50%|█████     | 1003/2000 [01:14&lt;00:48, 20.61it/s, 63 steps of size 4.94e-02. acc. prob=0.94] sample:  50%|█████     | 1006/2000 [01:14&lt;00:44, 22.53it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  50%|█████     | 1009/2000 [01:15&lt;00:41, 23.89it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  51%|█████     | 1012/2000 [01:15&lt;00:39, 25.08it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  51%|█████     | 1015/2000 [01:15&lt;00:37, 26.22it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  51%|█████     | 1019/2000 [01:15&lt;00:33, 28.90it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  51%|█████     | 1023/2000 [01:15&lt;00:32, 30.46it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  51%|█████▏    | 1027/2000 [01:15&lt;00:30, 31.71it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▏    | 1031/2000 [01:15&lt;00:30, 32.12it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▏    | 1035/2000 [01:15&lt;00:30, 31.93it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▏    | 1039/2000 [01:16&lt;00:29, 32.14it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▏    | 1043/2000 [01:16&lt;00:29, 32.19it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▏    | 1047/2000 [01:16&lt;00:29, 32.43it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  52%|█████▎    | 1050/2000 [01:16&lt;00:30, 30.96it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  53%|█████▎    | 1054/2000 [01:16&lt;00:29, 32.07it/s, 63 steps of size 4.94e-02. acc. prob=0.98]sample:  53%|█████▎    | 1057/2000 [01:16&lt;00:31, 30.26it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  53%|█████▎    | 1060/2000 [01:16&lt;00:33, 28.24it/s, 127 steps of size 4.94e-02. acc. prob=0.97]sample:  53%|█████▎    | 1063/2000 [01:16&lt;00:33, 28.29it/s, 63 steps of size 4.94e-02. acc. prob=0.97] sample:  53%|█████▎    | 1066/2000 [01:16&lt;00:35, 26.44it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  53%|█████▎    | 1069/2000 [01:17&lt;00:35, 26.52it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▎    | 1072/2000 [01:17&lt;00:34, 26.58it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▍    | 1075/2000 [01:17&lt;00:34, 26.97it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▍    | 1079/2000 [01:17&lt;00:31, 29.15it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▍    | 1081/2000 [01:17&lt;00:34, 26.60it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▍    | 1084/2000 [01:17&lt;00:36, 25.13it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  54%|█████▍    | 1087/2000 [01:17&lt;00:35, 25.45it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  55%|█████▍    | 1090/2000 [01:17&lt;00:34, 26.19it/s, 63 steps of size 4.94e-02. acc. prob=0.97]sample:  55%|█████▍    | 1094/2000 [01:18&lt;00:32, 27.87it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  55%|█████▍    | 1098/2000 [01:18&lt;00:30, 29.83it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  55%|█████▌    | 1102/2000 [01:18&lt;00:29, 30.48it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  55%|█████▌    | 1106/2000 [01:18&lt;00:27, 31.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▌    | 1110/2000 [01:18&lt;00:27, 32.20it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▌    | 1114/2000 [01:18&lt;00:27, 32.72it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▌    | 1118/2000 [01:18&lt;00:27, 32.52it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▌    | 1121/2000 [01:18&lt;00:29, 29.47it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▋    | 1125/2000 [01:18&lt;00:28, 30.57it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  56%|█████▋    | 1129/2000 [01:19&lt;00:27, 31.92it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  57%|█████▋    | 1132/2000 [01:19&lt;00:27, 31.33it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  57%|█████▋    | 1135/2000 [01:19&lt;00:28, 30.03it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  57%|█████▋    | 1139/2000 [01:19&lt;00:27, 31.67it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  57%|█████▋    | 1143/2000 [01:19&lt;00:26, 32.22it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  57%|█████▋    | 1147/2000 [01:19&lt;00:25, 33.19it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1151/2000 [01:19&lt;00:25, 33.92it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1155/2000 [01:19&lt;00:24, 34.44it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1159/2000 [01:19&lt;00:24, 34.58it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1162/2000 [01:20&lt;00:26, 31.31it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1166/2000 [01:20&lt;00:26, 31.33it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  58%|█████▊    | 1170/2000 [01:20&lt;00:25, 32.06it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  59%|█████▊    | 1173/2000 [01:20&lt;00:27, 30.51it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  59%|█████▉    | 1176/2000 [01:20&lt;00:27, 30.02it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  59%|█████▉    | 1180/2000 [01:20&lt;00:25, 31.68it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  59%|█████▉    | 1184/2000 [01:20&lt;00:25, 31.43it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  59%|█████▉    | 1188/2000 [01:20&lt;00:25, 31.55it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  60%|█████▉    | 1192/2000 [01:21&lt;00:25, 31.53it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  60%|█████▉    | 1196/2000 [01:21&lt;00:25, 31.89it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  60%|██████    | 1200/2000 [01:21&lt;00:25, 30.83it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  60%|██████    | 1204/2000 [01:21&lt;00:24, 32.13it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  60%|██████    | 1208/2000 [01:21&lt;00:23, 33.05it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  61%|██████    | 1212/2000 [01:21&lt;00:23, 33.85it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  61%|██████    | 1216/2000 [01:21&lt;00:22, 34.27it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  61%|██████    | 1220/2000 [01:21&lt;00:22, 34.50it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  61%|██████    | 1224/2000 [01:22&lt;00:22, 34.49it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  61%|██████▏   | 1228/2000 [01:22&lt;00:22, 34.84it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  62%|██████▏   | 1232/2000 [01:22&lt;00:22, 34.75it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  62%|██████▏   | 1236/2000 [01:22&lt;00:21, 35.00it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  62%|██████▏   | 1240/2000 [01:22&lt;00:21, 35.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  62%|██████▏   | 1244/2000 [01:22&lt;00:21, 35.18it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  62%|██████▏   | 1248/2000 [01:22&lt;00:21, 35.44it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  63%|██████▎   | 1252/2000 [01:22&lt;00:22, 33.99it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  63%|██████▎   | 1256/2000 [01:22&lt;00:22, 32.72it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  63%|██████▎   | 1260/2000 [01:23&lt;00:22, 32.44it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  63%|██████▎   | 1264/2000 [01:23&lt;00:22, 32.53it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  63%|██████▎   | 1268/2000 [01:23&lt;00:21, 33.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  64%|██████▎   | 1272/2000 [01:23&lt;00:22, 32.90it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  64%|██████▍   | 1275/2000 [01:23&lt;00:23, 31.20it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  64%|██████▍   | 1278/2000 [01:23&lt;00:23, 30.54it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  64%|██████▍   | 1282/2000 [01:23&lt;00:22, 31.44it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  64%|██████▍   | 1286/2000 [01:23&lt;00:21, 32.45it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  64%|██████▍   | 1290/2000 [01:24&lt;00:21, 33.42it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  65%|██████▍   | 1294/2000 [01:24&lt;00:21, 33.39it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  65%|██████▍   | 1297/2000 [01:24&lt;00:22, 31.08it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  65%|██████▌   | 1301/2000 [01:24&lt;00:21, 32.52it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  65%|██████▌   | 1305/2000 [01:24&lt;00:21, 32.97it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  65%|██████▌   | 1309/2000 [01:24&lt;00:20, 33.62it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▌   | 1313/2000 [01:24&lt;00:20, 34.28it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▌   | 1317/2000 [01:24&lt;00:20, 33.87it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▌   | 1320/2000 [01:24&lt;00:21, 31.50it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▌   | 1324/2000 [01:25&lt;00:21, 31.59it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▋   | 1327/2000 [01:25&lt;00:21, 31.14it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  66%|██████▋   | 1330/2000 [01:25&lt;00:21, 30.74it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  67%|██████▋   | 1334/2000 [01:25&lt;00:21, 30.90it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  67%|██████▋   | 1338/2000 [01:25&lt;00:20, 31.78it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  67%|██████▋   | 1342/2000 [01:25&lt;00:20, 31.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  67%|██████▋   | 1345/2000 [01:25&lt;00:21, 30.57it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  67%|██████▋   | 1347/2000 [01:25&lt;00:23, 27.43it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1351/2000 [01:25&lt;00:23, 28.12it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1355/2000 [01:26&lt;00:22, 29.16it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1358/2000 [01:26&lt;00:21, 29.18it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1361/2000 [01:26&lt;00:22, 28.85it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1365/2000 [01:26&lt;00:21, 29.98it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  68%|██████▊   | 1369/2000 [01:26&lt;00:20, 30.59it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▊   | 1373/2000 [01:26&lt;00:20, 31.28it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▉   | 1376/2000 [01:26&lt;00:20, 30.69it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▉   | 1379/2000 [01:26&lt;00:21, 28.31it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▉   | 1382/2000 [01:27&lt;00:22, 27.27it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▉   | 1385/2000 [01:27&lt;00:23, 25.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  69%|██████▉   | 1388/2000 [01:27&lt;00:24, 25.46it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  70%|██████▉   | 1391/2000 [01:27&lt;00:23, 25.59it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  70%|██████▉   | 1395/2000 [01:27&lt;00:21, 28.09it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  70%|██████▉   | 1399/2000 [01:27&lt;00:20, 29.53it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  70%|███████   | 1403/2000 [01:27&lt;00:20, 29.50it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  70%|███████   | 1407/2000 [01:27&lt;00:19, 30.11it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  70%|███████   | 1410/2000 [01:28&lt;00:20, 29.04it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  71%|███████   | 1413/2000 [01:28&lt;00:21, 27.45it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  71%|███████   | 1416/2000 [01:28&lt;00:20, 27.91it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  71%|███████   | 1419/2000 [01:28&lt;00:20, 27.83it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  71%|███████   | 1422/2000 [01:28&lt;00:20, 28.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  71%|███████   | 1424/2000 [01:28&lt;00:24, 23.66it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  71%|███████▏  | 1428/2000 [01:28&lt;00:21, 26.21it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1431/2000 [01:28&lt;00:21, 26.18it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1433/2000 [01:28&lt;00:23, 24.01it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1436/2000 [01:29&lt;00:22, 25.21it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1439/2000 [01:29&lt;00:21, 26.42it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1442/2000 [01:29&lt;00:22, 24.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1445/2000 [01:29&lt;00:22, 24.96it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  72%|███████▏  | 1449/2000 [01:29&lt;00:20, 27.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1452/2000 [01:29&lt;00:22, 24.45it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1453/2000 [01:29&lt;00:28, 19.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1454/2000 [01:29&lt;00:36, 15.12it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1455/2000 [01:30&lt;00:42, 12.73it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1457/2000 [01:30&lt;00:39, 13.82it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1459/2000 [01:30&lt;00:39, 13.83it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1462/2000 [01:30&lt;00:31, 16.86it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1465/2000 [01:30&lt;00:28, 18.60it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  73%|███████▎  | 1469/2000 [01:30&lt;00:24, 21.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▎  | 1472/2000 [01:30&lt;00:25, 20.88it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▍  | 1475/2000 [01:31&lt;00:24, 21.52it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▍  | 1478/2000 [01:31&lt;00:22, 23.09it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▍  | 1481/2000 [01:31&lt;00:22, 22.62it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▍  | 1484/2000 [01:31&lt;00:21, 23.88it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  74%|███████▍  | 1487/2000 [01:31&lt;00:20, 25.41it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  75%|███████▍  | 1491/2000 [01:31&lt;00:18, 27.32it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  75%|███████▍  | 1495/2000 [01:31&lt;00:17, 29.06it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  75%|███████▍  | 1499/2000 [01:31&lt;00:16, 29.98it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  75%|███████▌  | 1502/2000 [01:31&lt;00:16, 29.98it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  75%|███████▌  | 1506/2000 [01:32&lt;00:16, 30.58it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▌  | 1510/2000 [01:32&lt;00:15, 31.14it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▌  | 1514/2000 [01:32&lt;00:15, 31.38it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▌  | 1518/2000 [01:32&lt;00:15, 31.27it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▌  | 1521/2000 [01:32&lt;00:15, 30.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▋  | 1525/2000 [01:32&lt;00:15, 30.33it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  76%|███████▋  | 1528/2000 [01:32&lt;00:16, 28.66it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1531/2000 [01:32&lt;00:16, 27.64it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1535/2000 [01:33&lt;00:16, 29.02it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1536/2000 [01:33&lt;00:20, 23.01it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1538/2000 [01:33&lt;00:21, 21.64it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1541/2000 [01:33&lt;00:20, 22.60it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1544/2000 [01:33&lt;00:18, 24.39it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  77%|███████▋  | 1548/2000 [01:33&lt;00:16, 27.28it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1552/2000 [01:33&lt;00:15, 29.51it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1555/2000 [01:33&lt;00:15, 28.41it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1558/2000 [01:34&lt;00:15, 28.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1561/2000 [01:34&lt;00:15, 28.78it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1564/2000 [01:34&lt;00:15, 27.77it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  78%|███████▊  | 1568/2000 [01:34&lt;00:15, 27.24it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  79%|███████▊  | 1572/2000 [01:34&lt;00:14, 29.18it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  79%|███████▉  | 1576/2000 [01:34&lt;00:13, 30.63it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  79%|███████▉  | 1580/2000 [01:34&lt;00:13, 31.82it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  79%|███████▉  | 1584/2000 [01:34&lt;00:13, 31.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  79%|███████▉  | 1588/2000 [01:34&lt;00:12, 32.28it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|███████▉  | 1591/2000 [01:35&lt;00:12, 31.67it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|███████▉  | 1595/2000 [01:35&lt;00:12, 31.95it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|███████▉  | 1598/2000 [01:35&lt;00:13, 28.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|████████  | 1602/2000 [01:35&lt;00:12, 30.80it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|████████  | 1606/2000 [01:35&lt;00:13, 30.30it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  80%|████████  | 1610/2000 [01:35&lt;00:12, 31.16it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  81%|████████  | 1613/2000 [01:35&lt;00:12, 30.30it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  81%|████████  | 1617/2000 [01:35&lt;00:12, 31.47it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  81%|████████  | 1621/2000 [01:36&lt;00:11, 32.40it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  81%|████████▏ | 1625/2000 [01:36&lt;00:11, 33.18it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  81%|████████▏ | 1629/2000 [01:36&lt;00:11, 33.56it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  82%|████████▏ | 1633/2000 [01:36&lt;00:10, 34.17it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  82%|████████▏ | 1637/2000 [01:36&lt;00:10, 34.43it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  82%|████████▏ | 1641/2000 [01:36&lt;00:10, 33.15it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  82%|████████▏ | 1645/2000 [01:36&lt;00:10, 33.19it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  82%|████████▏ | 1649/2000 [01:36&lt;00:10, 33.02it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  83%|████████▎ | 1653/2000 [01:36&lt;00:10, 33.09it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  83%|████████▎ | 1657/2000 [01:37&lt;00:10, 33.57it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  83%|████████▎ | 1661/2000 [01:37&lt;00:09, 34.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  83%|████████▎ | 1664/2000 [01:37&lt;00:10, 31.60it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  83%|████████▎ | 1668/2000 [01:37&lt;00:10, 32.32it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  84%|████████▎ | 1672/2000 [01:37&lt;00:09, 33.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  84%|████████▍ | 1676/2000 [01:37&lt;00:09, 33.93it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  84%|████████▍ | 1680/2000 [01:37&lt;00:09, 33.84it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  84%|████████▍ | 1683/2000 [01:37&lt;00:09, 31.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  84%|████████▍ | 1687/2000 [01:38&lt;00:09, 32.88it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  85%|████████▍ | 1691/2000 [01:38&lt;00:09, 33.54it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  85%|████████▍ | 1695/2000 [01:38&lt;00:09, 33.17it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  85%|████████▍ | 1699/2000 [01:38&lt;00:09, 33.21it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  85%|████████▌ | 1703/2000 [01:38&lt;00:08, 33.84it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  85%|████████▌ | 1707/2000 [01:38&lt;00:08, 34.38it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▌ | 1711/2000 [01:38&lt;00:08, 34.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▌ | 1715/2000 [01:38&lt;00:08, 34.08it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▌ | 1719/2000 [01:38&lt;00:08, 34.10it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▌ | 1723/2000 [01:39&lt;00:08, 32.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▋ | 1726/2000 [01:39&lt;00:08, 31.65it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  86%|████████▋ | 1730/2000 [01:39&lt;00:08, 32.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  87%|████████▋ | 1734/2000 [01:39&lt;00:08, 30.38it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  87%|████████▋ | 1738/2000 [01:39&lt;00:08, 31.42it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  87%|████████▋ | 1742/2000 [01:39&lt;00:08, 32.12it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  87%|████████▋ | 1746/2000 [01:39&lt;00:08, 31.20it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  88%|████████▊ | 1750/2000 [01:39&lt;00:07, 32.32it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  88%|████████▊ | 1754/2000 [01:40&lt;00:07, 33.13it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  88%|████████▊ | 1758/2000 [01:40&lt;00:07, 33.68it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  88%|████████▊ | 1762/2000 [01:40&lt;00:07, 33.63it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  88%|████████▊ | 1766/2000 [01:40&lt;00:07, 32.59it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  88%|████████▊ | 1770/2000 [01:40&lt;00:07, 32.07it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  89%|████████▊ | 1774/2000 [01:40&lt;00:07, 31.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  89%|████████▉ | 1778/2000 [01:40&lt;00:06, 31.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  89%|████████▉ | 1781/2000 [01:40&lt;00:07, 29.79it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  89%|████████▉ | 1785/2000 [01:41&lt;00:07, 30.51it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  89%|████████▉ | 1789/2000 [01:41&lt;00:06, 30.99it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|████████▉ | 1792/2000 [01:41&lt;00:06, 30.50it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|████████▉ | 1795/2000 [01:41&lt;00:06, 30.22it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|████████▉ | 1798/2000 [01:41&lt;00:06, 29.43it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|█████████ | 1802/2000 [01:41&lt;00:06, 30.89it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|█████████ | 1806/2000 [01:41&lt;00:06, 31.67it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  90%|█████████ | 1809/2000 [01:41&lt;00:06, 31.14it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  91%|█████████ | 1813/2000 [01:41&lt;00:05, 32.06it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  91%|█████████ | 1817/2000 [01:42&lt;00:05, 33.12it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  91%|█████████ | 1821/2000 [01:42&lt;00:05, 33.31it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  91%|█████████▏| 1825/2000 [01:42&lt;00:05, 33.22it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  91%|█████████▏| 1829/2000 [01:42&lt;00:05, 33.31it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  92%|█████████▏| 1833/2000 [01:42&lt;00:05, 33.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  92%|█████████▏| 1837/2000 [01:42&lt;00:04, 33.34it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  92%|█████████▏| 1841/2000 [01:42&lt;00:04, 32.89it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  92%|█████████▏| 1844/2000 [01:42&lt;00:05, 30.59it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  92%|█████████▏| 1847/2000 [01:43&lt;00:05, 30.01it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  93%|█████████▎| 1851/2000 [01:43&lt;00:04, 30.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  93%|█████████▎| 1854/2000 [01:43&lt;00:04, 29.70it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  93%|█████████▎| 1856/2000 [01:43&lt;00:05, 24.78it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  93%|█████████▎| 1859/2000 [01:43&lt;00:05, 26.12it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  93%|█████████▎| 1863/2000 [01:43&lt;00:04, 27.94it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  93%|█████████▎| 1867/2000 [01:43&lt;00:04, 29.31it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▎| 1871/2000 [01:43&lt;00:04, 29.99it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▎| 1874/2000 [01:43&lt;00:04, 29.88it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▍| 1878/2000 [01:44&lt;00:03, 31.40it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▍| 1882/2000 [01:44&lt;00:03, 30.90it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▍| 1886/2000 [01:44&lt;00:03, 31.22it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  94%|█████████▍| 1890/2000 [01:44&lt;00:03, 31.11it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  95%|█████████▍| 1893/2000 [01:44&lt;00:03, 30.69it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  95%|█████████▍| 1896/2000 [01:44&lt;00:03, 28.70it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  95%|█████████▌| 1900/2000 [01:44&lt;00:03, 29.23it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  95%|█████████▌| 1903/2000 [01:44&lt;00:03, 28.65it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  95%|█████████▌| 1907/2000 [01:45&lt;00:03, 29.93it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▌| 1910/2000 [01:45&lt;00:03, 29.21it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▌| 1913/2000 [01:45&lt;00:03, 28.83it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▌| 1916/2000 [01:45&lt;00:02, 29.00it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▌| 1920/2000 [01:45&lt;00:02, 30.07it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▌| 1923/2000 [01:45&lt;00:02, 29.65it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▋| 1927/2000 [01:45&lt;00:02, 30.03it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  96%|█████████▋| 1930/2000 [01:45&lt;00:02, 29.86it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  97%|█████████▋| 1934/2000 [01:45&lt;00:02, 30.83it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  97%|█████████▋| 1938/2000 [01:46&lt;00:01, 31.58it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  97%|█████████▋| 1941/2000 [01:46&lt;00:01, 29.85it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample:  97%|█████████▋| 1945/2000 [01:46&lt;00:01, 29.57it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample:  97%|█████████▋| 1949/2000 [01:46&lt;00:01, 30.60it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1953/2000 [01:46&lt;00:01, 31.37it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1957/2000 [01:46&lt;00:01, 31.90it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1961/2000 [01:46&lt;00:01, 31.58it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1964/2000 [01:46&lt;00:01, 30.82it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1967/2000 [01:47&lt;00:01, 28.25it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  98%|█████████▊| 1969/2000 [01:47&lt;00:01, 25.00it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▊| 1972/2000 [01:47&lt;00:01, 24.35it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▉| 1975/2000 [01:47&lt;00:01, 23.77it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▉| 1978/2000 [01:47&lt;00:00, 23.86it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▉| 1982/2000 [01:47&lt;00:00, 26.38it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▉| 1986/2000 [01:47&lt;00:00, 27.88it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample:  99%|█████████▉| 1988/2000 [01:47&lt;00:00, 24.97it/s, 127 steps of size 4.94e-02. acc. prob=0.96]sample: 100%|█████████▉| 1992/2000 [01:48&lt;00:00, 27.36it/s, 63 steps of size 4.94e-02. acc. prob=0.96] sample: 100%|█████████▉| 1996/2000 [01:48&lt;00:00, 28.96it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample: 100%|██████████| 2000/2000 [01:48&lt;00:00, 30.61it/s, 63 steps of size 4.94e-02. acc. prob=0.96]sample: 100%|██████████| 2000/2000 [01:48&lt;00:00, 18.47it/s, 63 steps of size 4.94e-02. acc. prob=0.96]</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution.⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution.⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>warmup:   0%|          | 0/2000 [00:19&lt;?, ?it/s, 1023 steps of size 2.33e-02. acc. prob=0.77]warmup:   5%|▍         | 96/2000 [00:20&lt;06:38,  4.78it/s, 1023 steps of size 3.38e-02. acc. prob=0.77]warmup:   5%|▍         | 97/2000 [00:20&lt;06:37,  4.78it/s, 1023 steps of size 1.25e-02. acc. prob=0.76]warmup:   5%|▍         | 98/2000 [00:20&lt;06:37,  4.78it/s, 1023 steps of size 1.50e-02. acc. prob=0.76]warmup:   5%|▍         | 99/2000 [00:20&lt;06:37,  4.79it/s, 1023 steps of size 2.18e-02. acc. prob=0.77]warmup:   5%|▌         | 100/2000 [00:20&lt;06:38,  4.77it/s, 1023 steps of size 3.21e-02. acc. prob=0.77]warmup:   5%|▌         | 104/2000 [00:21&lt;05:33,  5.68it/s, 255 steps of size 1.99e-02. acc. prob=0.76] warmup:   5%|▌         | 107/2000 [00:21&lt;04:50,  6.51it/s, 127 steps of size 7.33e-02. acc. prob=0.77]warmup:   6%|▌         | 113/2000 [00:21&lt;03:30,  8.97it/s, 255 steps of size 2.72e-02. acc. prob=0.77]warmup:   6%|▌         | 118/2000 [00:21&lt;02:45, 11.39it/s, 127 steps of size 7.22e-02. acc. prob=0.77]warmup:   6%|▌         | 124/2000 [00:21&lt;02:02, 15.33it/s, 63 steps of size 6.50e-02. acc. prob=0.77] warmup:   6%|▋         | 128/2000 [00:21&lt;01:46, 17.58it/s, 127 steps of size 5.81e-02. acc. prob=0.77]warmup:   7%|▋         | 135/2000 [00:21&lt;01:17, 24.05it/s, 127 steps of size 7.90e-02. acc. prob=0.77]warmup:   7%|▋         | 142/2000 [00:21&lt;01:00, 30.92it/s, 63 steps of size 2.92e-02. acc. prob=0.77] warmup:   7%|▋         | 147/2000 [00:21&lt;00:54, 34.14it/s, 63 steps of size 6.58e-02. acc. prob=0.77]warmup:   8%|▊         | 151/2000 [00:22&lt;00:53, 34.53it/s, 127 steps of size 5.56e-01. acc. prob=0.77]warmup:   8%|▊         | 158/2000 [00:22&lt;01:01, 29.71it/s, 1023 steps of size 1.18e-02. acc. prob=0.77]warmup:   8%|▊         | 159/2000 [00:22&lt;01:12, 25.34it/s, 511 steps of size 2.19e-02. acc. prob=0.77] warmup:   8%|▊         | 163/2000 [00:22&lt;01:05, 27.94it/s, 31 steps of size 4.14e-02. acc. prob=0.77] warmup:   8%|▊         | 169/2000 [00:22&lt;00:53, 34.46it/s, 127 steps of size 9.33e-02. acc. prob=0.77]warmup:   9%|▊         | 173/2000 [00:22&lt;00:52, 35.09it/s, 127 steps of size 5.66e-02. acc. prob=0.77]warmup:   9%|▉         | 181/2000 [00:22&lt;00:40, 45.27it/s, 63 steps of size 9.57e-02. acc. prob=0.77] warmup:   9%|▉         | 186/2000 [00:22&lt;00:40, 44.37it/s, 255 steps of size 2.75e-02. acc. prob=0.77]warmup:  10%|▉         | 193/2000 [00:23&lt;00:35, 50.94it/s, 31 steps of size 4.60e-02. acc. prob=0.77] warmup:  10%|█         | 200/2000 [00:23&lt;00:32, 54.58it/s, 127 steps of size 6.30e-02. acc. prob=0.78]warmup:  10%|█         | 209/2000 [00:23&lt;00:28, 62.16it/s, 63 steps of size 1.12e-01. acc. prob=0.78] warmup:  11%|█         | 215/2000 [00:23&lt;00:32, 55.51it/s, 255 steps of size 3.00e-02. acc. prob=0.78]warmup:  11%|█         | 221/2000 [00:23&lt;00:31, 55.69it/s, 63 steps of size 1.06e-01. acc. prob=0.78] warmup:  12%|█▏        | 230/2000 [00:23&lt;00:28, 62.71it/s, 63 steps of size 8.88e-02. acc. prob=0.78]warmup:  12%|█▏        | 236/2000 [00:23&lt;00:29, 60.81it/s, 127 steps of size 5.17e-02. acc. prob=0.78]warmup:  12%|█▏        | 242/2000 [00:23&lt;00:29, 59.56it/s, 63 steps of size 9.42e-02. acc. prob=0.78] warmup:  12%|█▎        | 250/2000 [00:24&lt;00:27, 63.96it/s, 63 steps of size 1.21e-01. acc. prob=0.78]warmup:  13%|█▎        | 257/2000 [00:24&lt;00:26, 65.10it/s, 255 steps of size 3.37e-02. acc. prob=0.78]warmup:  13%|█▎        | 265/2000 [00:24&lt;00:25, 68.45it/s, 31 steps of size 4.09e-02. acc. prob=0.78] warmup:  14%|█▎        | 271/2000 [00:24&lt;00:26, 65.47it/s, 63 steps of size 1.28e-01. acc. prob=0.78]warmup:  14%|█▍        | 276/2000 [00:24&lt;00:29, 59.32it/s, 63 steps of size 1.45e-01. acc. prob=0.78]warmup:  14%|█▍        | 284/2000 [00:24&lt;00:27, 63.14it/s, 63 steps of size 4.46e-02. acc. prob=0.78]warmup:  15%|█▍        | 293/2000 [00:24&lt;00:24, 70.43it/s, 31 steps of size 7.27e-02. acc. prob=0.78]warmup:  15%|█▍        | 299/2000 [00:24&lt;00:25, 67.26it/s, 63 steps of size 8.30e-02. acc. prob=0.78]warmup:  15%|█▌        | 303/2000 [00:24&lt;00:28, 59.12it/s, 127 steps of size 6.09e-02. acc. prob=0.78]warmup:  15%|█▌        | 307/2000 [00:24&lt;00:32, 51.48it/s, 63 steps of size 2.65e-02. acc. prob=0.78] warmup:  16%|█▌        | 312/2000 [00:25&lt;00:33, 50.15it/s, 127 steps of size 6.11e-02. acc. prob=0.78]warmup:  16%|█▌        | 318/2000 [00:25&lt;00:31, 52.69it/s, 127 steps of size 5.30e-02. acc. prob=0.78]warmup:  16%|█▋        | 326/2000 [00:25&lt;00:29, 56.94it/s, 127 steps of size 5.64e-02. acc. prob=0.78]warmup:  17%|█▋        | 334/2000 [00:25&lt;00:27, 59.81it/s, 127 steps of size 4.68e-02. acc. prob=0.78]warmup:  17%|█▋        | 340/2000 [00:25&lt;00:28, 58.81it/s, 63 steps of size 9.66e-02. acc. prob=0.78] warmup:  18%|█▊        | 350/2000 [00:25&lt;00:23, 69.56it/s, 31 steps of size 1.23e-01. acc. prob=0.78]warmup:  18%|█▊        | 357/2000 [00:25&lt;00:24, 66.39it/s, 127 steps of size 5.79e-02. acc. prob=0.78]warmup:  18%|█▊        | 364/2000 [00:25&lt;00:24, 67.21it/s, 63 steps of size 7.81e-02. acc. prob=0.78] warmup:  19%|█▊        | 372/2000 [00:25&lt;00:23, 69.70it/s, 31 steps of size 1.26e-01. acc. prob=0.78]warmup:  19%|█▉        | 379/2000 [00:26&lt;00:23, 68.74it/s, 31 steps of size 1.55e-01. acc. prob=0.78]warmup:  19%|█▉        | 386/2000 [00:26&lt;00:23, 68.53it/s, 63 steps of size 6.01e-02. acc. prob=0.78]warmup:  20%|█▉        | 393/2000 [00:26&lt;00:24, 64.89it/s, 63 steps of size 5.70e-02. acc. prob=0.78]warmup:  20%|█▉        | 397/2000 [00:26&lt;00:28, 57.18it/s, 63 steps of size 8.68e-02. acc. prob=0.78]warmup:  20%|██        | 403/2000 [00:26&lt;00:29, 53.31it/s, 127 steps of size 6.01e-02. acc. prob=0.78]warmup:  20%|██        | 408/2000 [00:26&lt;00:31, 51.00it/s, 63 steps of size 5.14e-02. acc. prob=0.78] warmup:  21%|██        | 412/2000 [00:26&lt;00:33, 47.26it/s, 63 steps of size 9.74e-02. acc. prob=0.78]warmup:  21%|██        | 419/2000 [00:26&lt;00:31, 50.89it/s, 127 steps of size 5.12e-02. acc. prob=0.78]warmup:  21%|██        | 424/2000 [00:26&lt;00:31, 49.86it/s, 63 steps of size 1.00e-01. acc. prob=0.78] warmup:  21%|██▏       | 429/2000 [00:27&lt;00:33, 47.43it/s, 63 steps of size 8.19e-02. acc. prob=0.78]warmup:  22%|██▏       | 435/2000 [00:27&lt;00:32, 48.02it/s, 63 steps of size 3.76e-02. acc. prob=0.78]warmup:  22%|██▏       | 438/2000 [00:27&lt;00:36, 42.60it/s, 63 steps of size 8.34e-02. acc. prob=0.78]warmup:  22%|██▏       | 444/2000 [00:27&lt;00:35, 44.32it/s, 63 steps of size 8.30e-02. acc. prob=0.79]warmup:  22%|██▏       | 449/2000 [00:27&lt;00:35, 43.21it/s, 63 steps of size 8.12e-02. acc. prob=0.79]warmup:  23%|██▎       | 454/2000 [00:27&lt;00:37, 41.05it/s, 255 steps of size 2.52e-02. acc. prob=0.78]warmup:  23%|██▎       | 459/2000 [00:27&lt;00:36, 41.65it/s, 63 steps of size 1.08e-01. acc. prob=0.78] warmup:  23%|██▎       | 464/2000 [00:27&lt;00:35, 43.24it/s, 63 steps of size 1.53e-02. acc. prob=0.78]warmup:  23%|██▎       | 467/2000 [00:28&lt;00:39, 39.15it/s, 63 steps of size 9.48e-02. acc. prob=0.78]warmup:  24%|██▎       | 471/2000 [00:28&lt;00:39, 39.00it/s, 127 steps of size 5.85e-02. acc. prob=0.78]warmup:  24%|██▍       | 476/2000 [00:28&lt;00:39, 38.46it/s, 127 steps of size 5.19e-02. acc. prob=0.78]warmup:  24%|██▍       | 480/2000 [00:28&lt;00:41, 36.43it/s, 127 steps of size 4.70e-02. acc. prob=0.78]warmup:  24%|██▍       | 482/2000 [00:28&lt;00:50, 30.17it/s, 63 steps of size 6.23e-02. acc. prob=0.78] warmup:  24%|██▍       | 485/2000 [00:28&lt;00:53, 28.08it/s, 63 steps of size 8.92e-02. acc. prob=0.78]warmup:  24%|██▍       | 488/2000 [00:28&lt;01:06, 22.69it/s, 127 steps of size 7.03e-02. acc. prob=0.78]warmup:  25%|██▍       | 491/2000 [00:28&lt;01:08, 21.94it/s, 127 steps of size 7.52e-02. acc. prob=0.78]warmup:  25%|██▍       | 496/2000 [00:29&lt;00:53, 28.01it/s, 63 steps of size 8.34e-02. acc. prob=0.78] warmup:  25%|██▌       | 501/2000 [00:29&lt;00:49, 30.35it/s, 255 steps of size 3.41e-02. acc. prob=0.78]warmup:  25%|██▌       | 504/2000 [00:29&lt;00:50, 29.65it/s, 63 steps of size 2.95e-02. acc. prob=0.78] warmup:  25%|██▌       | 509/2000 [00:29&lt;00:43, 34.21it/s, 31 steps of size 1.13e-01. acc. prob=0.79]warmup:  26%|██▌       | 515/2000 [00:29&lt;00:36, 40.81it/s, 63 steps of size 7.45e-02. acc. prob=0.78]warmup:  26%|██▌       | 522/2000 [00:29&lt;00:31, 46.79it/s, 63 steps of size 8.94e-02. acc. prob=0.79]warmup:  26%|██▋       | 526/2000 [00:29&lt;00:33, 43.83it/s, 63 steps of size 8.91e-02. acc. prob=0.79]warmup:  27%|██▋       | 531/2000 [00:29&lt;00:33, 43.81it/s, 63 steps of size 9.31e-02. acc. prob=0.79]warmup:  27%|██▋       | 537/2000 [00:29&lt;00:31, 45.91it/s, 127 steps of size 5.43e-02. acc. prob=0.78]warmup:  27%|██▋       | 543/2000 [00:30&lt;00:31, 46.72it/s, 127 steps of size 6.38e-02. acc. prob=0.79]warmup:  28%|██▊       | 551/2000 [00:30&lt;00:26, 54.94it/s, 31 steps of size 1.27e-01. acc. prob=0.79] warmup:  28%|██▊       | 559/2000 [00:30&lt;00:23, 61.02it/s, 63 steps of size 6.78e-02. acc. prob=0.79]warmup:  28%|██▊       | 564/2000 [00:30&lt;00:25, 56.01it/s, 63 steps of size 8.61e-02. acc. prob=0.79]warmup:  28%|██▊       | 570/2000 [00:30&lt;00:25, 55.01it/s, 63 steps of size 1.03e-01. acc. prob=0.79]warmup:  29%|██▉       | 579/2000 [00:30&lt;00:22, 63.43it/s, 31 steps of size 3.79e-02. acc. prob=0.79]warmup:  29%|██▉       | 585/2000 [00:30&lt;00:23, 61.38it/s, 63 steps of size 1.19e-01. acc. prob=0.79]warmup:  30%|██▉       | 592/2000 [00:30&lt;00:22, 63.79it/s, 63 steps of size 9.86e-02. acc. prob=0.79]warmup:  30%|██▉       | 599/2000 [00:30&lt;00:22, 63.31it/s, 63 steps of size 1.18e-01. acc. prob=0.79]warmup:  30%|███       | 608/2000 [00:31&lt;00:21, 65.18it/s, 127 steps of size 5.88e-02. acc. prob=0.79]warmup:  31%|███       | 613/2000 [00:31&lt;00:24, 57.66it/s, 127 steps of size 5.73e-02. acc. prob=0.79]warmup:  31%|███       | 619/2000 [00:31&lt;00:24, 56.47it/s, 127 steps of size 6.23e-02. acc. prob=0.79]warmup:  31%|███       | 624/2000 [00:31&lt;00:25, 53.07it/s, 63 steps of size 7.59e-02. acc. prob=0.79] warmup:  32%|███▏      | 631/2000 [00:31&lt;00:23, 57.50it/s, 31 steps of size 1.53e-01. acc. prob=0.79]warmup:  32%|███▏      | 639/2000 [00:31&lt;00:22, 61.57it/s, 63 steps of size 6.76e-02. acc. prob=0.79]warmup:  32%|███▏      | 647/2000 [00:31&lt;00:20, 64.88it/s, 63 steps of size 9.17e-02. acc. prob=0.79]warmup:  33%|███▎      | 652/2000 [00:31&lt;00:22, 59.79it/s, 63 steps of size 4.04e-02. acc. prob=0.79]warmup:  33%|███▎      | 657/2000 [00:31&lt;00:24, 55.95it/s, 63 steps of size 9.74e-02. acc. prob=0.79]warmup:  33%|███▎      | 661/2000 [00:32&lt;00:26, 50.00it/s, 63 steps of size 8.68e-02. acc. prob=0.79]warmup:  33%|███▎      | 664/2000 [00:32&lt;00:30, 43.28it/s, 31 steps of size 6.37e-02. acc. prob=0.79]warmup:  33%|███▎      | 667/2000 [00:32&lt;00:36, 36.27it/s, 63 steps of size 7.62e-02. acc. prob=0.79]warmup:  33%|███▎      | 669/2000 [00:32&lt;00:44, 29.89it/s, 63 steps of size 7.11e-02. acc. prob=0.79]warmup:  34%|███▎      | 671/2000 [00:32&lt;00:55, 23.79it/s, 127 steps of size 5.79e-02. acc. prob=0.79]warmup:  34%|███▍      | 677/2000 [00:32&lt;00:41, 31.55it/s, 63 steps of size 6.20e-02. acc. prob=0.79] warmup:  34%|███▍      | 683/2000 [00:32&lt;00:34, 37.75it/s, 31 steps of size 1.13e-01. acc. prob=0.79]warmup:  35%|███▍      | 691/2000 [00:32&lt;00:27, 46.92it/s, 63 steps of size 9.36e-02. acc. prob=0.79]warmup:  35%|███▍      | 698/2000 [00:33&lt;00:25, 51.71it/s, 31 steps of size 5.19e-02. acc. prob=0.79]warmup:  35%|███▌      | 705/2000 [00:33&lt;00:23, 54.01it/s, 63 steps of size 8.22e-02. acc. prob=0.79]warmup:  36%|███▌      | 712/2000 [00:33&lt;00:22, 57.02it/s, 31 steps of size 1.00e-01. acc. prob=0.79]warmup:  36%|███▌      | 719/2000 [00:33&lt;00:21, 58.36it/s, 63 steps of size 7.98e-02. acc. prob=0.79]warmup:  36%|███▋      | 726/2000 [00:33&lt;00:21, 59.26it/s, 63 steps of size 6.92e-02. acc. prob=0.79]warmup:  37%|███▋      | 732/2000 [00:33&lt;00:22, 55.95it/s, 127 steps of size 4.50e-02. acc. prob=0.79]warmup:  37%|███▋      | 737/2000 [00:33&lt;00:24, 51.47it/s, 63 steps of size 7.59e-02. acc. prob=0.79] warmup:  37%|███▋      | 744/2000 [00:33&lt;00:23, 54.44it/s, 63 steps of size 6.72e-02. acc. prob=0.79]warmup:  38%|███▊      | 751/2000 [00:33&lt;00:22, 56.49it/s, 63 steps of size 7.18e-02. acc. prob=0.79]warmup:  38%|███▊      | 756/2000 [00:34&lt;00:25, 49.41it/s, 255 steps of size 2.03e-02. acc. prob=0.79]warmup:  38%|███▊      | 759/2000 [00:34&lt;00:29, 41.98it/s, 127 steps of size 3.90e-02. acc. prob=0.79]warmup:  38%|███▊      | 764/2000 [00:34&lt;00:28, 42.67it/s, 127 steps of size 5.10e-02. acc. prob=0.79]warmup:  39%|███▊      | 772/2000 [00:34&lt;00:24, 50.70it/s, 63 steps of size 9.21e-02. acc. prob=0.79] warmup:  39%|███▉      | 780/2000 [00:34&lt;00:21, 58.02it/s, 63 steps of size 7.71e-02. acc. prob=0.79]warmup:  39%|███▉      | 788/2000 [00:34&lt;00:19, 62.68it/s, 63 steps of size 1.04e-01. acc. prob=0.79]warmup:  40%|███▉      | 796/2000 [00:34&lt;00:18, 65.60it/s, 63 steps of size 4.75e-02. acc. prob=0.79]warmup:  40%|████      | 803/2000 [00:34&lt;00:18, 64.34it/s, 63 steps of size 6.75e-02. acc. prob=0.79]warmup:  41%|████      | 811/2000 [00:35&lt;00:17, 66.96it/s, 63 steps of size 8.17e-02. acc. prob=0.79]warmup:  41%|████      | 820/2000 [00:35&lt;00:16, 73.21it/s, 63 steps of size 5.70e-02. acc. prob=0.79]warmup:  41%|████▏     | 828/2000 [00:35&lt;00:16, 72.44it/s, 63 steps of size 6.13e-02. acc. prob=0.79]warmup:  42%|████▏     | 835/2000 [00:35&lt;00:16, 71.27it/s, 63 steps of size 6.20e-02. acc. prob=0.79]warmup:  42%|████▏     | 843/2000 [00:35&lt;00:15, 72.88it/s, 63 steps of size 7.38e-02. acc. prob=0.79]warmup:  43%|████▎     | 851/2000 [00:35&lt;00:15, 72.83it/s, 63 steps of size 7.36e-02. acc. prob=0.79]warmup:  43%|████▎     | 858/2000 [00:35&lt;00:15, 71.76it/s, 63 steps of size 7.59e-02. acc. prob=0.79]warmup:  43%|████▎     | 865/2000 [00:35&lt;00:16, 70.06it/s, 31 steps of size 8.48e-02. acc. prob=0.79]warmup:  44%|████▎     | 872/2000 [00:35&lt;00:16, 68.36it/s, 63 steps of size 7.79e-02. acc. prob=0.79]warmup:  44%|████▍     | 875/2000 [00:35&lt;00:19, 56.91it/s, 63 steps of size 5.78e-02. acc. prob=0.79]warmup:  44%|████▍     | 878/2000 [00:36&lt;00:24, 45.33it/s, 63 steps of size 8.20e-02. acc. prob=0.79]warmup:  44%|████▍     | 880/2000 [00:36&lt;00:29, 37.92it/s, 63 steps of size 7.94e-02. acc. prob=0.79]warmup:  44%|████▍     | 884/2000 [00:36&lt;00:30, 36.62it/s, 63 steps of size 5.95e-02. acc. prob=0.79]warmup:  44%|████▍     | 887/2000 [00:36&lt;00:33, 33.28it/s, 63 steps of size 5.86e-02. acc. prob=0.79]warmup:  44%|████▍     | 889/2000 [00:36&lt;00:37, 29.62it/s, 63 steps of size 8.05e-02. acc. prob=0.79]warmup:  45%|████▍     | 892/2000 [00:36&lt;00:40, 27.42it/s, 31 steps of size 1.07e-01. acc. prob=0.79]warmup:  45%|████▍     | 896/2000 [00:36&lt;00:36, 29.98it/s, 63 steps of size 8.12e-02. acc. prob=0.79]warmup:  45%|████▌     | 901/2000 [00:36&lt;00:31, 34.76it/s, 63 steps of size 7.98e-02. acc. prob=0.79]warmup:  45%|████▌     | 905/2000 [00:36&lt;00:30, 35.94it/s, 63 steps of size 9.62e-02. acc. prob=0.79]warmup:  46%|████▌     | 910/2000 [00:37&lt;00:29, 37.28it/s, 63 steps of size 6.78e-02. acc. prob=0.79]warmup:  46%|████▌     | 914/2000 [00:37&lt;00:31, 34.31it/s, 127 steps of size 5.33e-02. acc. prob=0.79]warmup:  46%|████▌     | 919/2000 [00:37&lt;00:29, 37.16it/s, 63 steps of size 9.71e-02. acc. prob=0.79] warmup:  46%|████▋     | 926/2000 [00:37&lt;00:23, 45.50it/s, 63 steps of size 8.40e-02. acc. prob=0.79]warmup:  47%|████▋     | 933/2000 [00:37&lt;00:21, 50.32it/s, 31 steps of size 8.88e-02. acc. prob=0.79]warmup:  47%|████▋     | 938/2000 [00:37&lt;00:21, 48.68it/s, 63 steps of size 8.73e-02. acc. prob=0.79]warmup:  47%|████▋     | 942/2000 [00:37&lt;00:22, 46.13it/s, 63 steps of size 7.11e-02. acc. prob=0.79]warmup:  47%|████▋     | 946/2000 [00:37&lt;00:24, 42.29it/s, 63 steps of size 6.50e-02. acc. prob=0.79]warmup:  48%|████▊     | 950/2000 [00:38&lt;00:26, 39.65it/s, 127 steps of size 5.78e-02. acc. prob=0.79]warmup:  48%|████▊     | 957/2000 [00:38&lt;00:22, 46.28it/s, 63 steps of size 8.52e-02. acc. prob=0.79] warmup:  48%|████▊     | 960/2000 [00:38&lt;00:25, 40.26it/s, 127 steps of size 6.14e-02. acc. prob=0.79]warmup:  48%|████▊     | 966/2000 [00:38&lt;00:22, 45.54it/s, 31 steps of size 1.92e-02. acc. prob=0.79] warmup:  48%|████▊     | 969/2000 [00:38&lt;00:25, 39.82it/s, 63 steps of size 3.91e-02. acc. prob=0.79]warmup:  49%|████▊     | 974/2000 [00:38&lt;00:24, 42.53it/s, 31 steps of size 9.93e-02. acc. prob=0.79]warmup:  49%|████▉     | 977/2000 [00:38&lt;00:27, 37.53it/s, 127 steps of size 6.75e-02. acc. prob=0.79]warmup:  49%|████▉     | 983/2000 [00:38&lt;00:24, 42.18it/s, 127 steps of size 4.81e-02. acc. prob=0.79]warmup:  49%|████▉     | 989/2000 [00:38&lt;00:21, 46.80it/s, 31 steps of size 7.46e-02. acc. prob=0.79] warmup:  50%|████▉     | 996/2000 [00:39&lt;00:19, 51.58it/s, 63 steps of size 1.05e-01. acc. prob=0.79]sample:  50%|█████     | 1002/2000 [00:39&lt;00:20, 48.41it/s, 63 steps of size 7.25e-02. acc. prob=0.96]sample:  50%|█████     | 1005/2000 [00:39&lt;00:25, 39.72it/s, 63 steps of size 7.25e-02. acc. prob=0.92]sample:  50%|█████     | 1008/2000 [00:39&lt;00:29, 33.69it/s, 63 steps of size 7.25e-02. acc. prob=0.89]sample:  51%|█████     | 1011/2000 [00:39&lt;00:30, 31.99it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  51%|█████     | 1014/2000 [00:39&lt;00:33, 29.72it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  51%|█████     | 1019/2000 [00:39&lt;00:28, 33.87it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  51%|█████     | 1024/2000 [00:39&lt;00:26, 37.26it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  52%|█████▏    | 1030/2000 [00:39&lt;00:22, 42.21it/s, 63 steps of size 7.25e-02. acc. prob=0.89]sample:  52%|█████▏    | 1036/2000 [00:40&lt;00:21, 45.88it/s, 63 steps of size 7.25e-02. acc. prob=0.89]sample:  52%|█████▏    | 1042/2000 [00:40&lt;00:20, 47.35it/s, 63 steps of size 7.25e-02. acc. prob=0.90]sample:  52%|█████▏    | 1047/2000 [00:40&lt;00:20, 47.27it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  53%|█████▎    | 1053/2000 [00:40&lt;00:19, 49.63it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  53%|█████▎    | 1059/2000 [00:40&lt;00:18, 49.87it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  53%|█████▎    | 1065/2000 [00:40&lt;00:18, 51.52it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  54%|█████▎    | 1071/2000 [00:40&lt;00:17, 53.51it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  54%|█████▍    | 1077/2000 [00:40&lt;00:16, 54.99it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  54%|█████▍    | 1083/2000 [00:40&lt;00:16, 54.49it/s, 63 steps of size 7.25e-02. acc. prob=0.89]sample:  54%|█████▍    | 1089/2000 [00:41&lt;00:17, 53.16it/s, 63 steps of size 7.25e-02. acc. prob=0.89]sample:  55%|█████▍    | 1094/2000 [00:41&lt;00:17, 51.71it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  55%|█████▌    | 1100/2000 [00:41&lt;00:16, 53.03it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  55%|█████▌    | 1106/2000 [00:41&lt;00:16, 54.04it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  56%|█████▌    | 1112/2000 [00:41&lt;00:16, 55.19it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  56%|█████▌    | 1119/2000 [00:41&lt;00:15, 58.10it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  56%|█████▋    | 1126/2000 [00:41&lt;00:14, 59.64it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  57%|█████▋    | 1133/2000 [00:41&lt;00:14, 59.91it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  57%|█████▋    | 1135/2000 [00:41&lt;00:18, 47.36it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  57%|█████▋    | 1137/2000 [00:42&lt;00:22, 38.30it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  57%|█████▋    | 1140/2000 [00:42&lt;00:24, 34.48it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  57%|█████▋    | 1144/2000 [00:42&lt;00:24, 35.09it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  58%|█████▊    | 1151/2000 [00:42&lt;00:20, 42.42it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  58%|█████▊    | 1158/2000 [00:42&lt;00:17, 48.23it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  58%|█████▊    | 1164/2000 [00:42&lt;00:16, 51.04it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  59%|█████▊    | 1171/2000 [00:42&lt;00:15, 54.39it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  59%|█████▉    | 1178/2000 [00:42&lt;00:14, 57.12it/s, 63 steps of size 7.25e-02. acc. prob=0.88]sample:  59%|█████▉    | 1185/2000 [00:42&lt;00:13, 58.79it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  60%|█████▉    | 1192/2000 [00:43&lt;00:13, 59.57it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  60%|█████▉    | 1199/2000 [00:43&lt;00:13, 59.76it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  60%|██████    | 1205/2000 [00:43&lt;00:13, 59.61it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  61%|██████    | 1211/2000 [00:43&lt;00:13, 58.49it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  61%|██████    | 1218/2000 [00:43&lt;00:13, 59.44it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  61%|██████▏   | 1225/2000 [00:43&lt;00:12, 60.51it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  62%|██████▏   | 1232/2000 [00:43&lt;00:12, 61.16it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  62%|██████▏   | 1239/2000 [00:43&lt;00:12, 63.40it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  62%|██████▏   | 1246/2000 [00:43&lt;00:11, 65.11it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  63%|██████▎   | 1253/2000 [00:44&lt;00:11, 64.30it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  63%|██████▎   | 1260/2000 [00:44&lt;00:11, 65.82it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  63%|██████▎   | 1268/2000 [00:44&lt;00:10, 67.52it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  64%|██████▍   | 1276/2000 [00:44&lt;00:10, 69.37it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  64%|██████▍   | 1284/2000 [00:44&lt;00:10, 69.76it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  65%|██████▍   | 1291/2000 [00:44&lt;00:10, 68.81it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  65%|██████▍   | 1298/2000 [00:44&lt;00:10, 67.46it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  65%|██████▌   | 1306/2000 [00:44&lt;00:10, 68.35it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  66%|██████▌   | 1313/2000 [00:44&lt;00:10, 68.48it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  66%|██████▌   | 1321/2000 [00:45&lt;00:09, 71.14it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  66%|██████▋   | 1329/2000 [00:45&lt;00:09, 73.18it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  67%|██████▋   | 1337/2000 [00:45&lt;00:08, 74.70it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  67%|██████▋   | 1345/2000 [00:45&lt;00:08, 75.44it/s, 63 steps of size 7.25e-02. acc. prob=0.87]sample:  68%|██████▊   | 1353/2000 [00:45&lt;00:08, 75.25it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  68%|██████▊   | 1361/2000 [00:45&lt;00:08, 74.23it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  68%|██████▊   | 1369/2000 [00:45&lt;00:08, 73.86it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  69%|██████▉   | 1377/2000 [00:45&lt;00:08, 74.00it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  69%|██████▉   | 1385/2000 [00:45&lt;00:08, 74.64it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  70%|██████▉   | 1391/2000 [00:45&lt;00:08, 70.16it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  70%|██████▉   | 1397/2000 [00:46&lt;00:09, 65.09it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  70%|███████   | 1403/2000 [00:46&lt;00:09, 60.70it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  70%|███████   | 1408/2000 [00:46&lt;00:10, 57.52it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  71%|███████   | 1413/2000 [00:46&lt;00:10, 54.41it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  71%|███████   | 1418/2000 [00:46&lt;00:10, 53.08it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  71%|███████   | 1422/2000 [00:46&lt;00:11, 48.77it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  71%|███████▏  | 1427/2000 [00:46&lt;00:12, 46.20it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1432/2000 [00:46&lt;00:12, 43.89it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1435/2000 [00:47&lt;00:15, 37.03it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1438/2000 [00:47&lt;00:16, 33.25it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1441/2000 [00:47&lt;00:18, 30.37it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1444/2000 [00:47&lt;00:18, 29.69it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▏  | 1447/2000 [00:47&lt;00:19, 28.02it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  72%|███████▎  | 1450/2000 [00:47&lt;00:22, 24.93it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  73%|███████▎  | 1453/2000 [00:47&lt;00:21, 25.87it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  73%|███████▎  | 1457/2000 [00:47&lt;00:18, 28.69it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  73%|███████▎  | 1463/2000 [00:47&lt;00:14, 35.95it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  74%|███████▎  | 1470/2000 [00:48&lt;00:12, 43.93it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  74%|███████▍  | 1477/2000 [00:48&lt;00:10, 49.62it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  74%|███████▍  | 1484/2000 [00:48&lt;00:09, 54.56it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  75%|███████▍  | 1491/2000 [00:48&lt;00:08, 57.52it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  75%|███████▍  | 1498/2000 [00:48&lt;00:08, 58.64it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  75%|███████▌  | 1503/2000 [00:48&lt;00:08, 56.22it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  75%|███████▌  | 1509/2000 [00:48&lt;00:08, 55.05it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  76%|███████▌  | 1515/2000 [00:48&lt;00:08, 54.88it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  76%|███████▌  | 1521/2000 [00:48&lt;00:08, 54.97it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  76%|███████▋  | 1527/2000 [00:49&lt;00:08, 54.08it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  77%|███████▋  | 1533/2000 [00:49&lt;00:08, 53.90it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  77%|███████▋  | 1539/2000 [00:49&lt;00:08, 53.48it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  77%|███████▋  | 1544/2000 [00:49&lt;00:08, 52.32it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  78%|███████▊  | 1550/2000 [00:49&lt;00:08, 54.46it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  78%|███████▊  | 1557/2000 [00:49&lt;00:07, 57.77it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  78%|███████▊  | 1564/2000 [00:49&lt;00:07, 60.48it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  79%|███████▊  | 1571/2000 [00:49&lt;00:06, 62.74it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  79%|███████▉  | 1578/2000 [00:49&lt;00:06, 64.81it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  79%|███████▉  | 1586/2000 [00:50&lt;00:06, 67.01it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  80%|███████▉  | 1593/2000 [00:50&lt;00:06, 67.52it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  80%|████████  | 1601/2000 [00:50&lt;00:05, 69.23it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  80%|████████  | 1609/2000 [00:50&lt;00:05, 71.37it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  81%|████████  | 1617/2000 [00:50&lt;00:05, 73.16it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  81%|████████▏ | 1625/2000 [00:50&lt;00:05, 74.17it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  82%|████████▏ | 1633/2000 [00:50&lt;00:04, 75.20it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  82%|████████▏ | 1640/2000 [00:50&lt;00:04, 73.18it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  82%|████████▏ | 1648/2000 [00:50&lt;00:04, 74.35it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  83%|████████▎ | 1656/2000 [00:50&lt;00:04, 75.08it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  83%|████████▎ | 1664/2000 [00:51&lt;00:04, 74.45it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  84%|████████▎ | 1672/2000 [00:51&lt;00:04, 75.36it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  84%|████████▍ | 1680/2000 [00:51&lt;00:04, 74.47it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  84%|████████▍ | 1684/2000 [00:51&lt;00:05, 59.41it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  84%|████████▍ | 1687/2000 [00:51&lt;00:06, 49.94it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  84%|████████▍ | 1690/2000 [00:51&lt;00:07, 43.11it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  85%|████████▍ | 1694/2000 [00:51&lt;00:07, 41.76it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  85%|████████▌ | 1700/2000 [00:51&lt;00:06, 46.33it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  85%|████████▌ | 1706/2000 [00:51&lt;00:05, 49.14it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  86%|████████▌ | 1712/2000 [00:52&lt;00:05, 51.62it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  86%|████████▌ | 1718/2000 [00:52&lt;00:05, 53.75it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  86%|████████▋ | 1725/2000 [00:52&lt;00:04, 58.16it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  87%|████████▋ | 1733/2000 [00:52&lt;00:04, 62.32it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  87%|████████▋ | 1741/2000 [00:52&lt;00:03, 65.56it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  87%|████████▋ | 1748/2000 [00:52&lt;00:03, 64.05it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  88%|████████▊ | 1754/2000 [00:52&lt;00:04, 61.20it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  88%|████████▊ | 1759/2000 [00:52&lt;00:04, 57.45it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  88%|████████▊ | 1764/2000 [00:52&lt;00:04, 55.03it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  88%|████████▊ | 1770/2000 [00:53&lt;00:04, 53.85it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  89%|████████▉ | 1776/2000 [00:53&lt;00:04, 55.51it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  89%|████████▉ | 1783/2000 [00:53&lt;00:03, 57.98it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  90%|████████▉ | 1790/2000 [00:53&lt;00:03, 61.39it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  90%|████████▉ | 1798/2000 [00:53&lt;00:03, 64.98it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  90%|█████████ | 1806/2000 [00:53&lt;00:02, 67.85it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  91%|█████████ | 1814/2000 [00:53&lt;00:02, 68.90it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  91%|█████████ | 1822/2000 [00:53&lt;00:02, 69.34it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  92%|█████████▏| 1830/2000 [00:53&lt;00:02, 70.80it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  92%|█████████▏| 1838/2000 [00:53&lt;00:02, 73.17it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  92%|█████████▏| 1847/2000 [00:54&lt;00:02, 75.95it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  93%|█████████▎| 1856/2000 [00:54&lt;00:01, 77.70it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  93%|█████████▎| 1864/2000 [00:54&lt;00:01, 75.85it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  94%|█████████▎| 1872/2000 [00:54&lt;00:01, 75.99it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  94%|█████████▍| 1880/2000 [00:54&lt;00:01, 74.23it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  94%|█████████▍| 1888/2000 [00:54&lt;00:01, 73.69it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  95%|█████████▍| 1895/2000 [00:54&lt;00:01, 71.24it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  95%|█████████▌| 1902/2000 [00:54&lt;00:01, 70.63it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  95%|█████████▌| 1909/2000 [00:54&lt;00:01, 68.60it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  96%|█████████▌| 1916/2000 [00:55&lt;00:01, 66.83it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  96%|█████████▌| 1923/2000 [00:55&lt;00:01, 66.39it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  96%|█████████▋| 1927/2000 [00:55&lt;00:01, 54.61it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  96%|█████████▋| 1930/2000 [00:55&lt;00:01, 46.27it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  97%|█████████▋| 1934/2000 [00:55&lt;00:01, 43.60it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  97%|█████████▋| 1941/2000 [00:55&lt;00:01, 48.97it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  97%|█████████▋| 1948/2000 [00:55&lt;00:00, 53.43it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  98%|█████████▊| 1955/2000 [00:55&lt;00:00, 56.93it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  98%|█████████▊| 1961/2000 [00:55&lt;00:00, 55.60it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  98%|█████████▊| 1966/2000 [00:56&lt;00:00, 52.38it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  98%|█████████▊| 1970/2000 [00:56&lt;00:00, 47.49it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  99%|█████████▉| 1975/2000 [00:56&lt;00:00, 46.51it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  99%|█████████▉| 1980/2000 [00:56&lt;00:00, 45.52it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample:  99%|█████████▉| 1985/2000 [00:56&lt;00:00, 44.22it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample:  99%|█████████▉| 1989/2000 [00:56&lt;00:00, 42.81it/s, 63 steps of size 7.25e-02. acc. prob=0.85]sample: 100%|█████████▉| 1994/2000 [00:56&lt;00:00, 43.04it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample: 100%|█████████▉| 1999/2000 [00:56&lt;00:00, 43.34it/s, 63 steps of size 7.25e-02. acc. prob=0.86]sample: 100%|██████████| 2000/2000 [00:56&lt;00:00, 35.15it/s, 63 steps of size 7.25e-02. acc. prob=0.86]</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution.⚠️
-Model found 4 clusters.
-⚠️This function is still in development. Use it with caution.⚠️</code></pre>
+<pre><code>Model found 4 clusters.</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <pre><code>(&lt;Figure size 960x768 with 2 Axes&gt;,
@@ -491,11 +630,213 @@ Model found 4 clusters.
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="36. BNNC unsupervised_files/figure-html/cell-2-output-8.png" class="img-fluid figure-img"></p>
+<p><img src="36. BNNC unsupervised_files/figure-html/cell-2-output-7.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>jax <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>numpyro <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"numpyro"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.scipy.stats"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 distinct underlying true clusters</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>sk <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"sklearn.datasets"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> sk<span class="sc">$</span><span class="fu">make_blobs</span>(</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_samples =</span> <span class="dv">500</span>L, <span class="at">centers =</span> <span class="dv">4</span>L, <span class="at">cluster_std =</span> <span class="fl">0.8</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">center_box =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>), <span class="at">random_state =</span> <span class="dv">101</span>L</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> out[[<span class="dv">1</span>]]</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>true_labels <span class="ot">&lt;-</span> out[[<span class="dv">2</span>]]</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data =</span> data)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Define raw model ------------------------------------------------</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># BF passes only `data` (an R matrix here); K and D_H1 keep their defaults</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>bnn_mixture_model <span class="ot">&lt;-</span> <span class="cf">function</span>(data, <span class="at">K =</span> <span class="dv">11</span>L, <span class="at">D_H1 =</span> <span class="dv">10</span>L) {</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># data shape: (N, D)</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">&lt;-</span> <span class="fu">dim</span>(data)[<span class="dv">1</span>]</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  D_X <span class="ot">&lt;-</span> <span class="fu">dim</span>(data)[<span class="dv">2</span>]</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- BNN Gating Network ---</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  w1 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">dist =</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">name =</span> <span class="st">"w1_weight"</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(D_X, D_H1)),</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">activation =</span> <span class="st">"tanh"</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  w2 <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    w1,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">dist =</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.05</span>, <span class="at">name =</span> <span class="st">"w2_weight"</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(D_H1, K))</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Global parsimony prior: Dirichlet prior on global cluster weights</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Alpha &lt; 1 acts as a sparse prior to suppress inactive clusters</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  pi <span class="ot">&lt;-</span> numpyro<span class="sc">$</span><span class="fu">sample</span>(<span class="st">"global_pi"</span>, numpyro<span class="sc">$</span>distributions<span class="sc">$</span><span class="fu">Dirichlet</span>(jnp<span class="sc">$</span><span class="fu">ones</span>(K) <span class="sc">*</span> (alpha <span class="sc">/</span> K)))</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  logits <span class="ot">&lt;-</span> w2 <span class="sc">+</span> jnp<span class="sc">$</span><span class="fu">log</span>(pi <span class="sc">+</span> <span class="fl">1e-10</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  log_p <span class="ot">&lt;-</span> jax<span class="sc">$</span>nn<span class="sc">$</span><span class="fu">log_softmax</span>(logits, <span class="at">axis =</span> <span class="sc">-</span><span class="dv">1</span>L)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  theta <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">exp</span>(log_p)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  numpyro<span class="sc">$</span><span class="fu">deterministic</span>(<span class="st">"theta"</span>, theta)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- Mixture Components ---</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="at">name =</span> <span class="st">"mu"</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(K, D_X))</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="fl">1.0</span>, <span class="at">name =</span> <span class="st">"sigma"</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(K, D_X))</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- Marginalized Gaussian Mixture ---</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>  data_exp <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(data, <span class="at">axis =</span> <span class="dv">1</span>L)   <span class="co"># (N, 1, D_X)</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  mu_exp <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(mu, <span class="at">axis =</span> <span class="dv">0</span>L)       <span class="co"># (1, K, D_X)</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>  sigma_exp <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">expand_dims</span>(sigma, <span class="at">axis =</span> <span class="dv">0</span>L) <span class="co"># (1, K, D_X)</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>  log_pdf_clusters <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">sum</span>(stats<span class="sc">$</span>norm<span class="sc">$</span><span class="fu">logpdf</span>(data_exp, <span class="at">loc =</span> mu_exp, <span class="at">scale =</span> sigma_exp), <span class="at">axis =</span> <span class="sc">-</span><span class="dv">1</span>L) <span class="co"># (N, K)</span></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>  weighted_log_pdf <span class="ot">&lt;-</span> log_p <span class="sc">+</span> log_pdf_clusters <span class="co"># (N, K)</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># LogSumExp merges K clusters back together</span></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>  total_log_likelihood <span class="ot">&lt;-</span> jax<span class="sc">$</span>scipy<span class="sc">$</span>special<span class="sc">$</span><span class="fu">logsumexp</span>(weighted_log_pdf, <span class="at">axis =</span> <span class="sc">-</span><span class="dv">1</span>L)</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Target Likelihood</span></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>  numpyro<span class="sc">$</span><span class="fu">factor</span>(<span class="st">"mixture_likelihood"</span>, jnp<span class="sc">$</span><span class="fu">sum</span>(total_log_likelihood))</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC</span></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(bnn_mixture_model, <span class="at">num_chains =</span> <span class="dv">1</span>L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>()</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>sk <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"sklearn.datasets"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> sk<span class="sc">$</span><span class="fu">make_blobs</span>(</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_samples =</span> <span class="dv">500</span>L, <span class="at">centers =</span> <span class="dv">4</span>L, <span class="at">cluster_std =</span> <span class="fl">0.8</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">center_box =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>), <span class="at">random_state =</span> <span class="dv">101</span>L</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> out[[<span class="dv">1</span>]]</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>true_labels <span class="ot">&lt;-</span> out[[<span class="dv">2</span>]]</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co"># K is the maximum component limit, D_H1 is the hidden width</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data =</span> data, <span class="at">K =</span> <span class="dv">11</span>L, <span class="at">D_H1 =</span> <span class="dv">10</span>L, <span class="at">empirical_bayes =</span> <span class="cn">TRUE</span>) <span class="co"># Enables empirical priors over fixed standards</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(m<span class="sc">$</span>models<span class="sc">$</span>bnnc, <span class="at">num_chains =</span> <span class="dv">1</span>L)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict cluster targets</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> m<span class="sc">$</span>models<span class="sc">$</span>bnnc<span class="sc">$</span><span class="fu">predict</span>(data, m<span class="sc">$</span>sampler)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>theta_samps <span class="ot">&lt;-</span> pred[[<span class="dv">1</span>]]</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>mu_samps <span class="ot">&lt;-</span> pred[[<span class="dv">2</span>]]</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>sigma_samps <span class="ot">&lt;-</span> pred[[<span class="dv">3</span>]]</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>labels <span class="ot">&lt;-</span> pred[[<span class="dv">4</span>]]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Results</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>models<span class="sc">$</span>bnnc<span class="sc">$</span><span class="fu">plot</span>(data, m<span class="sc">$</span>sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
+<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>numpyro <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"numpyro"</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>stats <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"jax.scipy.stats"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 distinct underlying true clusters</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>sk <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"sklearn.datasets"</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> sk.<span class="fu">make_blobs</span>(</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    n_samples<span class="op">=</span><span class="fl">500</span>, centers<span class="op">=</span><span class="fl">4</span>, cluster_std<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    center_box<span class="op">=</span>(<span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span>), random_state<span class="op">=</span><span class="fl">101</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> out[<span class="fl">0</span>]</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>true_labels <span class="op">=</span> out[<span class="fl">1</span>]</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(data <span class="op">=</span> data)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Define raw model ------------------------------------------------</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="co"># BF calls the model with `data` only, so K and D_H1 are set inside the body</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">bnn_mixture_model</span>(data)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> <span class="fl">11</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    D_H1 <span class="op">=</span> <span class="fl">10</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># data shape: (N, D)</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> data.shape[<span class="fl">0</span>]</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    D_X <span class="op">=</span> data.shape[<span class="fl">1</span>]</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- BNN Gating Network ---</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    w1 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>        data,</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name<span class="op">=</span><span class="st">"w1_weight"</span>, shape<span class="op">=</span>(D_X, D_H1)),</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>        activation<span class="op">=</span><span class="st">"tanh"</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>    w2 <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        w1,</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>        dist<span class="op">=</span>m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.05</span>, name<span class="op">=</span><span class="st">"w2_weight"</span>, shape<span class="op">=</span>(D_H1, K))</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Global parsimony prior: Dirichlet prior on global cluster weights</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Alpha &lt; 1 acts as a sparse prior to suppress inactive clusters</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>    <span class="cn">pi</span> <span class="op">=</span> numpyro.<span class="fu">sample</span>(<span class="st">"global_pi"</span>, numpyro.distributions.<span class="fu">Dirichlet</span>(jnp.<span class="fu">ones</span>(K) <span class="op">*</span> (alpha <span class="op">/</span> K)))</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> w2 <span class="op">+</span> jnp.<span class="fu">log</span>(<span class="cn">pi</span> <span class="op">+</span> <span class="fl">1e-10</span>)</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>    log_p <span class="op">=</span> jax.nn.<span class="fu">log_softmax</span>(logits, axis<span class="op">=-</span><span class="fl">1</span>)</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> jnp.<span class="fu">exp</span>(log_p)</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>    numpyro.<span class="fu">deterministic</span>(<span class="st">"theta"</span>, theta)</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- Mixture Components ---</span></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">5</span>, name<span class="op">=</span><span class="st">"mu"</span>, shape<span class="op">=</span>(K, D_X))</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"sigma"</span>, shape<span class="op">=</span>(K, D_X))</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- Marginalized Gaussian Mixture ---</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>    data_exp <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(data, axis<span class="op">=</span><span class="fl">1</span>) <span class="co"># (N, 1, D_X)</span></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>    mu_exp <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(mu, axis<span class="op">=</span><span class="fl">0</span>)     <span class="co"># (1, K, D_X)</span></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>    sigma_exp <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(sigma, axis<span class="op">=</span><span class="fl">0</span>) <span class="co"># (1, K, D_X)</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>    log_pdf_clusters <span class="op">=</span> jnp.<span class="fu">sum</span>(stats.norm.<span class="fu">logpdf</span>(data_exp, loc<span class="op">=</span>mu_exp, scale<span class="op">=</span>sigma_exp), axis<span class="op">=-</span><span class="fl">1</span>) <span class="co"># (N, K)</span></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>    weighted_log_pdf <span class="op">=</span> log_p <span class="op">+</span> log_pdf_clusters <span class="co"># (N, K)</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>    <span class="co"># LogSumExp merges K clusters back together</span></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>    total_log_likelihood <span class="op">=</span> jax.scipy.special.<span class="fu">logsumexp</span>(weighted_log_pdf, axis<span class="op">=-</span><span class="fl">1</span>)</span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Target Likelihood</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>    numpyro.<span class="fu">factor</span>(<span class="st">"mixture_likelihood"</span>, jnp.<span class="fu">sum</span>(total_log_likelihood))</span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(bnn_mixture_model, num_chains<span class="op">=</span><span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-6-tab">
+<div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>()</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate Synthetic Data ------------------------------------</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>sk <span class="op">=</span> <span class="fu">pyimport</span>(<span class="st">"sklearn.datasets"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> sk.<span class="fu">make_blobs</span>(</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    n_samples<span class="op">=</span><span class="fl">500</span>, centers<span class="op">=</span><span class="fl">4</span>, cluster_std<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    center_box<span class="op">=</span>(<span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span>), random_state<span class="op">=</span><span class="fl">101</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> out[<span class="fl">0</span>]</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>true_labels <span class="op">=</span> out[<span class="fl">1</span>]</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co"># K is the maximum component limit, D_H1 is the hidden width</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(data <span class="op">=</span> data, K <span class="op">=</span> <span class="fl">11</span>, D_H1 <span class="op">=</span> <span class="fl">10</span>, empirical_bayes <span class="op">=</span> <span class="cn">true</span>) <span class="co"># Enables empirical priors over fixed standards</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(m.models.bnnc, num_chains<span class="op">=</span><span class="fl">1</span>)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict cluster targets</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>pred <span class="op">=</span> m.models.bnnc.<span class="fu">predict</span>(data, m.sampler)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>theta_samps, mu_samps, sigma_samps, labels <span class="op">=</span> pred[<span class="fl">0</span>], pred[<span class="fl">1</span>], pred[<span class="fl">2</span>], pred[<span class="fl">3</span>]</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Results</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.bnnc.<span class="fu">plot</span>(data, m.sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -532,7 +873,7 @@ W_2 &amp; \sim \text{Normal}(0, 0.05) \\
 <section id="model-validation-tests" class="level2">
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="references" class="level2">
@@ -1301,383 +1642,255 @@ An activation function is a nonlinear transformation applied to the pre-activati
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
     }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const disableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'prefetch';
-    }
-  }
-  const enableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'stylesheet';
-    }
-  }
-  const manageTransitions = (selector, allowTransitions) => {
-    const els = window.document.querySelectorAll(selector);
-    for (let i=0; i < els.length; i++) {
-      const el = els[i];
-      if (allowTransitions) {
-        el.classList.remove('notransition');
-      } else {
-        el.classList.add('notransition');
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-  }
-  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-    let newTheme = '';
-    if(darkModeDefault) {
-      newTheme = isAlternate ? baseTheme : alternateTheme;
-    } else {
-      newTheme = isAlternate ? alternateTheme : baseTheme;
-    }
-    const changeGiscusTheme = () => {
-      // From: https://github.com/giscus/giscus/issues/336
-      const sendMessage = (message) => {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
-      sendMessage({
-        setConfig: {
-          theme: newTheme
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
       });
     }
-    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-    if (isGiscussLoaded) {
-      changeGiscusTheme();
-    }
-  }
-  const toggleColorMode = (alternate) => {
-    // Switch the stylesheets
-    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-    manageTransitions('#quarto-margin-sidebar .nav-link', false);
-    if (alternate) {
-      enableStylesheet(alternateStylesheets);
-      for (const sheetNode of alternateStylesheets) {
-        if (sheetNode.id === "quarto-bootstrap") {
-          toggleBodyColorMode(sheetNode);
-        }
-      }
-    } else {
-      disableStylesheet(alternateStylesheets);
-      toggleBodyColorPrimary();
-    }
-    manageTransitions('#quarto-margin-sidebar .nav-link', true);
-    // Switch the toggles
-    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-    for (let i=0; i < toggles.length; i++) {
-      const toggle = toggles[i];
-      if (toggle) {
-        if (alternate) {
-          toggle.classList.add("alternate");     
-        } else {
-          toggle.classList.remove("alternate");
-        }
-      }
-    }
-    // Hack to workaround the fact that safari doesn't
-    // properly recolor the scrollbar when toggling (#1455)
-    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-      manageTransitions("body", false);
-      window.scrollTo(0, 1);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        manageTransitions("body", true);
-      }, 40);  
-    }
-  }
-  const isFileUrl = () => { 
-    return window.location.protocol === 'file:';
-  }
-  const hasAlternateSentinel = () => {  
-    let styleSentinel = getColorSchemeSentinel();
-    if (styleSentinel !== null) {
-      return styleSentinel === "alternate";
-    } else {
-      return false;
-    }
-  }
-  const setStyleSentinel = (alternate) => {
-    const value = alternate ? "alternate" : "default";
-    if (!isFileUrl()) {
-      window.localStorage.setItem("quarto-color-scheme", value);
-    } else {
-      localAlternateSentinel = value;
-    }
-  }
-  const getColorSchemeSentinel = () => {
-    if (!isFileUrl()) {
-      const storageValue = window.localStorage.getItem("quarto-color-scheme");
-      return storageValue != null ? storageValue : localAlternateSentinel;
-    } else {
-      return localAlternateSentinel;
-    }
-  }
-  const darkModeDefault = true;
-  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-  // Dark / light mode switch
-  window.quartoToggleColorScheme = () => {
-    // Read the current dark / light value 
-    let toAlternate = !hasAlternateSentinel();
-    toggleColorMode(toAlternate);
-    setStyleSentinel(toAlternate);
-    toggleGiscusIfUsed(toAlternate, darkModeDefault);
-  };
-  // Ensure there is a toggle, if there isn't float one in the top right
-  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-    const a = window.document.createElement('a');
-    a.classList.add('top-right');
-    a.classList.add('quarto-color-scheme-toggle');
-    a.href = "";
-    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-    const i = window.document.createElement("i");
-    i.classList.add('bi');
-    a.appendChild(i);
-    window.document.body.appendChild(a);
-  }
-  // Switch to dark mode if need be
-  if (hasAlternateSentinel()) {
-    toggleColorMode(true);
-  } else {
-    toggleColorMode(false);
-  }
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
-    });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
         }
-        return container.innerHTML
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -1685,185 +1898,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 </div> <!-- /content -->
 
 

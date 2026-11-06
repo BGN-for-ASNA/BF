@@ -1,0 +1,29 @@
+Comparison Table for 14.Dirichlet
+============================================================
+Parameter BF Mean Stan Mean    Diff KL Div
+  beta[0]  1.0774    1.0767  0.0006 0.0661
+  beta[1]  0.6280    0.6281 -0.0000 0.0630
+ alpha[1] -0.4983   -0.4964 -0.0019 0.0549
+ alpha[0]  0.4419    0.4416  0.0003 0.0302
+    kappa  9.8213    9.8099  0.0114 0.0535
+============================================================
+
+================================================================
+WAIC cross-check  -  14.Dirichlet
+================================================================
+[A] NumPyro direct (numpyro.infer.log_likelihood)
+      elpd_waic = +336.584532    p_waic = 4.568314
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = +336.584532    p_waic = 4.568314
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=200)
+----------------------------------------------------------------
+LOO cross-check  -  14.Dirichlet
+----------------------------------------------------------------
+[A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
+      elpd_loo  = +336.575475    p_loo  = 4.577371
+[B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
+      elpd_loo  = +336.575553    p_loo  = 4.577293
+|delta elpd_loo| = 7.798e-05      |delta p_loo| = 7.798e-05
+RESULT: PASS
+================================================================

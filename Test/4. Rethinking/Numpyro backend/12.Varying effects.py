@@ -25,16 +25,16 @@ m.data_on_model = dict(
 )
 
 def model(cafe, wait, N_cafes, afternoon):
-    a = m.dist.normal(0, 2)
-    b = m.dist.normal(0, 1)
-    sigma = m.dist.exponential( 1)
+    a = m.dist.normal(5, 2, name='a')
+    b = m.dist.normal(-1, 0.5, name='b')
+    sigma = m.dist.exponential(1, name='sigma')
 
-    sigma_cafe = m.dist.exponential(1, shape=(2,))
-    Rho = m.dist.lkj(2, 2)
+    sigma_cafe = m.dist.exponential(1, shape=(2,), name='sigma_cafe')
+    Rho = m.dist.lkj(2, 2, name='Rho')
 
     cov = jnp.outer(sigma_cafe, sigma_cafe) * Rho
 
-    a_b_cafe = m.dist.multivariate_normal(jnp.stack([a, b]), cov, shape = [N_cafes])
+    a_b_cafe = m.dist.multivariate_normal(jnp.stack([a, b]), cov, shape=[N_cafes], name='a_b_cafe')
 
     a_cafe, b_cafe = a_b_cafe[:, 0], a_b_cafe[:, 1]
     mu = a_cafe[cafe] + b_cafe[cafe] * afternoon
@@ -47,7 +47,7 @@ print("BF Summary:")
 print(BF_summary)
 
 #%%
-# 3. Stan Model (Non-Centered Parametrization)
+# 3. Stan Model
 stan_code = """ 
 data{
     int len;
@@ -72,8 +72,8 @@ model{
     Rho ~ lkj_corr( 2 );
     sigma ~ exponential( 1 );
     sigma_cafe ~ exponential( 1 );
-    b ~ normal( 0 , 1 );
-    a ~ normal( 0 , 2 );
+    b ~ normal( -1 , 0.5 );
+    a ~ normal( 5 , 2 );
     {
         array[N_cafes] vector[2] YY;
         vector[2] MU;

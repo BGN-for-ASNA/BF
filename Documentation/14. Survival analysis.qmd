@@ -43,7 +43,6 @@ Here’s an example of a Bayesian survival analysis using the **BayesForge (BF)*
 
 ```{python}
 from BayesForge import bf
-import numpy as np
 import jax.numpy as jnp
 
 m = bf(platform='cpu')
@@ -54,7 +53,7 @@ m = bf(platform='cpu')
 # event-free), `metastasized` = "yes"/"no".
 data_path = m.load.mastectomy(only_path=True)
 m.data(data_path, sep=',')
-m.df.metastasized = (m.df.metastasized.values == "yes").astype(np.int64)
+m.df.metastasized = jnp.asarray(m.df.metastasized == "yes", dtype=jnp.int64)
 
 # --- Piecewise-constant hazard setup -------------------------------
 # Cut follow-up time into fixed intervals of length 3. For every
@@ -64,11 +63,12 @@ m.df.metastasized = (m.df.metastasized.values == "yes").astype(np.int64)
 # Censoring is encoded here: after a subject leaves (event OR censoring)
 # its exposure is 0 in every later interval, so it stops contributing
 # to the likelihood without being counted as a death.
-m.models.survival.import_time_even(m.df.time.values, m.df.event.values,
+m.models.survival.import_time_even(jnp.asarray(m.df.time.values),
+                                   jnp.asarray(m.df.event.values),
                                    interval_length=3)
 
 # Register `metastasized` as a patient-level (time-invariant) covariate.
-m.models.survival.import_covF(m.df.metastasized.values, ["metastasized"])
+m.models.survival.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
 
 # --- Censoring plot -----------------------------------------------
 # One horizontal line per subject = observed follow-up. Red = censored
@@ -159,7 +159,6 @@ from $\beta$ (equivalently the hazard ratio $e^{\beta}$) in
 library(BayesForge)
 m <- importBF(platform = "cpu")
 jnp <- reticulate::import("jax.numpy")
-np <- reticulate::import("numpy")
 
 # --- Data ------------------------------------------------------------
 # Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if
@@ -167,7 +166,7 @@ np <- reticulate::import("numpy")
 # event-free), `metastasized` = "yes"/"no".
 data_path <- m$load$mastectomy(only_path = TRUE)
 m$data(data_path, sep = ",")
-met <- np$astype(np$equal(m$df$metastasized, "yes"), np$int64)
+met <- jnp$asarray(m$df$metastasized == "yes", dtype = jnp$int64)
 m$df$metastasized <- met
 
 # --- Piecewise-constant hazard setup -------------------------------
@@ -178,8 +177,8 @@ m$df$metastasized <- met
 # Censoring is encoded here: after a subject leaves (event OR censoring)
 # its exposure is 0 in every later interval, so it stops contributing
 # to the likelihood without being counted as a death.
-m$models$survival$import_time_even(np$asarray(m$df$time),
-                                   np$asarray(m$df$event),
+m$models$survival$import_time_even(jnp$asarray(m$df$time),
+                                   jnp$asarray(m$df$event),
                                    interval_length = 3L)
 
 # Register `metastasized` as a patient-level (time-invariant) covariate.
@@ -266,7 +265,6 @@ m$models$survival$plot_surv(beta = "Hazard_rate_metastasized")
 ```julia
 using PyBayesForge
 using PythonCall
-np = pyimport("numpy")
 m = importBF(platform="cpu")
 
 # --- Data ------------------------------------------------------------
@@ -275,7 +273,7 @@ m = importBF(platform="cpu")
 # event-free), `metastasized` = "yes"/"no".
 data_path = pyconvert(String, m.load.mastectomy(only_path=true))
 m.data(data_path, sep=",")
-m.df.metastasized = np.astype(np.equal(m.df.metastasized.values, "yes"), np.int64)
+m.df.metastasized = jnp.asarray(m.df.metastasized.eq("yes").values, dtype=jnp.int64)
 
 # --- Piecewise-constant hazard setup -------------------------------
 # Cut follow-up time into fixed intervals of length 3. For every
@@ -285,11 +283,12 @@ m.df.metastasized = np.astype(np.equal(m.df.metastasized.values, "yes"), np.int6
 # Censoring is encoded here: after a subject leaves (event OR censoring)
 # its exposure is 0 in every later interval, so it stops contributing
 # to the likelihood without being counted as a death.
-m.models.survival.import_time_even(m.df.time.values, m.df.event.values,
+m.models.survival.import_time_even(jnp.asarray(m.df.time.values),
+                                   jnp.asarray(m.df.event.values),
                                    interval_length=3)
 
 # Register `metastasized` as a patient-level (time-invariant) covariate.
-m.models.survival.import_covF(m.df.metastasized.values, ["metastasized"])
+m.models.survival.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
 
 # --- Censoring plot -----------------------------------------------
 # One horizontal line per subject = observed follow-up. Red = censored
@@ -368,6 +367,7 @@ println(m.summary())
 
 :::
 
+<!--
 ### Posterior predictive checks
 
 Do survival times simulated from the fitted hazard reproduce the observed survival curve?
@@ -375,53 +375,53 @@ Do survival times simulated from the fitted hazard reproduce the observed surviv
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-s = m.models.survival
-times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
-m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+# s = m.models.survival
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
 ```
 
 #### R
 ```r
-library(BayesForge)
-m <- importBF(platform = "cpu")
-# Fit the survival model of this page (see the Python example above)
-data_path <- m$load$mastectomy(only_path = TRUE)
-m$data(data_path, sep = ",")
-np <- reticulate::import("numpy")
-met <- np$astype(np$equal(m$df$metastasized, "yes"), np$int64)
-m$df$metastasized <- met
-s <- m$models$survival
-s$import_time_even(np$asarray(m$df$time), np$asarray(m$df$event), interval_length = 3L)
-s$import_covF(met, list("metastasized"))
-s$baseline_rate_prior <- c(0.01, 0.01)
-s$hazard_rate_prior_scale <- 10.0
-m$fit(s$model)
-times_rep = s$sample_times(lambda0 = "Baseline_rate", beta = "Hazard_rate_metastasized", n_draws = 100L)
-m$diag$ppc_km_overlay(y = s$time, yrep = times_rep, status_y = s$event, name = "time")
+# library(BayesForge)
+# m <- importBF(platform = "cpu")
+# jnp <- reticulate::import("jax.numpy")
+# # Fit the survival model of this page (see the Python example above)
+# data_path <- m$load$mastectomy(only_path = TRUE)
+# m$data(data_path, sep = ",")
+# met <- jnp$asarray(m$df$metastasized == "yes", dtype = jnp$int64)
+# m$df$metastasized <- met
+# s <- m$models$survival
+# s$import_time_even(jnp$asarray(m$df$time), jnp$asarray(m$df$event), interval_length = 3L)
+# s$import_covF(met, list("metastasized"))
+# s$baseline_rate_prior <- c(0.01, 0.01)
+# s$hazard_rate_prior_scale <- 10.0
+# m$fit(s$model)
+# times_rep = s$sample_times(lambda0 = "Baseline_rate", beta = "Hazard_rate_metastasized", n_draws = 100L)
+# m$diag$ppc_km_overlay(y = s$time, yrep = times_rep, status_y = s$event, name = "time")
 ```
 
 #### Julia
 ```julia
-using PyBayesForge
-using PythonCall
-m = importBF(platform="cpu")
-# Fit the survival model of this page (see the Python example above)
-data_path = pyconvert(String, m.load.mastectomy(only_path=true))
-m.data(data_path, sep=",")
-np = pyimport("numpy")
-m.df.metastasized = np.astype(np.equal(m.df.metastasized.values, "yes"), np.int64)
-s = m.models.survival
-s.import_time_even(m.df.time.values, m.df.event.values, interval_length=3)
-s.import_covF(m.df.metastasized.values, ["metastasized"])
-s.baseline_rate_prior = (0.01, 0.01)
-s.hazard_rate_prior_scale = 10.0
-m.fit(s.model)
-times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
-m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+# using PyBayesForge
+# using PythonCall
+# m = importBF(platform="cpu")
+# # Fit the survival model of this page (see the Python example above)
+# data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+# m.data(data_path, sep=",")
+# m.df.metastasized = jnp.asarray(m.df.metastasized.eq("yes").values, dtype=jnp.int64)
+# s = m.models.survival
+# s.import_time_even(jnp.asarray(m.df.time.values), jnp.asarray(m.df.event.values), interval_length=3)
+# s.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
+# s.baseline_rate_prior = (0.01, 0.01)
+# s.hazard_rate_prior_scale = 10.0
+# m.fit(s.model)
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
 ```
 :::
 
 The black step curve is the Kaplan–Meier estimate of the observed data (censored patients included); each blue curve is the Kaplan–Meier curve of one set of survival times simulated from the posterior hazard (no censoring). The black curve should stay inside the blue band. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 
 ## Mathematical Details
 

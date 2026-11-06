@@ -11,6 +11,7 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.stats import multivariate_normal
 import seaborn as sns # Ensure seaborn is imported for palettes
 import matplotlib.pyplot as plt
+from BayesForge.Utils.dev_warning import warn_dev
 
 dist = dist()
 def gmm(data, K, initial_means=None):
@@ -118,7 +119,7 @@ def predict_gmm(data,sampler):
 
 
     """
-    print("⚠️This function is still in development. Use it with caution. ⚠️")
+    warn_dev("gmm")
     # 1. Calculate posterior mean of all model parameters
     posterior_samples = sampler.get_samples()
     w_samps = posterior_samples['weights']
@@ -160,7 +161,7 @@ def predict_gmm(data,sampler):
     return post_mean_w, post_mean_mu, post_mean_cov, final_labels
 
 def plot_gmm(data,sampler, figsize = (10, 8)):
-    print("⚠️This function is still in development. Use it with caution. ⚠️")
+    warn_dev("gmm")
     post_mean_w, post_mean_mu, post_mean_cov, final_labels = predict_gmm(data,sampler)
     # 2. Set up a grid of points to evaluate the GMM density
     x_min, x_max = data[:, 0].min() - 2, data[:, 0].max() + 2

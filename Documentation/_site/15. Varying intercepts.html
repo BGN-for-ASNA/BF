@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,8 +22,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +35,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -87,17 +88,18 @@ div.csl-indent {
 <meta name="quarto:offset" content="./">
 <link href="./16. Varying slopes.html" rel="next">
 <link href="./14. Survival analysis.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -148,14 +150,10 @@ div.csl-indent {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -237,7 +235,167 @@ window.Quarto = {
 <link rel="stylesheet" href="MyStyles_v1.css">
 </head>
 
-<body class="nav-sidebar floating nav-fixed">
+<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -630,7 +788,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -649,6 +807,7 @@ window.Quarto = {
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
+
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./15. Varying intercepts.html">Multilevel &amp; Varying Effects</a></li><li class="breadcrumb-item"><a href="./15. Varying intercepts.html">Varying Intercepts Models</a></li></ol></nav>
 <div class="quarto-title">
@@ -709,7 +868,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="0c9d1109" class="cell" data-execution_count="1">
+<div id="72e13d74" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -741,14 +900,11 @@ Note
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 32</code></pre>
+jax.local_device_count 16</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -773,35 +929,35 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_bar</td>
 <td>1.35</td>
-<td>0.25</td>
-<td>0.96</td>
+<td>0.26</td>
+<td>0.94</td>
 <td>1.76</td>
-<td>4113.43</td>
-<td>2761.36</td>
+<td>3642.04</td>
+<td>3037.26</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[0]</td>
-<td>2.15</td>
-<td>0.86</td>
-<td>0.92</td>
-<td>3.64</td>
-<td>5325.88</td>
-<td>2963.68</td>
+<td>2.14</td>
+<td>0.88</td>
+<td>0.83</td>
+<td>3.62</td>
+<td>4030.61</td>
+<td>2533.55</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[1]</td>
-<td>3.08</td>
-<td>1.11</td>
-<td>1.45</td>
-<td>5.02</td>
-<td>5126.52</td>
-<td>2662.46</td>
+<td>3.12</td>
+<td>1.14</td>
+<td>1.48</td>
+<td>5.07</td>
+<td>3546.37</td>
+<td>2228.75</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -809,11 +965,11 @@ jax.local_device_count 32</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[2]</td>
 <td>1.00</td>
-<td>0.67</td>
-<td>-0.03</td>
-<td>2.13</td>
-<td>5141.62</td>
-<td>2818.64</td>
+<td>0.65</td>
+<td>-0.01</td>
+<td>2.06</td>
+<td>4911.48</td>
+<td>2951.91</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -821,11 +977,11 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[3]</td>
 <td>3.09</td>
-<td>1.14</td>
-<td>1.43</td>
-<td>5.10</td>
-<td>4429.68</td>
-<td>2327.93</td>
+<td>1.12</td>
+<td>1.49</td>
+<td>4.98</td>
+<td>4399.05</td>
+<td>2704.51</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -844,12 +1000,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[5]</td>
-<td>2.14</td>
-<td>0.88</td>
-<td>0.84</td>
-<td>3.65</td>
-<td>4389.66</td>
-<td>2394.59</td>
+<td>2.17</td>
+<td>0.89</td>
+<td>0.87</td>
+<td>3.67</td>
+<td>4959.91</td>
+<td>2471.29</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
@@ -868,12 +1024,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[7]</td>
-<td>2.16</td>
-<td>0.90</td>
-<td>0.82</td>
-<td>3.65</td>
-<td>5431.74</td>
-<td>2747.14</td>
+<td>2.13</td>
+<td>0.87</td>
+<td>0.84</td>
+<td>3.52</td>
+<td>4885.46</td>
+<td>2759.74</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
@@ -892,24 +1048,24 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[9]</td>
-<td>2.15</td>
-<td>0.88</td>
-<td>0.86</td>
-<td>3.67</td>
-<td>4920.14</td>
-<td>2492.98</td>
+<td>2.16</td>
+<td>0.91</td>
+<td>0.82</td>
+<td>3.69</td>
+<td>3886.68</td>
+<td>2433.61</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[10]</td>
 <td>1.01</td>
-<td>0.68</td>
-<td>0.00</td>
-<td>2.17</td>
-<td>4949.54</td>
-<td>2770.57</td>
+<td>0.66</td>
+<td>-0.01</td>
+<td>2.08</td>
+<td>5152.03</td>
+<td>2776.47</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -917,11 +1073,11 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[11]</td>
 <td>0.58</td>
-<td>0.62</td>
-<td>-0.37</td>
-<td>1.58</td>
-<td>4866.68</td>
-<td>3008.95</td>
+<td>0.63</td>
+<td>-0.38</td>
+<td>1.62</td>
+<td>4603.47</td>
+<td>3165.66</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -940,24 +1096,24 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[13]</td>
-<td>0.19</td>
+<td>0.21</td>
 <td>0.63</td>
 <td>-0.78</td>
-<td>1.19</td>
-<td>4992.12</td>
-<td>2860.79</td>
+<td>1.23</td>
+<td>4660.35</td>
+<td>2986.75</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[14]</td>
-<td>2.14</td>
+<td>2.13</td>
+<td>0.85</td>
 <td>0.88</td>
-<td>0.87</td>
-<td>3.59</td>
-<td>5187.02</td>
-<td>2700.93</td>
+<td>3.55</td>
+<td>4690.18</td>
+<td>2335.27</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
@@ -976,72 +1132,72 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[16]</td>
-<td>2.92</td>
-<td>0.78</td>
-<td>1.81</td>
-<td>4.25</td>
-<td>4064.36</td>
-<td>2214.70</td>
+<td>2.89</td>
+<td>0.76</td>
+<td>1.77</td>
+<td>4.19</td>
+<td>4467.42</td>
+<td>2679.70</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[17]</td>
 <td>2.39</td>
 <td>0.66</td>
-<td>1.43</td>
-<td>3.52</td>
-<td>4777.81</td>
-<td>2771.84</td>
+<td>1.41</td>
+<td>3.50</td>
+<td>4990.03</td>
+<td>2811.79</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[18]</td>
-<td>2.03</td>
-<td>0.60</td>
-<td>1.14</td>
-<td>3.02</td>
-<td>4396.96</td>
-<td>2779.95</td>
+<td>2.00</td>
+<td>0.57</td>
+<td>1.16</td>
+<td>2.96</td>
+<td>4767.86</td>
+<td>2622.98</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[19]</td>
-<td>3.68</td>
-<td>1.00</td>
-<td>2.26</td>
-<td>5.37</td>
-<td>4372.63</td>
-<td>2609.22</td>
+<td>3.69</td>
+<td>1.03</td>
+<td>2.22</td>
+<td>5.51</td>
+<td>3912.91</td>
+<td>2459.18</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[20]</td>
-<td>2.41</td>
+<td>2.40</td>
 <td>0.66</td>
 <td>1.43</td>
-<td>3.57</td>
-<td>4880.88</td>
-<td>2430.45</td>
+<td>3.55</td>
+<td>4871.73</td>
+<td>2822.09</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[21]</td>
-<td>2.38</td>
-<td>0.64</td>
-<td>1.42</td>
-<td>3.45</td>
-<td>5455.01</td>
-<td>2826.08</td>
+<td>2.39</td>
+<td>0.66</td>
+<td>1.40</td>
+<td>3.53</td>
+<td>4844.64</td>
+<td>2695.27</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1060,12 +1216,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[23]</td>
-<td>1.71</td>
-<td>0.53</td>
-<td>0.90</td>
-<td>2.58</td>
-<td>5507.69</td>
-<td>2932.55</td>
+<td>1.69</td>
+<td>0.52</td>
+<td>0.89</td>
+<td>2.55</td>
+<td>5487.24</td>
+<td>2992.48</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1085,11 +1241,11 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[25]</td>
 <td>0.16</td>
-<td>0.37</td>
-<td>-0.43</td>
+<td>0.39</td>
+<td>-0.44</td>
 <td>0.77</td>
-<td>5138.28</td>
-<td>3018.86</td>
+<td>4928.95</td>
+<td>3080.15</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1097,11 +1253,11 @@ jax.local_device_count 32</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[26]</td>
 <td>-1.43</td>
-<td>0.48</td>
-<td>-2.23</td>
-<td>-0.69</td>
-<td>4103.19</td>
-<td>2750.87</td>
+<td>0.49</td>
+<td>-2.26</td>
+<td>-0.68</td>
+<td>4446.50</td>
+<td>2503.74</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1132,12 +1288,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[29]</td>
-<td>1.45</td>
-<td>0.51</td>
-<td>0.68</td>
-<td>2.30</td>
-<td>5478.31</td>
-<td>2930.04</td>
+<td>1.44</td>
+<td>0.50</td>
+<td>0.69</td>
+<td>2.27</td>
+<td>5453.04</td>
+<td>3042.77</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1156,12 +1312,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[31]</td>
-<td>-0.31</td>
-<td>0.40</td>
-<td>-0.94</td>
-<td>0.31</td>
-<td>5040.03</td>
-<td>2898.02</td>
+<td>-0.30</td>
+<td>0.39</td>
+<td>-0.92</td>
+<td>0.33</td>
+<td>4727.35</td>
+<td>3091.54</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1180,24 +1336,24 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[33]</td>
-<td>2.71</td>
-<td>0.62</td>
-<td>1.79</td>
-<td>3.76</td>
-<td>4843.23</td>
-<td>2456.56</td>
+<td>2.73</td>
+<td>0.64</td>
+<td>1.78</td>
+<td>3.80</td>
+<td>4420.62</td>
+<td>2559.17</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[34]</td>
-<td>2.72</td>
-<td>0.65</td>
+<td>2.70</td>
+<td>0.62</td>
 <td>1.76</td>
-<td>3.79</td>
-<td>5125.77</td>
-<td>2733.09</td>
+<td>3.74</td>
+<td>4912.38</td>
+<td>2821.99</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1206,10 +1362,10 @@ jax.local_device_count 32</code></pre>
 <td data-quarto-table-cell-role="th">alpha[35]</td>
 <td>2.06</td>
 <td>0.51</td>
-<td>1.30</td>
-<td>2.91</td>
-<td>4823.79</td>
-<td>2516.01</td>
+<td>1.28</td>
+<td>2.90</td>
+<td>4785.07</td>
+<td>2674.86</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1219,21 +1375,21 @@ jax.local_device_count 32</code></pre>
 <td>2.08</td>
 <td>0.52</td>
 <td>1.30</td>
-<td>2.95</td>
-<td>5975.92</td>
-<td>2940.94</td>
+<td>2.92</td>
+<td>5165.23</td>
+<td>2755.21</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[37]</td>
-<td>3.89</td>
-<td>0.97</td>
-<td>2.53</td>
-<td>5.58</td>
-<td>3937.47</td>
-<td>2205.22</td>
+<td>3.92</td>
+<td>1.00</td>
+<td>2.51</td>
+<td>5.67</td>
+<td>4090.41</td>
+<td>2369.99</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1253,23 +1409,23 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[39]</td>
 <td>2.36</td>
-<td>0.57</td>
-<td>1.52</td>
-<td>3.34</td>
-<td>4553.53</td>
-<td>2523.72</td>
+<td>0.58</td>
+<td>1.50</td>
+<td>3.32</td>
+<td>4415.39</td>
+<td>2610.21</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[40]</td>
-<td>-1.81</td>
+<td>-1.82</td>
 <td>0.48</td>
-<td>-2.61</td>
-<td>-1.09</td>
-<td>5585.84</td>
-<td>3094.76</td>
+<td>-2.63</td>
+<td>-1.11</td>
+<td>4913.95</td>
+<td>2995.22</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1289,23 +1445,23 @@ jax.local_device_count 32</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[42]</td>
 <td>-0.46</td>
-<td>0.35</td>
+<td>0.34</td>
 <td>-1.01</td>
-<td>0.10</td>
-<td>5165.58</td>
-<td>2950.54</td>
+<td>0.09</td>
+<td>4680.07</td>
+<td>3080.63</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[43]</td>
-<td>-0.34</td>
-<td>0.34</td>
-<td>-0.89</td>
+<td>-0.33</td>
+<td>0.33</td>
+<td>-0.86</td>
 <td>0.19</td>
-<td>5103.01</td>
-<td>2991.26</td>
+<td>5096.02</td>
+<td>3131.19</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -1324,14 +1480,14 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[45]</td>
-<td>-0.57</td>
-<td>0.35</td>
-<td>-1.14</td>
-<td>-0.03</td>
-<td>4577.31</td>
-<td>3032.66</td>
+<td>-0.58</td>
+<td>0.34</td>
+<td>-1.13</td>
+<td>-0.04</td>
+<td>5030.74</td>
+<td>3283.65</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
@@ -1352,10 +1508,10 @@ jax.local_device_count 32</code></pre>
 <td>0.33</td>
 <td>-0.52</td>
 <td>0.54</td>
-<td>5023.24</td>
-<td>2839.34</td>
+<td>4448.54</td>
+<td>3016.91</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
@@ -1378,7 +1534,7 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="3a0d9d17" class="cell" data-execution_count="2">
+<div id="3d524db9" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -1408,7 +1564,7 @@ jax.local_device_count 32</code></pre>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>jax.local_device_count 32</code></pre>
+<pre><code>jax.local_device_count 16</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="2">
 <div>
@@ -1432,12 +1588,12 @@ jax.local_device_count 32</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">global_intercept_tank</td>
-<td>1.36</td>
-<td>0.25</td>
+<td>1.37</td>
+<td>0.26</td>
 <td>0.96</td>
-<td>1.75</td>
-<td>3415.29</td>
-<td>2882.49</td>
+<td>1.80</td>
+<td>3001.76</td>
+<td>2952.27</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1445,26 +1601,26 @@ jax.local_device_count 32</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[0]</td>
 <td>2.15</td>
-<td>0.88</td>
 <td>0.89</td>
-<td>3.65</td>
-<td>3990.57</td>
-<td>2563.44</td>
+<td>0.87</td>
+<td>3.63</td>
+<td>4838.53</td>
+<td>2445.57</td>
 <td>1.0</td>
-<td>0.02</td>
+<td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[1]</td>
-<td>3.05</td>
-<td>1.09</td>
-<td>1.50</td>
-<td>4.89</td>
-<td>4276.75</td>
-<td>2787.83</td>
+<td>3.15</td>
+<td>1.21</td>
+<td>1.46</td>
+<td>5.21</td>
+<td>3260.95</td>
+<td>2062.04</td>
 <td>1.0</td>
 <td>0.02</td>
-<td>0.02</td>
+<td>0.03</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[2]</td>
@@ -1480,12 +1636,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[3]</td>
-<td>3.07</td>
-<td>1.09</td>
-<td>1.51</td>
-<td>4.96</td>
-<td>3952.78</td>
-<td>2461.45</td>
+<td>3.12</td>
+<td>1.16</td>
+<td>1.47</td>
+<td>5.14</td>
+<td>4238.89</td>
+<td>2384.62</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1504,84 +1660,84 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[5]</td>
-<td>2.14</td>
-<td>0.87</td>
-<td>0.86</td>
-<td>3.59</td>
-<td>5232.49</td>
-<td>2762.75</td>
+<td>2.15</td>
+<td>0.88</td>
+<td>0.83</td>
+<td>3.64</td>
+<td>4977.17</td>
+<td>2862.88</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[6]</td>
-<td>3.08</td>
-<td>1.10</td>
-<td>1.51</td>
-<td>5.00</td>
-<td>3921.00</td>
-<td>2541.90</td>
+<td>3.11</td>
+<td>1.12</td>
+<td>1.53</td>
+<td>5.07</td>
+<td>4472.06</td>
+<td>2479.04</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[7]</td>
-<td>2.14</td>
-<td>0.86</td>
-<td>0.89</td>
-<td>3.55</td>
-<td>4571.10</td>
-<td>2844.65</td>
+<td>2.18</td>
+<td>0.88</td>
+<td>0.88</td>
+<td>3.68</td>
+<td>4241.15</td>
+<td>2604.43</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[8]</td>
-<td>-0.19</td>
-<td>0.61</td>
+<td>-0.17</td>
+<td>0.62</td>
 <td>-1.18</td>
 <td>0.79</td>
-<td>5145.73</td>
-<td>3243.38</td>
+<td>4286.68</td>
+<td>2688.87</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[9]</td>
-<td>2.13</td>
-<td>0.87</td>
+<td>2.14</td>
 <td>0.88</td>
+<td>0.80</td>
 <td>3.60</td>
-<td>5271.00</td>
-<td>2690.19</td>
+<td>5414.76</td>
+<td>2701.72</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[10]</td>
-<td>1.01</td>
-<td>0.69</td>
+<td>0.99</td>
+<td>0.67</td>
 <td>-0.04</td>
-<td>2.15</td>
-<td>5143.47</td>
-<td>3014.53</td>
+<td>2.14</td>
+<td>4725.83</td>
+<td>2969.61</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[11]</td>
-<td>0.58</td>
-<td>0.63</td>
+<td>0.57</td>
+<td>0.62</td>
 <td>-0.38</td>
-<td>1.60</td>
-<td>5247.58</td>
-<td>2783.29</td>
+<td>1.59</td>
+<td>4747.47</td>
+<td>2568.55</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1590,10 +1746,10 @@ jax.local_device_count 32</code></pre>
 <td data-quarto-table-cell-role="th">intercept_tank[12]</td>
 <td>1.00</td>
 <td>0.67</td>
-<td>-0.03</td>
-<td>2.09</td>
-<td>4800.55</td>
-<td>2813.44</td>
+<td>-0.01</td>
+<td>2.08</td>
+<td>4598.02</td>
+<td>3051.20</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1601,23 +1757,23 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[13]</td>
 <td>0.21</td>
-<td>0.60</td>
-<td>-0.74</td>
-<td>1.17</td>
-<td>5073.60</td>
-<td>3158.70</td>
+<td>0.63</td>
+<td>-0.80</td>
+<td>1.26</td>
+<td>4412.74</td>
+<td>2747.06</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[14]</td>
-<td>2.13</td>
-<td>0.86</td>
-<td>0.86</td>
-<td>3.55</td>
-<td>4297.19</td>
-<td>2575.43</td>
+<td>2.15</td>
+<td>0.88</td>
+<td>0.87</td>
+<td>3.64</td>
+<td>4482.89</td>
+<td>2306.51</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
@@ -1648,24 +1804,24 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[17]</td>
-<td>2.38</td>
-<td>0.66</td>
-<td>1.43</td>
-<td>3.47</td>
-<td>4479.05</td>
-<td>2308.42</td>
+<td>2.40</td>
+<td>0.68</td>
+<td>1.39</td>
+<td>3.55</td>
+<td>4938.93</td>
+<td>2517.81</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[18]</td>
-<td>2.02</td>
-<td>0.59</td>
-<td>1.13</td>
-<td>2.99</td>
-<td>4037.64</td>
-<td>2705.47</td>
+<td>2.01</td>
+<td>0.58</td>
+<td>1.15</td>
+<td>3.02</td>
+<td>5041.51</td>
+<td>2657.92</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1673,11 +1829,11 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[19]</td>
 <td>3.67</td>
-<td>1.01</td>
-<td>2.26</td>
-<td>5.43</td>
-<td>3760.69</td>
-<td>2359.75</td>
+<td>0.99</td>
+<td>2.27</td>
+<td>5.35</td>
+<td>3830.53</td>
+<td>2423.09</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1687,33 +1843,33 @@ jax.local_device_count 32</code></pre>
 <td>2.39</td>
 <td>0.66</td>
 <td>1.43</td>
-<td>3.51</td>
-<td>4015.97</td>
-<td>2736.78</td>
+<td>3.49</td>
+<td>4594.02</td>
+<td>2438.30</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[21]</td>
-<td>2.41</td>
-<td>0.66</td>
-<td>1.44</td>
-<td>3.53</td>
-<td>4878.37</td>
-<td>2732.84</td>
+<td>2.40</td>
+<td>0.67</td>
+<td>1.40</td>
+<td>3.52</td>
+<td>4940.79</td>
+<td>2342.75</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[22]</td>
-<td>2.40</td>
-<td>0.66</td>
-<td>1.41</td>
-<td>3.53</td>
-<td>4908.69</td>
-<td>2344.78</td>
+<td>2.39</td>
+<td>0.64</td>
+<td>1.42</td>
+<td>3.45</td>
+<td>4669.45</td>
+<td>2879.57</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1744,12 +1900,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[25]</td>
-<td>0.15</td>
-<td>0.40</td>
-<td>-0.47</td>
-<td>0.81</td>
-<td>5037.27</td>
-<td>3073.73</td>
+<td>0.16</td>
+<td>0.39</td>
+<td>-0.45</td>
+<td>0.78</td>
+<td>4624.14</td>
+<td>2692.03</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1768,12 +1924,12 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[27]</td>
-<td>-0.47</td>
-<td>0.40</td>
-<td>-1.13</td>
-<td>0.17</td>
-<td>4680.95</td>
-<td>2854.13</td>
+<td>-0.48</td>
+<td>0.41</td>
+<td>-1.15</td>
+<td>0.18</td>
+<td>3772.37</td>
+<td>2625.51</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1807,45 +1963,45 @@ jax.local_device_count 32</code></pre>
 <td>-0.64</td>
 <td>0.42</td>
 <td>-1.33</td>
-<td>0.02</td>
-<td>4577.58</td>
-<td>2720.51</td>
+<td>0.03</td>
+<td>5367.28</td>
+<td>2947.42</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[31]</td>
-<td>-0.31</td>
-<td>0.41</td>
-<td>-0.96</td>
-<td>0.33</td>
-<td>4334.32</td>
-<td>3159.60</td>
+<td>-0.30</td>
+<td>0.39</td>
+<td>-0.93</td>
+<td>0.32</td>
+<td>5225.23</td>
+<td>3347.86</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[32]</td>
-<td>3.20</td>
-<td>0.77</td>
-<td>2.08</td>
-<td>4.54</td>
-<td>4317.99</td>
-<td>2038.67</td>
+<td>3.21</td>
+<td>0.76</td>
+<td>2.12</td>
+<td>4.55</td>
+<td>4203.03</td>
+<td>2408.38</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[33]</td>
-<td>2.71</td>
-<td>0.66</td>
-<td>1.77</td>
-<td>3.83</td>
-<td>4611.22</td>
-<td>2561.36</td>
+<td>2.72</td>
+<td>0.67</td>
+<td>1.75</td>
+<td>3.88</td>
+<td>4713.53</td>
+<td>2535.59</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1876,36 +2032,36 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[36]</td>
-<td>2.06</td>
-<td>0.51</td>
-<td>1.29</td>
-<td>2.87</td>
-<td>4468.91</td>
-<td>2726.32</td>
+<td>2.07</td>
+<td>0.52</td>
+<td>1.30</td>
+<td>2.96</td>
+<td>5105.69</td>
+<td>2689.78</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[37]</td>
-<td>3.90</td>
-<td>0.98</td>
-<td>2.50</td>
-<td>5.60</td>
-<td>3662.11</td>
-<td>2645.65</td>
+<td>3.93</td>
+<td>1.00</td>
+<td>2.52</td>
+<td>5.65</td>
+<td>3739.24</td>
+<td>2669.58</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[38]</td>
-<td>2.70</td>
-<td>0.65</td>
-<td>1.76</td>
-<td>3.80</td>
-<td>4552.19</td>
-<td>2859.90</td>
+<td>2.72</td>
+<td>0.66</td>
+<td>1.74</td>
+<td>3.86</td>
+<td>5138.60</td>
+<td>2528.81</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1913,23 +2069,23 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[39]</td>
 <td>2.36</td>
-<td>0.59</td>
-<td>1.49</td>
-<td>3.32</td>
-<td>4654.09</td>
-<td>2769.89</td>
+<td>0.57</td>
+<td>1.50</td>
+<td>3.33</td>
+<td>4640.52</td>
+<td>2323.09</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[40]</td>
-<td>-1.81</td>
-<td>0.47</td>
-<td>-2.61</td>
+<td>-1.82</td>
+<td>0.48</td>
+<td>-2.64</td>
 <td>-1.10</td>
-<td>4785.77</td>
-<td>2901.93</td>
+<td>4467.76</td>
+<td>2622.00</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1949,11 +2105,11 @@ jax.local_device_count 32</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[42]</td>
 <td>-0.45</td>
-<td>0.35</td>
+<td>0.34</td>
 <td>-1.00</td>
-<td>0.10</td>
-<td>5536.59</td>
-<td>3204.83</td>
+<td>0.09</td>
+<td>5597.31</td>
+<td>2989.53</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -1961,37 +2117,37 @@ jax.local_device_count 32</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[43]</td>
 <td>-0.34</td>
-<td>0.33</td>
-<td>-0.88</td>
+<td>0.34</td>
+<td>-0.86</td>
 <td>0.19</td>
-<td>4317.01</td>
-<td>2622.25</td>
+<td>5940.16</td>
+<td>3287.90</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[44]</td>
 <td>0.58</td>
 <td>0.35</td>
-<td>0.03</td>
-<td>1.13</td>
-<td>5168.11</td>
-<td>3021.95</td>
+<td>0.04</td>
+<td>1.16</td>
+<td>4850.07</td>
+<td>2792.03</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[45]</td>
 <td>-0.57</td>
-<td>0.35</td>
-<td>-1.14</td>
-<td>-0.01</td>
-<td>5270.88</td>
-<td>2951.50</td>
+<td>0.34</td>
+<td>-1.13</td>
+<td>-0.03</td>
+<td>4619.70</td>
+<td>3104.38</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
@@ -2008,24 +2164,24 @@ jax.local_device_count 32</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[47]</td>
-<td>-0.00</td>
-<td>0.34</td>
-<td>-0.54</td>
-<td>0.54</td>
-<td>4196.53</td>
-<td>3017.55</td>
+<td>0.00</td>
+<td>0.33</td>
+<td>-0.51</td>
+<td>0.55</td>
+<td>5007.93</td>
+<td>2776.65</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sd_tank</td>
-<td>1.62</td>
+<td>1.63</td>
 <td>0.22</td>
 <td>1.31</td>
-<td>1.98</td>
-<td>2272.90</td>
-<td>2645.92</td>
+<td>2.00</td>
+<td>2206.19</td>
+<td>2513.05</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -2045,29 +2201,30 @@ jax.local_device_count 32</code></pre>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">reedfrogs</span>(<span class="at">only_path=</span>T), <span class="at">sep=</span><span class="st">';'</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>tank <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span><span class="sc">:</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df)<span class="sc">-</span><span class="dv">1</span>)) <span class="co"># Manipulate</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>tank <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="dv">0</span><span class="sc">:</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df)<span class="sc">-</span><span class="dv">1</span>)) <span class="co"># Manipulate</span></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'tank'</span>, <span class="st">'surv'</span>, <span class="st">'density'</span>)) <span class="co"># Manipulate</span></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>tank<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>surv<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int32) <span class="co"># Manipulate</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>density <span class="ot">=</span> m<span class="sc">$</span>data_on_model<span class="sc">$</span>density<span class="sc">$</span><span class="fu">astype</span>(jnp<span class="sc">$</span>int64) <span class="co"># Manipulate</span></span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(tank, surv, density){</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>( <span class="dv">1</span>,  <span class="at">name =</span> <span class="st">'sigma'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  a_bar <span class="ot">=</span>  <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">1.5</span>, <span class="at">name=</span><span class="st">'a_bar'</span>,<span class="at">shape=</span><span class="fu">c</span>(<span class="dv">1</span>))</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(a_bar, sigma, <span class="at">name=</span><span class="st">'alpha'</span>, <span class="at">shape =</span><span class="fu">c</span>(<span class="dv">48</span>))</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> alpha[tank]</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> density, <span class="at">logits =</span> p, <span class="at">obs=</span>surv)</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(tank, surv, density){</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>( <span class="dv">1</span>, <span class="at">name =</span> <span class="st">'sigma'</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  a_bar <span class="ot">=</span>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">1.5</span>, <span class="at">name =</span> <span class="st">'a_bar'</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(a_bar, sigma, <span class="at">name =</span> <span class="st">'alpha'</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">48</span>L))</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">=</span> alpha<span class="sc">$</span><span class="st">`</span><span class="at">__getitem__</span><span class="st">`</span>(tank)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">binomial</span>(<span class="at">total_count =</span> density, <span class="at">logits =</span> p, <span class="at">obs =</span> surv, <span class="at">name =</span> <span class="st">'surv'</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
 <div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
@@ -2095,129 +2252,61 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 </div>
-<section id="posterior-predictive-checks" class="level3">
-<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
-<p>Does the model reproduce the number of survivors in every tank?</p>
-<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
-<div class="tab-content" data-group="language">
-<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
-<div id="c59bf6a1" class="cell" data-execution_count="3">
-<details open="" class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-        <script type="text/javascript">
-        window.PlotlyConfig = {MathJaxConfig: 'local'};
-        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
-        </script>
-        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
-        
-</div>
-<div class="cell-output cell-output-display">
-<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="49229b3b-db76-4987-9e08-b6ba75b3da50" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("49229b3b-db76-4987-9e08-b6ba75b3da50")) {                    Plotly.newPlot(                        "49229b3b-db76-4987-9e08-b6ba75b3da50",                        [{"hoverinfo":"skip","line":{"color":"rgba(100,149,237,0.6)","width":1.5},"mode":"lines","name":"90% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null],"y":[6.0,10.0,null,7.0,10.0,null,4.0,10.0,null,7.0,10.0,null,6.0,10.0,null,6.0,10.0,null,7.0,10.0,null,6.0,10.0,null,1.0,8.0,null,6.0,10.0,null,4.0,10.0,null,3.0,9.0,null,4.0,10.0,null,2.0,9.0,null,6.0,10.0,null,6.0,10.0,null,20.0,25.0,null,19.0,25.0,null,17.0,25.0,null,22.0,25.0,null,19.0,25.0,null,19.0,25.0,null,19.0,25.0,null,16.0,24.0,null,2.0,12.0,null,8.0,19.0,null,1.0,10.0,null,4.0,15.0,null,8.0,19.0,null,15.0,24.0,null,4.0,14.0,null,5.0,16.049999999999727,null,30.0,35.0,null,29.0,35.0,null,28.0,35.0,null,26.0,34.0,null,26.0,34.0,null,31.0,35.0,null,28.0,35.0,null,27.0,35.0,null,1.0,10.0,null,7.0,19.0,null,7.0,20.0,null,8.0,21.0,null,16.0,28.0,null,6.0,19.0,null,26.0,34.0,null,11.0,24.0,null],"type":"scatter"},{"hoverinfo":"skip","line":{"color":"cornflowerblue","width":5},"mode":"lines","name":"50% interval","x":[0,0,null,1,1,null,2,2,null,3,3,null,4,4,null,5,5,null,6,6,null,7,7,null,8,8,null,9,9,null,10,10,null,11,11,null,12,12,null,13,13,null,14,14,null,15,15,null,16,16,null,17,17,null,18,18,null,19,19,null,20,20,null,21,21,null,22,22,null,23,23,null,24,24,null,25,25,null,26,26,null,27,27,null,28,28,null,29,29,null,30,30,null,31,31,null,32,32,null,33,33,null,34,34,null,35,35,null,36,36,null,37,37,null,38,38,null,39,39,null,40,40,null,41,41,null,42,42,null,43,43,null,44,44,null,45,45,null,46,46,null,47,47,null],"y":[8.0,10.0,null,9.0,10.0,null,6.0,8.0,null,9.0,10.0,null,8.0,10.0,null,8.0,10.0,null,9.0,10.0,null,8.0,10.0,null,3.0,6.0,null,8.0,10.0,null,6.0,9.0,null,5.0,8.0,null,6.0,9.0,null,4.0,7.0,null,8.0,10.0,null,8.0,10.0,null,23.0,25.0,null,21.0,24.0,null,20.0,23.0,null,24.0,25.0,null,21.0,24.0,null,22.0,24.0,null,21.0,24.0,null,19.0,23.0,null,5.0,9.0,null,11.0,16.0,null,3.0,7.0,null,7.0,12.0,null,11.0,16.0,null,18.0,22.0,null,6.0,11.0,null,8.0,13.0,null,32.0,35.0,null,31.0,34.0,null,31.0,34.0,null,29.0,33.0,null,29.0,33.0,null,33.0,35.0,null,31.0,34.0,null,30.0,33.0,null,3.0,7.0,null,10.0,15.0,null,11.0,17.0,null,12.0,17.0,null,20.0,25.0,null,10.0,16.0,null,29.0,33.0,null,15.0,20.0,null],"type":"scatter"},{"marker":{"color":"white","line":{"color":"cornflowerblue","width":1.5},"size":7},"mode":"markers","name":"Median prediction of surv","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v"},"y":{"dtype":"f8","bdata":"AAAAAAAAIkAAAAAAAAAkQAAAAAAAABxAAAAAAAAAJEAAAAAAAAAiQAAAAAAAACJAAAAAAAAAJEAAAAAAAAAiQAAAAAAAABRAAAAAAAAAIkAAAAAAAAAcQAAAAAAAABhAAAAAAAAAHEAAAAAAAAAYQAAAAAAAACJAAAAAAAAAIkAAAAAAAAA4QAAAAAAAADdAAAAAAAAANkAAAAAAAAA5QAAAAAAAADdAAAAAAAAAN0AAAAAAAAA3QAAAAAAAADVAAAAAAAAAHEAAAAAAAAAqQAAAAAAAABRAAAAAAAAAJEAAAAAAAAAsQAAAAAAAADRAAAAAAAAAIkAAAAAAAAAmQAAAAAAAAEFAAAAAAACAQEAAAAAAAIBAQAAAAAAAAD9AAAAAAAAAP0AAAAAAAABBQAAAAAAAgEBAAAAAAAAAQEAAAAAAAAAUQAAAAAAAACpAAAAAAAAALEAAAAAAAAAuQAAAAAAAADZAAAAAAAAAKkAAAAAAAAA\u002fQAAAAAAAADFA"},"type":"scatter"},{"marker":{"color":"black","size":5},"mode":"markers","name":"surv (observed)","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v"},"y":{"dtype":"f8","bdata":"AAAAAAAAIkAAAAAAAAAkQAAAAAAAABxAAAAAAAAAJEAAAAAAAAAiQAAAAAAAACJAAAAAAAAAJEAAAAAAAAAiQAAAAAAAABBAAAAAAAAAIkAAAAAAAAAcQAAAAAAAABhAAAAAAAAAHEAAAAAAAAAUQAAAAAAAACJAAAAAAAAAIkAAAAAAAAA4QAAAAAAAADdAAAAAAAAANkAAAAAAAAA5QAAAAAAAADdAAAAAAAAAN0AAAAAAAAA3QAAAAAAAADVAAAAAAAAAGEAAAAAAAAAqQAAAAAAAABBAAAAAAAAAIkAAAAAAAAAqQAAAAAAAADRAAAAAAAAAIEAAAAAAAAAkQAAAAAAAAEFAAAAAAACAQEAAAAAAAIBAQAAAAAAAAD9AAAAAAAAAP0AAAAAAAIBBQAAAAAAAgEBAAAAAAAAAQEAAAAAAAAAQQAAAAAAAAChAAAAAAAAAKkAAAAAAAAAsQAAAAAAAADZAAAAAAAAAKEAAAAAAAAA\u002fQAAAAAAAADFA"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"title":{"text":"PPC: Predictive intervals — predictions of surv"},"xaxis":{"title":{"text":"Observation"}},"yaxis":{"title":{"text":"surv"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('49229b3b-db76-4987-9e08-b6ba75b3da50');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
+<!--
+### Posterior predictive checks
 
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
+Does the model reproduce the number of survivors in every tank?
 
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
+::: {.panel-tabset group="language"}
+#### Python
 
-                        })                };            </script>        </div>
-</div>
-</div>
-</div>
-<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_intervals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-<p>One point per tank (observed survivors) with the 50 % and 90 % predictive intervals. Partial pooling pulls extreme tanks toward the average, so a few points may sit at the edge of their interval; many points outside would mean too much shrinkage. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-More checks
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
-<div class="tab-content" data-group="language">
-<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<div id="1b1c0080" class="cell" data-execution_count="4">
-<details open="" class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat(stat<span class="op">=</span><span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="5efb5d75-7290-44e8-8adc-2ca7d4472cff" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("5efb5d75-7290-44e8-8adc-2ca7d4472cff")) {                    Plotly.newPlot(                        "5efb5d75-7290-44e8-8adc-2ca7d4472cff",                        [{"fill":"tozeroy","fillcolor":"rgba(100,149,237,0.3)","line":{"color":"cornflowerblue","width":1.5},"mode":"lines","name":"sd of each prediction of surv","x":{"dtype":"f8","bdata":"Ky4voRIPIUCL9C1RURMhQOy6LAGQFyFATIErsc4bIUCtRyphDSAhQA0OKRFMJCFAbtQnwYooIUDOmiZxySwhQC9hJSEIMSFAjyck0UY1IUDw7SKBhTkhQFC0ITHEPSFAsHog4QJCIUARQR+RQUYhQHEHHkGASiFA0s0c8b5OIUAylBuh\u002fVIhQJNaGlE8VyFA8yAZAXtbIUBU5xexuV8hQLStFmH4YyFAFXQVETdoIUB1OhTBdWwhQNYAE3G0cCFANscRIfN0IUCWjRDRMXkhQPdTD4FwfSFAVxoOMa+BIUC44Azh7YUhQBinC5EsiiFAeW0KQWuOIUDZMwnxqZIhQDr6B6HoliFAmsAGUSebIUD7hgUBZp8hQFtNBLGkoyFAvBMDYeOnIUAc2gERIqwhQHygAMFgsCFA3Wb\u002fcJ+0IUA9Lf4g3rghQJ7z\u002fNAcvSFA\u002frn7gFvBIUBfgPowmsUhQL9G+eDYySFAIA34kBfOIUCA0\u002fZAVtIhQOGZ9fCU1iFAQWD0oNPaIUChJvNQEt8hQALt8QBR4yFAYrPwsI\u002fnIUDDee9gzushQCNA7hAN8CFAhAbtwEv0IUDkzOtwivghQEWT6iDJ\u002fCFApVnp0AcBIkAGIOiARgUiQGbm5jCFCSJAxqzl4MMNIkAnc+SQAhIiQIc540BBFiJA6P\u002fh8H8aIkBIxuCgvh4iQKmM31D9IiJACVPeADwnIkBqGd2weisiQMrf22C5LyJAK6baEPgzIkCLbNnANjgiQOwy2HB1PCJATPnWILRAIkCsv9XQ8kQiQA2G1IAxSSJAbUzTMHBNIkDOEtLgrlEiQC7Z0JDtVSJAj5\u002fPQCxaIkDvZc7wal4iQFAszaCpYiJAsPLLUOhmIkARucoAJ2siQHF\u002fybBlbyJA0kXIYKRzIkAyDMcQ43ciQJLSxcAhfCJA85jEcGCAIkBTX8Mgn4QiQLQlwtDdiCJAFOzAgByNIkB1sr8wW5EiQNV4vuCZlSJANj+9kNiZIkCWBbxAF54iQPbLuvBVoiJAV5K5oJSmIkC3WLhQ06oiQBgftwASryJAeOW1sFCzIkDZq7Rgj7ciQDlysxDOuyJAmjiywAzAIkD6\u002frBwS8QiQFvFryCKyCJAu4uu0MjMIkAcUq2AB9EiQHwYrDBG1SJA3N6q4ITZIkA9pamQw90iQJ1rqEAC4iJA\u002fjGn8EDmIkBe+KWgf+oiQL++pFC+7iJAH4WjAP3yIkCAS6KwO\u002fciQOARoWB6+yJAQdifELn\u002fIkChnp7A9wMjQAJlnXA2CCNAYiucIHUMI0DC8ZrQsxAjQCO4mYDyFCNAg36YMDEZI0DkRJfgbx0jQEQLlpCuISNApdGUQO0lI0AFmJPwKyojQGZekqBqLiNAxiSRUKkyI0Am648A6DYjQIexjrAmOyNA6HeNYGU\u002fI0BIPowQpEMjQKgEi8DiRyNACcuJcCFMI0BpkYggYFAjQMpXh9CeVCNAKh6GgN1YI0CL5IQwHF0jQOuqg+BaYSNATHGCkJllI0CsN4FA2GkjQAz+f\u002fAWbiNAbcR+oFVyI0DNin1QlHYjQC5RfADTeiNAjhd7sBF\u002fI0Dv3XlgUIMjQE+keBCPhyNAsGp3wM2LI0AQMXZwDJAjQHH3dCBLlCNA0b1z0ImYI0AyhHKAyJwjQJJKcTAHoSNA8hBw4EWlI0BT126QhKkjQLOdbUDDrSNAFGRs8AGyI0B0KmugQLYjQNXwaVB\u002fuiNANbdoAL6+I0CWfWew\u002fMIjQPZDZmA7xyNAVwplEHrLI0C30GPAuM8jQBiXYnD30yNAeF1hIDbYI0DYI2DQdNwjQDnqXoCz4CNAmbBdMPLkI0D6dlzgMOkjQFo9W5Bv7SNAuwNaQK7xI0Abyljw7PUjQHyQV6Ar+iNA3FZWUGr+I0A8HVUAqQIkQJ3jU7DnBiRA\u002fqlSYCYLJEBecFEQZQ8kQL42UMCjEyRAH\u002f1OcOIXJEB\u002fw00gIRwkQOCJTNBfICRAQFBLgJ4kJEChFkow3SgkQAHdSOAbLSRAYqNHkFoxJEDCaUZAmTUkQCIwRfDXOSRAg\u002fZDoBY+JEDjvEJQVUIkQESDQQCURiRApElAsNJKJEAFED9gEU8kQGXWPRBQUyRAxpw8wI5XJEAmYztwzVskQIcpOiAMYCRA5+840EpkJEBItjeAiWgkQKh8NjDIbCRACEM14AZxJEBpCTSQRXUkQMnPMkCEeSRAKpYx8MJ9JECKXDCgAYIkQOsiL1BAhiRAS+ktAH+KJECsryywvY4kQAx2K2D8kiRAbDwqEDuXJEDNAinAeZskQC7JJ3C4nyRAjo8mIPejJEDuVSXQNagkQE8cJIB0rCRAr+IiMLOwJEAQqSHg8bQkQHBvIJAwuSRA0TUfQG+9JEAx\u002fB3wrcEkQJLCHKDsxSRA8ogbUCvKJEBSTxoAas4kQLMVGbCo0iRAE9wXYOfWJEB0ohYQJtskQNRoFcBk3yRANS8UcKPjJECV9RIg4uckQPa7EdAg7CRAVoIQgF\u002fwJEC3SA8wnvQkQBcPDuDc+CRAeNUMkBv9JEDYmwtAWgElQDhiCvCYBSVAmSgJoNcJJUD57gdQFg4lQFq1BgBVEiVAunsFsJMWJUAbQgRg0holQHsIAxARHyVA3M4BwE8jJUA8lQBwjiclQJxb\u002fx\u002fNKyVA\u002fSH+zwswJUBe6Px\u002fSjQlQL6u+y+JOCVAHnX638c8JUB\u002fO\u002fmPBkElQN8B+D9FRSVAQMj274NJJUCgjvWfwk0lQAFV9E8BUiVAYRvz\u002fz9WJUDC4fGvflolQCKo8F+9XiVAgm7vD\u002fxiJUDjNO6\u002fOmclQET77G95ayVApMHrH7hvJUAEiOrP9nMlQGVO6X81eCVAxRToL3R8JUAm2+bfsoAlQIah5Y\u002fxhCVA52fkPzCJJUBHLuPvbo0lQKj04Z+tkSVACLvgT+yVJUBogd\u002f\u002fKpolQMlH3q9pniVAKg7dX6iiJUCK1NsP56YlQOqa2r8lqyVAS2HZb2SvJUCrJ9gfo7MlQAzu1s\u002fhtyVAbLTVfyC8JUDMetQvX8AlQC1B09+dxCVAjgfSj9zIJUDuzdA\u002fG80lQE6Uz+9Z0SVAr1rOn5jVJUAPIc1P19klQHDny\u002f8V3iVA0K3Kr1TiJUAxdMlfk+YlQJE6yA\u002fS6iVA8gDHvxDvJUBSx8VvT\u002fMlQLKNxB+O9yVAE1TDz8z7JUB0GsJ\u002fCwAmQNTgwC9KBCZA"},"y":{"dtype":"f8","bdata":"F5\u002fjV\u002f7BZj\u002fz4roIq7tnP+982o9vX2g\u002fOy8AxEGmaD9diI0cFo1oP\u002fgGHaMXFWg\u002farFfophDZz\u002fLvJhHviFmP\u002f2P+o3vu2Q\u002fgzDISRUhYz9vxz1+vWFhPyItdKptHl8\u002ftlhmUnN1Wz95WnO3ZOlXP\u002fMF3195mFQ\u002fsRb8w7OdUT+MIxpmjyFOP3wSPOjfDEo\u002ftzGH3zIiRz\u002f3gEXXfINFP1pxuXuKUUU\u002fbiSSA2mtRj+KjJptJ7lJP4iBhQa0l04\u002fvlKrkNy1Uj\u002f+MHLswCpXP0CPwNcLuFw\u002fUkNWvnuzYT8x8HVKZZ1lP8JEvzu5F2o\u002f3oZ3U1Ecbz\u002f\u002fBgIpbVByP6TjH7ScS3U\u002fjdcKnTh3eD9IpDVvAcp7P\u002foZz2fcOn8\u002f5dSI+e5ggT82IxGosSyDP+NUspWQ\u002f4Q\u002fdav8X4Xahj+BhX2f+sCIP9NVkwrvuIo\u002fXiYwJ+DKjD+rwFnfdgGPP3N\u002fDt16tJA\u002fB7HFZjcHkj9anoAVZ3+TP\u002fZ+9eblIpU\u002f4WryiW72lj\u002fM5QJLIP2YPyyE5JAfOJs\u002f8jUBk1ymnT+WS4xQRCKgP7d2LNmehqE\u002fP840Sqv8oj\u002fqlmNbOICkP9FyagDGDKY\u002fyfz2Ct2dpz++JlOtZi+pP+8ZnIz8vao\u002felC4gitHrD\u002fzvaw+pcmtP0+G1DFfRa8\u002fP6Hom89dsD8cJw7kexexP+6pYgib0bE\u002f6LKHEKKOsj8aSOlDgFGzP+20jfKFHbQ\u002f0TilLkb2tD9FmLt+c9+1P0xudxC43LY\u002feVgz1orxtz9FC8kOBCG5PzfKKba0bbo\u002ffAo494TZuz+iWdupnWW9PxJYEBJgEr8\u002fugA1wLZvwD9PEfws32XBP0dYEOTiasI\u002fj+B8ps59wz+KylgOmZ3EP3EU+Nk2ycU\u002fnU4+56n\u002fxj+GWzDICEDIP2ZHMhR+ick\u002fG2XTBkDbyj\u002frgqhlgjTMP162LdNllM0\u002fqp8wduj5zj\u002fO9pEJ7jHQPx+dyKdy6NA\u002f2strbcOf0T9jYRrcHFfSP1HT8wXJDdM\u002fs3RC5zbD0z\u002fjaRd0FHfUP3PWAFxoKdU\u002fFwWFGqja1T8wliHsxovWP98kGrk6Ptc\u002fXc2J8\u002fTz1z+nW9urTq\u002fYP23wG5Toctk\u002f6xIZG4FB2j\u002f3qR3+wx3bPy7wcX4XCtw\u002fGRUFs2sI3T+EbdQxEBreP7XPI5mTP98\u002fLVygvFc84D8s9vz3IOLgPyDW5owqkOE\u002f3JGkuRlF4j8N7B65Q\u002f\u002fiP7zmigPCvOM\u002fuLeYqol75D\u002ftJTtehDnlP0VveJ+p9OU\u002fruY8sRar5j9SLhP2I1vnP9x68J92A+g\u002fvzB+5Q2j6D9ODbVRSznpP2973iv2xek\u002ffbhvVjpJ6j\u002fwP2ZIo8PqP7r5XeATNus\u002fkZ4xvbuh6z8+M7mMCgjsPyDjtnGhauw\u002fAko7WkLL7D81iyT9vCvtPw+6Ok7Zje0\u002f4dnelD\u002fz7T9ntfbmXl3uP4eOoXxTze4\u002fTIXZ+M5D7z+cVY8zBcHvP3y9CBNQIvA\u002fRvjmnt5m8D91IlnGeq3wP+OTr5Q49fA\u002fAEpIXwI98T9HOMx+q4PxP\u002f2+fUwFyPE\u002fWp\u002fXYvQI8j+TS3cOhEXyP1PBEQ32fPI\u002fpIZgI82u8j93KZOn0dryP6vmOsYPAfM\u002fxVut7c8h8z\u002fbcHNcij3zP8Fi+TzXVPM\u002fEssd\u002fFxo8z8HZsmfvnjzPxfwttCLhvM\u002fnG53EzSS8z\u002f3COZV\u002fpvzPykgm4UFpPM\u002fauWtYDqq8z\u002fEfK4laq7zP8u\u002fvj5JsPM\u002fs2pfjYCv8z9kbl6pu6vzP4ms80O2pPM\u002fUYHF+Uaa8z\u002frPgQ0ZozzPzLhnUAwe\u002fM\u002fIZC1cOJm8z9Nk2i500\u002fzPxi7BuppNvM\u002f1DyE9Awb8z\u002fI9PTxGf7yP+0G23nX3\u002fI\u002fkEJymGzA8j+Gtdk\u002f25\u002fyP+mV9pD+ffI\u002fBDKd4Yxa8j8j0xsHHTXyP5hnby8uDfI\u002f0lfvdzHi8T9EhbRulLPxPzJad7nLgPE\u002fGaLSLl1J8T+755e\u002f6AzxP5O3yJwvy\u002fA\u002fgZGqGBmE8D80CNHdtDfwP1Ho+oh0zO8\u002fhwQCnwkg7z+qvs1SHGvuP\u002fVuhJvMru0\u002fw7ABolXs7D\u002fgKijE\u002fCTsP7XsSD4DWus\u002f7QjRRpyM6j8pgTWo6L3pP28hBef37ug\u002fGj398c0g6D8zwUJra1TnPy0k1fzViuY\u002f4LJDAh7F5T9R8BAtXwTlP12Czp26SeQ\u002f0Y0VGEqW4z9x5ZpHDeviP0lJAkXTSOI\u002fcYT+cCOw4T\u002fJ9K0oKSHhP9VyrrGlm+A\u002fWpxRC+se4D\u002fqJ2piwlPfP64\u002fqPIrdt4\u002fvm\u002fjmayh3T\u002fTqU2AnNLcP8+4tVlZBdw\u002fNumgH4022z\u002fTp8sCbWPaP\u002fatb2jqidk\u002fKb9jndGo2D8xi5oo1L\u002fXP3Azl\u002f1+z9Y\u002ft7Pi8B7Z1T9Qw8d9l97UPx6sE\u002fww4tM\u002fa\u002fDdxGPm0j8xU7R8pe3RPwnF3+I8+tA\u002fM9nUSh8O0D\u002fvOyjxslXOPy0frlsIo8w\u002fAqBw8oYFyz+cBRzWnX3JP5vgbI4AC8g\u002fA7v7Qsysxj\u002f0QI3+r2HFP+vrSQwUKMQ\u002ft\u002f9poD3+wj9zHYgvbeLBP0emXej20sA\u002fX0B7Iaucvz\u002fU4t\u002f9cKa9P12i+Rcbwbs\u002fmYJEcQ\u002fruT\u002fPcl\u002fdRSO4PzHUf9NJabY\u002fcJqmBTa9tD\u002ffv2XlqB+zP6aO+VuxkbE\u002feiQgi7MUsD9lku+vjFStP20HATsXqKo\u002fSFys7gsnqD8yPszE39OlP+iwbowwsKM\u002f2iw1cJC8oT9RhAzB0\u002fCfP5AOaUn+w5w\u002fS5yNKgvtmT+C1dtdsmSXPxN7iZ2EIpU\u002fjA9X2Iodkz\u002fVhZmf50yRP+K0Z6vSUI8\u002fD8sBq\u002f1RjD8Ukx2lCZKJPzbJMRLPCIc\u002fh6eCWzOxhD++rmVpzIiCP8aT0\u002flLj4A\u002fislOrJGLfT\u002ff2+7++Vt6P7N4PX0ck3c\u002fZXGhiOUydT+JClzJ\u002fDpzP2Pwmmk+qHE\u002f+7SyKZV0cD8+jC1CWi5vPxRZ6KTdCW4\u002fjjvoZllibT833g5e1RxtP4c01udOHm0\u002fcxk0giRNbT+CLLeVOZJtP5Hhzhe+2W0\u002fYaK+GpMTbj9\u002fg8AnUjNuP1Lzs+YHMG4\u002f7eSL+LkDbj9G2e1T06ptP+WBariRI20\u002fvxIUSYptbD+veJLwU4lrPzLw\u002fRtdeGo\u002f0+IxIOk8aT\u002fo8lnEKdpnPwD8jT1kVGY\u002f"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"black","width":2.5},"type":"line","x0":9.884774989636572,"x1":9.884774989636572,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"annotations":[{"showarrow":false,"text":"observed sd = 9.88","x":9.884774989636572,"xanchor":"left","xref":"x","y":1,"yanchor":"top","yref":"y domain"}],"title":{"text":"PPC: sd of surv  |  P(predicted ≥ observed) = 0.488  (two-sided p = 0.976)"},"xaxis":{"title":{"text":"sd(surv)"}},"yaxis":{"title":{"text":"Density"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('5efb5d75-7290-44e8-8adc-2ca7d4472cff');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
+::: {#0455caed .cell execution_count=3}
+``` {.python .cell-code}
+# m.diag.ppc_intervals()
+```
+:::
 
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
 
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
+#### R
+```r
+# m$diag$ppc_intervals()
+```
 
-                        })                };            </script>        </div>
-</div>
-</div>
-</div>
-<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_stat</span>(<span class="at">stat =</span> <span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
-<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_stat</span>(stat<span class="op">=</span><span class="st">"sd"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-<p>The observed spread of survivor counts between tanks (vertical line) should fall inside the simulated spreads.</p>
-</div>
-</div>
-</div>
-</section>
+#### Julia
+```julia
+# m.diag.ppc_intervals()
+```
+:::
+
+One point per tank (observed survivors) with the 50 % and 90 % predictive intervals. Partial pooling pulls extreme tanks toward the average, so a few points may sit at the edge of their interval; many points outside would mean too much shrinkage. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#068eba79 .cell execution_count=4}
+``` {.python .cell-code}
+# m.diag.ppc_stat(stat="sd")
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_stat(stat = "sd")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_stat(stat="sd")
+```
+:::
+
+The observed spread of survivor counts between tanks (vertical line) should fall inside the simulated spreads.
+:::
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -2255,7 +2344,7 @@ Y_{i} \sim \text{Normal}(\mu_{i}, \sigma)
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
 <li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>11.Varying intercepts.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">
@@ -3047,383 +3136,255 @@ An activation function is a nonlinear transformation applied to the pre-activati
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
     }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const disableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'prefetch';
-    }
-  }
-  const enableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'stylesheet';
-    }
-  }
-  const manageTransitions = (selector, allowTransitions) => {
-    const els = window.document.querySelectorAll(selector);
-    for (let i=0; i < els.length; i++) {
-      const el = els[i];
-      if (allowTransitions) {
-        el.classList.remove('notransition');
-      } else {
-        el.classList.add('notransition');
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-  }
-  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-    let newTheme = '';
-    if(darkModeDefault) {
-      newTheme = isAlternate ? baseTheme : alternateTheme;
-    } else {
-      newTheme = isAlternate ? alternateTheme : baseTheme;
-    }
-    const changeGiscusTheme = () => {
-      // From: https://github.com/giscus/giscus/issues/336
-      const sendMessage = (message) => {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
-      sendMessage({
-        setConfig: {
-          theme: newTheme
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
       });
     }
-    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-    if (isGiscussLoaded) {
-      changeGiscusTheme();
-    }
-  }
-  const toggleColorMode = (alternate) => {
-    // Switch the stylesheets
-    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-    manageTransitions('#quarto-margin-sidebar .nav-link', false);
-    if (alternate) {
-      enableStylesheet(alternateStylesheets);
-      for (const sheetNode of alternateStylesheets) {
-        if (sheetNode.id === "quarto-bootstrap") {
-          toggleBodyColorMode(sheetNode);
-        }
-      }
-    } else {
-      disableStylesheet(alternateStylesheets);
-      toggleBodyColorPrimary();
-    }
-    manageTransitions('#quarto-margin-sidebar .nav-link', true);
-    // Switch the toggles
-    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-    for (let i=0; i < toggles.length; i++) {
-      const toggle = toggles[i];
-      if (toggle) {
-        if (alternate) {
-          toggle.classList.add("alternate");     
-        } else {
-          toggle.classList.remove("alternate");
-        }
-      }
-    }
-    // Hack to workaround the fact that safari doesn't
-    // properly recolor the scrollbar when toggling (#1455)
-    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-      manageTransitions("body", false);
-      window.scrollTo(0, 1);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        manageTransitions("body", true);
-      }, 40);  
-    }
-  }
-  const isFileUrl = () => { 
-    return window.location.protocol === 'file:';
-  }
-  const hasAlternateSentinel = () => {  
-    let styleSentinel = getColorSchemeSentinel();
-    if (styleSentinel !== null) {
-      return styleSentinel === "alternate";
-    } else {
-      return false;
-    }
-  }
-  const setStyleSentinel = (alternate) => {
-    const value = alternate ? "alternate" : "default";
-    if (!isFileUrl()) {
-      window.localStorage.setItem("quarto-color-scheme", value);
-    } else {
-      localAlternateSentinel = value;
-    }
-  }
-  const getColorSchemeSentinel = () => {
-    if (!isFileUrl()) {
-      const storageValue = window.localStorage.getItem("quarto-color-scheme");
-      return storageValue != null ? storageValue : localAlternateSentinel;
-    } else {
-      return localAlternateSentinel;
-    }
-  }
-  const darkModeDefault = true;
-  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-  // Dark / light mode switch
-  window.quartoToggleColorScheme = () => {
-    // Read the current dark / light value 
-    let toAlternate = !hasAlternateSentinel();
-    toggleColorMode(toAlternate);
-    setStyleSentinel(toAlternate);
-    toggleGiscusIfUsed(toAlternate, darkModeDefault);
-  };
-  // Ensure there is a toggle, if there isn't float one in the top right
-  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-    const a = window.document.createElement('a');
-    a.classList.add('top-right');
-    a.classList.add('quarto-color-scheme-toggle');
-    a.href = "";
-    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-    const i = window.document.createElement("i");
-    i.classList.add('bi');
-    a.appendChild(i);
-    window.document.body.appendChild(a);
-  }
-  // Switch to dark mode if need be
-  if (hasAlternateSentinel()) {
-    toggleColorMode(true);
-  } else {
-    toggleColorMode(false);
-  }
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
-    });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
         }
-        return container.innerHTML
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -3431,185 +3392,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./14. Survival analysis.html" class="pagination-link" aria-label="Survival Analysis">

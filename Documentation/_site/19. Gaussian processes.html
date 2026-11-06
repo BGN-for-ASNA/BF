@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.7.32">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,8 +22,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +35,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -87,17 +88,18 @@ div.csl-indent {
 <meta name="quarto:offset" content="./">
 <link href="./18. Phylogenetic analysis.html" rel="next">
 <link href="./17. Nested varying effects.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -148,14 +150,10 @@ div.csl-indent {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -237,7 +235,167 @@ window.Quarto = {
 <link rel="stylesheet" href="MyStyles_v1.css">
 </head>
 
-<body class="nav-sidebar floating nav-fixed">
+<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -630,7 +788,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -653,6 +811,7 @@ window.Quarto = {
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
+
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./15. Varying intercepts.html">Multilevel &amp; Varying Effects</a></li><li class="breadcrumb-item"><a href="./19. Gaussian processes.html">Gaussian Processes</a></li></ol></nav>
 <div class="quarto-title">
@@ -716,7 +875,7 @@ Caution
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="25688f28" class="cell" data-execution_count="1">
+<div id="606bb7f0" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -747,27 +906,27 @@ Caution
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># non-centered Gaussian Process prior</span></span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    etasq <span class="op">=</span> m.dist.exponential(<span class="dv">2</span>, name <span class="op">=</span> <span class="st">'etasq'</span>)</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    rhosq <span class="op">=</span> m.dist.exponential(<span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">'rhosq'</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> etasq <span class="op">*</span> jnp.exp(<span class="op">-</span>rhosq <span class="op">*</span> jnp.square(Dmat))</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> SIGMA.at[jnp.diag_indices(Dmat.shape[<span class="dv">0</span>])].add(<span class="fl">0.001</span>)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> m.dist.multivariate_normal(<span class="dv">0</span>, SIGMA, name <span class="op">=</span> <span class="st">'k'</span>)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> a <span class="op">*</span> population<span class="op">**</span>b <span class="op">/</span> g <span class="op">*</span> jnp.exp(k[society])</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    m.dist.poisson(lambda_, obs<span class="op">=</span>total_tools)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) </span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> Dmat.shape[<span class="dv">0</span>]</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> etasq <span class="op">*</span> jnp.exp(<span class="op">-</span>rhosq <span class="op">*</span> jnp.square(Dmat))</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> SIGMA.at[jnp.diag_indices(n)].add(<span class="fl">0.01</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    L_chol <span class="op">=</span> jnp.linalg.cholesky(SIGMA)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> m.dist.multivariate_normal(jnp.zeros(n), jnp.eye(n), name <span class="op">=</span> <span class="st">'z'</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> jnp.matmul(L_chol, z)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> a <span class="op">*</span> population<span class="op">**</span>b <span class="op">/</span> g <span class="op">*</span> jnp.exp(k[society])</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    m.dist.poisson(lambda_, obs<span class="op">=</span>total_tools)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) </span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 32</code></pre>
+jax.local_device_count 16</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -791,38 +950,38 @@ jax.local_device_count 32</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>1.36</td>
-<td>1.02</td>
-<td>0.22</td>
-<td>3.28</td>
-<td>1277.00</td>
-<td>1306.18</td>
+<td>1.40</td>
+<td>1.05</td>
+<td>0.24</td>
+<td>3.44</td>
+<td>2186.63</td>
+<td>1875.33</td>
 <td>1.0</td>
-<td>0.03</td>
+<td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">b</td>
 <td>0.28</td>
-<td>0.08</td>
-<td>0.15</td>
+<td>0.09</td>
+<td>0.14</td>
 <td>0.41</td>
-<td>1120.99</td>
-<td>1271.03</td>
+<td>1640.03</td>
+<td>1746.30</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">etasq</td>
-<td>0.21</td>
-<td>0.21</td>
-<td>0.04</td>
-<td>0.59</td>
-<td>926.63</td>
-<td>1136.30</td>
+<td>0.19</td>
+<td>0.19</td>
+<td>0.03</td>
+<td>0.53</td>
+<td>1324.73</td>
+<td>2076.28</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
@@ -838,136 +997,136 @@ jax.local_device_count 32</code></pre>
 <td>0.02</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">k[0]</td>
-<td>-0.15</td>
-<td>0.31</td>
-<td>-0.64</td>
-<td>0.32</td>
-<td>661.45</td>
-<td>1035.55</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">k[1]</td>
-<td>-0.04</td>
-<td>0.30</td>
-<td>-0.49</td>
-<td>0.42</td>
-<td>595.13</td>
-<td>707.81</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">k[2]</td>
-<td>-0.07</td>
-<td>0.29</td>
-<td>-0.53</td>
-<td>0.37</td>
-<td>616.73</td>
-<td>767.20</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">k[3]</td>
-<td>0.36</td>
-<td>0.27</td>
-<td>-0.04</td>
-<td>0.78</td>
-<td>763.04</td>
-<td>892.54</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">k[4]</td>
-<td>0.09</td>
-<td>0.27</td>
-<td>-0.30</td>
-<td>0.50</td>
-<td>602.39</td>
-<td>891.31</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.02</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">k[5]</td>
-<td>-0.38</td>
-<td>0.28</td>
-<td>-0.83</td>
-<td>0.01</td>
-<td>580.68</td>
-<td>867.26</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">k[6]</td>
-<td>0.15</td>
-<td>0.27</td>
-<td>-0.26</td>
-<td>0.58</td>
-<td>778.84</td>
-<td>853.17</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.02</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">k[7]</td>
-<td>-0.21</td>
-<td>0.27</td>
-<td>-0.62</td>
-<td>0.19</td>
-<td>693.99</td>
-<td>679.44</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.02</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">k[8]</td>
-<td>0.26</td>
-<td>0.26</td>
-<td>-0.12</td>
-<td>0.65</td>
-<td>694.51</td>
-<td>758.46</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.02</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">k[9]</td>
-<td>-0.16</td>
-<td>0.35</td>
-<td>-0.72</td>
-<td>0.37</td>
-<td>947.79</td>
-<td>1135.90</td>
-<td>1.0</td>
-<td>0.01</td>
-<td>0.01</td>
-</tr>
-<tr class="odd">
 <td data-quarto-table-cell-role="th">rhosq</td>
-<td>1.25</td>
-<td>1.51</td>
+<td>1.34</td>
+<td>1.67</td>
 <td>0.08</td>
-<td>4.04</td>
-<td>660.88</td>
-<td>789.45</td>
+<td>4.43</td>
+<td>1428.61</td>
+<td>2029.50</td>
 <td>1.0</td>
 <td>0.04</td>
-<td>0.04</td>
+<td>0.05</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">z[0]</td>
+<td>-0.45</td>
+<td>0.75</td>
+<td>-1.65</td>
+<td>0.73</td>
+<td>2531.96</td>
+<td>2719.53</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">z[1]</td>
+<td>0.38</td>
+<td>0.76</td>
+<td>-0.84</td>
+<td>1.55</td>
+<td>3545.94</td>
+<td>2860.35</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">z[2]</td>
+<td>-0.22</td>
+<td>0.76</td>
+<td>-1.44</td>
+<td>1.02</td>
+<td>3001.64</td>
+<td>2583.86</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">z[3]</td>
+<td>0.95</td>
+<td>0.62</td>
+<td>-0.00</td>
+<td>1.98</td>
+<td>2187.96</td>
+<td>2697.22</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">z[4]</td>
+<td>0.36</td>
+<td>0.67</td>
+<td>-0.66</td>
+<td>1.47</td>
+<td>2568.18</td>
+<td>2483.14</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">z[5]</td>
+<td>-1.07</td>
+<td>0.65</td>
+<td>-2.14</td>
+<td>-0.08</td>
+<td>2737.64</td>
+<td>2596.06</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">z[6]</td>
+<td>0.35</td>
+<td>0.58</td>
+<td>-0.57</td>
+<td>1.26</td>
+<td>2617.33</td>
+<td>2442.54</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">z[7]</td>
+<td>-0.40</td>
+<td>0.68</td>
+<td>-1.51</td>
+<td>0.68</td>
+<td>3607.72</td>
+<td>2487.06</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">z[8]</td>
+<td>0.77</td>
+<td>0.64</td>
+<td>-0.25</td>
+<td>1.82</td>
+<td>2789.14</td>
+<td>2410.42</td>
+<td>1.0</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">z[9]</td>
+<td>-0.44</td>
+<td>0.81</td>
+<td>-1.73</td>
+<td>0.83</td>
+<td>2250.17</td>
+<td>2537.66</td>
+<td>1.0</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 </tbody>
 </table>
@@ -977,7 +1136,7 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="b4e0b3dd" class="cell" data-execution_count="2">
+<div id="24ff4fba" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -1134,159 +1293,159 @@ Running chain 2:  95%|█████████▌| 1900/2000 [00:03&lt;00:00,
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>1.18</td>
-<td>0.99</td>
+<td>1.12</td>
+<td>0.94</td>
 <td>0.15</td>
-<td>3.09</td>
-<td>1009.78</td>
-<td>966.33</td>
-<td>1.00</td>
+<td>2.92</td>
+<td>636.85</td>
+<td>356.44</td>
+<td>1.01</td>
 <td>0.03</td>
 <td>0.03</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">b</td>
 <td>0.33</td>
-<td>0.15</td>
-<td>0.09</td>
-<td>0.56</td>
-<td>667.97</td>
-<td>687.79</td>
-<td>1.00</td>
+<td>0.14</td>
+<td>0.11</td>
+<td>0.57</td>
+<td>368.74</td>
+<td>302.59</td>
+<td>1.01</td>
 <td>0.01</td>
-<td>0.00</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">g</td>
-<td>0.86</td>
-<td>0.88</td>
+<td>0.81</td>
+<td>0.85</td>
 <td>0.07</td>
-<td>2.46</td>
-<td>849.10</td>
-<td>740.16</td>
-<td>1.01</td>
+<td>2.35</td>
+<td>819.00</td>
+<td>1004.24</td>
+<td>1.00</td>
 <td>0.03</td>
 <td>0.04</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">kernel[0]</td>
 <td>-0.16</td>
-<td>0.67</td>
-<td>-1.24</td>
-<td>0.93</td>
-<td>548.71</td>
-<td>683.59</td>
-<td>1.01</td>
+<td>0.62</td>
+<td>-1.16</td>
+<td>0.84</td>
+<td>486.59</td>
+<td>681.51</td>
+<td>1.02</td>
 <td>0.03</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">kernel[1]</td>
-<td>0.13</td>
-<td>0.63</td>
+<td>0.14</td>
+<td>0.59</td>
 <td>-0.84</td>
-<td>1.16</td>
-<td>504.11</td>
-<td>550.82</td>
-<td>1.01</td>
+<td>1.07</td>
+<td>426.58</td>
+<td>581.58</td>
+<td>1.02</td>
 <td>0.03</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">kernel[2]</td>
 <td>0.06</td>
-<td>0.62</td>
-<td>-0.94</td>
-<td>1.06</td>
-<td>491.63</td>
-<td>559.74</td>
-<td>1.01</td>
+<td>0.59</td>
+<td>-0.90</td>
+<td>1.02</td>
+<td>340.45</td>
+<td>526.36</td>
+<td>1.02</td>
 <td>0.03</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">kernel[3]</td>
 <td>0.51</td>
-<td>0.62</td>
-<td>-0.45</td>
-<td>1.53</td>
-<td>471.02</td>
-<td>606.22</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.58</td>
+<td>-0.44</td>
+<td>1.46</td>
+<td>220.68</td>
+<td>465.12</td>
+<td>1.02</td>
+<td>0.04</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">kernel[4]</td>
 <td>0.12</td>
-<td>0.63</td>
-<td>-0.89</td>
-<td>1.13</td>
-<td>474.07</td>
-<td>503.12</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.60</td>
+<td>-0.84</td>
+<td>1.10</td>
+<td>212.39</td>
+<td>557.75</td>
+<td>1.02</td>
+<td>0.04</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">kernel[5]</td>
 <td>-0.48</td>
-<td>0.64</td>
-<td>-1.52</td>
-<td>0.53</td>
-<td>497.80</td>
-<td>666.17</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.62</td>
+<td>-1.47</td>
+<td>0.50</td>
+<td>221.49</td>
+<td>555.96</td>
+<td>1.02</td>
+<td>0.04</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">kernel[6]</td>
-<td>0.23</td>
-<td>0.63</td>
-<td>-0.76</td>
-<td>1.24</td>
-<td>466.24</td>
-<td>575.91</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.22</td>
+<td>0.61</td>
+<td>-0.73</td>
+<td>1.20</td>
+<td>222.35</td>
+<td>575.23</td>
+<td>1.02</td>
+<td>0.04</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">kernel[7]</td>
 <td>-0.23</td>
-<td>0.65</td>
-<td>-1.27</td>
-<td>0.82</td>
-<td>468.84</td>
-<td>546.72</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.63</td>
+<td>-1.23</td>
+<td>0.77</td>
+<td>200.45</td>
+<td>541.92</td>
+<td>1.02</td>
+<td>0.04</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">kernel[8]</td>
-<td>0.34</td>
-<td>0.65</td>
-<td>-0.70</td>
-<td>1.37</td>
-<td>460.24</td>
-<td>544.03</td>
-<td>1.01</td>
-<td>0.03</td>
+<td>0.33</td>
+<td>0.63</td>
+<td>-0.69</td>
+<td>1.35</td>
+<td>189.74</td>
+<td>276.95</td>
+<td>1.02</td>
+<td>0.05</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">kernel[9]</td>
-<td>-0.29</td>
-<td>0.88</td>
-<td>-1.74</td>
-<td>1.10</td>
-<td>505.34</td>
-<td>616.54</td>
-<td>1.01</td>
-<td>0.04</td>
-<td>0.02</td>
+<td>-0.30</td>
+<td>0.85</td>
+<td>-1.71</td>
+<td>1.04</td>
+<td>215.49</td>
+<td>252.29</td>
+<td>1.02</td>
+<td>0.06</td>
+<td>0.03</td>
 </tr>
 </tbody>
 </table>
@@ -1296,209 +1455,144 @@ Running chain 2:  95%|█████████▌| 1900/2000 [00:03&lt;00:00,
 </div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>pd <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'pandas'</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">kline2</span>(<span class="at">only_path=</span>T), <span class="at">sep=</span><span class="st">';'</span>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>islandsDistMatrix <span class="ot">=</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">islands_dist_matrix</span>(<span class="at">frame =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>data</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'total_tools'</span>, <span class="st">'population'</span>))</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>society <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">arange</span>(<span class="dv">0</span>,<span class="dv">10</span>, <span class="at">dtype=</span><span class="st">'int64'</span>)</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>Dmat <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(islandsDistMatrix)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(Dmat, population, society, total_tools){</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'a'</span>)</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'b'</span>)</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'g'</span>)</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># non-centered Gaussian Process prior</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  etasq <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">2</span>, <span class="at">name =</span> <span class="st">'etasq'</span>)</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  rhosq <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'rhosq'</span>)</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">=</span> m<span class="sc">$</span>gaussian<span class="sc">$</span><span class="fu">gaussian_process</span>(Dmat, etasq, rhosq, <span class="fl">0.01</span>)</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  lambda_ <span class="ot">=</span> a <span class="sc">*</span> population<span class="sc">**</span>b <span class="sc">/</span> g <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">exp</span>(k[society])</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">poisson</span>(lambda_, <span class="at">obs=</span>total_tools)</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pd <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'pandas'</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># setup platform------------------------------------------------</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">kline2</span>(<span class="at">only_path=</span>T), <span class="at">sep=</span><span class="st">';'</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>islandsDistMatrix <span class="ot">=</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">islands_dist_matrix</span>(<span class="at">frame =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>data</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'total_tools'</span>, <span class="st">'population'</span>))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>society <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">arange</span>(<span class="dv">0</span>,<span class="dv">10</span>, <span class="at">dtype=</span><span class="st">'int64'</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>Dmat <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(islandsDistMatrix)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(Dmat, population, society, total_tools){</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'a'</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'b'</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'g'</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># non-centered Gaussian Process prior</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  etasq <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">2</span>, <span class="at">name =</span> <span class="st">'etasq'</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  rhosq <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'rhosq'</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">=</span> m<span class="sc">$</span>gaussian<span class="sc">$</span><span class="fu">gaussian_process</span>(Dmat, etasq, rhosq, <span class="fl">0.001</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  lambda_ <span class="ot">=</span> a <span class="sc">*</span> population<span class="sc">**</span>b <span class="sc">/</span> g <span class="sc">*</span> jnp<span class="sc">$</span><span class="fu">exp</span>(k[society])</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">poisson</span>(lambda_, <span class="at">obs =</span> total_tools, <span class="at">name =</span> <span class="st">"y"</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">kline2</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>islandsDistMatrix <span class="op">=</span> m.load.<span class="fu">islands_dist_matrix</span>(frame <span class="op">=</span> <span class="cn">false</span>)[<span class="st">"data"</span>]</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data_to_model</span>([<span class="st">"total_tools"</span>, <span class="st">"population"</span>])</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"society"</span>] <span class="op">=</span> jnp.<span class="fu">arange</span>(<span class="fl">0</span>,<span class="fl">10</span>)<span class="co"># index observations</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"Dmat"</span>] <span class="op">=</span> jnp.<span class="fu">array</span>(islandsDistMatrix) <span class="co"># Distance matrix</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(Dmat, population, society, total_tools)</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"a"</span>)</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"b"</span>)</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"g"</span>)</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># non-centered Gaussian Process prior</span></span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    etasq <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">2</span>, name <span class="op">=</span> <span class="st">"etasq"</span>)</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    rhosq <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"rhosq"</span>)</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> etasq <span class="op">*</span> jnp.<span class="fu">exp</span>(<span class="op">-</span>rhosq <span class="op">*</span> jnp.<span class="fu">square</span>(Dmat))</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> SIGMA.at[jnp.<span class="fu">diag_indices</span>(Dmat.shape[<span class="fl">0</span>])].<span class="fu">add</span>(etasq)</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(<span class="fl">0</span>, SIGMA, name <span class="op">=</span> <span class="st">"k"</span>)</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> a <span class="op">*</span> population<span class="op">^</span>b <span class="op">/</span> g <span class="op">*</span> jnp.<span class="fu">exp</span>(k[society])</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">poisson</span>(lambda_, obs<span class="op">=</span>total_tools)</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">kline2</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>islandsDistMatrix <span class="op">=</span> m.load.<span class="fu">islands_dist_matrix</span>(frame <span class="op">=</span> <span class="cn">false</span>)[<span class="st">"data"</span>]</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data_to_model</span>([<span class="st">"total_tools"</span>, <span class="st">"population"</span>])</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"society"</span>] <span class="op">=</span> jnp.<span class="fu">arange</span>(<span class="fl">0</span>,<span class="fl">10</span>)<span class="co"># index observations</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>m.data_on_model[<span class="st">"Dmat"</span>] <span class="op">=</span> jnp.<span class="fu">array</span>(islandsDistMatrix) <span class="co"># Distance matrix</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(Dmat, population, society, total_tools)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"a"</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"b"</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"g"</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># non-centered Gaussian Process prior</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    etasq <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">2</span>, name <span class="op">=</span> <span class="st">"etasq"</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    rhosq <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"rhosq"</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> Dmat.shape[<span class="fl">0</span>]</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> etasq <span class="op">*</span> jnp.<span class="fu">exp</span>(jnp.<span class="fu">negative</span>(rhosq) <span class="op">*</span> jnp.<span class="fu">square</span>(Dmat))</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    SIGMA <span class="op">=</span> SIGMA.at[jnp.<span class="fu">diag_indices</span>(n)].<span class="fu">add</span>(<span class="fl">0.01</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    L_chol <span class="op">=</span> jnp.linalg.<span class="fu">cholesky</span>(SIGMA)</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> m.dist.<span class="fu">multivariate_normal</span>(jnp.<span class="fu">zeros</span>(n), jnp.<span class="fu">eye</span>(n), name <span class="op">=</span> <span class="st">"z"</span>)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> jnp.<span class="fu">matmul</span>(L_chol, z)</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> a <span class="op">*</span> population<span class="op">^</span>b <span class="op">/</span> g <span class="op">*</span> jnp.<span class="fu">exp</span>(k[society])</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">poisson</span>(lambda_, obs<span class="op">=</span>total_tools, name<span class="op">=</span><span class="st">"y"</span>)</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
-<section id="posterior-predictive-checks" class="level3">
-<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
-<p>Does the model predict the number of tools of each society?</p>
-<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
-<div class="tab-content" data-group="language">
-<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
-<div id="6ff93ee8" class="cell" data-execution_count="3">
-<details open="" class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals(x<span class="op">=</span><span class="st">"population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-        <script type="text/javascript">
-        window.PlotlyConfig = {MathJaxConfig: 'local'};
-        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
-        </script>
-        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
-        
-</div>
-<div class="cell-output cell-output-display">
-<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="aaeb2724-daf9-46ba-b93b-c1e2eb99e36a" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("aaeb2724-daf9-46ba-b93b-c1e2eb99e36a")) {                    Plotly.newPlot(                        "aaeb2724-daf9-46ba-b93b-c1e2eb99e36a",                        [{"hoverinfo":"skip","line":{"color":"rgba(100,149,237,0.6)","width":1.5},"mode":"lines","name":"90% interval","x":[1100,1100,null,1500,1500,null,3600,3600,null,4791,4791,null,7400,7400,null,8000,8000,null,9200,9200,null,13000,13000,null,17500,17500,null,275000,275000,null],"y":[6.0,23.0,null,12.0,30.0,null,15.0,37.0,null,29.0,58.0,null,21.0,47.0,null,10.0,30.0,null,26.0,55.0,null,17.0,41.0,null,38.0,73.0,null,52.0,92.0,null],"type":"scatter"},{"hoverinfo":"skip","line":{"color":"cornflowerblue","width":5},"mode":"lines","name":"50% interval","x":[1100,1100,null,1500,1500,null,3600,3600,null,4791,4791,null,7400,7400,null,8000,8000,null,9200,9200,null,13000,13000,null,17500,17500,null,275000,275000,null],"y":[10.0,17.0,null,16.0,24.0,null,20.0,29.0,null,36.0,48.0,null,27.0,39.0,null,15.0,23.0,null,33.0,45.0,null,23.0,33.0,null,47.0,62.0,null,62.0,79.0,null],"type":"scatter"},{"marker":{"color":"white","line":{"color":"cornflowerblue","width":1.5},"size":7},"mode":"markers","name":"Median prediction of total_tools","x":{"dtype":"i4","bdata":"TAQAANwFAAAQDgAAtxIAAOgcAABAHwAA8CMAAMgyAABcRAAAODIEAA=="},"y":{"dtype":"f8","bdata":"AAAAAAAAKkAAAAAAAAA0QAAAAAAAADlAAAAAAAAARUAAAAAAAIBAQAAAAAAAADNAAAAAAACAQ0AAAAAAAAA8QAAAAAAAAEtAAAAAAACAUUA="},"type":"scatter"},{"marker":{"color":"black","size":5},"mode":"markers","name":"total_tools (observed)","x":{"dtype":"i4","bdata":"TAQAANwFAAAQDgAAtxIAAOgcAABAHwAA8CMAAMgyAABcRAAAODIEAA=="},"y":{"dtype":"f8","bdata":"AAAAAAAAKkAAAAAAAAA2QAAAAAAAADhAAAAAAACARUAAAAAAAIBAQAAAAAAAADNAAAAAAAAAREAAAAAAAAA8QAAAAAAAgEtAAAAAAADAUUA="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"title":{"text":"PPC: Predictive intervals — predictions of total_tools"},"xaxis":{"title":{"text":"population"},"tickmode":"array","tickvals":[1100.0,1500.0,3600.0,4791.0,7400.0,8000.0,9200.0,13000.0,17500.0,275000.0],"ticktext":["1100","1500","3600","4791","7400","8000","9200","13000","17500","275000"]},"yaxis":{"title":{"text":"total_tools"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('aaeb2724-daf9-46ba-b93b-c1e2eb99e36a');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
+<!--
+### Posterior predictive checks
 
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
+Does the model predict the number of tools of each society?
 
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
+::: {.panel-tabset group="language"}
+#### Python
 
-                        })                };            </script>        </div>
-</div>
-</div>
-</div>
-<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_intervals</span>(<span class="at">x =</span> <span class="st">"population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
-<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_intervals</span>(x<span class="op">=</span><span class="st">"population"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-<p>Points are observed tool counts, bars the 50 % and 90 % predictive intervals along population. The Gaussian process lets nearby islands share deviations, so points away from the population trend can still fall inside their interval. See <a href="./start/Diagnostics.html">Diagnostics</a> for every posterior predictive plot.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-More checks
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
-<div class="tab-content" data-group="language">
-<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<div id="b28f6d62" class="cell" data-execution_count="4">
-<details open="" class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_rootogram()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="df0432bd-991a-48ce-b987-a6ad97002052" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("df0432bd-991a-48ce-b987-a6ad97002052")) {                    Plotly.newPlot(                        "df0432bd-991a-48ce-b987-a6ad97002052",                        [{"base":[0.015811388300841896,0.0,0.022360679774997897,0.0670820393249937,0.1,0.13228756555322954,0.1753567791675018,0.22472205054244232,0.26410225292488515,0.29538110975483856,0.33800887562311144,0.3687817782917155,0.3990613987846983,-0.5828669277077159,0.4472135954999579,0.4687749993333689,0.47958315233127197,0.4952272205765753,0.49598387070548977,-0.48207143349685766,0.5039841267341661,0.5220153254455275,-0.48400581398624265,0.5089204259999789,-0.5042682176821824,0.5128352561983234,0.48887626246321264,0.48554093545240856,-0.5057834482739373,0.47010637094172636,0.4693080012102926,0.4533210782657255,0.43588989435406733,-0.5547472627821363,0.4381780460041329,0.43960209280666535,0.4230839160261236,0.42337926260033093,0.41683330001332664,0.4074309757492673,-0.6047152924789525,0.38697545141778694,0.38632887544163713,-0.6318967536138808,0.3446012188022555,0.3687817782917155,0.34641016151377546,0.3312853754695489,0.3331666249791536,0.3293933818400121,0.32054640849649213,0.3122498999199199,0.30700162866017505,0.2936835031117683,0.28151376520518495,-0.7004169564210951,0.2872281323269014,0.2797320146139873,0.26504716561397146,0.2692582403567252,0.260768096208106,0.2569046515733026,0.22967368155711704,0.23926972228010798,0.2339871791359518,0.2361143790623519,0.23558437978779492,0.23130067012440755,0.22416511771459896,0.2115419580130618,0.21389249636207439,-0.7849418683239343,0.2115419580130618,0.20676073128135333,0.18973665961010275,0.191049731745428,0.19621416870348585,0.1823458252881047,0.1710263137648707,0.1767766952966369,0.17029386365926402,0.15491933384829668,0.14832396974191325,0.13874436925511607,0.14317821063276354,0.12549900398011132,0.12144957801491119,0.108397416943394,0.11401754250991379,0.10124228365658294,0.09617692030835673,0.09354143466934854,0.08803408430829504,0.07071067811865475,0.07071067811865475,0.05244044240850758,0.07245688373094719,0.04183300132670378,0.0651920240520265,0.05916079783099616,0.03872983346207417,0.044721359549995794,0.04183300132670378,0.035355339059327376,0.044721359549995794,0.04183300132670378,0.027386127875258306,0.015811388300841896,0.027386127875258306,0.035355339059327376,0.022360679774997897,0.0,0.015811388300841896,0.0,0.015811388300841896],"marker":{"color":"cornflowerblue"},"name":"√Observed (hanging from √Expected)","opacity":0.7,"x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bxcg=="},"y":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPA\u002fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},"type":"bar"},{"line":{"color":"black","width":2},"mode":"lines+markers","name":"√Expected count (predictions of total_tools)","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bxcg=="},"y":{"dtype":"f8","bdata":"cjqgTtwwkD8AAAAAAAAAAOFXZtG35ZY\u002f6cEM3UkssT+amZmZmZm5P1X624fM7sA\u002fHALURxdyxj9oiuIwscPMP\u002fUvxyIN59A\u002fujSQK4bn0j+UxqP676HVP7vpR+Memtc\u002fMRU40jiK2T\u002fF0uTpTrLaP9ntv8Uln9w\u002fc27U2mgA3j\u002fxbL6IfbHeP5zIHYPNsd8\u002fMIIBIjO+3z\u002fucdnt3pLgP\u002ffXwFGjIOA\u002fLJTZe1m04D8IXjs9BoPgPyb2PX0TSeA\u002f6yMpzBG63z9McbN7JWngP1V+xKm\u002fSd8\u002fNcqoSRoT3z+OirN1PqHfP1yANQg5Ft4\u002f6ME8bSQJ3j+jR29pNgPdP1oWOrqe5ds\u002fgogzVgV\u002f3D+EbVruGwvcP\u002fHl9tBwItw\u002fku6yj84T2z+3EqtVpRjbP0A53JNlrdo\u002fNxwOX1kT2j9TW9o6WEzZP0tuDK80xNg\u002fL21hv5y52D9y6DHrAI\u002fXPyO3OkXyDdY\u002fu+lH4x6a1z8iCq2GlSvWPw06UpPHM9U\u002fyN2ZG5pS1T9oY6H6xxTVP6PuVRXVg9Q\u002fCHYVAef70z8Pgroo6qXTPzZYT+S1y9I\u002foYa7T1IE0j\u002fs4aZbXizTP\u002fNztRryYdI\u002fPVKaGyHn0T+AaA1jiPbQP1yuIOqGO9E\u002fr3RDq2yw0D+jpSw1IHHQPxIWhXvyZc0\u002fQ9sO6GOgzj8QPgm5SvPNP0AVGPj+OM4\u002f9YlRA6Enzj9fFd2mQpvNPxp9vkxxscw\u002fku6yj84Tyz97EV5O1GDLP+POJF0Gh8s\u002fku6yj84Tyz+RqHm5InfKP6tX8HVKScg\u002ftsrgTlF0yD808cu+ix3JP09XFqYbV8c\u002fKhIwtDDkxT\u002fNO39mnqDGP3whkHcwzMU\u002f08EykGXUwz+KkKCjR\u002fzCPzo5OiBgwsE\u002fQnEV4qlTwj8uOOPyWRDAPyDir81RF78\u002fGCW+4O6\u002fuz83GEDwQDC9P1ACR6kD67k\u002fVLla9wyfuD87zLnaVPK3P0aVCdlmibY\u002fCmP\u002fURgasj8KY\u002f9RGBqyP1a+Q0J52ao\u002fEpf+yYiMsj+T9S6ZImulP690Q6tssLA\u002f8l7H91JKrj\u002fTwTKQZdSjP+FXZtG35aY\u002fk\u002fUumSJrpT8KY\u002f9RGBqiP+FXZtG35aY\u002fk\u002fUumSJrpT+EbVruGwucP3I6oE7cMJA\u002fhG1a7hsLnD8KY\u002f9RGBqiP+FXZtG35ZY\u002fAAAAAAAAAAByOqBO3DCQPwAAAAAAAAAAcjqgTtwwkD8="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"shapes":[{"line":{"color":"grey","dash":"dash"},"type":"line","x0":0,"x1":1,"xref":"x domain","y0":0,"y1":0,"yref":"y"}],"title":{"text":"PPC: Rootogram — predictions of total_tools"},"xaxis":{"title":{"text":"total_tools"}},"yaxis":{"title":{"text":"√Frequency"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('df0432bd-991a-48ce-b987-a6ad97002052');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
+::: {#840dbdaf .cell execution_count=3}
+``` {.python .cell-code}
+# m.diag.ppc_intervals(x="population")
+```
+:::
 
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
 
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
+#### R
+```r
+# m$diag$ppc_intervals(x = "population")
+```
 
-                        })                };            </script>        </div>
-</div>
-</div>
-</div>
-<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_rootogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
-<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_rootogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</div>
-</div>
-<p><code>ppc_rootogram</code>: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten societies the bars are sparse).</p>
-</div>
-</div>
-</div>
-</section>
+#### Julia
+```julia
+# m.diag.ppc_intervals(x="population")
+```
+:::
+
+Points are observed tool counts, bars the 50 % and 90 % predictive intervals along population. The Gaussian process lets nearby islands share deviations, so points away from the population trend can still fall inside their interval. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#c01432b1 .cell execution_count=4}
+``` {.python .cell-code}
+# m.diag.ppc_rootogram()
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_rootogram()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_rootogram()
+```
+:::
+
+`ppc_rootogram`: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten societies the bars are sparse).
+:::
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -1585,7 +1679,7 @@ p^2 \sim \text{HalfCauchy}(0,1)
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
 <li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>13.Gaussian processes.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation example</a>: the Python example of this page is run by the documentation tests (<code>test_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
 </ul>
 </section>
 <section id="notes" class="level2">
@@ -2709,57 +2803,69 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -2767,185 +2873,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./17. Nested varying effects.html" class="pagination-link" aria-label="🚧Nested Varying Effects">

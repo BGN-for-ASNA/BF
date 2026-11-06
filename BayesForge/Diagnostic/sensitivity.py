@@ -3,6 +3,7 @@
 Functions
 ---------
 prior_sensitivity_plot   — overlay posteriors fitted with different priors
+prior_sensitivity        — same, or declare prior variations and refit in parallel
 influence_plot           — Pareto-k scatter (LOO influential observations)
 calibration_plot         — empirical coverage vs nominal level
 divergence_energy_plot   — HMC energy / divergence check
@@ -17,6 +18,11 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 
 _COLORS = pcolors.qualitative.Plotly
+
+# Hover for a density curve: density at x, plus the posterior summary.
+_HOVER = ("density %{y:.3g}<br>mean %{customdata[0]:.3g} "
+          "(sd %{customdata[1]:.3g})<br>"
+          "HDI [%{customdata[2]:.3g}, %{customdata[3]:.3g}]<extra>%{fullData.name}</extra>")
 
 
 def _hdi(samples, prob):
@@ -98,6 +104,9 @@ def prior_sensitivity_plot(
                 line=dict(color=color, width=2),
                 name=label, showlegend=(pi == 0),
                 legendgroup=label,
+                customdata=np.tile([samples.mean(), samples.std(),
+                                    *_hdi(samples, hdi_prob)], (len(xs), 1)),
+                hovertemplate=_HOVER,
             ), row=r, col=c)
 
             # HDI marker -- the actual highest-density interval, not an
@@ -109,10 +118,257 @@ def prior_sensitivity_plot(
                 x=[lo, hi], y=[y_max * 0.05, y_max * 0.05],
                 mode="lines", line=dict(color=color, width=4),
                 showlegend=False, legendgroup=label,
+                hoverinfo="skip",
             ), row=r, col=c)
 
-    fig.update_layout(title=title, height=300 * nrows, plot_bgcolor="white")
+    fig.update_layout(title=title, height=300 * nrows, plot_bgcolor="white",
+                      hovermode="x unified")
     return _axis_labels(fig, x_label, y_label)
+
+
+def prior_sensitivity_by_prior(posts, labels, varied, param_names=None,
+                               hdi_prob=0.89, title="Prior sensitivity, by prior"):
+    """One row per varied prior, one column per parameter.
+
+    Each cell overlays the baseline posterior (grey, dashed) with the
+    posteriors obtained when *that* prior alone is varied; the other priors
+    stay at baseline. ``labels[0]`` must be the baseline fit.
+    """
+    import scipy.stats as stats
+    base = posts[0]
+    rows = []
+    for v in varied:
+        if v != "baseline" and v not in rows:
+            rows.append(v)
+    if param_names is None:
+        param_names = sorted(set.intersection(*[set(p) for p in posts]))
+    nr, nc = len(rows), len(param_names)
+    fig = make_subplots(
+        rows=nr, cols=nc,
+        column_titles=list(param_names),
+        row_titles=[f"vary {r}" for r in rows],
+        vertical_spacing=0.08 / max(nr, 1) * 3)
+    for ri, row in enumerate(rows, start=1):
+        idx = [i for i, v in enumerate(varied) if v == row]
+        for ci, param in enumerate(param_names, start=1):
+            groups = [(0, "baseline", dict(color="grey", dash="dash", width=2))]
+            for k, i in enumerate(idx):
+                groups.append((i, labels[i],
+                               dict(color=_COLORS[k % len(_COLORS)], width=2)))
+            for i, lab, line in groups:
+                smp = np.asarray(posts[i][param]).flatten()
+                xs = np.linspace(smp.min(), smp.max(), 300)
+                lo, hi = _hdi(smp, hdi_prob)
+                cd = np.tile([smp.mean(), smp.std(), lo, hi], (len(xs), 1))
+                fig.add_trace(go.Scatter(
+                    x=xs, y=stats.gaussian_kde(smp)(xs), mode="lines",
+                    line=line, name=lab, legendgroup=f"{row}|{lab}",
+                    showlegend=(ci == 1 and i != 0),
+                    customdata=cd, hovertemplate=_HOVER), row=ri, col=ci)
+    fig.update_layout(title=title, height=260 * nr + 80, plot_bgcolor="white",
+                      hovermode="x unified")
+    return fig
+
+
+def prior_sensitivity_shift(table, title="Shift of the posterior mean vs baseline"):
+    """Dot plot of ``shift_sd`` (in baseline posterior sd) per variation.
+
+    One panel per parameter, one line per prior variation. A dot near 0
+    means the posterior ignores that prior change; |shift| > ~0.5 sd is a
+    sensitive parameter. ``table`` is the DataFrame from
+    ``prior_sensitivity(..., return_results=True)``.
+    """
+    t = table[table["label"] != "baseline"]
+    params = list(dict.fromkeys(t["param"]))
+    fig = make_subplots(rows=1, cols=len(params), shared_yaxes=True,
+                        subplot_titles=params)
+    for ci, param in enumerate(params, start=1):
+        d = t[t["param"] == param]
+        fig.add_trace(go.Scatter(
+            x=d["shift_sd"], y=d["label"], mode="markers",
+            marker=dict(size=10, color=_COLORS[0]), showlegend=False),
+            row=1, col=ci)
+        fig.add_vline(x=0, line_dash="dash", line_color="grey", row=1, col=ci)
+        fig.update_xaxes(title_text="shift (sd)", row=1, col=ci)
+    fig.update_layout(title=title, height=120 + 28 * t["label"].nunique() + 120,
+                      plot_bgcolor="white")
+    return fig
+
+
+def _prior_scenarios(priors, mode="one_at_a_time", baseline=None, joint=None):
+    """Build the scenario list for :func:`prior_sensitivity`.
+
+    ``priors`` maps a model argument to the list of values to try, e.g.
+    ``{"b_sd": [0.1, 0.5, 2.0], "a_sd": [5, 50]}``. Each scenario dict holds
+    a ``label``, the ``varied`` argument name and the full ``priors`` dict
+    that the model receives.
+
+    mode="one_at_a_time": a baseline fit, then each argument varied alone
+        with the others left at ``baseline`` (the model defaults when
+        absent). 1 + sum(len(values)) fits. Standard practice: the shift of
+        the posterior is attributable to one prior at a time.
+    mode="grid": Cartesian product of every list (interactions, but the
+        number of fits is the product of the list lengths).
+    joint: optional {label: {arg: value, ...}} extra scenarios in which
+        several priors move together (e.g. "all tighter").
+    """
+    import itertools
+    baseline = dict(baseline or {})
+    out = [dict(label="baseline", varied="baseline", priors=dict(baseline))]
+    if mode == "one_at_a_time":
+        for arg, values in priors.items():
+            for v in values:
+                out.append(dict(label=f"{arg}={v}", varied=arg,
+                                priors={**baseline, arg: v}))
+    elif mode == "grid":
+        out = []
+        keys = list(priors)
+        for combo in itertools.product(*(priors[k] for k in keys)):
+            d = dict(zip(keys, combo))
+            out.append(dict(label=", ".join(f"{k}={v}" for k, v in d.items()),
+                            varied="grid", priors={**baseline, **d}))
+    else:
+        raise ValueError("mode must be 'one_at_a_time' or 'grid'.")
+    for label, d in (joint or {}).items():
+        out.append(dict(label=label, varied="joint", priors={**baseline, **d}))
+    return out
+
+
+def _prior_sens_sim(label, varied, priors, seed, model, obs, fit_kwargs, **_):
+    """One prior-sensitivity fit (runs inside a run_simulations worker)."""
+    import functools
+    import numpy as np
+    from BayesForge import bf
+    m = bf(rand_seed=seed, print_devices_found=False)
+    bound = functools.partial(model, m, **priors)
+    m.fit(bound, obs=obs, progress_bar=False, **fit_kwargs)
+    post = {k: np.asarray(v).reshape(-1) for k, v in m.posteriors.items()}
+    return {"posteriors": post}
+
+
+def prior_sensitivity(
+    model_or_posteriors,
+    labels=None,
+    priors=None,
+    obs=None,
+    mode="one_at_a_time",
+    baseline=None,
+    joint=None,
+    fit_kwargs=None,
+    workers=None,
+    seed=0,
+    param_names=None,
+    hdi_prob=0.89,
+    title="Prior Sensitivity Analysis",
+    x_label=None,
+    y_label=None,
+    return_results=False,
+    plot="by_prior",
+    **run_kwargs,
+):
+    """Prior sensitivity: from already-fitted posteriors, or by refitting in parallel.
+
+    Two ways to call it:
+
+    1. **Posteriors you already have** (unchanged behaviour)::
+
+           m.diag.prior_sensitivity([post_weak, post_strong],
+                                    labels=["weak", "strong"])
+
+    2. **Declare the prior variations and let BF run the fits in parallel**
+       (through :func:`BayesForge.run_simulations`)::
+
+           def model(m, weight, height, a_sd=20.0, b_sd=1.0):
+               a = m.dist.normal(178, a_sd, name="a")
+               b = m.dist.log_normal(0, b_sd, name="b")
+               s = m.dist.uniform(0, 50, name="s")
+               m.dist.normal(a + b * weight, s, obs=height,
+                             shape=(weight.shape[0],))
+
+           m.diag.prior_sensitivity(
+               model,
+               priors={"b_sd": [0.1, 0.5, 2.0], "a_sd": [5, 50]},
+               obs=dict(weight=w, height=h),
+           )
+
+       The model takes the bf instance ``m`` first, then the data, then the
+       prior hyper-parameters (with their baseline values as defaults). Each
+       fit is a separate worker with its own bf instance and seed.
+
+    Args:
+        model_or_posteriors: list of posterior dicts (mode 1) or a model
+            function ``model(m, <obs names>, <prior args>)`` (mode 2).
+        labels: labels for mode 1; ignored in mode 2 (generated).
+        priors: {prior arg: [values]}; each value is one variation.
+        obs: dict of data passed to ``m.fit(obs=...)``.
+        mode: ``'one_at_a_time'`` (default; baseline + each prior varied
+            alone, 1 + sum(len) fits) or ``'grid'`` (Cartesian product).
+        baseline: {prior arg: value} used when an arg is not varied. Defaults
+            to the model's own defaults.
+        joint: {label: {arg: value}} extra scenarios where several priors
+            move together.
+        fit_kwargs: extra ``m.fit`` arguments (num_samples, num_chains...).
+        workers, seed, **run_kwargs: forwarded to ``run_simulations``.
+        plot: ``'by_prior'`` (default for one_at_a_time: one row per varied
+            prior, baseline in grey dashed + that prior's variations),
+            ``'overlay'`` (every fit in one panel per parameter) or
+            ``'shift'`` (dot plot of the posterior-mean shift vs baseline).
+        return_results: also return the summary table (posterior mean/sd/HDI
+            per scenario and shift from the baseline in posterior sd).
+
+    Returns:
+        plotly Figure (or ``(Figure, DataFrame)`` with ``return_results``).
+    """
+    if not callable(model_or_posteriors):
+        if labels is None:
+            labels = [f"fit {i + 1}" for i in range(len(model_or_posteriors))]
+        return prior_sensitivity_plot(
+            model_or_posteriors, labels, param_names=param_names,
+            hdi_prob=hdi_prob, title=title, x_label=x_label, y_label=y_label)
+
+    if not priors and not joint:
+        raise ValueError("Pass `priors={arg: [values]}` (or `joint=`).")
+    import pandas as pd
+    from BayesForge.Parallel.simulate import run_simulations
+
+    scen = _prior_scenarios(priors or {}, mode, baseline, joint)
+    res = run_simulations(
+        _prior_sens_sim, scen, workers=workers, seed=seed,
+        fn_kwargs=dict(model=model_or_posteriors, obs=obs or {},
+                       fit_kwargs=dict(fit_kwargs or {})),
+        **run_kwargs)
+    if "error" in res and res["error"].notna().any():
+        bad = res[res["error"].notna()][["label", "error"]]
+        raise RuntimeError(f"prior_sensitivity: {len(bad)} fit(s) failed:\n{bad}")
+
+    posts = list(res["posteriors"])
+    lbls = list(res["label"])
+    rows, base = [], posts[0] if lbls[0] == "baseline" else None
+    for lab, varied, post in zip(lbls, res["varied"], posts):
+        for k, v in post.items():
+            if param_names and k not in param_names:
+                continue
+            lo, hi = _hdi(v, hdi_prob)
+            row = dict(label=lab, varied=varied, param=k, mean=float(np.mean(v)),
+                       sd=float(np.std(v)), hdi_low=lo, hdi_high=hi)
+            if base is not None and k in base:
+                row["shift_sd"] = (row["mean"] - float(np.mean(base[k]))) / (
+                    float(np.std(base[k])) or np.nan)
+            rows.append(row)
+    table = pd.DataFrame(rows)
+
+    if plot == "by_prior" and mode == "one_at_a_time" and base is not None:
+        fig = prior_sensitivity_by_prior(posts, lbls, list(res["varied"]),
+                                         param_names, hdi_prob)
+    elif plot == "shift" and base is not None:
+        fig = prior_sensitivity_shift(table)
+    else:
+        fig = prior_sensitivity_plot(posts, lbls, param_names=param_names,
+                                     hdi_prob=hdi_prob, title=title,
+                                     x_label=x_label, y_label=y_label)
+    if not return_results:
+        return fig
+    return fig, table
 
 
 # =============================================================================

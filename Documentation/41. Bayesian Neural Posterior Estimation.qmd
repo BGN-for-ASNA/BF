@@ -1,0 +1,375 @@
+---
+title: "Bayesian Neural Posterior Estimation"
+description: "Neural posterior estimation with a prior on the network weights: calibrated, conservative posteriors from small simulation budgets."
+categories: [Simulation-based inference, Neural Networks]
+order: 41
+reading-time: true
+---
+
+
+## General Principles
+
+[Neural Posterior Estimation](40.%20Neural%20Posterior%20Estimation.qmd) (NPE) trains a network $q_\phi(\theta \mid x)$ on simulations to approximate the posterior. Its main weakness appears when simulations are expensive and the budget is small: the network over-fits the few training pairs and returns posteriors that are *too narrow*, i.e., credible intervals that contain the true parameter less often than they claim [@hermans2022trust].
+
+Bayesian NPE (BNPE) applies the idea of [Bayesian neural networks](33.%20BNN.qmd) to NPE [@delaunoy2024low]:
+
+1) Train a standard NPE network on the simulations.
+
+2) Treat its weights $\phi$ as random variables with a prior, and approximate their posterior given the simulations, $p(\phi \mid \mathcal{D})$, with variational inference.
+
+3) Average the posterior estimates of many networks drawn from $p(\phi \mid \mathcal{D})$.
+
+With few simulations, many networks are compatible with the data, so the average is wide: BNPE trades sharpness for *calibration*, and its credible intervals are conservative rather than over-confident. As the budget grows, $p(\phi \mid \mathcal{D})$ concentrates and BNPE converges to NPE.
+
+
+## Considerations
+
+::: callout-note
+-   Bayesian NPE is NPE with `bayesian=True`: `m.npe(model, ..., bayesian=True)`. Everything else (summary statistics, transforms, mixture density network) is as in the [NPE chapter](40.%20Neural%20Posterior%20Estimation.qmd).
+
+-   **Weight prior**: weights of a layer with $n_{in}$ inputs are $\text{Normal}(0, \sigma_\phi/\sqrt{n_{in}})$ and biases $\text{Normal}(0, \sigma_\phi)$, with $\sigma_\phi$ = `prior_scale` (default 1).
+
+-   **Inference on the weights**: a mean-field Normal variational distribution, fitted with stochastic variational inference (`svi_steps` Adam steps) and initialised at the weights of the trained standard network. Full MCMC on thousands of network weights is far too slow and does not mix between the many equivalent modes of a neural network posterior.
+
+-   **Posterior estimate**: the average of the mixture densities of `num_weight_samples` networks drawn from the weight posterior.
+
+-   Always compare calibration with `m.sbc_coverage()`: NPE below the diagonal (over-confident) and BNPE on or above it (calibrated or conservative) is the expected picture with small budgets.
+:::
+
+## Example
+
+Below is an example code snippet demonstrating *Bayesian Neural Posterior Estimation* using the BayesForge (**BF**) package, on the linear regression of height on weight of [chapter 1](1.%20Linear%20Regression%20for%20continuous%20variable.qmd) [@mcelreath2018statistical], with the least-squares intercept, slope and residual standard deviation as summary statistics. The simulation budget is deliberately small: 1 000 simulated datasets. NPE and BNPE are trained on them, and their calibration is checked on 200 new simulated datasets.
+
+The *From scratch* tab builds the Bayesian network directly with BF's BNN layers (`m.bnn.layer_linear` and the output layer `m.bnn.layer_mixture_normal`), BF distributions as weight priors, and BF's stochastic variational inference (`m.svi`); the *Built-in function* tab obtains the same result with `m.npe(bayesian=True)` and `m.sbc_coverage()`.
+
+::: {.panel-tabset group="language"}
+## Python
+
+``` {python}
+from BayesForge import bf
+import jax
+import jax.numpy as jnp
+import numpyro
+import matplotlib.pyplot as plt
+
+# Setup device------------------------------------------------
+m = bf(platform="cpu", rand_seed=0)
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = m.load.howell1(only_path=True)
+m.data(data_path, sep=";")
+m.df = m.df[m.df.age > 18]  # Subset data to adults
+m.scale(["weight"])  # Normalize
+
+
+# Define model ------------------------------------------------
+def model(weight, height):
+    a = m.dist.normal(178, 20, name="a")
+    b = m.dist.log_normal(0, 1, name="b")
+    s = m.dist.uniform(0, 50, name="s")
+    m.dist.normal(a + b * weight, s, obs=height)
+
+
+# Summary statistics ------------------------------------------------
+weight = jnp.asarray(m.df.weight.values)
+height_obs = jnp.asarray(m.df.height.values)
+X = jnp.stack([jnp.ones_like(weight), weight], axis=1)
+
+def ols(height):
+    """Least-squares intercept, slope and residual sd: sufficient for this model."""
+    coef = jnp.linalg.lstsq(X, height)[0]
+    return jnp.array([coef[0], coef[1], jnp.std(height - X @ coef)])
+
+
+# Reference: exact posterior with MCMC ------------------------------------------------
+m.fit(model, progress_bar=False)
+nuts = dict(m.posteriors)
+howell = {"weight": weight, "height": height_obs}
+```
+
+::: {.panel-tabset}
+
+#### From scratch
+
+Bayesian NPE written out with BF functions only. The network is a BF model: its weights are `m.dist.normal` priors, its layers `m.bnn.layer_linear`, and its output layer `m.bnn.layer_mixture_normal` is the likelihood of the simulated parameters. The *same* model gives both estimators; only the guide of BF's stochastic variational inference (`m.svi`) changes: a point-mass guide (`AutoDelta`) gives standard NPE (one network), and a mean-field Normal guide (`AutoNormal`), started at the NPE network, gives Bayesian NPE (a distribution over networks). Posterior draws are predictions of the model (`m.sample`), one per network draw.
+
+``` {python}
+import numpy as np
+from numpyro.infer import Trace_ELBO, log_likelihood
+from numpyro.infer.autoguide import AutoDelta, AutoNormal
+from numpyro.infer.initialization import init_to_sample, init_to_value
+
+# 1. Simulations: 1 000 for training, 200 to test calibration -------------------------
+M, M_test = 1_000, 200
+a = m.dist.normal(178, 20, sample=True, shape=(M + M_test,))
+b = m.dist.log_normal(0, 1, sample=True, shape=(M + M_test,))
+s = m.dist.uniform(0, 50, sample=True, shape=(M + M_test,))
+height = m.dist.normal(a[:, None] + b[:, None] * weight, s[:, None], sample=True)
+stats = jax.vmap(ols)(height)
+
+# 2. Unconstrained parameters, standardised with the training set ---------------------
+u = jnp.stack([a, jnp.log(b), jax.scipy.special.logit(s / 50)], axis=1)
+u_mean, u_sd = u[:M].mean(0), u[:M].std(0)
+s_mean, s_sd = stats[:M].mean(0), stats[:M].std(0)
+un, sn = (u - u_mean) / u_sd, (stats - s_mean) / s_sd
+
+def to_params(u_std):
+    u = u_std * u_sd + u_mean
+    return {"a": u[:, 0], "b": jnp.exp(u[:, 1]), "s": 50 * jax.nn.sigmoid(u[:, 2])}
+
+# 3. The network as a BF model: weight priors, BNN layers, mixture likelihood -------
+D, K, H = 3, 5, 64
+sizes = [3, H, H, m.bnn.mixture_normal_size(K, D)]
+
+def npe_net(c, u=None, batch_size=None):
+    params = [(m.dist.normal(0, 1 / jnp.sqrt(n_in), shape=(n_in, n_out), name=f"W{i}"),
+               m.dist.normal(0, 1, shape=(n_out,), name=f"b{i}"))
+              for i, (n_in, n_out) in enumerate(zip(sizes[:-1], sizes[1:]))]
+    with m.dist.plate("sims", c.shape[0], subsample_size=batch_size) as idx:
+        h = c[idx]
+        for i, (W, bias) in enumerate(params):
+            act = "gelu" if i < len(params) - 1 else None
+            h = m.bnn.layer_linear(h, W, activation=act, bias=bias, verbose=False)
+        m.bnn.layer_mixture_normal(h, K, D, diag_offset=0.5413, name="u",
+                                   obs=u if u is None else u[idx])
+
+m.data_on_model = {"c": sn[:M], "u": un[:M], "batch_size": 256}
+```
+
+``` {python}
+#| output: false
+# 4. NPE: point estimate of the weights (AutoDelta) -----------------------------------
+m.svi(npe_net, guide=AutoDelta(npe_net, init_loc_fn=init_to_sample),
+      optim=numpyro.optim.Adam(1e-3), loss=Trace_ELBO(), num_steps=10_000, num_samples=100)
+w_npe = dict(m.posteriors)                                              # 100 copies of one network
+
+# 5. Bayesian NPE: Normal distribution over the weights (AutoNormal), from the NPE network
+start = {name: draws[0] for name, draws in w_npe.items()}
+m.svi(npe_net, guide=AutoNormal(npe_net, init_loc_fn=init_to_value(values=start), init_scale=1e-3),
+      optim=numpyro.optim.Adam(1e-3), loss=Trace_ELBO(), num_steps=10_000, num_samples=100)
+w_bnpe = dict(m.posteriors)                                             # 100 different networks
+```
+
+``` {python}
+# 6. Posterior draws (m.sample) and densities (average over the network draws) --------
+def draw(weights, c, n_per_net):
+    """Posterior draws for each row of c: n_per_net per network -> (rows, 100 * n_per_net, D)."""
+    data = {"c": jnp.repeat(c, n_per_net, axis=0), "u": None, "batch_size": None}
+    u = m.sample(posterior_draws=weights, data=data)["u"]                 # (100 nets, rows * n, D)
+    u = u.reshape(100, c.shape[0], n_per_net, D)
+    return jnp.moveaxis(u, 0, 1).reshape(c.shape[0], -1, D)
+
+def log_q(weights, n_nets, u, c):
+    """log of the average density over n_nets network draws, for rows (u, c)."""
+    w = {name: draws[:n_nets] for name, draws in weights.items()}
+    ll = log_likelihood(npe_net, w, c=c, u=u)["u"]                        # (n_nets, rows)
+    return jax.scipy.special.logsumexp(ll, axis=0) - jnp.log(n_nets)
+
+estimators = {"NPE": (w_npe, 1), "BNPE": (w_bnpe, 100)}
+
+# 7. Posterior of the observed data ----------------------------------------------------
+c_obs = (ols(height_obs) - s_mean) / s_sd
+raw = {name: to_params(draw(w, c_obs[None], 10)[0]) for name, (w, _) in estimators.items()}
+for name, post in raw.items():
+    print(name, {p: f"{post[p].mean():.2f} ± {post[p].std():.2f}" for p in ["a", "b", "s"]})
+
+# 8. Expected coverage on the 200 test simulations ------------------------------------
+u_test, c_test = un[M:], sn[M:]
+levels = np.linspace(0.01, 0.99, 50)
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+ax.plot([0, 1], [0, 1], "k--", lw=1)
+for name, (w, n_nets) in estimators.items():
+    draws = draw(w, c_test, 5)                                           # (200, 500, D)
+    ranks = []
+    for i in range(0, M_test, 10):                                       # 10 test sets at a time
+        u_d, c_d = draws[i:i + 10], c_test[i:i + 10]
+        lq_draws = log_q(w, n_nets, u_d.reshape(-1, D), jnp.repeat(c_d, 500, axis=0)).reshape(-1, 500)
+        lq_true = log_q(w, n_nets, u_test[i:i + 10], c_d)
+        # mass of the smallest highest-density region containing the true value
+        ranks.append(np.asarray(jnp.mean(lq_draws > lq_true[:, None], axis=1)))
+    ranks = np.concatenate(ranks)
+    ax.plot(levels, [(ranks <= q).mean() for q in levels], lw=2, label=name)
+ax.set_xlabel("Nominal credibility level")
+ax.set_ylabel("Empirical coverage")
+ax.set_title("From scratch, 1 000 simulations")
+ax.legend()
+plt.show()
+```
+
+#### Built-in function
+
+The same analysis with `m.npe()`: `bayesian=False` gives standard NPE and `bayesian=True` Bayesian NPE; `m.sbc_coverage()` checks calibration on new simulations.
+
+``` {python}
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+builtin = {}
+for name, bay in [("NPE", False), ("BNPE", True)]:
+    m.npe(model, data=howell, summary_stats=ols, num_simulations=1_000,
+          bayesian=bay, progress_bar=False)
+    builtin[name] = dict(m.posteriors)
+    m.sbc_coverage(n_test=200, ax=ax, label=name)
+ax.set_title("m.npe(), 1 000 simulations")
+plt.show()
+
+# Summary of the Bayesian NPE posterior ------------------------------------------------
+m.summary()
+```
+
+``` {python}
+# Posteriors vs exact posterior ------------------------------------------------
+fig, axes = plt.subplots(2, 3, figsize=(12, 6), constrained_layout=True)
+for row, (name, post_builtin) in enumerate(builtin.items()):
+    for ax, p in zip(axes[row], ["a", "b", "s"]):
+        ax.hist(nuts[p], bins=40, density=True, alpha=0.4, label="MCMC (NUTS)")
+        ax.hist(post_builtin[p], bins=40, density=True, alpha=0.4, label="m.npe()")
+        ax.hist(raw[name][p], bins=40, density=True, alpha=0.4, label="from scratch")
+        ax.set_title(f"{name}: {p}")
+axes[0, 0].legend()
+plt.show()
+```
+
+:::
+
+## R
+
+``` r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+m$data(m$load$howell1(only_path = T), sep = ";")
+m$df <- m$df[m$df$age > 18, ] # Subset data to adults
+m$scale(list("weight")) # Normalize
+m$data_to_model(list("weight", "height"))
+
+# Define model ------------------------------------------------
+model <- function(height, weight) {
+    a <- bf.dist.normal(178, 20, name = "a")
+    b <- bf.dist.log_normal(0, 1, name = "b")
+    s <- bf.dist.uniform(0, 50, name = "s")
+    bf.dist.normal(a + b * weight, s, obs = height)
+}
+
+# Summary statistics ------------------------------------------------
+X <- jnp$stack(list(jnp$ones_like(m$data_on_model$weight), m$data_on_model$weight), axis = 1L)
+ols <- function(height) {
+    coef <- jnp$linalg$lstsq(X, height)[[1]]
+    jnp$stack(list(coef[0], coef[1], jnp$std(height - jnp$matmul(X, coef))))
+}
+
+# Run Bayesian NPE ------------------------------------------------
+m$npe(model, summary_stats = ols, num_simulations = 1000L, bayesian = TRUE)
+
+# Summary and calibration ------------------------------------------------
+m$summary()
+m$sbc_coverage(n_test = 200L)
+```
+
+## Julia
+```julia
+using BayesForge
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = m.load.howell1(only_path = true)
+m.data(data_path, sep=';')
+m.df = m.df[m.df.age > 18] # Subset data to adults
+m.scale(["weight"]) # Normalize
+
+# Define model ------------------------------------------------
+@BF function model(weight, height)
+    a = m.dist.normal(178, 20, name = 'a')
+    b = m.dist.log_normal(0, 1, name = 'b')
+    s = m.dist.uniform(0, 50, name = 's')
+    m.dist.normal(a + b * weight, s, obs = height)
+end
+
+# Summary statistics ------------------------------------------------
+X = jnp.stack([jnp.ones(length(m.df.weight)), jnp.array(m.df.weight)], axis = 1)
+function ols(height)
+    coef = jnp.linalg.lstsq(X, height)[1]
+    jnp.stack([coef[1], coef[2], jnp.std(height - X * coef)])
+end
+
+# Run Bayesian NPE ------------------------------------------------
+m.npe(model, summary_stats = ols, num_simulations = 1_000, bayesian = true)
+
+# Summary and calibration ------------------------------------------------
+m.summary()
+m.sbc_coverage(n_test = 200)
+```
+:::
+
+## Mathematical Details
+
+### *Model*
+
+The model is the linear regression of [chapter 1](1.%20Linear%20Regression%20for%20continuous%20variable.qmd):
+
+$$
+Y_i \sim \text{Normal}(\alpha + \beta X_i, \sigma)
+$$
+
+$$
+\alpha \sim \text{Normal}(178, 20), \qquad \beta \sim \text{LogNormal}(0, 1), \qquad \sigma \sim \text{Uniform}(0, 50)
+$$
+
+BNPE only uses it to simulate datasets, summarised by the least-squares estimates $s(Y) = (\hat\alpha, \hat\beta, \hat\sigma)$. The parameters are modelled in the unconstrained space $u = (\alpha,\ \log\beta,\ \text{logit}(\sigma/50))$, standardised, as described in the [NPE chapter](40.%20Neural%20Posterior%20Estimation.qmd), together with the mixture density network $q_\phi(u \mid s)$ and its training.
+
+### *Bayesian NPE*
+
+Bayesian NPE treats the network weights $\phi$ as unknown, with the simulations $\mathcal{D} = \{(u_j, s_j)\}$ as data [@delaunoy2024low]:
+
+$$
+W^{(l)} \sim \text{Normal}\left(0, \frac{\sigma_\phi^2}{n_{in}^{(l)}}\right), \qquad b^{(l)} \sim \text{Normal}(0, \sigma_\phi^2), \qquad p(\mathcal{D} \mid \phi) = \prod_{j=1}^{M} q_\phi(u_j \mid s_j)
+$$
+
+where $n_{in}^{(l)}$ is the number of inputs of layer $l$ and $\sigma_\phi$ is `prior_scale`. The weight posterior is approximated by a mean-field Normal distribution $\hat p_\lambda(\phi) = \prod_k \text{Normal}(\phi_k \mid \mu_k, \sigma_k^2)$ that maximizes the evidence lower bound (stochastic variational inference, `svi_steps` Adam steps on mini-batches):
+
+$$
+\text{ELBO}(\lambda) = \mathbb{E}_{\hat p_\lambda(\phi)}\left[\sum_{j=1}^{M} \log q_\phi(u_j \mid s_j) + \log p(\phi) - \log \hat p_\lambda(\phi)\right]
+$$
+
+The means $\mu_k$ start at the weights of the trained standard network and the scales at $10^{-3}$. The posterior estimate averages the mixture densities of $S$ networks (`num_weight_samples`) drawn from $\hat p_\lambda$:
+
+$$
+q(u \mid s) = \int q_\phi(u \mid s)\; p(\phi \mid \mathcal{D})\, d\phi \approx \frac{1}{S}\sum_{k=1}^{S} q_{\phi_k}(u \mid s), \qquad \phi_k \sim \hat p_\lambda(\phi)
+$$
+
+and sampling draws an equal number of values from each network. When $\mathcal{D}$ is small, the weight posterior is wide and the mixture over networks widens the posterior estimate.
+
+The from-scratch code expresses both estimators with one BF model, $u_j \sim q_\phi(\cdot \mid s_j)$ with the weight priors above, and changes only the variational family of `m.svi`:
+
+-   **NPE**: a point mass, $\hat p_\lambda(\phi) = \delta_{\hat\phi}$ (`AutoDelta`). The ELBO then reduces to $\sum_j \log q_{\hat\phi}(u_j \mid s_j) + \log p(\hat\phi)$, so SVI finds the posterior mode of the weights: the NPE loss plus a weight decay.
+
+-   **Bayesian NPE**: a mean-field Normal (`AutoNormal`) whose means start at $\hat\phi$ and scales at $10^{-3}$.
+
+In both cases the likelihood of a mini-batch of 256 simulations is rescaled by $M/256$, and posterior draws for a dataset are predictions of the model, one $u$ per weight draw (`m.sample`). The densities needed for the expected coverage are $\log \frac{1}{S}\sum_k q_{\phi_k}(u \mid s)$, computed from the log-likelihood of the model under each weight draw.
+
+### *Expected coverage*
+
+For $n$ test pairs $(\theta^*_i, x^*_i)$ simulated from the model (`n_test`), `m.sbc_coverage()` draws $K$ samples $u_{ik} \sim q(\cdot \mid s(x^*_i))$ (`n_post`) and computes the mass of the smallest highest-density region that contains the true value:
+
+$$
+r_i = \frac{1}{K}\sum_{k=1}^{K} \mathbb{1}\left[q(u_{ik} \mid s_i) > q(u^*_i \mid s_i)\right]
+$$
+
+The true value lies inside the $(1-\alpha)$ highest-density region when $r_i \le 1 - \alpha$, so the empirical coverage at level $1-\alpha$ is $\frac{1}{n}\sum_i \mathbb{1}[r_i \le 1 - \alpha]$ [@hermans2022trust]. A calibrated estimator has empirical coverage equal to $1-\alpha$ for every $\alpha$; a curve below the diagonal reveals over-confident posteriors, above the diagonal conservative ones.
+
+## Notes
+::: callout-note
+-   With 1 000 simulations, the standard NPE network is over-confident: its credible intervals contain the true parameters less often than their nominal level. Bayesian NPE is conservative: its intervals are too wide rather than too narrow, which is the safe side of the error, and both converge to the exact posterior as the simulation budget grows.
+
+-   The BNPE posterior of the observed data is much wider than the exact one here: with 1 000 simulations, the network weights are poorly determined, and BNPE honestly reports this uncertainty. Increase `num_simulations` when simulations are affordable.
+
+-   BNPE is slower than NPE, as it adds a variational fit of all network weights after the standard training.
+:::
+
+## Reference(s)
+
+@delaunoy2024low; @hermans2022trust; @papamakarios2016fast
+
+::: {#refs}
+:::

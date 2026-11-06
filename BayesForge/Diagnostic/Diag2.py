@@ -353,12 +353,18 @@ class diagWIP:
             "energy",
         ],
     ):
-        """Convert the sampler output to an arviz trace object.
+        """Convert the sampler output to an ArviZ ``InferenceData`` trace object.
 
-        This method prepares the trace for use with arviz diagnostic tools.
+        This method prepares the trace for use with ArviZ diagnostic tools.
+
+        Args:
+            backend (str): Backend used to fit the model (``"numpyro"`` or ``"tfp"``).
+            sample_stats_name (list[str]): Sample statistics keys for the TFP backend.
 
         Returns:
-            self.trace: The arviz trace object containing the diagnostic data
+            arviz.InferenceData: The ArviZ ``InferenceData`` object stored in ``m.diag.trace``.
+            Updates on m.diag: sets ``m.diag.trace`` (``arviz.InferenceData``) and
+                ``m.diag.priors_name`` (list of posterior variable names).
         """
         if backend == "numpyro":
             if hasattr(self.sampler, "svi"):

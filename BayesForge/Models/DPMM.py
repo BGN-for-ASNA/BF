@@ -1,4 +1,5 @@
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Utils.dev_warning import warn_dev
 import jax.numpy as jnp
 import numpyro.distributions as Dist
 import numpyro
@@ -63,7 +64,7 @@ class dpmm:
         Latent Variable formulation: Explicitly samples 'z'.
         Requires a sampler that supports discrete variables (e.g., MixedHMC or DiscreteHMCGibbs).
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("dpmm")
         N, D = data.shape  # Number of features
         data_mean = jnp.mean(data, axis=0)
         data_std = jnp.std(data, axis=0)*2

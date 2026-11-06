@@ -50,15 +50,14 @@ import jax.numpy as jnp
 m = bf(platform='cpu')
 
 # import data ------------------------------------------------
-# Import
-from importlib.resources import files
 data_path = m.load.kline(only_path = True)
 m.data(data_path, sep=';')
+m.df["population"] = jnp.log(jnp.array(m.df.population.values, dtype=jnp.float64))
 m.scale(['population'])
 m.df["cid"] = (m.df.contact == "high").astype(int)
-#m.data_to_model(['total_tools', 'population', 'cid'])
+
 def model(cid, population, total_tools):
-    a = m.dist.normal(3, 0.5, shape= (2,), name='a')
+    a = m.dist.normal(3, 0.5, shape=(2,), name='a')
     b = m.dist.normal(0, 0.2, shape=(2,), name='b')
     l = jnp.exp(a[cid] + b[cid]*population)
     m.dist.poisson(l, obs=total_tools)
@@ -80,16 +79,17 @@ jnp <- reticulate::import("jax.numpy")
 
 # import data ------------------------------------------------
 m$data(m$load$kline(only_path = TRUE), sep=';')
-m$scale(list('population'))# Scale
-m$df["cid"] =  as.integer(ifelse(m$df$contact == "high", 1, 0)) # Manipulate
-m$data_to_model(list('total_tools', 'population', 'cid' )) # Send to model (convert to jax array)
+m$df$population <- log(m$df$population)
+m$scale(list('population')) # Scale log-population
+m$df["cid"] = as.integer(ifelse(m$df$contact == "high", 1, 0)) # Manipulate
+m$data_to_model(list('total_tools', 'population', 'cid')) # Send to model (convert to jax array)
 
 # Define model ------------------------------------------------
 model <- function(total_tools, population, cid){
   # Parameter prior distributions
-  alpha = m$dist$normal(3, 0.5, name='alpha', shape = reticulate::tuple(2L))
-  beta = m$dist$normal(0, 0.2, name='beta', shape = reticulate::tuple(2L))
-  l = jnp$exp(alpha[cid] + beta[cid]*population)
+  a = m$dist$normal(3, 0.5, name='a', shape = reticulate::tuple(2L))
+  b = m$dist$normal(0, 0.2, name='b', shape = reticulate::tuple(2L))
+  l = jnp$exp(a[cid] + b[cid]*population)
   # Likelihood
   m$dist$poisson(l, obs = total_tools, name = "total_tools")
 }
@@ -110,15 +110,15 @@ using PyBayesForge
 m = importBF(platform="cpu")
 
 # Import Data & Data Manipulation ------------------------------------------------
-# Import
 data_path = m.load.kline(only_path = true)
 m.data(data_path, sep=';')
-m.scale(["population"]) # Normalize
+m.df["population"] = jnp.log(jnp.array(m.df.population.values))
+m.scale(["population"]) # Normalize log-population
 m.df["cid"] = m.df.contact.eq("high").astype("int")
 
 # Define model ------------------------------------------------
 @BF function model(cid, population, total_tools)
-    a = m.dist.normal(3, 0.5, shape= (2,), name="a")
+    a = m.dist.normal(3, 0.5, shape=(2,), name="a")
     b = m.dist.normal(0, 0.2, shape=(2,), name="b")
     l = jnp.exp(a[cid] + b[cid]*population)
     m.dist.poisson(l, obs=total_tools)
@@ -132,6 +132,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model predict the number of tools of each island, given its population?
@@ -139,17 +140,17 @@ Does the model predict the number of tools of each island, given its population?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals(x="population")
+# m.diag.ppc_intervals(x="population")
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals(x = "population")
+# m$diag$ppc_intervals(x = "population")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals(x="population")
+# m.diag.ppc_intervals(x="population")
 ```
 :::
 
@@ -161,22 +162,23 @@ Points are the observed tool counts, bars the 50 % and 90 % predictive intervals
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 
 #### R
 ```r
-m$diag$ppc_rootogram()
+# m$diag$ppc_rootogram()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 :::
 
 `ppc_rootogram`: bars are the square roots of the observed frequencies of each count, the line the expected frequencies; systematic gaps show counts the model predicts too often or too rarely (with ten observations the bars are sparse).
 :::
+-->
 
 ## Mathematical Details
 

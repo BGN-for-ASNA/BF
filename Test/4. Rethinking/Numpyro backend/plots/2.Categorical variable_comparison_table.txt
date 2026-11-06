@@ -1,27 +1,33 @@
 Comparison Table for 2.Categorical variable
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-        s  0.8026    0.7982  0.0045 0.0638
-     a[3] -0.5468   -0.5519  0.0051 0.0402
-     a[1]  0.3489    0.3523 -0.0034 0.0853
-     a[0] -0.4685   -0.4668 -0.0017 0.0410
-     a[2]  0.6391    0.6392 -0.0000 0.0777
+     b[2] -0.1690   -0.1721  0.0031 0.0787
+        s  0.8094    0.8060  0.0034 0.0441
+     a[3] -0.4586   -0.4648  0.0063 0.0662
+     b[0] -0.0711   -0.0688 -0.0023 0.0344
+     a[1]  0.2291    0.2448 -0.0157 0.0896
+     b[1] -0.2870   -0.2619 -0.0251 0.1377
+     a[0] -0.4050   -0.4067  0.0017 0.0456
+     a[2]  0.5883    0.5911 -0.0028 0.0553
+     b[3]  0.2516    0.2451  0.0065 0.0697
 ============================================================
 
 ================================================================
 WAIC cross-check  -  2.Categorical variable
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -36.232124    p_waic = 3.467042
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -36.232124  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -36.656174    p_waic = 3.745923
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -36.656174    p_waic = 3.745923
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=29)
 ----------------------------------------------------------------
 LOO cross-check  -  2.Categorical variable
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -36.308008    p_loo  = 3.542926
+      elpd_loo  = -36.763322    p_loo  = 3.853071
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -36.308238    p_loo  = 3.543157
-|delta elpd_loo| = 2.305e-04      |delta p_loo| = 2.305e-04
+      elpd_loo  = -36.763620    p_loo  = 3.853369
+|delta elpd_loo| = 2.985e-04      |delta p_loo| = 2.985e-04
 RESULT: PASS
 ================================================================

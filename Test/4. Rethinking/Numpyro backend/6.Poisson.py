@@ -23,9 +23,8 @@ m.df = df
 m.data_to_model(['cid', 'population_scaled', 'total_tools'])
 
 def model_BF(cid, population_scaled, total_tools):
-    a = m.dist.normal(3, 0.5, shape=(2,))
-    # Wider prior on b allows better recovery when b varies
-    b = m.dist.normal(0, 0.5, shape=(2,))
+    a = m.dist.normal(3, 0.5, shape=(2,), name='a')
+    b = m.dist.normal(0, 0.2, shape=(2,), name='b')
     lambda_ = jnp.exp(a[cid] + b[cid] * population_scaled)
     m.dist.poisson(lambda_, obs=total_tools)
 
@@ -49,7 +48,7 @@ parameters {
 model {
     vector[N] lambda;
     a ~ normal(3, 0.5);
-    b ~ normal(0, 0.5);
+    b ~ normal(0, 0.2);
     for (i in 1:N) {
         lambda[i] = a[cid[i]] + b[cid[i]] * population[i];
     }

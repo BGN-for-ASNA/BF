@@ -112,9 +112,9 @@ model <- function(height, weight, age){
   # Local coefficient variances
   lam2 = tau2 * phi
   # Parameter prior distributions
-  alpha = m$dist$normal(0, 0.5, name = 'a')
-  beta1 = m$dist$normal(0, jnp$sqrt(lam2[0L]), name = 'b1')
-  beta2 = m$dist$normal(0, jnp$sqrt(lam2[1L]), name = 'b2')
+  alpha = m$dist$normal(0, 0.5, name = 'alpha')
+  beta1 = m$dist$normal(0, jnp$sqrt(lam2[0L]), name = 'beta1')
+  beta2 = m$dist$normal(0, jnp$sqrt(lam2[1L]), name = 'beta2')
   # Likelihood
   m$dist$normal(alpha + beta1 * weight + beta2 * age, sigma, obs = height, name = "y_obs")
 }
@@ -479,6 +479,7 @@ The key identity $\tau^2 = \sigma^2 R^2 / (1 - R^2)$ requires $\sigma^2$ to be a
 
 In practice, applying R2D2 naively to a Binomial or Poisson model produces a prior whose shape depends on an arbitrary constant — the resulting shrinkage is no longer tied to any interpretable goodness-of-fit metric. For discrete outcomes, horseshoe or spike-and-slab priors are better-motivated alternatives.
 
+<!--
 ### Posterior predictive checks
 
 Are the predictions of the calibrated-prior model well calibrated?
@@ -486,17 +487,17 @@ Are the predictions of the calibrated-prior model well calibrated?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 
 #### R
 ```r
-m$diag$ppc_loo_pit()
+# m$diag$ppc_loo_pit()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 :::
 
@@ -508,22 +509,23 @@ LOO-PIT values should be uniform: the observed curve stays inside the band of un
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 
 #### R
 ```r
-m$diag$ppc_density()
+# m$diag$ppc_density()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 :::
 
 Density of the observed outcome (black) against simulated datasets (blue).
 :::
+-->
 
 ## Mathematical Details
 

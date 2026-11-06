@@ -1,5 +1,6 @@
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
 from BayesForge.BNN.activations import activation
+from BayesForge.Utils.dev_warning import warn_dev
 
 from numpyro import deterministic
 import jax.numpy as jnp
@@ -50,7 +51,7 @@ class bnn(activation):
         - prior_dist (bf.dist): The prior distribution for the weights of the layer. The shape of the distribution defines the layer's input/output dimensions.
         - activation (str): The name of the activation function to use after this layer ('relu', 'tanh', 'sigmoid', 'softmax').  
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         if bias is not False:
             prod = jnp.matmul(X, dist) + bias
         else:
@@ -67,7 +68,7 @@ class bnn(activation):
             return activation_func(prod)
 
     def layer_attention(self, b_kv, b_q, d_model=32,  sample=True, name = '', seed = None):
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         # Layers
         ### Dimensions 
         self.b_q, self.b_kv, self.d_model = b_q, b_kv, d_model
@@ -105,7 +106,7 @@ class bnn(activation):
         return self.layer_linear(context.reshape(1, -1), self.out).reshape(self.b_q, self.b_kv) 
 
     def layer_toeplitz(self, block_size = 32, sample = False, name = '', seed = None):
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         """
         Models a diagonal covariance block C_ii with a diagonal structure.
 
@@ -145,7 +146,7 @@ class bnn(activation):
 
         Returns a (size, size) SPD matrix.
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         # Store the block size.
         self.b = block_size
 
@@ -187,7 +188,7 @@ class bnn(activation):
 
         Returns a (size, size) SPD diagonal matrix.
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         # Store the block size.
         self.b = block_size
         # Learnable vector of per-variable variances (stored in log space).
@@ -226,7 +227,7 @@ class bnn(activation):
         - a (jnp.ndarray): The first set of offsets for the covariance matrix.
         - b (jnp.ndarray): The second set of offsets for the covariance matrix.
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         # First layer weights/biases: note these are treated as latent parameters
         W1 = self.dist.normal(0, 1, shape=(N, hidden_dim), name='W1', sample=sample)
 
@@ -247,7 +248,7 @@ class bnn(activation):
         """
 
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        warn_dev("bnn")
         a_b = jnp.mean(posterior, axis=0) 
         N= a_b.shape[0]
 

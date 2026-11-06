@@ -152,6 +152,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the number of survivors in every tank?
@@ -159,17 +160,17 @@ Does the model reproduce the number of survivors in every tank?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals()
+# m$diag$ppc_intervals()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 :::
 
@@ -181,22 +182,23 @@ One point per tank (observed survivors) with the 50 % and 90 % predictive interv
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "sd")
+# m$diag$ppc_stat(stat = "sd")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 :::
 
 The observed spread of survivor counts between tanks (vertical line) should fall inside the simulated spreads.
 :::
+-->
 
 ## Mathematical Details
 

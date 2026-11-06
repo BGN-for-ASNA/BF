@@ -94,7 +94,7 @@ model <- function(height, weight) {
     # Parameter prior distributions
     s <- bf.dist.uniform(0, 50, name = "s")
     a <- bf.dist.normal(178, 20, name = "a")
-    b <- bf.dist.normal(0, 1, name = "b")
+    b <- bf.dist.log_normal(0, 1, name = "b")
 
     # Likelihood
     bf.dist.normal(a + b * weight, s, obs = height)
@@ -138,6 +138,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the distribution of observed heights?
@@ -145,17 +146,17 @@ Does the model reproduce the distribution of observed heights?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 
 #### R
 ```r
-m$diag$ppc_density()
+# m$diag$ppc_density()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 :::
 
@@ -167,34 +168,35 @@ Each blue curve is the density of one dataset simulated from the posterior; the 
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 ```{python}
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "sd")
+# m$diag$ppc_stat(stat = "sd")
 ```
 
 ```r
-m$diag$ppc_loo_pit()
+# m$diag$ppc_loo_pit()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 ```julia
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 :::
 
 `ppc_stat(stat="sd")`: the vertical line (observed standard deviation) should fall inside the distribution of simulated standard deviations. `ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
 :::
+-->
 
 ## Mathematical Details
 
@@ -227,11 +229,11 @@ Y_i \sim \text{Normal}(\alpha + \beta   X_i, \sigma)
 $$
 
 $$
-\alpha \sim \text{Normal}(0, 1)
+\alpha \sim \text{Normal}(178, 20)
 $$
 
 $$
-\beta \sim \text{Normal}(0, 1)
+\beta \sim \text{LogNormal}(0, 1)
 $$
 
 $$

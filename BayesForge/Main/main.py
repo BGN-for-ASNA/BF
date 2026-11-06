@@ -161,6 +161,8 @@ class bf(manip):
                 False.
         """
         manip.__init__(self)
+        from BayesForge.Utils.dev_warning import reset_dev_warnings
+        reset_dev_warnings()
         setup_device(
             platform=platform,
             cores=cores,
@@ -176,14 +178,17 @@ class bf(manip):
         import jax
         self._platform = platform
         self.n_gpus    = len(jax.devices('gpu')) if platform == 'gpu' else 0
-        self.n_devices = len(jax.devices(platform))
+        all_devices    = jax.devices(platform)
+        if cores is not None and int(cores) > 0 and len(all_devices) > int(cores):
+            all_devices = all_devices[:int(cores)]
+        self.n_devices = len(all_devices)
         self._data_sharding = None
         self._rep_sharding  = None
         self.mesh = None
         self._last_shard_report = None
         if self.n_devices > 1:
             self.mesh, self._data_sharding, self._rep_sharding = \
-                setup_multi_device(platform)
+                setup_multi_device(platform, cores=cores)
         # -----------------------------------------------------------------------
 
         # Sharding is declared per-fit via fit(shard=True); it is NOT a
@@ -299,11 +304,25 @@ class bf(manip):
         return jax.random.PRNGKey(int(seed))
 
     def get_seed(self):
-        """Return the resolved base seed governing reproducibility."""
+        """Return the resolved base seed governing reproducibility.
+
+        Returns:
+            int: The resolved base integer seed stored in ``m._rng``.
+        """
         return self._rng.get_seed()
 
     def set_seed(self, seed):
-        """Reset the reproducibility base seed for subsequent draws."""
+        """Reset the reproducibility base seed for subsequent draws.
+
+        Args:
+            seed (int or bool): New seed value (integer for deterministic stream,
+                ``True`` for fresh entropy, ``False`` for default seed 0).
+
+        Returns:
+            None: Updates ``m`` in-place.
+            Updates on m: sets ``m.seed = seed`` and resets the internal random
+                number generator ``m._rng`` for all subsequent stochastic calls.
+        """
         self._rng.set_seed(seed)
         self.seed = seed
 
@@ -428,6 +447,28 @@ class bf(manip):
                 every latent site: discrete ones as values, continuous ones in
                 unconstrained space (e.g. log for a positive parameter). With
                 ``num_chains > 1`` each value needs a leading chain dimension.
+
+        Returns:
+            None: Fits the model and populates attributes on ``m`` in-place.
+            Attributes set on ``m``:
+                - ``m.model``: fitted model callable; ``m.run_model_name``
+                  holds its name.
+                - ``m.data_on_model``: model data, taken from ``obs`` or built
+                  automatically from ``m.df`` via ``m.pd_to_jax`` when ``None``.
+                - ``m.num_chains``: number of chains used for the fit.
+                - ``m.sampler`` and ``m.sampler_name``: fitted MCMC sampler
+                  instance and kernel name.
+                - ``m.posteriors`` and ``m.posteriors_by_chain``: pooled and
+                  per-chain posterior draws.
+                - ``m.posteriors_full`` and ``m.posteriors_by_chain_full``:
+                  unfiltered copies preserved for ``m.filter_posteriors``.
+                - ``m.extra_fields`` and ``m.extra_fields_by_chain``: HMC
+                  trajectory diagnostics (``num_steps``, ``energy``,
+                  ``diverging``, ``accept_prob``, ``adapt_state.step_size``).
+                - ``m.diag``: initialized diagnostics object bound to ``m``.
+                - ``m.history``: fit snapshot dictionary.
+                - ``m._last_shard_report``: sharding report, only when
+                  ``shard=True``.
         """
         from BayesForge.Samplers.mcmc_numpyro import SAMPLERS
 
@@ -530,6 +571,8 @@ class bf(manip):
             )
 
         if self.backend == "numpyro":
+            from BayesForge.Utils.dev_warning import reset_dev_warnings
+            reset_dev_warnings()
             from BayesForge.Samplers.mcmc_numpyro import mcmc_numpyro
 
             self.sampler = mcmc_numpyro(
@@ -677,6 +720,27 @@ class bf(manip):
     ):
         """
         Fit the model using SVI (Stochastic Variational Inference).
+
+        Args:
+            model: Model callable to fit (defaults to ``m.model``).
+            guide: Variational guide callable or name (``"diagonal"``,
+                ``"multivariate"``, ``"laplace"``, ``"delta"``, ``"normal"``,
+                ``"low_rank"``). Defaults to ``AutoDiagonalNormal``.
+            optim: NumPyro optimizer (defaults to ``Adam(1e-3)``).
+            loss: ELBO loss instance (defaults to ``Trace_ELBO(num_particles=10)``).
+            num_steps (int): Number of SVI optimization steps. Defaults to 1000.
+            num_samples (int): Number of posterior draws sampled from the fitted
+                guide. Defaults to 1000.
+            seed (int, optional): Random seed.
+            **kwargs: Additional keyword arguments forwarded to ``svi_numpyro``.
+
+        Returns:
+            None: Fits the variational approximation and populates ``m`` in-place.
+            Updates on m: sets ``m.model``, ``m.run_model_name``,
+                ``m.data_on_model`` (populated via ``m.pd_to_jax`` if ``None``),
+                ``m.sampler`` (``svi_numpyro`` instance), ``m.posteriors``
+                (draws from the fitted variational guide), ``m.diag``
+                (diagnostics instance), and ``m.history``.
         """
         if model is None:
             model = self.model
@@ -888,6 +952,16 @@ class bf(manip):
                 JAX/NumPy diagnostics are experimental.
             kind: Passed to az.summary ("all", "stats", "diagnostics") when the
                 arviz backend is in use.
+
+        Returns:
+            pandas.DataFrame: Posterior summary table (``mean``, ``sd``, HDI bounds,
+                ``mcse_mean``, ``mcse_sd``, ``ess_bulk``, ``ess_tail``, ``r_hat``).
+            Updates on m: stores the returned table in ``m.tab_summary``; if
+                ``include``/``var_names`` or ``exclude``/``exclude_vars`` is
+                provided, also calls ``m.filter_posteriors(...)`` which updates
+                ``m.posteriors`` and ``m.posteriors_by_chain`` in-place; when
+                using the ``"arviz"`` backend, initializes ``m.diag.trace`` and
+                ``m.diag.priors_name`` if not yet built.
         """
         from BayesForge.Diagnostic.patch_diag import (
             ARVIZ, _resolve_backend, _warn_jax_experimental,
@@ -924,7 +998,17 @@ class bf(manip):
         return self.tab_summary
 
     def summary_jax(self, **kwargs):
-        """Posterior summary via the experimental JAX/NumPy diagnostics."""
+        """Posterior summary via the experimental JAX/NumPy diagnostics.
+
+        Args:
+            **kwargs: Forwarded to ``m.summary(..., backend="jax")``.
+
+        Returns:
+            pandas.DataFrame: Posterior summary table.
+            Updates on m: stores the returned table in ``m.tab_summary`` (and
+                updates ``m.posteriors`` / ``m.posteriors_by_chain`` if
+                ``include`` or ``exclude`` is passed).
+        """
         kwargs.setdefault("backend", "jax")
         return self.summary(**kwargs)
 
@@ -956,14 +1040,20 @@ class bf(manip):
         _empty = [v for v in _post.data_vars if _post[v].size == 0]
         if _empty and "var_names" not in kwargs:
             kwargs["var_names"] = [v for v in _post.data_vars if v not in _empty]
-        self.tab_summary = az.summary(
-            self.diag.trace,
-            *args,
-            round_to=round_to,
-            kind=kind,
-            **{_prob_kw: hdi_prob},
-            **kwargs,
-        )
+        with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="invalid value encountered in scalar divide",
+                category=RuntimeWarning,
+            )
+            self.tab_summary = az.summary(
+                self.diag.trace,
+                *args,
+                round_to=round_to,
+                kind=kind,
+                **{_prob_kw: hdi_prob},
+                **kwargs,
+            )
         if var_names is not None or exclude_vars is not None:
             base_names = self.tab_summary.index.str.split("[").str[0]
             vars_to_keep = base_names.unique().tolist()
@@ -991,6 +1081,14 @@ class bf(manip):
         Args:
             include: str or list — keep only these parameters.
             exclude: str or list — remove these parameters.
+
+        Returns:
+            None: Modifies ``m`` in-place.
+            Updates on m: updates ``m.posteriors`` (pooled across chains) and
+                ``m.posteriors_by_chain`` (grouped by chain) in-place with the
+                filtered parameter subset, always starting from the unfiltered
+                ``m.posteriors_full`` and ``m.posteriors_by_chain_full`` (which
+                remain untouched).
         """
         if self.posteriors_full is None:
             raise RuntimeError("No posteriors found. Run fit() first.")
@@ -1021,7 +1119,11 @@ class bf(manip):
         Get the posterior means of the variables.
 
         Returns:
-            Dictionary of variable names and their posterior means.
+            dict: Dictionary mapping each variable name (with index suffix for
+                array parameters) to its posterior mean.
+            Updates on m: calls ``m.summary()`` internally, which updates
+                ``m.tab_summary`` (and initializes ``m.diag.trace`` when using
+                the ``"arviz"`` backend).
         """
         d = self.summary()
         posterior_means = d["mean"].values
@@ -1155,7 +1257,11 @@ class bf(manip):
                 Requires posterior=True (a fitted model).
 
         Returns:
-            dict: samples from the model.
+            dict: Dictionary mapping site names to JAX arrays of simulated draws.
+            Updates on m: sets ``m.model2`` (modified model callable with
+                optional observed arguments defaulting to ``None``), updates
+                ``m.obs_args`` (list of observed data entry names), and advances
+                ``m._rng`` when ``seed=None``.
         """
         import jax.numpy as jnp
         rng_key = self._rng.stream() if seed is None else jax.random.PRNGKey(int(seed))
@@ -1358,10 +1464,13 @@ class bf(manip):
 
     def get_history(self):
         """
-        Get the history of the model fit.
+        Build and store a snapshot of the current fitted state on ``m.history``.
 
         Returns:
-            Dictionary containing model, model_name, data, sampler, and posteriors.
+            None: Populates ``m.history`` in-place.
+            Updates on m: sets ``m.history`` to a dictionary with keys
+                ``"model"``, ``"model_name"``, ``"data"`` (``m.data_on_model``),
+                ``"sampler"``, and ``"posteriors"``.
         """
         self.history = {
             "model": self.model,
@@ -1426,7 +1535,9 @@ class bf(manip):
             path (str, optional): File path to save the object. Defaults to '{model_name}_bf.pkl' or 'bf_model.pkl' in CWD.
 
         Returns:
-            str: The path the object was written to.
+            str: The file path the serialized ``bf`` object was written to.
+            Updates on m: sets ``m._saved_with_version`` to the current
+                BayesForge version string before serializing.
         """
         if path is None:
             path = f"{self.model_name}_bf.pkl" if self.model_name else "bf_model.pkl"
@@ -1745,6 +1856,13 @@ class bf(manip):
         arr = jnp.asarray(array)
         if self._data_sharding is None:
             return arr
+        if arr.ndim == 0 or arr.shape[0] % self.n_devices != 0:
+            warnings.warn(
+                f"m.shard: leading dimension ({arr.shape[0] if arr.ndim else 0}) is not "
+                f"divisible by n_devices={self.n_devices}; replicating array instead.",
+                stacklevel=2,
+            )
+            return self.replicate(arr)
         return jax.device_put(arr, self._data_sharding)
 
     def replicate(self, array):

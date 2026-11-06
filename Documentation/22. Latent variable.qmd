@@ -190,6 +190,7 @@ m.summary()
 
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the distribution of the observed values?
@@ -197,21 +198,22 @@ Does the model reproduce the distribution of the observed values?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 
 #### R
 ```r
-m$diag$ppc_density()
+# m$diag$ppc_density()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 :::
 
 The black curve is the density of all observed values, the blue curves the densities of simulated datasets; the black curve should look like one more blue curve. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 
 ## Mathematical Details
 

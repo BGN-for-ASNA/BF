@@ -204,6 +204,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does each café get its own variability of waiting times right?
@@ -211,17 +212,17 @@ Does each café get its own variability of waiting times right?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="sd", group="cafe")
+# m.diag.ppc_stat(stat="sd", group="cafe")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "sd", group = "cafe")
+# m$diag$ppc_stat(stat = "sd", group = "cafe")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="sd", group="cafe")
+# m.diag.ppc_stat(stat="sd", group="cafe")
 ```
 :::
 
@@ -233,22 +234,23 @@ One panel per café: the vertical line is the observed standard deviation of wai
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals(x="afternoon", group="cafe")
+# m.diag.ppc_intervals(x="afternoon", group="cafe")
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals(x = "afternoon", group = "cafe")
+# m$diag$ppc_intervals(x = "afternoon", group = "cafe")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals(x="afternoon", group="cafe")
+# m.diag.ppc_intervals(x="afternoon", group="cafe")
 ```
 :::
 
 One panel per café, observed waits in the morning (0) and afternoon (1) with predictive intervals: the varying slopes should follow the morning–afternoon difference of each café.
 :::
+-->
 
 ## Mathematical Details
 ###  Centered parameterization

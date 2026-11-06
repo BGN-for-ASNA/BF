@@ -15,18 +15,23 @@ python_exe = sys.executable
 
 models = [
     "1.Continuous variable.py",
+    "1b.Multiple continuous variables.py",
     "2.Categorical variable.py",
     "3.Continuous interactions.py",
     "4.Binomial.py",
     "5.Binomial with indices.py",
     "6.Poisson.py",
+    "6b.Poisson with offset.py",
     "7.Negative binomial.py",
     "8.Multinomial.py",
+    "8b.Multinomial fixed income.py",
     "9.Beta binomial.py",
     "10.Zero inflated.py",
     "11.Varying intercepts.py",
     "12.Varying effects.py",
-    "13.Gaussian processes.py"
+    "13.Gaussian processes.py",
+    "14.Dirichlet.py",
+    "15.Measuring error.py"
 ]
 
 script_dir = os.path.dirname(os.path.abspath(__file__))

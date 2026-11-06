@@ -25,7 +25,7 @@ m.data_on_model = {
 
 def model_BF(tank, surv, density):
     sigma = m.dist.exponential(1.0)
-    a_bar = m.dist.normal(0.0, 2.0)
+    a_bar = m.dist.normal(0.0, 1.5)
     alpha = m.dist.normal(a_bar, sigma, shape=(48,))
     p = alpha[tank]
     m.dist.binomial(total_count=density, logits=p, obs=surv)
@@ -51,7 +51,7 @@ parameters {
 model {
     vector[N_obs] p;
     sigma ~ exponential(1);
-    a_bar ~ normal(0, 2);
+    a_bar ~ normal(0, 1.5);
     a ~ normal(a_bar, sigma);
     for (i in 1:N_obs) {
         p[i] = a[tank[i]];

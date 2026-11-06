@@ -109,3 +109,12 @@ calibration_plot(y, yrep).show()
 influence_plot(m=m).show()
 
 # %%
+
+# %%
+# Declared prior variations, fitted in parallel (one-at-a-time)
+if __name__ == "__main__":
+    from BayesForge.Diagnostic.sensitivity import prior_sensitivity, _prior_scenarios
+
+    sc = _prior_scenarios({"b_sd": [0.1, 0.5], "a_sd": [5]})
+    assert [s["label"] for s in sc] == ["baseline", "b_sd=0.1", "b_sd=0.5", "a_sd=5"]
+    assert len(_prior_scenarios({"b_sd": [1, 2], "a_sd": [5, 6]}, mode="grid")) == 4

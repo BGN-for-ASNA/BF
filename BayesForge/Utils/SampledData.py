@@ -538,6 +538,8 @@ class SampledData:
         """
         Creates a posterior predictive check plot.
         """
+        from BayesForge.Utils.dev_warning import warn_dev
+        warn_dev("ppc")
         import plotly.graph_objects as go
         import plotly.express as px
         import plotly.figure_factory as ff
