@@ -167,6 +167,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+<script src="https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
   <script>document.addEventListener("DOMContentLoaded", function () {
@@ -774,10 +775,7 @@ window.Quarto = {
   <ul>
   <li><a href="#general-principles" id="toc-general-principles" class="nav-link active" data-scroll-target="#general-principles">General Principles</a></li>
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
-  <ul class="collapse">
-  <li><a href="#posterior-predictive-checks" id="toc-posterior-predictive-checks" class="nav-link" data-scroll-target="#posterior-predictive-checks">Posterior predictive checks</a></li>
-  </ul></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a>
   <ul class="collapse">
   <li><a href="#bayesian-formulation" id="toc-bayesian-formulation" class="nav-link" data-scroll-target="#bayesian-formulation"><em>Bayesian formulation</em></a></li>
@@ -1023,190 +1021,54 @@ Hazard_rate_metastasized[0]   2419.06    1.0       0.01     0.01
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>m.models.survival.plot_surv(beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+<pre><code>⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/2000 [00:00&lt;?, ?it/s]Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
-  0%|          | 0/2000 [00:00&lt;?, ?it/s]
-Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
-
-  0%|          | 0/2000 [00:00&lt;?, ?it/s]
-
-Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]
-
-
-  0%|          | 0/2000 [00:00&lt;?, ?it/s]
-
-
-Compiling.. :   0%|          | 0/2000 [00:00&lt;?, ?it/s]</code></pre>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"1593c61d4fd844f68901bb02eb5f3823","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"9b36000e4d094c38b3ab911ea8996afd","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Running chain 0:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
-Running chain 1:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
-
-Running chain 2:   0%|          | 0/2000 [00:01&lt;?, ?it/s]
-
-
-Running chain 3:   0%|          | 0/2000 [00:01&lt;?, ?it/s]Running chain 0:   5%|▌         | 100/2000 [00:02&lt;00:29, 65.45it/s]
-
-
-Running chain 3:   5%|▌         | 100/2000 [00:02&lt;00:31, 60.37it/s]
-
-Running chain 2:   5%|▌         | 100/2000 [00:03&lt;00:31, 60.02it/s]
-Running chain 1:   5%|▌         | 100/2000 [00:03&lt;00:31, 59.54it/s]Running chain 0:  10%|█         | 200/2000 [00:04&lt;00:28, 62.31it/s]
-
-Running chain 2:  10%|█         | 200/2000 [00:04&lt;00:30, 59.47it/s]
-
-
-Running chain 3:  10%|█         | 200/2000 [00:04&lt;00:30, 59.40it/s]
-Running chain 1:  10%|█         | 200/2000 [00:04&lt;00:31, 57.39it/s]Running chain 0:  15%|█▌        | 300/2000 [00:06&lt;00:33, 50.83it/s]
-
-Running chain 2:  15%|█▌        | 300/2000 [00:07&lt;00:34, 49.28it/s]
-
-
-Running chain 3:  15%|█▌        | 300/2000 [00:07&lt;00:36, 46.47it/s]
-Running chain 1:  15%|█▌        | 300/2000 [00:07&lt;00:38, 44.38it/s]Running chain 0:  20%|██        | 400/2000 [00:09&lt;00:34, 46.06it/s]
-
-Running chain 2:  20%|██        | 400/2000 [00:09&lt;00:34, 46.89it/s]
-
-
-Running chain 3:  20%|██        | 400/2000 [00:09&lt;00:36, 43.98it/s]
-Running chain 1:  20%|██        | 400/2000 [00:09&lt;00:36, 44.07it/s]
-
-Running chain 2:  25%|██▌       | 500/2000 [00:11&lt;00:29, 50.59it/s]Running chain 0:  25%|██▌       | 500/2000 [00:11&lt;00:30, 49.35it/s]
-
-
-Running chain 3:  25%|██▌       | 500/2000 [00:11&lt;00:30, 49.57it/s]
-Running chain 1:  25%|██▌       | 500/2000 [00:11&lt;00:29, 50.09it/s]Running chain 0:  30%|███       | 600/2000 [00:12&lt;00:25, 54.84it/s]
-
-Running chain 2:  30%|███       | 600/2000 [00:13&lt;00:29, 48.12it/s]
-Running chain 1:  30%|███       | 600/2000 [00:13&lt;00:27, 50.55it/s]
-
-
-Running chain 3:  30%|███       | 600/2000 [00:13&lt;00:28, 48.80it/s]Running chain 0:  35%|███▌      | 700/2000 [00:14&lt;00:23, 55.33it/s]
-Running chain 1:  35%|███▌      | 700/2000 [00:14&lt;00:23, 55.27it/s]
-
-
-Running chain 3:  35%|███▌      | 700/2000 [00:15&lt;00:24, 53.39it/s]
-
-Running chain 2:  35%|███▌      | 700/2000 [00:15&lt;00:25, 51.19it/s]Running chain 0:  40%|████      | 800/2000 [00:15&lt;00:20, 58.69it/s]
-Running chain 1:  40%|████      | 800/2000 [00:17&lt;00:23, 51.91it/s]
-
-Running chain 2:  40%|████      | 800/2000 [00:17&lt;00:24, 48.08it/s]
-
-
-Running chain 3:  40%|████      | 800/2000 [00:17&lt;00:25, 47.89it/s]Running chain 0:  45%|████▌     | 900/2000 [00:18&lt;00:20, 53.61it/s]
-Running chain 1:  45%|████▌     | 900/2000 [00:18&lt;00:20, 52.53it/s]
-
-
-Running chain 3:  45%|████▌     | 900/2000 [00:19&lt;00:22, 49.42it/s]
-
-Running chain 2:  45%|████▌     | 900/2000 [00:19&lt;00:23, 47.19it/s]Running chain 0:  50%|█████     | 1000/2000 [00:20&lt;00:18, 52.81it/s]
-Running chain 1:  50%|█████     | 1000/2000 [00:21&lt;00:19, 50.91it/s]
-
-
-Running chain 3:  50%|█████     | 1000/2000 [00:21&lt;00:20, 49.26it/s]
-
-Running chain 2:  50%|█████     | 1000/2000 [00:21&lt;00:21, 47.29it/s]Running chain 0:  55%|█████▌    | 1100/2000 [00:22&lt;00:17, 52.18it/s]
-Running chain 1:  55%|█████▌    | 1100/2000 [00:23&lt;00:19, 46.22it/s]
-
-
-Running chain 3:  55%|█████▌    | 1100/2000 [00:23&lt;00:19, 46.62it/s]Running chain 0:  60%|██████    | 1200/2000 [00:24&lt;00:16, 49.50it/s]
-
-Running chain 2:  55%|█████▌    | 1100/2000 [00:24&lt;00:20, 44.51it/s]
-Running chain 1:  60%|██████    | 1200/2000 [00:25&lt;00:15, 50.16it/s]
-
-
-Running chain 3:  60%|██████    | 1200/2000 [00:25&lt;00:16, 49.68it/s]Running chain 0:  65%|██████▌   | 1300/2000 [00:25&lt;00:13, 52.07it/s]
-
-Running chain 2:  60%|██████    | 1200/2000 [00:26&lt;00:17, 46.99it/s]
-Running chain 1:  65%|██████▌   | 1300/2000 [00:27&lt;00:15, 46.25it/s]
-
-
-Running chain 3:  65%|██████▌   | 1300/2000 [00:27&lt;00:14, 47.27it/s]Running chain 0:  70%|███████   | 1400/2000 [00:28&lt;00:12, 48.56it/s]
-
-Running chain 2:  65%|██████▌   | 1300/2000 [00:28&lt;00:15, 44.24it/s]
-Running chain 1:  70%|███████   | 1400/2000 [00:29&lt;00:12, 49.80it/s]
-
-
-Running chain 3:  70%|███████   | 1400/2000 [00:29&lt;00:11, 51.96it/s]Running chain 0:  75%|███████▌  | 1500/2000 [00:29&lt;00:09, 52.93it/s]
-
-Running chain 2:  70%|███████   | 1400/2000 [00:30&lt;00:12, 48.58it/s]
-
-
-Running chain 3:  75%|███████▌  | 1500/2000 [00:30&lt;00:08, 56.21it/s]
-Running chain 1:  75%|███████▌  | 1500/2000 [00:31&lt;00:09, 52.47it/s]Running chain 0:  80%|████████  | 1600/2000 [00:31&lt;00:07, 56.51it/s]
-
-Running chain 2:  75%|███████▌  | 1500/2000 [00:32&lt;00:10, 49.85it/s]
-
-
-Running chain 3:  80%|████████  | 1600/2000 [00:32&lt;00:07, 54.87it/s]
-Running chain 1:  80%|████████  | 1600/2000 [00:33&lt;00:07, 50.04it/s]Running chain 0:  85%|████████▌ | 1700/2000 [00:33&lt;00:05, 53.46it/s]
-
-Running chain 2:  80%|████████  | 1600/2000 [00:34&lt;00:08, 48.52it/s]
-
-
-Running chain 3:  85%|████████▌ | 1700/2000 [00:34&lt;00:05, 52.42it/s]Running chain 0:  90%|█████████ | 1800/2000 [00:35&lt;00:03, 51.65it/s]
-Running chain 1:  85%|████████▌ | 1700/2000 [00:35&lt;00:06, 47.54it/s]
-
-Running chain 2:  85%|████████▌ | 1700/2000 [00:36&lt;00:06, 49.62it/s]
-
-
-Running chain 3:  90%|█████████ | 1800/2000 [00:37&lt;00:03, 50.32it/s]Running chain 0:  95%|█████████▌| 1900/2000 [00:38&lt;00:02, 45.68it/s]
-Running chain 1:  90%|█████████ | 1800/2000 [00:38&lt;00:04, 43.81it/s]
-
-Running chain 2:  90%|█████████ | 1800/2000 [00:39&lt;00:04, 44.49it/s]
-
-
-Running chain 3:  95%|█████████▌| 1900/2000 [00:39&lt;00:02, 47.49it/s]Running chain 0: 100%|██████████| 2000/2000 [00:40&lt;00:00, 47.92it/s]Running chain 0: 100%|██████████| 2000/2000 [00:40&lt;00:00, 49.82it/s]
-
-Running chain 1:  95%|█████████▌| 1900/2000 [00:40&lt;00:02, 46.69it/s]
-
-Running chain 2:  95%|█████████▌| 1900/2000 [00:41&lt;00:02, 45.54it/s]
-
-
-Running chain 3: 100%|██████████| 2000/2000 [00:41&lt;00:00, 48.12it/s]Running chain 3: 100%|██████████| 2000/2000 [00:41&lt;00:00, 48.17it/s]
-
-Running chain 1: 100%|██████████| 2000/2000 [00:42&lt;00:00, 47.46it/s]Running chain 1: 100%|██████████| 2000/2000 [00:42&lt;00:00, 47.40it/s]
-
-
-Running chain 2: 100%|██████████| 2000/2000 [00:42&lt;00:00, 50.66it/s]Running chain 2: 100%|██████████| 2000/2000 [00:42&lt;00:00, 46.92it/s]</code></pre>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"25763e855fd140d99f930a9f797e0d57","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
+</div>
+<div class="cell-output cell-output-display">
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id":"0b5d8f91a45c443e8f36a0665b30000d","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+</script>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-⚠️This function is still in development. Use it with caution. ⚠️
-                         mean      sd  eti89_lb  eti89_ub  ess_bulk  ess_tail  \
-Baseline_rate[0]         0.00    0.00      0.00      0.00    965.90   1054.10   
-Baseline_rate[1]         0.00    0.01      0.00      0.01   1632.80   1555.83   
-Baseline_rate[2]         0.00    0.01      0.00      0.01   1263.78   1334.60   
-Baseline_rate[3]         0.00    0.01      0.00      0.01   1821.93   1880.18   
-Baseline_rate[4]         0.00    0.01      0.00      0.02   1512.95   1373.01   
+<pre><code>                         mean      sd  eti89_lb  eti89_ub  ess_bulk  ess_tail  \
+Baseline_rate[0]         0.00    0.00      0.00      0.00    950.84    989.49   
+Baseline_rate[1]         0.00    0.01      0.00      0.01   1671.08   1537.41   
+Baseline_rate[2]         0.00    0.01      0.00      0.01   1628.77   1455.32   
+Baseline_rate[3]         0.00    0.01      0.00      0.01   1582.26   1668.03   
+Baseline_rate[4]         0.00    0.01      0.00      0.02   1753.51   1701.40   
 ...                       ...     ...       ...       ...       ...       ...   
-log_Baseline_rate[71] -101.81   96.51   -279.99     -8.60   1025.41    978.19   
-log_Baseline_rate[72] -101.54   94.30   -276.16     -9.38   1090.05   1214.28   
-log_Baseline_rate[73] -103.33  104.11   -297.56     -8.62    969.82    968.72   
-log_Baseline_rate[74] -101.12   94.89   -289.04     -8.85   1295.32   1416.71   
-log_Baseline_rate[75]  -93.16   94.40   -278.88     -1.29   1195.87   1326.58   
+log_Baseline_rate[71] -101.63   99.64   -274.64     -9.44   1109.14   1184.22   
+log_Baseline_rate[72] -102.64   97.89   -292.43     -8.28   1139.04   1387.76   
+log_Baseline_rate[73]  -97.24   93.30   -275.22     -8.15    972.07   1178.21   
+log_Baseline_rate[74] -103.13   95.16   -280.46     -9.08   1356.77   1737.32   
+log_Baseline_rate[75]  -96.85  103.17   -294.53     -1.54   1212.82   1236.85   
 
                        r_hat  mcse_mean  mcse_sd  
-Baseline_rate[0]        1.00       0.00     0.00  
-Baseline_rate[1]        1.00       0.00     0.00  
-Baseline_rate[2]        1.00       0.00     0.00  
-Baseline_rate[3]        1.00       0.00     0.00  
-Baseline_rate[4]        1.00       0.00     0.00  
+Baseline_rate[0]         1.0       0.00     0.00  
+Baseline_rate[1]         1.0       0.00     0.00  
+Baseline_rate[2]         1.0       0.00     0.00  
+Baseline_rate[3]         1.0       0.00     0.00  
+Baseline_rate[4]         1.0       0.00     0.00  
 ...                      ...        ...      ...  
-log_Baseline_rate[71]   1.00       3.56     5.29  
-log_Baseline_rate[72]   1.00       3.21     4.01  
-log_Baseline_rate[73]   1.01       3.98     6.08  
-log_Baseline_rate[74]   1.00       2.85     3.39  
-log_Baseline_rate[75]   1.00       2.96     3.51  
+log_Baseline_rate[71]    1.0       3.66     6.83  
+log_Baseline_rate[72]    1.0       3.16     3.85  
+log_Baseline_rate[73]    1.0       3.19     4.36  
+log_Baseline_rate[74]    1.0       2.63     2.80  
+log_Baseline_rate[75]    1.0       3.30     4.66  
 
 [153 rows x 9 columns]</code></pre>
 </div>
@@ -1322,70 +1184,98 @@ log_Baseline_rate[75]   1.00       2.96     3.51
 </div>
 </div>
 </div>
-<section id="posterior-predictive-checks" class="level3">
-<h3 class="anchored" data-anchor-id="posterior-predictive-checks">Posterior predictive checks</h3>
-<p>Do survival times simulated from the fitted hazard reproduce the observed survival curve?</p>
-<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
-<div class="tab-content" data-group="language">
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<p><strong>Data and discrete-time setup</strong> (shared by both approaches below).</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Data ------------------------------------------------------------</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># death was observed, 0 if the patient was censored (left the study</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># event-free), `metastasized` = "yes"/"no".</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> <span class="fu">pyconvert</span>(<span class="dt">String</span>, m.load.<span class="fu">mastectomy</span>(only_path<span class="op">=</span><span class="cn">true</span>))</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">","</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>m.df.metastasized <span class="op">=</span> jnp.<span class="fu">asarray</span>(m.df.metastasized.<span class="fu">eq</span>(<span class="st">"yes"</span>).values, dtype<span class="op">=</span>jnp.int64)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Piecewise-constant hazard setup -------------------------------</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut follow-up time into fixed intervals of length 3. For every</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co"># (subject, interval) this builds two matrices:</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   death[i, k]    -&gt; 1 if subject i had the event in interval k</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   exposure[i, k] -&gt; time subject i spent at risk in interval k</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Censoring is encoded here: after a subject leaves (event OR censoring)</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co"># its exposure is 0 in every later interval, so it stops contributing</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co"># to the likelihood without being counted as a death.</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>m.models.survival.<span class="fu">import_time_even</span>(jnp.<span class="fu">asarray</span>(m.df.time.values),</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>                                   jnp.<span class="fu">asarray</span>(m.df.event.values),</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>                                   interval_length<span class="op">=</span><span class="fl">3</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Register `metastasized` as a patient-level (time-invariant) covariate.</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>m.models.survival.<span class="fu">import_covF</span>(jnp.<span class="fu">asarray</span>(m.df.metastasized.values), [<span class="st">"metastasized"</span>])</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Censoring plot -----------------------------------------------</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="co"># One horizontal line per subject = observed follow-up. Red = censored</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co"># (event never seen), grey = event observed, black dot = metastasized.</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Reading it: metastasized patients tend to have shorter lines ending</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="co"># in an event -&gt; a first visual clue of a positive hazard effect.</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.survival.<span class="fu">plot_censoring</span>(cov<span class="op">=</span><span class="st">"metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Explicit model</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">Built-in model</a></li></ul>
+<div class="tab-content">
 <div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<div id="88d16429" class="cell" data-execution_count="4">
-<details open="" class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> m.models.survival</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>times_rep <span class="op">=</span> s.sample_times(lambda0<span class="op">=</span><span class="st">"Baseline_rate"</span>, beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>, n_draws<span class="op">=</span><span class="dv">100</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_km_overlay(y<span class="op">=</span>s.time, yrep<span class="op">=</span>times_rep, status_y<span class="op">=</span>s.event, name<span class="op">=</span><span class="st">"time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>⚠️This function is still in development. Use it with caution. ⚠️</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-        <script type="text/javascript">
-        window.PlotlyConfig = {MathJaxConfig: 'local'};
-        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
-        </script>
-        <script type="module">import "https://cdn.plot.ly/plotly-3.1.1.min"</script>
-        
-</div>
-<div class="cell-output cell-output-display">
-<div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.1.1.min.js" integrity="sha256-HUEFyfiTnZJxCxur99FjbKYTvKSzwDaD3/x5TqHpFu4=" crossorigin="anonymous"></script>                <div id="3647b734-6df3-4938-8e65-62314c8840fc" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("3647b734-6df3-4938-8e65-62314c8840fc")) {                    Plotly.newPlot(                        "3647b734-6df3-4938-8e65-62314c8840fc",                        [{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":true,"x":{"dtype":"f8","bdata":"AAAAAAAAAAA+UVbmqLcKQCx0LpjryQxAwnUJIhXSFkCSyva53ZAuQFgoyQZ43C5ALacYCpSXNkAUa3giPD43QHVhjt3LlkBAftqBbSHHRkB4Z2El0gBHQMdB6lyhbEdAj0tcSdgySEBvFiTQ9pRIQIA14sEfz0hAXJ\u002fKTx44TUBfuqTmTctQQF3BB9bxjF1A33cCnltoYkA\u002fFUJlzHViQKSQ9EQ6eGJAx2D+eNeRZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACujJmZSH8TQG9Euz10AjZANNXQ72mQN0AjwL9PK2Q4QG\u002fy4FZ80jhASzmVR8pQOkCIIfOaDWo6QDtFKyuejkNAnLcFcfSTREDg00vOhfVOQFMy15lQqFBAZ4WWIHIdUUAEsO555oVRQFA71DcMJFJAl1c0reHHW0CFANDvO8tbQLIVyT0R21tAliuXkwXoW0DCeX8i2QJcQIJX3erhflxAiMtRXdLIXUBIcfoH3eJdQLasrsZ3gmZAl\u002fKRlp+CZkA0nRCDE4hmQL\u002fHkMvXr2ZARTE4K\u002f20ZkBMDx9DddtmQCXRH0jfT2tA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACjURbQCOIKQD0cZhFHqg9A\u002fA4bmVsmFED8Sjk4eYoUQK44fV1CbxVAjFWj75o7KEClQL0obBkpQFRRe4SlyStAxXbiHzfvLEB4\u002fMDMYUw2QOgZ8hK\u002ftjZApcHjreVMOUAwlbBIaWs5QDcuIuQ6wDlAcHTSMahqOkBgzDeeE8RDQPelt\u002fBKxkNAfaRTTVrNQ0CIIQ6JcgdEQJXSZ0nIm0RANknhmKauR0BBjvCpShhJQAFu+P+CoUxAMKgkMY32TEBdJttWglxPQEJaLFuCA1xA4puNrcpYXUC5FrIB\u002fdNmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAC\u002f285zZAUoQG5pi1l2ry9AB8\u002fDkAoPOEAnsE8zGHs4QBY7B96paT9AdIlWVZCmQEDIvjqr7flEQIUzNor6wEZAS6SdJs3sR0CuJyKObWtRQMpiwOdYfVFAczKEh6qlUUCJNpC50LhRQBNjsULczlFA9Amtxgz3UUCyKmGxHf1RQMj31TOe8VtAhVeWrlhRXUCmH76Q9ulhQFYLPGM0pGJAwegvN+q5YkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACbfCqbkBMxQGBc5gc\u002flTFAkhwZYj14NUCFvP+D6pI2QNWZCcsuITdAamiHA4ouN0BdmtkeXzI4QI6n3BEyZjhAChzONfgSOkBCVTb9hxg6QE70EOubrDpABjB4VFxPREBsQR7M7c1GQFk5zBWsBkhAH2wVUcXSW0CHKHtHI9lbQBdkfYlh+FtA21R82s8yXECcrKc5sUpcQJ\u002f1VHklS1xA4Ne9auJTXUCDvbVr0lRdQAfABCwbfF1AoS9c8uKVXUAUg5b1q6ddQANW4aQR1F1AbRbZoonbXUAf7jIVVdBhQP5I8bmz2WFAIThIDbliYkC3DKh8GrhiQIIt4D1viGZAs5BAwnWPZkCJv5flAaRmQBBgGBT0r2ZADFYNDrG+ZkDfiKyoacRmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAA8KFxtsy0JQGrF0ld1ADBAQWJ4yBfENkDZEBoa1Vo6QMJQvDKusEBAanrkigktQUCXOOeAx\u002fdEQKaBx2B3eE1AzMosNyKnUECi515WMcZbQN+X0eFzzVtAZ5FQjmtUXEDSxlnWn55dQEH0CMsFzGFA2wuT0brVYUBhc0fTfnNiQPHC642cc2JAKRknQYeYYkC3PuMmsJxiQDc001WMn2ZAzuBKtxqnZkAnPzEgkaxmQFNT0UsgwmZAHkZmAmzVZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAA0R7ETXMsdQPgVw+++iSBARwZeC6l\u002fL0DRDa4A19Y1QMxTrwoxDTZA4cZV9DXTNkDXcAFkfnk\u002fQNxrMq53VkBAoly1x0yVQEAQcBByJ8hBQLfMcgau7ENAV+3Qdd7pREA80qTCfA1HQPPkzESSRUdAZrWYMx8LSEDiDcTkehVIQHzVlgTcaElAm\u002fzc8FPSUEAKtV7B3hdRQObpsPBDKFFAV0M1ddZCUUAWo8V\u002fEehdQKBLjwW\u002f+F1AHyWGwY\u002ftYUD3RzXlhGhiQCTAkckvbmJAbhmiggWSYkCsjRRAXLNiQNJZ6gZ3u2JABgzmIxa\u002fZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAuF4wSwI0KQJJmDiO13Q5AUKGuxrWAD0CdpbtYkNcSQKhHgu21PRRAKllFJnmiFEAPwIT2QgcXQF7ulneVSDVAxeTA8qOVOEDCJeG2IAk5QM4pIgKIDTlA+0xvP6IqOUDzoRPFC5A5QKA3icvNGDpAQxLbqXWfQUAyFFByWaBDQMHyxbTjP0RASw9Mwb\u002fjRkCgdfpvs8tIQElkoZS0gExAx93JQeQ6XECtvWuQPcRdQIqV\u002fl6W1F1ArGJ86SbVXUAYbMRiSMRhQHoPfTQI12FAnYQyGEf2YUAYJEbUsZpiQF95RV\u002fwtWJAB61TPIKLZkCE0+EAM6RmQAW9EHwrzGZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABQ97+rgzsfQEhTiVvVmSNAVwZIQqavKEC88YBO4NwoQBVhYoTMuylA\u002fq8rQuVmLEAgmFlteoAtQEd0r3UN+i1AOKcQ9TO2L0BnPdNJxvZBQN5Y9JluSkRAJfN99MKXREB7r5Ee2LBEQJkFgjZ\u002fHkhABth0Tvl6TUCaFH3OTUtOQCQjEf8S1lBAY6h3XaeGUUCMAkpdzoxRQLra+ObNxFFAHHrtCIX+UUCcbGYsnZNdQA7dtuh3vV1AjprT94rKYUAzYIrY29lhQCFsy3Dc2mFAyfe1W8ZwYkD+R2xhMJZiQBA+XPharGJAh6cCH\u002fWXZkCppK2\u002ftp9mQLpLxKzaDG9ASgVRSjx5cEA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACfJw6JjOoSQI7prPerlBRAjNZV11VdIEBO9EmqlaMgQIT1\u002fFqXsjZA8nO4MdPWN0AoacQ9zts4QN27FNE64ThA6YnIDTH+OUC20b9tPGo6QIHLeJmCejpAt5vlXLaSOkBCwBoCXKA6QABPEKbC6UBAs6\u002focy2kQ0An90l\u002fzv5EQKtPBw3R9UZA7mF2UQa0TECUDwS0+DNNQHmNgYh0kU1ACAy9cSaCTkB26U\u002fJD6BQQNSShTRWxFBA3k5Y8Z8iUUDrgwc2cTJRQFJbs6ESlFFAIsDxAmf6XUD4A6Mq3KthQPQfpDK2xWFAOs9SYIv9YUCekmADbSRsQImrtweoJWxAMRKhrkssbEDYkQ6R3jBsQHhJdFJMOmxAw+qWNJ48bEDJkW+pLT1sQL5Xe2HSRWxA0bph31lMbEAJ5kfoJGFsQMINad5IemxAE5TL72iDbECE2HGnQcZsQKao50SS221A"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz9LF1100UWXPwAAAAAAAAAA"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAVfT9Zpu01QP2XUbttZTZAvCdWiaawOEBNKYOUSYQ5QAWgKq4rTjpAVFx3BtIXQECVsxGK8eBDQOtTZGMhS0RARvcAgYj7RkAGdedy7itHQPmLiE6GVUdAksJWKcVpTkCqPmJCMP1OQLILsiyMC09AGYnj2iTnUEAjJvdOTftQQDn8Le22mVFAXNuEXjeLXUAfmANma9BdQH9OBtsZs2FAjkkpXrLHYUC9uAMVidphQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAB1xA2yPRoOQLjYBbHFMhBAccnpPj8\u002fE0DrULlDWf8jQJ\u002fP+GUeADdAYIOP+sYOOEDC3Ei\u002fmJ44QCLFJbFj\u002fTlAeKCeAqZoP0AAUI5PAZtBQK+OtpBI1khATv0WlIo+TUDyNEQqkFpNQJANFlCAmE1AibpB\u002fyTeTUCydauUu5xQQKaQIzHj1lFAbwttNCbUUkD5wJSVQPxSQHzWWlWtK1NABnXt7WsvU0BRYRKVoi9TQCuPwFoSQlNAiR2oOUdiU0DR0N69QmZTQADuQmjJZ1NAaDNuhNXbW0CIZllD3nZcQH6CmfZk0F1At0sDWP3tYUCbGuOZ8INmQM3xTMXi0GZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAkw8vGd2wdQDTJhG6RHiBA3YE3AfO7NUA5coKGo9g2QO7lIeGX5TpAK2yga18OQUAk5p1H579DQHmixh84wENAAMQvHY3wQ0BiJGWlF1tEQIKwv7m\u002fvURAddn9HPvCREBSmNDrjuFEQP\u002fcMRRwjUZA48MOcvgaR0BkFc3KYH5IQAYTrAfjeU1AUkOYv4DsTkBm\u002f7JGuqBRQAWC\u002fq6w0VFAvN72M9+9YUDqScPD1ethQEEoKU9cdWJAeyW0PGKqYkDVPj5nDLNiQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAZVJMBKu8MQKFzFOKFkBNAWnjH4+JQOUBC0eXIvMc5QE0H+DFhpDpAaLm+AjNfP0B7L+RoQCtAQDcWem3aV0FAaTh0HTZxREAONBzWJM1GQGLNden\u002fz0ZApbS2zrKVTUCYA7cS5Q9RQOmKWIaxOFFASU2H5VE6UUDi0N7pJ1pRQMA8SyU57ltASZqjffXwW0ARMuUh9vxbQD\u002fxspdNalxA3Onvpux1XED9gu0enZldQA23lO5twF1AYgyVLLzVXUAgJRHTNvFdQDWjosPl+V1Afz66QSSzYkDeauYVE1NmQHc7KgTZmWZABTHEcDWcZkC8yLC9\u002fbFmQMB++kY832ZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACjBCeiT7YiQBf\u002fUbhPlSNAHt1NDkKhI0DwJvijbxMoQId65SzUCilAfE9CqZWWLED9iIMLLgItQLPm1qKWeC1AI+\u002fKfW1CNUBhkJKIzDg4QPymsqNIHz9AqEGHq9TbP0BJ+mqKXfw\u002fQDCfkMi3QUBAFVOmqgQ9QUCzLV+zH35BQH3QWqw4j0FAvQI\u002fLnGqQUAItEomYu5BQMCf33mfJklAR1G+9rJ5TkBA4gTAJaJQQNBhIES8yVBAJigFexIaUUCe3d24KkVRQKCBfNO9TVxAA521wSZFXUDdhyvFdXFiQCmH+SlZy2ZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADHMMyx0zsKQKMr9XQGcAxAX6mbrsyLFEAcsxqf1KUhQE6\u002fJZGtLiRALFCCylQMNUARF8qXKdM1QFmjJ4497TpAilzUKbuIQ0DIGZ4g5WREQKQO3prPtkRAGSb5yO+2REB1ZBvw1fZEQLYQN8Q\u002f2UZAEAlvdjhcR0Bv5KHMVYlIQCBFw\u002f3xikhA7mLorzr2SEAa1HrNJHdQQHS2KAbfu1BAdM8gFxDlUEBTVp1il\u002fxQQOIMtdOoDlFALsTKXykaUUDucZkQU\u002fRbQCzpxJu\u002fD1xAzrPJR6ouXEBcAFJx2zVcQF1O3\u002fGDWVxAyfy+PNZMXUBjBs0GwW1iQLqtenkLzWRAy3vdRdmMZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAyTKKeYdsrQJ1PfR5YzzZAo9T+rvGzN0DEkzoN09Q3QGGV1eZmNzhAwtvDTZd9OkBkuD1VugtBQEZqn5L7FEFA4Gjl0AZ2QUDpr1ILqbFBQPUZH2Jd4kZASqxybb\u002f4RkDKDPDhElZHQLq1Xu4Qz0dA8KIawX8PSUADtILPY+xQQNjhmykV7VBADu5g7wImUUDOoenLdD9RQNck5TqdjFFAZt+b7MadUUD00PthywxcQL4yayVEKVxAGsloUaUuXEChjmxolU5dQNz8ah7ip2FAjTsT4ajdYUAZGSLGL2BiQASxEyZQhmJA0C33bP6qYkD0X8rbbdlmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACMG4qXb88aQNo4jAitiSBALY1xfEsxI0B5GLBS\u002fU8jQCSiFceh2SZAYceQmCJfNUB9\u002fNaWNwY2QJMJFMuAgDdAVRF\u002fAMeIOkB1YRyA4\u002ftDQACYZoy5BURAJr1FRKMPREBs2yqEUyJEQG+6Mb3ZA0dAYailKdgkR0Dwg41urolQQIsvvrfMvlBAFnvn\u002f9diUUBw\u002fGvRVo5RQN++FRxvzltA0K8qTlXxW0ANy96yjgFcQEFlmwE0IFxAvCEZLO0+XECGkp+m9lBcQDhQroC8gF1Awwt5CjyTXUAVMkDkIcVdQIGFouxfr2JAifVmj0WAZkBOEv7t84NmQKsBuHS9hGZAlyhW9geJZkDWLeIYRpNmQNKFUEmCo2ZA8l6dhIOxZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABCIbrpBzAJQHj5Hu\u002fHTRJAWuIXCUtbFEAT+9uKs3A4QNt\u002fwChUiENAt\u002fO9vfuVQ0ByRmCRUrxDQCd8D86X2ENAGzR0Ars8REBNq95kXklEQIZoIHvViURAWZsfRiPRRkCUi54t3+FGQIpPSLhoNEdASn2s4QOVR0CQSVt\u002fbhlIQFz6r+oKy0hAWFn4f8bySEAEvQC5UyBJQFqFMSaHyVBAeGhOLy90UUB7\u002fm+QBkZcQPWwxjlvrGFAmq5Mwft\u002fYkC7loDSZptiQOHol7kZnGJA4byn99e0YkCd+mjzKr1iQGeIlPASi2ZASengZ8aLZkALWZNcosJnQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACIuKy5ayUbQBoVfPFWTShAk\u002fkHerACN0ASST6ruvk4QBXND7Gngz5ABG9w04PEPkBp3cNDYNs+QCIv3fHIYUBA8BRFrcu5QUBTV83KrNdHQKTMeGZaz01ALRUzlbcKT0Dxc1D9VyFPQC3P2mKQSU9AaK5mAJBlXEBkglIGLf1dQDyOD5opsmFAxBdksZa2YUBS56\u002fOhM5hQNZLvPxw4mFAagOghMWfZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAB0nVcLkYEJQKL5r9lzrBFAHPHaeepwIEAO7n+9B0g1QLGsCFXw2DVAhkYNlEK9N0AJ5KW8rC0+QKN07\u002fa5cEFAsUCLggeoQkDE2j6FdzJDQCbOcMLLi0ZAiJzrx8msRkCcyO7ANwlHQM4auRvuVkdALnyziTJuR0BfeYtl6apMQEv+DZhjt1BAlrv8yMzXUEAG4\u002fLxNEpRQO+Uk3sHYVFAXfWX5HLCUUD\u002fU5PdxxtcQBHwHGZVU1xApY2Cp2VjYkDMDK6i5GNiQDE2uIBtf2JA6Dc9L8CVYkAUhakTe6ZmQHxfdE4NwWZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABQPT367EMOQNM1dFuaJylA1p7EC36NKUDnoCgnn8spQFb4OcAFwy5AWh00ZYVTMEAAWQB4eGswQDf3gJT4ejdAFxp1CtTJOkCC5fZXaxE+QGoO0dv53D5AXYgY2cedRkBXqg5cL7JGQE7yXQiPYUdASOkOr2UPSEAGHxVg91pIQDa9Yg9Be0hAoSuui1PKTUB0lybv\u002fahQQDjOmSdAcVFAXttmHHCJUUDs4iN9e6VRQL1yGfrUzlFAIQRzJ9dIXUA9vv1vWmhdQHiudJixil1A37oV4Gr0XUCQuSOb7HpiQLkrnZVSvWJAnPkPziZkZUAhzEYuGIZlQONSjTFImmVALgUH3+ulZUA0IldyDLZlQIfIgQMmo2ZAFf84JobaZkBKK21DhyNsQDakPpxeJmxAjcUESKgpbEB8XNwAKThsQC2w0QgXSmxAWBBTp2xKbECLRJjQ7GRsQL3BTnBLcmxA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz9LF1100UWXPwAAAAAAAAAA"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAJi6JSfasuQC6vqWftCDZAElYb9DQWNkDk7rRXhhk2QPihKlZBXDZA5k9WJM+MNkCFH+b1+Gc3QIKf+bnYwzdArxx7MPP0OEAB7eyK6L86QDAGycT9HT5ALU\u002fJfrxSQEC8yB3uvl1AQABzdDgEfUFAswou16K1QUAUGD2YbfhBQD4I0yGMkkZAb7EP2opqR0BxWhqCcZJHQN2zZV8QYU1AUgauruLTTUCx+IMxrJhQQDyyAJp2xFBA9Ima5vAcUUC9dtDWgItRQHTwPFi3YF1AlZi587ZuXUDxDqPf4OFdQJ\u002fP73PY9mFAHyVHOL5iYkB9Hdx1R2hiQO\u002fJiHrlcGJAwkd4gzmHYkBiCnz5ObtiQKkKkRvUXWZAWPcQy4qaZkCOlE+SoaFmQAHyQymAIG5A"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACwGyFf+d8TQAYdnAnpHxVA36wDmbBcJEACc4eQxH4kQOCyEghFjiVA+eK4q0UjJkCgyV9jhMAnQPS1vaD9\u002fCdAmb1B39HULECTK7lI4CM3QI4vybueLzdAb55Mt0qiQ0DAO+ce3+NGQLmx7oi+RUdA\u002fzd\u002feaKRUEBBm+m0J6pQQBO8Q0+myFBAr1p1QjFyUUCSQOUatvtbQAKcT8Gb4mFAVzwbZoznYUCHwuAnrLtiQDVTVbsWvmJAFmIbXU2MZkDHHB+9UrRmQKoMaNdT2mZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADfzT3FnNwLQGEFR2hz2CBAc2\u002fXoTt3I0DgxHbCdPcjQL9vQpNtdyVAbpyBdjnUJkBQSgv5x+UmQAZe0nh4ljVAy7OPUuWwNUBraDN5tCQ3QAJpMtiXBTpAVR3qHiYKOkB8b9Abf\u002fREQC\u002fLofhwvEZAZmjGDlHJSECy4mlXXyZPQBK+WFTgGlFAmPWz5cNLUUC6Z6b9RL5RQIMfH7Cq+FFAS+074z3KW0AzUqE8ketbQBC+xEET\u002fFtAwGUOOAVHXEAuKBtb9mddQKx2oyBFomFA7\u002f8SHYytYUBgzjS0kLJhQGeDmfKTumFAfXT5prHRYUDD6Q6FVd5hQKnAHeAJ9WFAwddWZXT7YUDcXJaTG\u002f5hQOgB7X9ddGJA4BX1pQOBZkAyRaprkJJmQPeip8Bsu2ZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACEIh\u002fp1jcbQOTtwK2wcyFALUcxOGfqKUBBQ4ZG9J0tQHTCS8ph9jBAPSTA5+AiQEBtNd5Pd2hBQP2tlYGlv0ZAeL7heC7tRkD8h9FYzUhIQBXE1S3\u002fgExA1D+7WNOCTUCwsrpsWolNQL\u002f1+vC1xU1AblWKWhq7UECSHuMZGO1QQOVNlulvJFxAhfXknuddXUBh9XfXTXNdQD\u002f8MJls411Aof9Z5zduYkDJepuJ7oRiQPV09fQdlWJAnbXtEJSoZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACWzH81cIYaQMgwYMIXUihAeNsIiVCRKED0MSuQlVYqQBY2Ib4zbypANUp+vbyTKkA4UZMT\u002fc4sQKq70QmbtzFAXQvwxgvYNkDQYEyLN9I3QOtpmY\u002fH3jdAk2iESxlhQUAV4gYbl+JBQLKPNl7g+EFA8RfGe5HEQ0BSXN7ksvVDQDkoRLLXjEdAfkzh2izNR0Ay03gp\u002f\u002f9HQIKtWeT5s0hAUYSFdDb7TkDDZZ3aViRRQA2SyI1Z2VFAAFsjXAPiUUAylu07nOlRQCFrYVt\u002fj15AnqPLNORiYkChfdkReW9iQJMZxWEjqWJAUWpkyNW+YkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAM5VE+xZURQOj9SB453BFAuOZ0JDFNHkAHqfqdoOogQNOm4WWBcSNAo7sGXvezJUCl1y9QfoAwQL3z4KZotThARDw++0LZOEDNYN7y0v4\u002fQLLSrmFcI0BAnC8EIT5cQUA05pD\u002f3LNDQOl7UdK3JkRA0Oi\u002ffg\u002f7RECjJEkyiRdIQJbhvC6CNkhAqNWDEjZbTkCJpZ6CzfhOQOZEezIeoVBAzv2vQVF1XUDtEAe0CYJdQHaN\u002fgSu12FA6aOv5n7jYUA\u002fdHkCUXRiQF9X7SyEqWJAuOuSRt66YkAahJq\u002fQodmQIK1ZWkSkmZA5xTa9TWqZkCxeEikBs5mQCgfBJ301mZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABym1jpDY4PQOjcAxE9ChVAk5csYtQ4MUB6+z1P\u002fEU2QJwyFtsAKDpAVYV1a1vPPkAd9kKqZtJAQFGhMarG+UBA5OU3dSAsQUDqsxzaKtFDQIwbc7eb8ENA+tOi8CluREDiDrS9sXBEQAJzQlDCnERASTgJj4akREDy5Ot+v\u002fNHQIFFIu0yh0hAD1nBe32gTkD4CKZmOYRQQIjA7C1uhlBAtsNQLSCkUEDbWnA3QAZRQPKMA4vTDFFAS6+zmlHYVECBohSzE6NhQEo7a8BhpWFAlVNK\u002fEyuYUBcE8P46M1hQEQVNp7E0WFAObj9BL3TYUCBLwfYx9thQCZ2xNN9nGJAK9NUe8CWZkArFjPFyZlmQBpDYY55qGZA7Levkkq0ZkBj\u002f1QGLyBsQDEIPbfkIGxAF1SvwPMgbED4IKy6LSJsQH4YJOxgImxAY4mMkDgkbEABzkdglSdsQFFG3R9rO2xA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz9LF1100UWXPwAAAAAAAAAA"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAB6yeDI\u002fGgZQNcf9iIZCyBAZrzuQ1rsIECpWMGzeoEiQL+LyezzVyVAxEq0RvuoLkDn1t3dEhkxQEEmXAqq3TVAXixEIL79NUDgimLjwZw2QDfQJOl2cjdAZ3LmrqYhOUCIX2Vz3us6QAdOYgLCIz9AGBxIBmSfQEC+6An4I6BAQEQfNiOFukFAsDFLcgPqQ0D\u002f9Q6LowJEQC7cQYwIekRARJCgJa6VR0D9cwRWEP1QQMRK0rBRBlFAemKgMPCaUUAX3HFPp69RQL+S8eCy31FApw9ztDD5UUAQa0GH7DBcQK9w13YHSFxArxsD2\u002fKLZkCZ1dG5B61mQLNqQhhPxmZAvGGTZqxBbED4blo8b\u002fRsQDQGYPsXFG1AEYo+Gcg2bUC9Dq4lIHxtQDJTiTiwv21AzLibUEzNbUDQkBzuowxwQOGpWxiSb3BA4+gegzuAcEA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAADeCp3XjAdQAAstWOPFS9AINqstioWL0CumsVqmEwvQDeH0yCqtDBAMKfmvMvZOUAuoVjYydRAQHDJehQ2d0FATcL0wxvrQ0DTQ7D1R0lEQAZHfii28kRABnBFc\u002fEzR0D0rkjPPfNHQJhMYz3k0lBA+oIUp3hCUUA2JtMk7H9dQFkYFvbBhF1AX6UfaqGfXUDhXUddGtZdQINfVIK0hGZAqKFeJm6XZkBC8KyAzr9mQJYPFOfWxmZAJL\u002frHZbTZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAClVK9ddCsNQKzJZr7bzhZA\u002fNb10bmlKEBfNh+Ik2wpQK4+oxSeGypAG7wGU\u002fu2KkClyI4ckr8qQNSV5JCJOitABVgI\u002fIHhK0B1jLJXayE+QPRDSdQ1pz9AUAhafheJQEDLcLPJAK1AQFOa6JKxbEdASkJv6l+PTEBtvHVoOwxOQEGYZ2Psj05A0CKgQHeqTkBvXVv\u002fI8lQQAkklCd93FBAoX0H\u002fjo9UUAzEovkNcZbQPL7tNExvV1AiUQjuZfBYUDD8oIE085hQPcg8IkU82FA3ch4gi1vYkBidMghZptiQA8rrhX1smJA+KmjRVLZZkDEXvNeWb9nQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAA9MDxADU0bQMGRL3BtDxxAQJsx1gFrIEC30\u002fjTlHIpQIc1BhbwIjZAJbgv7nKnN0BSUQ7d+LY3QI9paarZ0TdAO\u002f7mecrPOEBsyFrka045QKAXt6zZRjpAZHVeO7hOOkAwdXgcW3s+QKTzMiI7rj9AhhHSJiscQEBC5KhPJx1AQOQ4RmRiD0FA3hiMB1fwQUDi1XQLCo9DQMhDnG8ED0RApSJImTiCTUCWyzfu94pOQPDn4ugJ0VtALPrJKesCXEDG8B\u002f1bPZhQLUpydjct2ZAoLx0w8LCZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABZB9GLWZYYQAfEj7tSJSNA1QfSdV9xLUDKhh\u002fi0Fk3QKiWyyvJfjhAVqo4yv1IOUBi0seOFYc6QMJau25Zt0FAFVZH68fVQ0ASXI6FQPJDQOhdoih6QURAznfW6eOfRECJUCySbmNJQISQkiENiFBA5MiGK4ejUEC+NPQUQtpQQPEpCGXc8FFAEuWsRqsaXEA6Nn24RalcQEvbhAYrs2FAqL7+DXXkYUCChqjPHWJiQIvB31o6sWJA0kiuBJy0YkDpfzZxXoRmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAaU+JCHQojQKgj5p5s4iRA\u002fSIRKErvJED06cUDUNI2QF4eCp3o2ThAbc7\u002f4plPPkAma\u002fE61vc+QI7F07CSAD9AN9aW0vU7REBeW+AYkjNJQDYc7qM9u0xAJBYoN3yETUDxVJ\u002fnZoJQQCZmVCdqrlBAyrEP553WUEA3D\u002fU8ON9QQP1wA9\u002fT41BAXiDbsqnrUED05DgeBy5RQC1FnC9uNlFAxyNwEzc7UUCek4vBqT1RQOJWj5UmuVFAEathogPyUUBLtqnoeJJdQOH5+MKuvWFAbskOiWPEYUBEsZhqyMxhQPymgW+rYmJAdHaY7yhnYkCmc1hERIdiQBmVftsdkmZA\u002f1mzdLG4ZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABQ8SLKJB4ZQO+tGZbwNR1AqEaMnfwYH0CQtMRhaUkgQHJnqOw60yJAO0SaIyGWKkBu6E4LCi0sQKh388LtgSxAnGfV0gOQLEAAMaVgUAktQIv2nH6oLi5AmAddWDXHLkBg7g2TjacwQD4aeep0LzFAVxCOIJWRNUDnYM+TrtY1QK8JNkGMjTZAmcL7a9xDOUDMjzq7Wd86QLIZiQFGY0FAXFAUy8wBRECdzG8PO25EQINQllR5OlxAS3ItvnqPXUA3HARidXdiQGjHtezPemJAIEQT4\u002fiZZkCmMP5ZZbBmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADyRsUiIBQXQHT2ZF1SIh1Aq+AExxwdIEBOMlYFEJw1QMuqY7VmCjhAqsZKvuBMOUDJFKSyA8Y+QIsk9XKUo0NARx1iBN+1SECz18rJAytNQNYhNcW4JE5A4wKyLpuZTkBSeyyhDcNQQOx9tLlAKFFAEgtNnt1tUUBPeK\u002fPVsVRQK2CNYzl1VFA6AZPynHsXUBzM\u002f9pTKBhQGV8CJnwoWFAfr7iJiSnYUAsxxQAqrBhQJ84pdg6tGFA3AOeEJPPYUAUhg+UktlhQFBHPLUD2mFAQtKLMO5rYkC3fBAhb3liQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAA5rALbqoAPQA5eIjmj3xdAUBoffRg+LkBm\u002f9pJMvEuQE+NeTNF9C5A0oaBp6ViP0AeUEwNWB1BQCOJf30RikFA+XN6z82PTEBG3RjGLrVMQIQfcBb91E1AGeYIow\u002fSUEC8\u002fKixj9NRQF7NrvXPZlxAQgaLbLB7XUCfo9+LuKJhQHS8g6\u002fc3GFAJ7gniTT9YUCw5WhbVWZiQFpjOWnxlWJA4JVaGv6jZkDJCdOZb61mQFb+1WQktmZActlYmy3BZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAB\u002fk1RrISIfQAwyXLcT5CBACHp+LD7EIUCD6HowTacpQMtgPi6NUCtANBk0qK3ZLECLkN+ti+41QFFURMPvyjhAFpGhOemFOUCqpA\u002fZIvNDQNdsTJVKX0RAsO34oSv+RkBCU9vWnb5HQMwkvoqfwUdAD0T+DODOR0BGp5FjN3tIQG9StftwcklAN7h7b1rATECyIP+sNyVNQMe\u002fhCOO2k5Aw1MaK\u002f66UEC+s+WVmSxRQO0ubTZ0OlFALdhpbFjnW0CYT3r49MlhQD2R4iiT+2FATtkPTGWPYkDAv1oz36BiQGDht8Y2oGZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABjRQey+JEJQPa2743AoRNA4JkZkzrZIUBB8DDqPfghQLuGI6wEnCJA\u002fQ\u002fs8FZiKUBapW3MAgUrQKHdIWq\u002fPDBAHWvWuA9NNUCQwwtzEDc2QJGQjeI93zZA1JVSHJnyNkDFKjGWxT84QCiwINdZzzhAcJtrd31JP0DhCw2bQaNBQEWgGvnZSEdAKnNIQRDKSECTyAk1UPtIQGLklJ9SgU1AX\u002fp+PIa8TUDA36V50chQQNJGNWYaDlFArgZ8HYJjUUCx+io55qpRQN00IRLqyFFA6uqM9jveUUDjVR8WOeFRQJt0lATCVlxAAjpZVr1bXUBLQqap+mhdQPBAc+RHa11A3tdBVpCBXUANvfBlkKNdQKTRC8iuumJAD0RgdtzWZkADdXUoJN5mQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADd5RqIPCEPQGBvn8mC+RpAj\u002fk5UlHtHEAZtA1Yx9AlQMZZBD\u002fbXS5Am3pZW8WdNkC2wfiHJys5QN6pjIb8YD5AQWM\u002fRVKlPkBLjb3jhjNAQDsbR+ltgENAhdBloUODREAQXnObRZVEQH+YOLZvgkZAZokVPG\u002fPRkDiJVF1Bq5IQFRg2O4t0k5ARzrYHg0eUUATRqq2kTFRQDhrq5XLBVxAi9mVvzZTXEBIYtNQu7FhQJnN88gPuWFA7PID2NLaYUBA9qPOvdxhQAOurSQb4mFANxhxJVGmYkB1P2ALBbNqQAoDXt8ixGpAQrW7MpLOakCUB0JFl9BqQPRbKvQD6GpAaCMZ5kHoakAUvTXDu\u002fNqQPSAJ1nU9GpA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADJFuFgs141QIyOjDRNZzVA4KZL3K0mN0DY1Ee0AGU3QGrCOK6TjzdAhDI8Ond4OUBcQwLBK0w\u002fQD6WcDeaJ0BA4440nrGBREDqhO1xPPREQIr4CR1ZzUZAIeLR9mbTRkDhf1S9ddNGQGZzZ6HGiUdAhSjKQQGISEAw0OCFUblIQPC+MVK\u002fHklAKHOWji5sSUCNCOaECr1MQETxQKVbN01AiVGNvR3lTUAEZOt4IKJOQCgkYkYCy1BAi1tPV\u002ff6UEDedsZ6Qk5dQMPAp+RQVl1ARCKRswNYXUCaN568BGtdQF6n6y16gF1AkGX0ApyOXUD7efXXdqFdQE2MuSJm511Au60oHD37XUDmpKmFVYhiQDfOWSawkmJAt\u002fn4PGejZkA2684nkMJmQFwKUIgjyWZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAABye4OwyAYfQMCpk\u002fcGUChA29\u002fSyHNLK0AsuWzqhlsrQD6aX+9NSy1Ah5d5dQx2MEBcr7R\u002fjYg3QHcolSft7jdAi+9XfM3wOUCFopbqIa5DQIHYlkSJ\u002fENA9fMnNioIREAXDq4nFN5EQKfeFo187kRATf5eKaiARkBHeR\u002frQ8BGQF7vMkLTW0dAiungA0JhR0DeaOsze4lHQJI9rSOwlUdAay89L\u002f43SEAxObxaCCNNQAufWflArU5Asl01tFzEUEDryVX9vzRRQJDMPUmLa1FAeDNkbo+PUUDTUBLDUBZcQHhMAjMZHFxABQkSk6WnXUC36i9MNmtiQDpLHaJgmmZA0ZevdTC4ZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADgiLt0LHogQHjP6JUuviZAWuFge8T4J0CQNgqRpHopQIj9RopE9ilArfGLokriLUDo7vBwX4I2QDH2dnkg7zlANo58NKRSPkDqiOvVTY4\u002fQBc+jBCdkkZAZZw7e38KR0BDMSBi+rBHQMqOKnHP9kdADDZ23XmeTEC4LyeamdFMQGKH+iTW8UxAw7b4Sp10TUBmBVaAGQJPQIjL9sY5DE9ALVTPAbzPW0AtVMbY1ItdQJgUvEfz011Ajvtq5RLtXUADW3wlELZhQPOW1HC\u002f4mFAoWo8XKTpYUDydIJUefJhQHM9Y98yZ2JA\u002fEH4mmp2YkDyzDGrs51iQNZoyk1vqmJA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAsB9ywL8MiQHvQDTGpTy5AN+6Rzq5kLkBzxMtbX9kuQKEUF9Z9ZDVAa3iB14skN0A7leDfAGg4QCZfXq5LojhA6YMFdZ4aOUAY4w9I31I\u002fQDJgnQ9smUNA6v1hO46pREBfGwEWgcNGQFXsaUEwP0dAAzTs\u002frNMSECQy64Ab3dIQIZyBXRiK0lA96iPRl6BSUALc7KLpOtOQAXaqx0s31BA\u002fmjvQREFUUAJ67xazAlRQKnzKfMFD1FA8vbvpGjWXUAKtQZzUdBhQEYW\u002fk13s2JANtZOg0W\u002fYkB\u002fqh85gJlmQMKt6pG9nGZAOozSvh+jZkAHozPreclmQMb2kdmYzmZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACUkwsHTNUYQAaA6HYyKB9ABk5uh1IFKEAmSZe3CwcpQI3WW9ZKhilAF45DgAv5K0AiJd3rWo82QE59W\u002fw1fTdAqvp99IH1OECqaxFsTSA6QKpw9\u002f4HJTpAZICwaqm2P0DubXOxcPc\u002fQF4S4CSGIUBAYmAycmILRED49Do9tMJEQIXVdyM\u002ftUZAGHGY0tjYRkB58E5tHfpQQE8goCGFCFFAnRLxXzs0XEALyrV\u002ft0JdQBMD7o\u002fLll1AC7WWvPz9XUDWUg\u002fCmK1iQOU8l8wdIWlAGKp\u002f3K5KaUBbvt+6znhpQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXPw=="},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAAJtStAkW4nQFicgw62njBAmE3PT0zDN0By7\u002fA6p4c+QDd\u002fq00swD9AnswzTz3CQEDeI186ccFBQDvjza3zwUFAKt4ifp3dQ0D0qHS2+9ZEQHhZpCDkgkZA0jPGGnSHRkBhURm0rEdIQDl5ofDXIUlA1oJLjEI1SUAleE+XP4JNQD2RbWZyok5ApFbGa85KUUD1UssSb3BRQAOWpBY+qFFAWcv8s6q1UUAmIT86tehRQKyxMGBp7lFAMq9hCdTHW0CIA\u002frLkvpbQHvT1uzgo2FAUkORkWynYUCQjbDp2s9hQGDXm39+\u002fmFAwr3W33+9ZkDAihuOJSBsQLD4YS47JWxAZWZ95u4pbEAtldDUPStsQFDmkSnoK2xA7Vf3gRY+bEBqOUq8SUhsQARNPCucSmxA94pGzetMbECA4aQU2U5sQEeu2NDwUGxAycxco8dkbEDGTH7LmZhsQHtN7UVNP21A"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz9LF1100UWXPwAAAAAAAAAA"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAADMgBoobpISQCnsVke1shlAGbCYQauQGkCvPSu59AobQIq0tISOOR1ACNX89CfbHUBN533k8rkeQN4yDdbL0h9AdKWR+99wIEByZFZs3J4wQA5unuBuJTdAbODLFz1hN0C\u002f3NBdqwU4QH3YAx2gijhAQ2Eqq1TROEBvg6xC1RI6QHTKd2K+lkNAL+bF\u002fHrpQ0AXyLOpF5BEQAgSPm3L+EZALtqGzjg5R0Alge6OLdtQQGiCNisr0VtAasSgaYkoXEDWzGghTrBdQEjXRjdj411AvZKi+QQhbEB5mvh+iyNsQFwqpTMaJWxAUtJK+UUqbEC6qR0RhStsQC3FKnG8M2xAyv7Di+czbEACKxszYjVsQNJARNoqO2xARq5H06I9bECTEizJVExsQA0H5\u002fC6TGxAreqIUPhVbEDQPHe49HBsQBVf2voslGxAFvxu0eydbEDujhdRg6BsQNhiygWau2xA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8cXXTRRRfNPzO66KKLLso\u002fSRdddNFFxz9gdNFFF13EP3fRRRdddME\u002fHF100UUXvT9KF1100UW3P3jRRRdddLE\u002fSxdddNFFpz9LF1100UWXPwAAAAAAAAAA"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAAD6sz6eBTwiQPCX4IAo0SVAUYGgKGrAN0DaLHXS21U\u002fQAZliTeNXEBAROiH4L1+QEDjAZn2GtBBQI3G9dku8UNAkZk\u002f3I\u002fLTED0usP9If1NQBo0NUBhPE9ApuCGmzaqUEC590yir7hQQDsRaML80VBAcuTJUaHjUEAmRlLDh91RQC1JSLg1zGFA4wZtZDXQYUDylpSCpOVhQHIH5gqQ8GFA4Qah71l3YkC\u002fmAgSnYhmQNSZY0Q9jGZAyXEzF\u002fucZkBa2WHOa6RmQGW76+AnsWZAkHmeGmixZkA\u002fHMa+xbNmQNMCBDtuzGZA"},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002f"},"type":"scatter"},{"line":{"color":"rgba(100,149,237,0.35)","shape":"hv"},"mode":"lines","name":"Predictions of time","showlegend":false,"x":{"dtype":"f8","bdata":"AAAAAAAAAACMapJerq8RQKm90utFgCNAc5Z6aC+5JkC+EWSm7EIpQFGbeW5IcylAaIN5akfNLEDQaNkfXCEtQCtbK1tp3zZAkeYlcv2MOEB1W\u002fiBUzI5QJOVn3dtiDlALCteGt63OUCCvbQb77k5QFC1V9+2kTpAs6DDnpTVQEAp1OvsdLJDQDEXjVAugkZAVC2sPrb\u002fRkDpNfG9xjlHQHdKNDunxEdAOFYrFQeJTEBz74apCKNdQA7hbqVWzl1ATgtFCMm+YUDB1ydAK+1hQJulBmEheWJAYc5fL3mBYkCbG7iqfYRiQDUwUzRFimJAYAuqXI+SYkA\u002fgcvEep1iQJSxsbhmqmJA1WB8RnK2ZkA="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqPy+66KKLLuo\u002fddFFF1106T+76KKLLrroPwEAAAAAAOg\u002fRxdddNFF5z+NLrrooovmP9NFF1100eU\u002fGV100UUX5T9fdNFFF13kP6WLLrroouM\u002f66KLLrro4j8xuuiiiy7iP3fRRRdddOE\u002fveiiiy664D8DAAAAAADgP5Iuuuiii94\u002fHV100UUX3T+oiy666KLbPzS66KKLLto\u002fv+iiiy662D9KF1100UXXP9VFF1100dU\u002fYHTRRRdd1D\u002fsoosuuujSP3jRRRdddNE\u002fAwAAAAAA0D8="},"type":"scatter"},{"line":{"color":"black","shape":"hv","width":2.5},"mode":"lines","name":"time (observed)","x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAUQAAAAAAAACBAAAAAAAAAJEAAAAAAAAAqQAAAAAAAADJAAAAAAAAAN0AAAAAAAAA4QAAAAAAAADpAAAAAAAAAP0AAAAAAAIBBQAAAAAAAAERAAAAAAACAREAAAAAAAIBHQAAAAAAAAEhAAAAAAAAASUAAAAAAAIBNQAAAAAAAgE5AAAAAAAAAUUAAAAAAAEBRQAAAAAAAwFFAAAAAAABAXEAAAAAAAIBdQAAAAAAA4GFAAAAAAACAYkAAAAAAAKBmQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAA8D9GF1100UXvP4suuuiii+4\u002f0UUXXXTR7T8XXXTRRRftP1100UUXXew\u002fo4suuuii6z\u002fpoosuuujqP3XRRRdddOk\u002fu+iiiy666D8BAAAAAADoP0cXXXTRRec\u002fjS666KKL5j\u002fTRRdddNHlPxlddNFFF+U\u002fX3TRRRdd5D+liy666KLjP+uiiy666OI\u002fMbrooosu4j930UUXXXThPw5ZyEIWsuA\u002f+qY3velN3z\u002fEiGqdfRHdP45qnX0R1do\u002fO9V3iZtk2D\u002fCS9wkw67VPw=="},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"yaxis":{"title":{"text":"Survival probability"},"range":[0,1.02]},"title":{"text":"PPC: Kaplan-Meier overlay — predictions of time"},"xaxis":{"title":{"text":"Time"}},"plot_bgcolor":"white"},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('3647b734-6df3-4938-8e65-62314c8840fc');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
-
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
-
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
-
-                        })                };            </script>        </div>
-</div>
-</div>
+<p>The full model written out, to show every prior and the likelihood.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(death, cov, exposure)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- Priors ---------------------------------------------------</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Baseline hazard: ONE positive rate per time interval. A</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Gamma(0.01, 0.01) prior is almost flat on (0, inf), so the shape</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># of the hazard over time is driven by the data, not by a</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># parametric family (Weibull, Gompertz, ...). This is what makes</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the model semi-parametric.</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    lambda0 <span class="op">=</span> m.dist.<span class="fu">gamma</span>(</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>      <span class="fl">0.01</span>, <span class="fl">0.01</span>, shape <span class="op">=</span> (<span class="fu">pyconvert</span>(<span class="dt">Int</span>, exposure.shape[<span class="fl">1</span>]),),</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>      name <span class="op">=</span> <span class="st">"Baseline_rate"</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Covariate effect on the LOG hazard. Normal(0, 10) is weakly</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># informative: centred on 0 (no effect) but wide enough to let the</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># data move it. exp(beta) is the hazard ratio for metastasized.</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> m.dist.<span class="fu">normal</span>(</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>      <span class="fl">0</span>, <span class="fl">10</span>, shape <span class="op">=</span> (<span class="fl">1</span>,),</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>      name <span class="op">=</span> <span class="st">"Hazard_rate_metastasized"</span>)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># --- Likelihood -------------------------------------------------</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Proportional hazards: lambda[i,k] = lambda0[k] * exp(beta * x_i).</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Expected event count mu = lambda * exposure; the 0/1 event</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># indicator is modelled as Poisson (equivalent to the piecewise</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># exponential survival likelihood).</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    lambda_ <span class="op">=</span> jnp.<span class="fu">expand_dims</span>(jnp.<span class="fu">exp</span>(beta <span class="op">*</span> jnp.<span class="fu">squeeze</span>(cov)), <span class="fl">1</span>) <span class="op">*</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>      jnp.<span class="fu">expand_dims</span>(lambda0, <span class="fl">0</span>)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> exposure <span class="op">*</span> lambda_</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">poisson</span>(mu <span class="op">+</span> jnp.<span class="fu">finfo</span>(mu.dtype).tiny, obs <span class="op">=</span> death)</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 chains and target_accept_prob=0.99: the many near-empty late</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a><span class="co"># baseline intervals make the geometry awkward, so a higher acceptance</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a><span class="co"># target keeps the step size small enough to mix well.</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, num_samples <span class="op">=</span> <span class="fl">2000</span>, num_warmup <span class="op">=</span> <span class="fl">2000</span>, num_chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>      target_accept_prob <span class="op">=</span> <span class="fl">0.99</span>, progress_bar <span class="op">=</span> <span class="cn">false</span>)</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.<span class="fu">summary</span>())</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Posterior cumulative hazard and survival curves, by covariate group.</span></span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.survival.<span class="fu">plot_surv</span>(beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-<div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>s <span class="ot">=</span> m<span class="sc">$</span>models<span class="sc">$</span>survival</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>times_rep <span class="ot">=</span> s<span class="sc">$</span><span class="fu">sample_times</span>(<span class="at">lambda0 =</span> <span class="st">"Baseline_rate"</span>, <span class="at">beta =</span> <span class="st">"Hazard_rate_metastasized"</span>, <span class="at">n_draws =</span> <span class="dv">100</span>L)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">ppc_km_overlay</span>(<span class="at">y =</span> s<span class="sc">$</span>time, <span class="at">yrep =</span> times_rep, <span class="at">status_y =</span> s<span class="sc">$</span>event, <span class="at">name =</span> <span class="st">"time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Same model, assembled by BF from the imported survival object. Priors are attributes you can override before <code>fit</code>.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: change the default priors (shown with their defaults).</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>m.models.survival.baseline_rate_prior <span class="op">=</span> (<span class="fl">0.01</span>, <span class="fl">0.01</span>)   <span class="co"># Gamma(conc, rate)</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>m.models.survival.hazard_rate_prior_scale <span class="op">=</span> <span class="fl">10.0</span>        <span class="co"># Normal(0, scale)</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(m.models.survival.model)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.<span class="fu">summary</span>())</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="pp">@pyplot</span> m.models.survival.<span class="fu">plot_surv</span>(beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
-<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> m.models.survival</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>times_rep <span class="op">=</span> s.<span class="fu">sample_times</span>(lambda0<span class="op">=</span><span class="st">"Baseline_rate"</span>, beta<span class="op">=</span><span class="st">"Hazard_rate_metastasized"</span>, n_draws<span class="op">=</span><span class="fl">100</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>m.diag.<span class="fu">ppc_km_overlay</span>(y<span class="op">=</span>s.time, yrep<span class="op">=</span>times_rep, status_y<span class="op">=</span>s.event, name<span class="op">=</span><span class="st">"time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -2264,330 +2154,193 @@ An activation function is a nonlinear transformation applied to the pre-activati
     });
   })();
 </script>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state":{"003a1a7092144850b1a28c6996c31870":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"04d8a1d67421484cbd8a22558c30a73b":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_a0b806da46444fcc826a0802a1720892","placeholder":"​","style":"IPY_MODEL_47746ba8c3f04e4998cbe120c4568856","tabbable":null,"tooltip":null,"value":"Running chain 3: 100%"}},"06689c1ee9874c69b1d1cebbd2a9c316":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_3f04d3b59ca5466faa33cb8e365c50ca","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_d8332f4e06b142de9bfaf182a7a0e73f","tabbable":null,"tooltip":null,"value":2000}},"06946601324040479d3e3099e5bd1c5d":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"0b5d8f91a45c443e8f36a0665b30000d":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_04d8a1d67421484cbd8a22558c30a73b","IPY_MODEL_06689c1ee9874c69b1d1cebbd2a9c316","IPY_MODEL_103f6ccab40c4e1f80616a3ca0ab56c4"],"layout":"IPY_MODEL_76efeaf200404fffbe3cb59ba78a1ffb","tabbable":null,"tooltip":null}},"0ef569b0a6644a67a0db7ea6930f5319":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_3d7139452ca64d8bbc0d5e0e93184f73","placeholder":"​","style":"IPY_MODEL_ecc1bbb5b6e24ddfb28a2f228b5a09cd","tabbable":null,"tooltip":null,"value":"Running chain 0: 100%"}},"103f6ccab40c4e1f80616a3ca0ab56c4":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_88638202a54849b1b869abd0c70db3b7","placeholder":"​","style":"IPY_MODEL_f556d13bec014159be88cfb0aa827d47","tabbable":null,"tooltip":null,"value":" 2000/2000 [01:11&lt;00:00, 30.98it/s]"}},"13d1f5e3dfe84015939e97cba7dcfb29":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_c6ac08c774b74e80a4ed3e19a83f04f5","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_4dd89f1bf5c6419a8b90dd786e0e0c47","tabbable":null,"tooltip":null,"value":2000}},"1569f40f777c4a86872c0bb405ca84e8":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_7df68f1c7a2c45c7b762806e071adbc2","placeholder":"​","style":"IPY_MODEL_a3931e1927364173967396ea6199507f","tabbable":null,"tooltip":null,"value":"Running chain 2: 100%"}},"1593c61d4fd844f68901bb02eb5f3823":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_0ef569b0a6644a67a0db7ea6930f5319","IPY_MODEL_84d8318a71d44e2790d1bde05c0850d3","IPY_MODEL_cd7ff0964c25482f963e5a62a6ecc42a"],"layout":"IPY_MODEL_581e00c8d2b444cf8817ec82db9fd70a","tabbable":null,"tooltip":null}},"228d812243364ef1af131b9df608649c":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_b60c3bced6924189b300bafa80638a3e","placeholder":"​","style":"IPY_MODEL_6c026ee2ac3149018fa5206419feec85","tabbable":null,"tooltip":null,"value":" 2000/2000 [01:13&lt;00:00, 30.15it/s]"}},"25763e855fd140d99f930a9f797e0d57":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_1569f40f777c4a86872c0bb405ca84e8","IPY_MODEL_86d7ad53c4ea40cc86f9174fea6fcc48","IPY_MODEL_77b76c97d5e3409aacd24cd4457ca19c"],"layout":"IPY_MODEL_003a1a7092144850b1a28c6996c31870","tabbable":null,"tooltip":null}},"2f588a9786d3483382bee499720c8dd8":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"3afb93841d254d0090847e295d34b2d7":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"3d7139452ca64d8bbc0d5e0e93184f73":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"3f04d3b59ca5466faa33cb8e365c50ca":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"4263035a78d2428d8b57772e50a51ad5":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"47746ba8c3f04e4998cbe120c4568856":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"4dd89f1bf5c6419a8b90dd786e0e0c47":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"50728323716241019bdf608851ede9ba":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"51b3504be0c7455dba3210eaa589fdfb":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"581e00c8d2b444cf8817ec82db9fd70a":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"6c026ee2ac3149018fa5206419feec85":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"76efeaf200404fffbe3cb59ba78a1ffb":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"77b76c97d5e3409aacd24cd4457ca19c":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_9a1a10c922c145079cbd17dd7125c383","placeholder":"​","style":"IPY_MODEL_2f588a9786d3483382bee499720c8dd8","tabbable":null,"tooltip":null,"value":" 2000/2000 [01:09&lt;00:00, 32.04it/s]"}},"7df68f1c7a2c45c7b762806e071adbc2":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"84d8318a71d44e2790d1bde05c0850d3":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_94b44477d99047448a9e9a2c5219e013","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_51b3504be0c7455dba3210eaa589fdfb","tabbable":null,"tooltip":null,"value":2000}},"86d7ad53c4ea40cc86f9174fea6fcc48":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"FloatProgressModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"FloatProgressModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"ProgressView","bar_style":"success","description":"","description_allow_html":false,"layout":"IPY_MODEL_4263035a78d2428d8b57772e50a51ad5","max":2000,"min":0,"orientation":"horizontal","style":"IPY_MODEL_b2aa62da10454a46af2a387a5b83fe2b","tabbable":null,"tooltip":null,"value":2000}},"88638202a54849b1b869abd0c70db3b7":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"94b44477d99047448a9e9a2c5219e013":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"9a1a10c922c145079cbd17dd7125c383":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"9b36000e4d094c38b3ab911ea8996afd":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HBoxModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HBoxModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HBoxView","box_style":"","children":["IPY_MODEL_e2efa892b1a94052bd841f047f68ba6f","IPY_MODEL_13d1f5e3dfe84015939e97cba7dcfb29","IPY_MODEL_228d812243364ef1af131b9df608649c"],"layout":"IPY_MODEL_50728323716241019bdf608851ede9ba","tabbable":null,"tooltip":null}},"a0b806da46444fcc826a0802a1720892":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"a15b9b56d7734ccd9c8d1417b1bfad09":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"a3931e1927364173967396ea6199507f":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"b2aa62da10454a46af2a387a5b83fe2b":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"b60c3bced6924189b300bafa80638a3e":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"c6ac08c774b74e80a4ed3e19a83f04f5":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"cd7ff0964c25482f963e5a62a6ecc42a":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_e2bea585dd624e5a92667f8d3c404574","placeholder":"​","style":"IPY_MODEL_3afb93841d254d0090847e295d34b2d7","tabbable":null,"tooltip":null,"value":" 2000/2000 [01:06&lt;00:00, 33.50it/s]"}},"d8332f4e06b142de9bfaf182a7a0e73f":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"ProgressStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"ProgressStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","bar_color":null,"description_width":""}},"e2bea585dd624e5a92667f8d3c404574":{"model_module":"@jupyter-widgets/base","model_module_version":"2.0.0","model_name":"LayoutModel","state":{"_model_module":"@jupyter-widgets/base","_model_module_version":"2.0.0","_model_name":"LayoutModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"LayoutView","align_content":null,"align_items":null,"align_self":null,"border_bottom":null,"border_left":null,"border_right":null,"border_top":null,"bottom":null,"display":null,"flex":null,"flex_flow":null,"grid_area":null,"grid_auto_columns":null,"grid_auto_flow":null,"grid_auto_rows":null,"grid_column":null,"grid_gap":null,"grid_row":null,"grid_template_areas":null,"grid_template_columns":null,"grid_template_rows":null,"height":null,"justify_content":null,"justify_items":null,"left":null,"margin":null,"max_height":null,"max_width":null,"min_height":null,"min_width":null,"object_fit":null,"object_position":null,"order":null,"overflow":null,"padding":null,"right":null,"top":null,"visibility":null,"width":null}},"e2efa892b1a94052bd841f047f68ba6f":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLModel","state":{"_dom_classes":[],"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLModel","_view_count":null,"_view_module":"@jupyter-widgets/controls","_view_module_version":"2.0.0","_view_name":"HTMLView","description":"","description_allow_html":false,"layout":"IPY_MODEL_a15b9b56d7734ccd9c8d1417b1bfad09","placeholder":"​","style":"IPY_MODEL_06946601324040479d3e3099e5bd1c5d","tabbable":null,"tooltip":null,"value":"Running chain 1: 100%"}},"ecc1bbb5b6e24ddfb28a2f228b5a09cd":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}},"f556d13bec014159be88cfb0aa827d47":{"model_module":"@jupyter-widgets/controls","model_module_version":"2.0.0","model_name":"HTMLStyleModel","state":{"_model_module":"@jupyter-widgets/controls","_model_module_version":"2.0.0","_model_name":"HTMLStyleModel","_view_count":null,"_view_module":"@jupyter-widgets/base","_view_module_version":"2.0.0","_view_name":"StyleView","background":null,"description_width":"","font_size":null,"text_color":null}}},"version_major":2,"version_minor":0}
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
     }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const disableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'prefetch';
-    }
-  }
-  const enableStylesheet = (stylesheets) => {
-    for (let i=0; i < stylesheets.length; i++) {
-      const stylesheet = stylesheets[i];
-      stylesheet.rel = 'stylesheet';
-    }
-  }
-  const manageTransitions = (selector, allowTransitions) => {
-    const els = window.document.querySelectorAll(selector);
-    for (let i=0; i < els.length; i++) {
-      const el = els[i];
-      if (allowTransitions) {
-        el.classList.remove('notransition');
-      } else {
-        el.classList.add('notransition');
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-  }
-  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-    let newTheme = '';
-    if(darkModeDefault) {
-      newTheme = isAlternate ? baseTheme : alternateTheme;
-    } else {
-      newTheme = isAlternate ? alternateTheme : baseTheme;
-    }
-    const changeGiscusTheme = () => {
-      // From: https://github.com/giscus/giscus/issues/336
-      const sendMessage = (message) => {
-        const iframe = document.querySelector('iframe.giscus-frame');
-        if (!iframe) return;
-        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
       }
-      sendMessage({
-        setConfig: {
-          theme: newTheme
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
       });
     }
-    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-    if (isGiscussLoaded) {
-      changeGiscusTheme();
-    }
-  }
-  const toggleColorMode = (alternate) => {
-    // Switch the stylesheets
-    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-    manageTransitions('#quarto-margin-sidebar .nav-link', false);
-    if (alternate) {
-      enableStylesheet(alternateStylesheets);
-      for (const sheetNode of alternateStylesheets) {
-        if (sheetNode.id === "quarto-bootstrap") {
-          toggleBodyColorMode(sheetNode);
-        }
-      }
-    } else {
-      disableStylesheet(alternateStylesheets);
-      toggleBodyColorPrimary();
-    }
-    manageTransitions('#quarto-margin-sidebar .nav-link', true);
-    // Switch the toggles
-    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-    for (let i=0; i < toggles.length; i++) {
-      const toggle = toggles[i];
-      if (toggle) {
-        if (alternate) {
-          toggle.classList.add("alternate");     
-        } else {
-          toggle.classList.remove("alternate");
-        }
-      }
-    }
-    // Hack to workaround the fact that safari doesn't
-    // properly recolor the scrollbar when toggling (#1455)
-    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-      manageTransitions("body", false);
-      window.scrollTo(0, 1);
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        manageTransitions("body", true);
-      }, 40);  
-    }
-  }
-  const isFileUrl = () => { 
-    return window.location.protocol === 'file:';
-  }
-  const hasAlternateSentinel = () => {  
-    let styleSentinel = getColorSchemeSentinel();
-    if (styleSentinel !== null) {
-      return styleSentinel === "alternate";
-    } else {
-      return false;
-    }
-  }
-  const setStyleSentinel = (alternate) => {
-    const value = alternate ? "alternate" : "default";
-    if (!isFileUrl()) {
-      window.localStorage.setItem("quarto-color-scheme", value);
-    } else {
-      localAlternateSentinel = value;
-    }
-  }
-  const getColorSchemeSentinel = () => {
-    if (!isFileUrl()) {
-      const storageValue = window.localStorage.getItem("quarto-color-scheme");
-      return storageValue != null ? storageValue : localAlternateSentinel;
-    } else {
-      return localAlternateSentinel;
-    }
-  }
-  const darkModeDefault = true;
-  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-  // Dark / light mode switch
-  window.quartoToggleColorScheme = () => {
-    // Read the current dark / light value 
-    let toAlternate = !hasAlternateSentinel();
-    toggleColorMode(toAlternate);
-    setStyleSentinel(toAlternate);
-    toggleGiscusIfUsed(toAlternate, darkModeDefault);
-  };
-  // Ensure there is a toggle, if there isn't float one in the top right
-  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-    const a = window.document.createElement('a');
-    a.classList.add('top-right');
-    a.classList.add('quarto-color-scheme-toggle');
-    a.href = "";
-    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-    const i = window.document.createElement("i");
-    i.classList.add('bi');
-    a.appendChild(i);
-    window.document.body.appendChild(a);
-  }
-  // Switch to dark mode if need be
-  if (hasAlternateSentinel()) {
-    toggleColorMode(true);
-  } else {
-    toggleColorMode(false);
-  }
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
-    });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
         }
-        return container.innerHTML
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }

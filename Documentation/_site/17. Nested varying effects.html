@@ -776,10 +776,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#note" id="toc-note" class="nav-link" data-scroll-target="#note">Note</a></li>
   </ul></li>
-  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a>
-  <ul class="collapse">
-  <li><a href="#posterior-predictive-checks" id="toc-posterior-predictive-checks" class="nav-link" data-scroll-target="#posterior-predictive-checks">Posterior predictive checks</a></li>
-  </ul></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a>
   <ul class="collapse">
   <li><a href="#centered-parameterization" id="toc-centered-parameterization" class="nav-link" data-scroll-target="#centered-parameterization">Centered Parameterization</a></li>
@@ -1008,9 +1005,9 @@ jax.local_device_count 16</code></pre>
 <td>0.49</td>
 <td>0.02</td>
 <td>0.46</td>
-<td>0.53</td>
-<td>1945.03</td>
-<td>620.64</td>
+<td>0.52</td>
+<td>1775.49</td>
+<td>899.73</td>
 <td>NaN</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1029,12 +1026,12 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma_group[1]</td>
-<td>0.26</td>
+<td>0.25</td>
 <td>0.06</td>
 <td>0.17</td>
-<td>0.37</td>
-<td>600.34</td>
-<td>651.77</td>
+<td>0.35</td>
+<td>787.62</td>
+<td>831.36</td>
 <td>NaN</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1162,12 +1159,12 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">L_group[1, 1]</td>
-<td>0.87</td>
+<td>0.88</td>
 <td>0.11</td>
-<td>0.65</td>
+<td>0.67</td>
 <td>1.00</td>
-<td>701.70</td>
-<td>738.99</td>
+<td>628.79</td>
+<td>679.71</td>
 <td>NaN</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1210,12 +1207,12 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">z_region[1, 1]</td>
-<td>1.03</td>
-<td>0.68</td>
+<td>1.01</td>
+<td>0.67</td>
 <td>-0.01</td>
-<td>2.12</td>
-<td>1034.67</td>
-<td>694.39</td>
+<td>2.15</td>
+<td>814.75</td>
+<td>766.80</td>
 <td>NaN</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1350,26 +1347,26 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">L_corr_group[1, 0]</td>
-<td>0.43</td>
+<td>0.41</td>
 <td>0.23</td>
-<td>0.02</td>
-<td>0.77</td>
-<td>521.24</td>
-<td>590.17</td>
+<td>0.01</td>
+<td>0.74</td>
+<td>766.25</td>
+<td>707.02</td>
 <td>NaN</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">L_corr_group[1, 1]</td>
-<td>0.86</td>
+<td>0.88</td>
 <td>0.11</td>
-<td>0.64</td>
+<td>0.67</td>
 <td>1.00</td>
-<td>536.46</td>
-<td>590.17</td>
+<td>757.35</td>
+<td>707.02</td>
 <td>NaN</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="odd">
@@ -1410,14 +1407,14 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">z_region[1, 1]</td>
-<td>0.95</td>
-<td>0.68</td>
-<td>-0.10</td>
-<td>2.09</td>
-<td>550.58</td>
-<td>496.78</td>
+<td>0.94</td>
+<td>0.64</td>
+<td>-0.03</td>
+<td>2.01</td>
+<td>834.80</td>
+<td>674.05</td>
 <td>NaN</td>
-<td>0.03</td>
+<td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
@@ -1434,24 +1431,24 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">z_region[1, 3]</td>
-<td>0.31</td>
-<td>0.82</td>
-<td>-0.99</td>
-<td>1.61</td>
-<td>545.09</td>
-<td>671.74</td>
+<td>0.27</td>
+<td>0.77</td>
+<td>-0.97</td>
+<td>1.41</td>
+<td>1053.24</td>
+<td>873.03</td>
 <td>NaN</td>
-<td>0.03</td>
-<td>0.03</td>
+<td>0.02</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">z_region[1, 4]</td>
-<td>-0.08</td>
-<td>0.68</td>
-<td>-1.18</td>
-<td>0.95</td>
-<td>767.51</td>
-<td>723.24</td>
+<td>-0.10</td>
+<td>0.72</td>
+<td>-1.23</td>
+<td>1.07</td>
+<td>910.32</td>
+<td>703.56</td>
 <td>NaN</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1496,25 +1493,11 @@ jax.local_device_count 16</code></pre>
 <span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>m.fit(model_nested_builtin_centered, num_samples<span class="op">=</span><span class="dv">1000</span>, num_warmup<span class="op">=</span><span class="dv">500</span>, num_chains<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.13/site-packages/jax/_src/ops/scatter.py:105: FutureWarning:
-
-scatter inputs have incompatible types: cannot safely cast value from dtype=int64 to dtype=int32 with jax_numpy_dtype_promotion=standard. In future JAX releases this will result in an error.
-</code></pre>
-</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>jax.local_device_count 32</code></pre>
+<pre><code>jax.local_device_count 16</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1500 [00:00&lt;?, ?it/s]warmup:   5%|▌         | 75/1500 [00:03&lt;00:59, 24.00it/s, 31 steps of size 3.03e-02. acc. prob=0.76]warmup:  10%|█         | 150/1500 [00:03&lt;00:24, 54.30it/s, 15 steps of size 4.51e-01. acc. prob=0.78]warmup:  15%|█▌        | 225/1500 [00:03&lt;00:13, 91.51it/s, 31 steps of size 2.32e-01. acc. prob=0.78]warmup:  20%|██        | 300/1500 [00:03&lt;00:08, 135.29it/s, 15 steps of size 5.27e-01. acc. prob=0.78]warmup:  25%|██▌       | 375/1500 [00:03&lt;00:06, 185.47it/s, 15 steps of size 4.02e-01. acc. prob=0.78]warmup:  30%|███       | 450/1500 [00:03&lt;00:04, 240.36it/s, 7 steps of size 2.73e-01. acc. prob=0.79] sample:  35%|███▌      | 525/1500 [00:03&lt;00:03, 293.14it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample:  40%|████      | 600/1500 [00:04&lt;00:02, 346.18it/s, 15 steps of size 2.74e-01. acc. prob=0.92]sample:  45%|████▌     | 675/1500 [00:04&lt;00:02, 393.16it/s, 15 steps of size 2.74e-01. acc. prob=0.91]sample:  50%|█████     | 750/1500 [00:04&lt;00:01, 432.70it/s, 15 steps of size 2.74e-01. acc. prob=0.91]sample:  55%|█████▌    | 825/1500 [00:04&lt;00:01, 465.02it/s, 15 steps of size 2.74e-01. acc. prob=0.91]sample:  60%|██████    | 900/1500 [00:04&lt;00:01, 485.94it/s, 15 steps of size 2.74e-01. acc. prob=0.91]sample:  65%|██████▌   | 975/1500 [00:04&lt;00:01, 500.76it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample:  70%|███████   | 1050/1500 [00:04&lt;00:00, 516.77it/s, 15 steps of size 2.74e-01. acc. prob=0.89]sample:  75%|███████▌  | 1125/1500 [00:05&lt;00:00, 524.00it/s, 15 steps of size 2.74e-01. acc. prob=0.89]sample:  80%|████████  | 1200/1500 [00:05&lt;00:00, 524.53it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample:  85%|████████▌ | 1275/1500 [00:05&lt;00:00, 521.62it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample:  90%|█████████ | 1350/1500 [00:05&lt;00:00, 526.44it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample:  95%|█████████▌| 1425/1500 [00:05&lt;00:00, 531.46it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample: 100%|██████████| 1500/1500 [00:05&lt;00:00, 534.01it/s, 15 steps of size 2.74e-01. acc. prob=0.90]sample: 100%|██████████| 1500/1500 [00:05&lt;00:00, 259.19it/s, 15 steps of size 2.74e-01. acc. prob=0.90]
-/home/sosa/.local/lib/python3.13/site-packages/arviz_stats/base/diagnostics.py:313: RuntimeWarning:
-
-invalid value encountered in scalar divide
-
-/home/sosa/.local/lib/python3.13/site-packages/arviz_stats/base/diagnostics.py:313: RuntimeWarning:
-
-invalid value encountered in scalar divide
-</code></pre>
+<pre><code>  0%|          | 0/1500 [00:00&lt;?, ?it/s]warmup:   5%|▌         | 75/1500 [00:05&lt;01:36, 14.84it/s, 23 steps of size 6.08e-02. acc. prob=0.77]warmup:  10%|█         | 150/1500 [00:05&lt;00:42, 31.93it/s, 15 steps of size 1.52e-01. acc. prob=0.78]warmup:  15%|█▌        | 225/1500 [00:05&lt;00:24, 53.06it/s, 31 steps of size 2.82e-01. acc. prob=0.78]warmup:  20%|██        | 300/1500 [00:06&lt;00:15, 77.35it/s, 15 steps of size 4.43e-01. acc. prob=0.78]warmup:  25%|██▌       | 375/1500 [00:06&lt;00:10, 103.52it/s, 15 steps of size 2.91e-01. acc. prob=0.78]warmup:  30%|███       | 450/1500 [00:06&lt;00:07, 131.48it/s, 15 steps of size 4.67e-01. acc. prob=0.79]sample:  35%|███▌      | 525/1500 [00:06&lt;00:06, 158.49it/s, 15 steps of size 2.47e-01. acc. prob=0.88]sample:  40%|████      | 600/1500 [00:07&lt;00:05, 160.80it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  45%|████▌     | 675/1500 [00:07&lt;00:04, 174.12it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  50%|█████     | 750/1500 [00:08&lt;00:03, 196.73it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  55%|█████▌    | 825/1500 [00:08&lt;00:03, 191.68it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  60%|██████    | 900/1500 [00:08&lt;00:03, 193.62it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  65%|██████▌   | 975/1500 [00:09&lt;00:02, 207.86it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  70%|███████   | 1050/1500 [00:09&lt;00:01, 227.95it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  75%|███████▌  | 1125/1500 [00:09&lt;00:01, 236.53it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  80%|████████  | 1200/1500 [00:09&lt;00:01, 251.13it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  85%|████████▌ | 1275/1500 [00:10&lt;00:00, 257.95it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  90%|█████████ | 1350/1500 [00:10&lt;00:00, 262.63it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample:  95%|█████████▌| 1425/1500 [00:10&lt;00:00, 250.23it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample: 100%|██████████| 1500/1500 [00:11&lt;00:00, 255.15it/s, 15 steps of size 2.47e-01. acc. prob=0.91]sample: 100%|██████████| 1500/1500 [00:11&lt;00:00, 135.61it/s, 15 steps of size 2.47e-01. acc. prob=0.91]</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div>
@@ -1612,10 +1595,10 @@ invalid value encountered in scalar divide
 <td data-quarto-table-cell-role="th">sigma</td>
 <td>0.49</td>
 <td>0.02</td>
-<td>0.47</td>
+<td>0.46</td>
 <td>0.52</td>
-<td>1374.16</td>
-<td>672.04</td>
+<td>1610.44</td>
+<td>751.97</td>
 <td>NaN</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1623,11 +1606,11 @@ invalid value encountered in scalar divide
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma_group[0]</td>
 <td>0.42</td>
-<td>0.08</td>
+<td>0.09</td>
 <td>0.30</td>
-<td>0.56</td>
-<td>581.53</td>
-<td>719.44</td>
+<td>0.58</td>
+<td>602.26</td>
+<td>549.25</td>
 <td>NaN</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1677,68 +1660,92 @@ invalid value encountered in scalar divide
 </div>
 </div>
 <div id="tabset-1-5" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-5-tab">
-<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device ------------------------------------------------</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data — column args mapped automatically from the DataFrame.</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># N_groups and N_regions are dataset-specific; provide them as defaults.</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">sim_nested_effects</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y, x, group_id, region_id, N_groups<span class="op">=</span><span class="fl">20</span>, N_regions<span class="op">=</span><span class="fl">5</span>)</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    a_g_est, b_g_est <span class="op">=</span> m.effects.<span class="fu">nested_varying_effects</span>(</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        N_vars    <span class="op">=</span> <span class="fl">2</span>,</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        names     <span class="op">=</span> [<span class="st">"region"</span>, <span class="st">"group"</span>],</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>        N_groups  <span class="op">=</span> [N_regions, N_groups],</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        group_ids <span class="op">=</span> [region_id, group_id],</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        centered  <span class="op">=</span> <span class="cn">false</span>,</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a_g_est <span class="op">.+</span> b_g_est <span class="op">.*</span> x</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, sigma, obs<span class="op">=</span>y)</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device ------------------------------------------------</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data — column args mapped automatically from the DataFrame.</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># N_groups and N_regions are dataset-specific; provide them as defaults.</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">sim_nested_effects</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The Julia wrapper exposes no Python-visible defaults, so pass the model</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co"># data (DataFrame columns + scalar sizes) explicitly.</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    y         <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"y"</span>]),</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    x         <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"x"</span>]),</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    group_id  <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"group_id"</span>]),</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    region_id <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"region_id"</span>]),</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    N_groups  <span class="op">=</span> <span class="fl">20</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    N_regions <span class="op">=</span> <span class="fl">5</span>,</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(y, x, group_id, region_id, N_groups<span class="op">=</span><span class="fl">20</span>, N_regions<span class="op">=</span><span class="fl">5</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    veff <span class="op">=</span> m.effects.<span class="fu">nested_varying_effects</span>(</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        N_vars    <span class="op">=</span> <span class="fl">2</span>,</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        names     <span class="op">=</span> [<span class="st">"region"</span>, <span class="st">"group"</span>],</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>        N_groups  <span class="op">=</span> [N_regions, N_groups],</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>        group_ids <span class="op">=</span> [region_id, group_id],</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>        centered  <span class="op">=</span> <span class="cn">false</span>,</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    a_g_est, b_g_est <span class="op">=</span> veff</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a_g_est <span class="op">+</span> b_g_est <span class="op">*</span> x</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, sigma, obs<span class="op">=</span>y, name<span class="op">=</span><span class="st">"y"</span>)</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, num_samples<span class="op">=</span><span class="fl">1000</span>, num_warmup<span class="op">=</span><span class="fl">500</span>, num_chains<span class="op">=</span><span class="fl">1</span>)</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-6" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-6-tab">
-<div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform ------------------------------------------------</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>m <span class="ot">=</span> <span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data — column args mapped automatically from the DataFrame.</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># N_groups and N_regions are dataset-specific; provide them as defaults.</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="ot">=</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">sim_nested_effects</span>(<span class="at">only_path=</span><span class="cn">TRUE</span>)</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(data_path)</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y, x, group_id, region_id, <span class="at">N_groups=</span><span class="dv">20</span>L, <span class="at">N_regions=</span><span class="dv">5</span>L) {</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name=</span><span class="st">'sigma'</span>)</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  veff <span class="ot">=</span> m<span class="sc">$</span>effects<span class="sc">$</span><span class="fu">nested_varying_effects</span>(</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_vars    =</span> <span class="dv">2</span>L,</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">names     =</span> <span class="fu">list</span>(<span class="st">'region'</span>, <span class="st">'group'</span>),</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_groups  =</span> <span class="fu">list</span>(N_regions, N_groups),</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_ids =</span> <span class="fu">list</span>(region_id, group_id),</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">centered  =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  a_g_est <span class="ot">=</span> veff[[<span class="dv">1</span>]]</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  b_g_est <span class="ot">=</span> veff[[<span class="dv">2</span>]]</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a_g_est <span class="sc">+</span> b_g_est <span class="sc">*</span> x</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, sigma, <span class="at">obs=</span>y)</span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model)</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform ------------------------------------------------</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>m <span class="ot">=</span> <span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data — column args mapped automatically from the DataFrame.</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># N_groups and N_regions are dataset-specific; provide them as defaults.</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>data_path <span class="ot">=</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">sim_nested_effects</span>(<span class="at">only_path=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(data_path)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co"># The R wrapper exposes no Python-visible defaults, so pass the model</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># data (DataFrame columns + scalar sizes) explicitly.</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">=</span> <span class="fu">list</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">y         =</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df<span class="sc">$</span>y),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">x         =</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df<span class="sc">$</span>x),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">group_id  =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(m<span class="sc">$</span>df<span class="sc">$</span>group_id)),</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">region_id =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(m<span class="sc">$</span>df<span class="sc">$</span>region_id)),</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">N_groups  =</span> <span class="dv">20</span>L,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">N_regions =</span> <span class="dv">5</span>L</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(y, x, group_id, region_id, <span class="at">N_groups=</span><span class="dv">20</span>L, <span class="at">N_regions=</span><span class="dv">5</span>L) {</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name=</span><span class="st">'sigma'</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  veff <span class="ot">=</span> m<span class="sc">$</span>effects<span class="sc">$</span><span class="fu">nested_varying_effects</span>(</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_vars    =</span> <span class="dv">2</span>L,</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">names     =</span> <span class="fu">list</span>(<span class="st">'region'</span>, <span class="st">'group'</span>),</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_groups  =</span> <span class="fu">list</span>(<span class="fu">as.integer</span>(N_regions), <span class="fu">as.integer</span>(N_groups)),</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_ids =</span> <span class="fu">list</span>(region_id, group_id),</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">centered  =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  a_g_est <span class="ot">=</span> veff[[<span class="dv">1</span>]]</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  b_g_est <span class="ot">=</span> veff[[<span class="dv">2</span>]]</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a_g_est <span class="sc">+</span> b_g_est <span class="sc">*</span> x</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, sigma, <span class="at">obs=</span>y, <span class="at">name=</span><span class="st">'y'</span>)</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">num_samples=</span><span class="dv">1000</span>L, <span class="at">num_warmup=</span><span class="dv">500</span>L, <span class="at">num_chains=</span><span class="dv">1</span>L)</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>

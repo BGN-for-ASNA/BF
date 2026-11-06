@@ -734,36 +734,36 @@ jax.local_device_count 16</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>154.66</td>
+<td>154.65</td>
 <td>0.27</td>
-<td>154.23</td>
-<td>155.08</td>
-<td>1698.42</td>
-<td>1530.86</td>
+<td>154.19</td>
+<td>155.09</td>
+<td>1851.19</td>
+<td>1431.37</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">b</td>
-<td>5.82</td>
-<td>0.27</td>
-<td>5.40</td>
-<td>6.25</td>
-<td>2962.28</td>
-<td>1771.65</td>
+<td>5.81</td>
+<td>0.28</td>
+<td>5.36</td>
+<td>6.26</td>
+<td>1843.03</td>
+<td>1290.68</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">s</td>
-<td>5.13</td>
+<td>5.15</td>
 <td>0.20</td>
-<td>4.81</td>
-<td>5.45</td>
-<td>2351.09</td>
-<td>1424.41</td>
+<td>4.84</td>
+<td>5.47</td>
+<td>1684.27</td>
+<td>1635.64</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -2244,10 +2244,62 @@ if (outputEl) {{
 </div>
 </div>
 </div>
+<div id="tabset-25-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-25-2-tab">
+<div class="sourceCode" id="cb79"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(m, weight, height, <span class="at">a_sd =</span> <span class="dv">20</span>, <span class="at">b_sd =</span> <span class="dv">1</span>) {</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>    a <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">178</span>, a_sd, <span class="at">name =</span> <span class="st">"a"</span>)</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">log_normal</span>(<span class="dv">0</span>, b_sd, <span class="at">name =</span> <span class="st">"b"</span>)</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>    s <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">uniform</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="at">name =</span> <span class="st">"s"</span>)</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>    m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(a <span class="sc">+</span> b <span class="sc">*</span> weight, s, <span class="at">obs =</span> height, <span class="at">name =</span> <span class="st">"height"</span>)</span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> m<span class="sc">$</span>diag<span class="sc">$</span><span class="fu">prior_sensitivity</span>(</span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">priors =</span> <span class="fu">list</span>(<span class="at">b_sd =</span> <span class="fu">list</span>(<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">2.0</span>), <span class="at">a_sd =</span> <span class="fu">list</span>(<span class="dv">5</span>, <span class="dv">50</span>)),   <span class="co"># 1 + 5 = 6 fits</span></span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">obs =</span> <span class="fu">list</span>(<span class="at">weight =</span> weight, <span class="at">height =</span> height),</span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">fit_kwargs =</span> <span class="fu">list</span>(<span class="at">num_samples =</span> <span class="dv">500</span>L, <span class="at">num_chains =</span> <span class="dv">1</span>L),</span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">return_results =</span> <span class="cn">TRUE</span>)     <span class="co"># out[[1]]: figure, out[[2]]: table</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-25-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-25-3-tab">
+<div class="sourceCode" id="cb80"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@sim</span> <span class="kw">function</span> <span class="fu">model</span>(m, weight, height; a_sd <span class="op">=</span> <span class="fl">20.0</span>, b_sd <span class="op">=</span> <span class="fl">1.0</span>)</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">178</span>, a_sd, name <span class="op">=</span> <span class="st">"a"</span>)</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.<span class="fu">log_normal</span>(<span class="fl">0</span>, b_sd, name <span class="op">=</span> <span class="st">"b"</span>)</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">uniform</span>(<span class="fl">0</span>, <span class="fl">50</span>, name <span class="op">=</span> <span class="st">"s"</span>)</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(a <span class="op">+</span> b <span class="op">*</span> weight, s, obs <span class="op">=</span> height, name <span class="op">=</span> <span class="st">"height"</span>)</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>fig, table <span class="op">=</span> m.diag.<span class="fu">prior_sensitivity</span>(</span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>    priors <span class="op">=</span> <span class="fu">Dict</span>(<span class="st">"b_sd"</span> <span class="op">=&gt;</span> [<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">2.0</span>], <span class="st">"a_sd"</span> <span class="op">=&gt;</span> [<span class="fl">5</span>, <span class="fl">50</span>]),   <span class="co"># 1 + 5 = 6 fits</span></span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>    obs <span class="op">=</span> <span class="fu">Dict</span>(<span class="st">"weight"</span> <span class="op">=&gt;</span> weight, <span class="st">"height"</span> <span class="op">=&gt;</span> height),</span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>    fit_kwargs <span class="op">=</span> <span class="fu">Dict</span>(<span class="st">"num_samples"</span> <span class="op">=&gt;</span> <span class="fl">500</span>, <span class="st">"num_chains"</span> <span class="op">=&gt;</span> <span class="fl">1</span>),</span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>    return_results <span class="op">=</span> <span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>The default plot (<code>plot="by_prior"</code>) has <strong>one row per varied prior</strong> and one column per parameter: each cell shows the baseline posterior (grey, dashed) and the posteriors when <em>that</em> prior alone is varied. <code>plot="shift"</code> gives a dot plot of the posterior-mean shift (in baseline sd) per variation, and <code>plot="overlay"</code> puts every fit in one panel per parameter.</p>
+<p><code>mode="grid"</code> crosses all the lists instead (captures interactions, but the number of fits is the product of the list lengths); <code>joint={"all tighter": {"a_sd": 5, "b_sd": 0.1}}</code> adds scenarios where several priors move together. <code>shift_sd</code> is the change of the posterior mean from the baseline, in baseline posterior sd.</p>
 <p>See <a href="../reference/diag.html#prior_sensitivity"><code>m.diag.prior_sensitivity</code></a> for further information regarding the list of arguments.</p>
+</section>
 </section>
 <section id="loo-influence" class="level3">
 <h3 class="anchored" data-anchor-id="loo-influence">LOO influence</h3>
+<div id="670be8af" class="cell" data-execution_count="28">
+<div class="cell-output cell-output-display cell-output-markdown">
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>⚠️This function is still in development. Use it with caution. ⚠️</p>
+</div>
+</div>
+</div>
+</div>
 <p>One point per observation with its Pareto k, from PSIS-LOO: how much the posterior would change if this observation were left out.</p>
 <table class="caption-top table">
 <colgroup>

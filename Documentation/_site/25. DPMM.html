@@ -927,16 +927,15 @@ Caution
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>m.fit(dpmm, progress_bar<span class="op">=</span><span class="va">False</span>)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>m.plot(X<span class="op">=</span>data,sampler<span class="op">=</span>m.sampler) <span class="co"># Prebuild plot function for GMM</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>bf v 0.0.60 package loaded</code></pre>
+</div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 32
-Model found 7 clusters.
+<pre><code>jax.local_device_count 16
+Model found 8 clusters.
 Computing density across all chains (this might take a moment)...</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
