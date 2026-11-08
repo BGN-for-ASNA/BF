@@ -45,12 +45,12 @@ Below are four typical missing data patterns translated into the **BayesForge (B
 
 ### 1. Simple Missing Imputation
 
-This example demonstrates the core concept of **Imputation** vs. **Marginalization** (from *Considerations*). We generate a linear regression dataset (**DGP**), **mask** 5 outcome values, **infer** both the model parameters and the 5 missing outcomes simultaneously as latent variables, and **compare** the posterior estimates against the true values.
+This example demonstrates the core concept of **Imputation** vs. **Marginalization** (from *Considerations*). We generate a linear regression dataset (**DGP**), **mask** 5 outcome values, **infer** both the model parameters and the 5 missing outcomes simultaneously as latent variables, **compare** the posterior estimates against the true values, and **plot** imputed vs true masked outcomes.
 
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
 from BayesForge import bf
 import jax.numpy as jnp
 import numpy as np
@@ -87,13 +87,18 @@ def missing_data_model(x_obs, y_obs, x_mis, N_mis):
 m.fit(missing_data_model, progress_bar=False)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-print(f"alpha: True = {true_alpha:.2f}, Estimated = {float(summ.loc['alpha', 'mean']):.2f}")
-print(f"beta:  True = {true_beta:.2f}, Estimated = {float(summ.loc['beta', 'mean']):.2f}")
-print(f"sigma: True = {true_sigma:.2f}, Estimated = {float(summ.loc['sigma', 'mean']):.2f}")
-for i in range(N_mis):
-    est_yi = float(summ.loc[f"y_mis[{i}]", "mean"])
-    print(f"y_mis[{i}]: True = {float(y_mis_true[i]):.2f}, Imputed = {est_yi:.2f}")
+# 4. Plot: imputed vs true masked outcomes (points should sit on y = x)
+import matplotlib.pyplot as plt
+draws = np.asarray(m.posteriors["y_mis"])            # (draws, N_mis)
+est = draws.mean(0)
+lo, hi = np.percentile(draws, [3, 97], axis=0)       # 94% credible interval
+truth = np.asarray(y_mis_true)
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+ax.errorbar(truth, est, yerr=[est - lo, hi - est], fmt="o", capsize=3, label="Imputed (mean, 94% CI)")
+lim = [min(truth.min(), lo.min()), max(truth.max(), hi.max())]
+ax.plot(lim, lim, "r--", label="y = x")
+ax.set_xlabel("True masked y"); ax.set_ylabel("Imputed y"); ax.legend()
+plt.show()
 ```
 
 ## R
@@ -136,6 +141,17 @@ summ <- m$summary()
 # 4. Comparison: Estimated vs True values
 print(summ)
 print(y_mis_true)
+
+# 5. Plot: imputed vs true masked outcomes (points should sit on y = x)
+np <- reticulate::import("numpy")
+draws <- np$asarray(m$posteriors[["y_mis"]])         # (draws, N_mis)
+est <- colMeans(draws)
+lo <- apply(draws, 2, quantile, 0.03); hi <- apply(draws, 2, quantile, 0.97)
+rng <- range(y_mis_true, lo, hi)
+plot(y_mis_true, est, xlim = rng, ylim = rng, pch = 19,
+     xlab = "True masked y", ylab = "Imputed y (mean, 94% CI)")
+arrows(y_mis_true, lo, y_mis_true, hi, angle = 90, code = 3, length = 0.05)
+abline(0, 1, col = "red", lty = 2)
 ```
 
 ## Julia
@@ -176,9 +192,19 @@ end
 m.fit(missing_data_model, progress_bar=false)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-println(summ)
-println("True masked y: ", y_mis_true)
+
+# 4. Plot: imputed vs true masked outcomes (points should sit on y = x)
+using Statistics
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+draws = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["y_mis"]))   # (draws, N_mis)
+est = vec(mean(draws, dims=1))
+lo = [quantile(c, 0.03) for c in eachcol(draws)]; hi = [quantile(c, 0.97) for c in eachcol(draws)]
+plt.figure(figsize=(4.5, 4.5))
+plt.errorbar(y_mis_true, est, yerr=pylist([est .- lo, hi .- est]), fmt="o", capsize=3)
+lim = [minimum([y_mis_true; lo]), maximum([y_mis_true; hi])]
+plt.plot(lim, lim, "r--")
+plt.xlabel("True masked y"); plt.ylabel("Imputed y (mean, 94% CI)")
+plt.show()
 ```
 :::
 
@@ -189,7 +215,7 @@ This example illustrates how to handle **Partial Knowledge** (from *Consideratio
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
 from BayesForge import bf
 import jax.numpy as jnp
 
@@ -221,10 +247,18 @@ def partially_known_model(y, var1, var2):
 m.fit(partially_known_model, progress_bar=False)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-print(f"mu[0]: True = {float(true_mu[0]):.2f}, Estimated = {float(summ.loc['mu[0]', 'mean']):.2f}")
-print(f"mu[1]: True = {float(true_mu[1]):.2f}, Estimated = {float(summ.loc['mu[1]', 'mean']):.2f}")
-print(f"cov:   True = {true_cov:.2f}, Estimated = {float(summ.loc['cov', 'mean']):.2f}")
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+import numpy as np
+import matplotlib.pyplot as plt
+mu_d = np.asarray(m.posteriors["mu"]); cov_d = np.asarray(m.posteriors["cov"])
+panels = [("mu[0]", mu_d[:, 0], 1.0), ("mu[1]", mu_d[:, 1], -1.0), ("cov", cov_d, true_cov)]
+fig, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=True)
+for ax, (name, d, truth) in zip(axes, panels):
+    ax.hist(d, bins=40, density=True, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--", label="True")
+    ax.set_title(name); ax.legend()
+plt.show()
 ```
 
 ## R
@@ -237,7 +271,7 @@ jnp <- reticulate::import("jax.numpy")
 true_mu <- jnp$array(c(1.0, -1.0))
 true_cov <- 0.8
 true_Sigma <- jnp$array(list(c(2.0, true_cov), c(true_cov, 1.5)))
-y <- m$dist$multivariate_normal(loc = true_mu, covariance_matrix = true_Sigma, shape = c(100L), sample = TRUE, seed = 42L)
+y <- m$dist$multivariate_normal(loc = true_mu, covariance_matrix = true_Sigma, shape = reticulate::tuple(100L), sample = TRUE, seed = 42L)
 var1 <- jnp$float64(2.0)
 var2 <- jnp$float64(1.5)
 
@@ -249,7 +283,7 @@ partially_known_model <- function(y, var1, var2) {
     max_cov <- jnp$sqrt(var1 * var2)
     min_cov <- -max_cov
 
-    mu <- m$dist$normal(0, 5, shape = c(2L), name = "mu")
+    mu <- m$dist$normal(0, 5, shape = reticulate::tuple(2L), name = "mu")
     cov <- m$dist$uniform(min_cov, max_cov, name = "cov")
 
     row1 <- jnp$stack(list(var1, cov))
@@ -262,9 +296,16 @@ partially_known_model <- function(y, var1, var2) {
 m$fit(partially_known_model, progress_bar = FALSE)
 summ <- m$summary()
 
-# 4. Comparison: Estimated vs True values
-print(summ)
-print(c(true_mu_0 = 1.0, true_mu_1 = -1.0, true_cov = true_cov))
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+np <- reticulate::import("numpy")
+mu_d <- np$asarray(m$posteriors[["mu"]]); cov_d <- as.numeric(np$asarray(m$posteriors[["cov"]]))
+par(mfrow = c(1, 3))
+for (p in list(list("mu[0]", mu_d[, 1], 1.0), list("mu[1]", mu_d[, 2], -1.0), list("cov", cov_d, true_cov))) {
+    hist(p[[2]], breaks = 40, freq = FALSE, main = p[[1]], xlab = "")
+    abline(v = p[[3]], col = "red", lty = 2, lwd = 2)
+}
+par(mfrow = c(1, 1))
 ```
 
 ## Julia
@@ -277,7 +318,7 @@ jnp = pyimport("jax.numpy")
 
 # 1. DGP: Simulate 2D observations with known variances (2.0, 1.5) and true cov = 0.8
 true_cov = 0.8
-true_Sigma = jnp.array([[2.0, true_cov], [true_cov, 1.5]])
+true_Sigma = jnp.array(pylist([pylist([2.0, true_cov]), pylist([true_cov, 1.5])]))
 y = m.dist.multivariate_normal(loc=jnp.array([1.0, -1.0]), covariance_matrix=true_Sigma, shape=(100,), sample=true, seed=42)
 var1 = jnp.float64(2.0)
 var2 = jnp.float64(1.5)
@@ -303,9 +344,18 @@ end
 m.fit(partially_known_model, progress_bar=false)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-println(summ)
-println("True mu = [1.0, -1.0], True cov = ", true_cov)
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+mu_d = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["mu"]))
+cov_d = pyconvert(Vector{Float64}, np.asarray(m.posteriors["cov"]))
+fig, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=true)
+for (ax, (name, d, truth)) in zip(axes, [("mu[0]", mu_d[:, 1], 1.0), ("mu[1]", mu_d[:, 2], -1.0), ("cov", cov_d, true_cov)])
+    ax.hist(d, bins=40, density=true, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--")
+    ax.set_title(name)
+end
+plt.show()
 ```
 :::
 
@@ -316,7 +366,7 @@ This example highlights the technical implementation detail of **JAX Arrays are 
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
 from BayesForge import bf
 import jax.numpy as jnp
 
@@ -352,11 +402,20 @@ def sliced_missing_model(y_obs, ii_obs, N_mis, ii_mis, N_total):
 m.fit(sliced_missing_model, progress_bar=False)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True masked time steps
-print(f"sigma: True = {true_sigma:.2f}, Estimated = {float(summ.loc['sigma', 'mean']):.2f}")
-for k, idx in enumerate([4, 10, 15]):
-    est_val = float(summ.loc[f"y_mis[{k}]", "mean"])
-    print(f"t={idx} (y_mis[{k}]): True = {float(y_mis_true[k]):.2f}, Imputed = {est_val:.2f}")
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+import numpy as np
+import matplotlib.pyplot as plt
+draws = np.asarray(m.posteriors["y_mis"])            # (draws, 3)
+est = draws.mean(0)
+lo, hi = np.percentile(draws, [3, 97], axis=0)
+t_mis = np.asarray(ii_mis)
+fig, ax = plt.subplots(figsize=(7, 3.5))
+ax.plot(np.asarray(y_true), "k-", alpha=0.3, label="True series")
+ax.plot(np.asarray(ii_obs), np.asarray(y_obs_ts), "ko", ms=4, label="Observed")
+ax.errorbar(t_mis, est, yerr=[est - lo, hi - est], fmt="rs", capsize=3, label="Imputed (mean, 94% CI)")
+ax.plot(t_mis, np.asarray(y_mis_true), "b*", ms=12, label="True masked")
+ax.set_xlabel("t"); ax.set_ylabel("y"); ax.legend()
+plt.show()
 ```
 
 ## R
@@ -368,7 +427,7 @@ jnp <- reticulate::import("jax.numpy")
 # 1. DGP: Simulate a random-walk time series of length 25 with known step noise
 N_total <- 25L
 true_sigma <- 0.5
-steps <- m$dist$normal(0.0, true_sigma, shape = c(N_total), sample = TRUE, seed = 42L)
+steps <- m$dist$normal(0.0, true_sigma, shape = reticulate::tuple(N_total), sample = TRUE, seed = 42L)
 y_true <- jnp$cumsum(steps)
 
 # 2. Masking: Mask 3 interior time steps (indices 4, 10, 15)
@@ -383,7 +442,7 @@ m$data_on_model <- list(y_obs = y_obs_ts, ii_obs = ii_obs, N_mis = N_mis, ii_mis
 # 3. Inference: Splice observed and latent missing points via JAX .at[].set()
 sliced_missing_model <- function(y_obs, ii_obs, N_mis, ii_mis, N_total) {
     sigma <- m$dist$gamma(1, 1, name = "sigma")
-    y_mis <- m$dist$normal(0, 10, shape = c(N_mis), name = "y_mis")
+    y_mis <- m$dist$normal(0, 10, shape = reticulate::tuple(N_mis), name = "y_mis")
 
     y_full <- jnp$zeros(N_total)
     y_full <- y_full$at[ii_obs]$set(y_obs)
@@ -396,9 +455,20 @@ sliced_missing_model <- function(y_obs, ii_obs, N_mis, ii_mis, N_total) {
 m$fit(sliced_missing_model, progress_bar = FALSE)
 summ <- m$summary()
 
-# 4. Comparison: Estimated vs True masked time steps
-print(summ)
-print(y_mis_true)
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+np <- reticulate::import("numpy")
+draws <- np$asarray(m$posteriors[["y_mis"]])         # (draws, 3)
+est <- colMeans(draws)
+lo <- apply(draws, 2, quantile, 0.03); hi <- apply(draws, 2, quantile, 0.97)
+yt <- as.numeric(np$asarray(y_true)); t_mis <- c(4, 10, 15)
+plot(0:(N_total - 1), yt, type = "l", col = "grey60", xlab = "t", ylab = "y",
+     ylim = range(yt, lo, hi))
+points(as.numeric(np$asarray(ii_obs)), as.numeric(np$asarray(y_obs_ts)), pch = 19, cex = 0.7)
+points(t_mis, est, col = "red", pch = 15)
+arrows(t_mis, lo, t_mis, hi, angle = 90, code = 3, length = 0.05, col = "red")
+points(t_mis, as.numeric(np$asarray(y_mis_true)), col = "blue", pch = 8, cex = 1.5)
+legend("topleft", c("True series", "Observed", "Imputed (94% CI)", "True masked"),
+       col = c("grey60", "black", "red", "blue"), pch = c(NA, 19, 15, 8), lty = c(1, NA, NA, NA), bty = "n")
 ```
 
 ## Julia
@@ -440,9 +510,23 @@ end
 m.fit(sliced_missing_model, progress_bar=false)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True masked time steps
-println(summ)
-println("True masked y_mis: ", y_mis_true)
+
+
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+using Statistics
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+draws = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["y_mis"]))   # (draws, 3)
+est = vec(mean(draws, dims=1))
+lo = [quantile(c, 0.03) for c in eachcol(draws)]; hi = [quantile(c, 0.97) for c in eachcol(draws)]
+yt = pyconvert(Vector{Float64}, np.asarray(y_true))
+t_mis = pyconvert(Vector{Int}, np.asarray(ii_mis)); t_obs = pyconvert(Vector{Int}, np.asarray(ii_obs))
+plt.figure(figsize=(7, 3.5))
+plt.plot(0:(N_total-1), yt, "k-", alpha=0.3, label="True series")
+plt.plot(t_obs, yt[t_obs .+ 1], "ko", ms=4, label="Observed")
+plt.errorbar(t_mis, est, yerr=pylist([est .- lo, hi .- est]), fmt="rs", capsize=3, label="Imputed (mean, 94% CI)")
+plt.plot(t_mis, yt[t_mis .+ 1], "b*", ms=12, label="True masked")
+plt.xlabel("t"); plt.ylabel("y"); plt.legend()
+plt.show()
 ```
 :::
 
@@ -453,7 +537,7 @@ This example corresponds to the **Not Missing At Random (NMAR)** mechanism (from
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
 from BayesForge import bf
 import jax.numpy as jnp
 import numpy as np
@@ -490,10 +574,15 @@ def censored_survival_model(x, t_obs, event):
 m.fit(censored_survival_model, progress_bar=False)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-print(f"Censored fraction: {1.0 - event.mean():.1%}")
-print(f"alpha: True = {true_alpha:.2f}, Estimated = {float(summ.loc['alpha', 'mean']):.2f}")
-print(f"beta:  True = {true_beta:.2f}, Estimated = {float(summ.loc['beta', 'mean']):.2f}")
+
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+import matplotlib.pyplot as plt
+fig, axes = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=True)
+for ax, (name, truth) in zip(axes, [("alpha", true_alpha), ("beta", true_beta)]):
+    ax.hist(np.asarray(m.posteriors[name]), bins=40, density=True, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--", label="True")
+    ax.set_title(name); ax.legend()
+plt.show()
 ```
 
 ## R
@@ -533,9 +622,14 @@ censored_survival_model <- function(x, t_obs, event) {
 m$fit(censored_survival_model, progress_bar = FALSE)
 summ <- m$summary()
 
-# 4. Comparison: Estimated vs True values
-print(summ)
-print(c(true_alpha = true_alpha, true_beta = true_beta))
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+np <- reticulate::import("numpy")
+par(mfrow = c(1, 2))
+for (p in list(list("alpha", true_alpha), list("beta", true_beta))) {
+    hist(as.numeric(np$asarray(m$posteriors[[p[[1]]]])), breaks = 40, freq = FALSE, main = p[[1]], xlab = "")
+    abline(v = p[[2]], col = "red", lty = 2, lwd = 2)
+}
+par(mfrow = c(1, 1))
 ```
 
 ## Julia
@@ -577,9 +671,16 @@ end
 m.fit(censored_survival_model, progress_bar=false)
 summ = m.summary()
 
-# 4. Comparison: Estimated vs True values
-println(summ)
-println("True alpha = ", true_alpha, ", True beta = ", true_beta)
+
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+fig, axes = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=true)
+for (ax, (name, truth)) in zip(axes, [("alpha", true_alpha), ("beta", true_beta)])
+    ax.hist(pyconvert(Vector{Float64}, np.asarray(m.posteriors[name])), bins=40, density=true, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--")
+    ax.set_title(name)
+end
+plt.show()
 ```
 :::
 

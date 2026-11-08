@@ -367,8 +367,12 @@ class diagWIP:
                 ``m.diag.priors_name`` (list of posterior variable names).
         """
         if backend == "numpyro":
-            if hasattr(self.sampler, "svi"):
-                # Handle SVI wrapper
+            if hasattr(self.sampler, "svi") or getattr(self.sampler, "az_from_dict", False):
+                # SVI and simulation-based samplers (ABC, NPE; see
+                # SBIPosterior in Samplers/SBI/simulate.py) have no NumPyro MCMC
+                # object, so az.from_numpyro() cannot read them. They expose
+                # get_samples(group_by_chain=True) instead, so we build the trace
+                # from that dict. az_from_dict = True is the opt-in flag.
                 posterior_samples = self.sampler.get_samples(group_by_chain=True)
                 self.trace = _az_from_dict({"posterior": posterior_samples})
             else:

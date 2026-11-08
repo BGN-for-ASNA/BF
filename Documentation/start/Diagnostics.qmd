@@ -108,7 +108,7 @@ m.summary()
 
 # List of all available diagnostics
 
-```{python}
+```{python .lang-only}
 #| echo: false
 from BayesForge.Utils.dev_warning import dev_warning
 ```
@@ -345,7 +345,7 @@ See [`m.diag.plot_ess`](../reference/diag.qmd#plot_ess) for further information 
 
 ## HMC diagnostics: divergences and energy
 
-```{python}
+```{python .lang-only}
 #| echo: false
 dev_warning()
 ```
@@ -796,7 +796,7 @@ See [`m.diag.prior_sensitivity`](../reference/diag.qmd#prior_sensitivity) for fu
 
 ### LOO influence
 
-```{python}
+```{python .lang-only}
 #| echo: false
 dev_warning()
 ```
@@ -854,7 +854,7 @@ See [`m.diag.calibration`](../reference/diag.qmd#calibration) for further inform
 
 ## Multimodality check
 
-```{python}
+```{python .lang-only}
 #| echo: false
 dev_warning()
 ```

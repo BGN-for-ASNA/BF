@@ -319,7 +319,10 @@ def prior_sensitivity(
     Returns:
         plotly Figure (or ``(Figure, DataFrame)`` with ``return_results``).
     """
-    if not callable(model_or_posteriors):
+    # A sequence of posteriors, not a model. Checked first: a Julia vector
+    # reaches Python as a wrapper that is both callable and a Sequence.
+    from collections.abc import Sequence
+    if isinstance(model_or_posteriors, Sequence) or not callable(model_or_posteriors):
         if labels is None:
             labels = [f"fit {i + 1}" for i in range(len(model_or_posteriors))]
         return prior_sensitivity_plot(

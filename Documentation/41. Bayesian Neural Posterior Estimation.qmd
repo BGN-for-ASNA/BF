@@ -267,7 +267,8 @@ m$sbc_coverage(n_test = 200L)
 
 ## Julia
 ```julia
-using BayesForge
+using PyBayesForge
+using PythonCall
 
 # Setup device------------------------------------------------
 m = importBF(platform="cpu")
@@ -288,10 +289,10 @@ end
 
 # Summary statistics ------------------------------------------------
 X = jnp.stack([jnp.ones(length(m.df.weight)), jnp.array(m.df.weight)], axis = 1)
-function ols(height)
-    coef = jnp.linalg.lstsq(X, height)[1]
-    jnp.stack([coef[1], coef[2], jnp.std(height - X * coef)])
-end
+# summary_stats is traced by JAX: it must be a Python function, not a Julia one
+ols = pyeval(Py,
+    "lambda height: (lambda coef: jnp.stack([coef[0], coef[1], jnp.std(height - X @ coef)]))(jnp.linalg.lstsq(X, height)[0])",
+    pydict(Dict("jnp" => jnp, "X" => X)))
 
 # Run Bayesian NPE ------------------------------------------------
 m.npe(model, summary_stats = ols, num_simulations = 1_000, bayesian = true)
