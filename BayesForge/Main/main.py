@@ -330,24 +330,35 @@ class bf(manip):
         self._rng.set_seed(seed)
         self.seed = seed
 
-    def latex(self):
+    def latex(self, model=None, data=None):
         """Write the fitted model as LaTeX equations (one line per prior and likelihood).
 
-        The equations are built from the model's Python source and displayed in
-        notebooks. Works for models written in Python.
+        The equations are built from the model's Python AST (expanding JAX, link,
+        and BF building-block calls into mathematical notation) or from an
+        execution trace when Python source is unavailable (e.g. R/Julia models).
+
+        Args:
+            model: Optional model function to render. Defaults to ``self.model``.
+            data: Optional dict of model inputs (defaults to ``self.data_on_model``
+                when rendering ``self.model``).
 
         Returns:
             str: A LaTeX ``align*`` environment.
         """
         from BayesForge.PostModel.to_latex import to_latex
 
-        return to_latex(self.model)
+        if model is None:
+            model = self.model
+        if data is None and model is getattr(self, "model", None):
+            data = getattr(self, "data_on_model", None)
+        return to_latex(model, data=data)
 
-    def graph(self, model=None, figsize=(8, 6), title=None, draw=True):
+    def graph(self, model=None, figsize=(8, 6), title=None, draw=True, data=None):
         """Build (and draw) the directed graph of a probabilistic model.
 
-        Parses the model's source to reconstruct latent, observed,
-        deterministic and data nodes and the dependencies between them.
+        Combines AST analysis and execution-based JAX tracing to reconstruct
+        latent, observed, deterministic and data nodes and the dependencies
+        between them.
 
         Args:
             model: Model function to graph. Defaults to the current model.
@@ -355,6 +366,8 @@ class bf(manip):
             title: Optional plot title.
             draw: If True (default) render with matplotlib; otherwise just
                 return the :class:`ModelGraph` object.
+            data: Optional dict of model inputs (defaults to ``self.data_on_model``
+                when graphing ``self.model``).
 
         Returns:
             The :class:`ModelGraph` instance (inspect ``.nodes``/``.edges``).
@@ -363,7 +376,9 @@ class bf(manip):
 
         if model is None:
             model = self.model
-        g = model_to_graph(model)
+        if data is None and model is getattr(self, "model", None):
+            data = getattr(self, "data_on_model", None)
+        g = model_to_graph(model, data=data)
         if draw:
             g.draw(figsize=figsize, title=title)
         return g
@@ -1799,16 +1814,21 @@ class bf(manip):
             X: Data to plot.
             y: Target variable. Defaults to None.
             figsize: Figure size. Defaults to (10, 6).
-            **kwargs: Additional keyword arguments.
+            **kwargs: Additional keyword arguments. A ``sampler`` keyword
+                overrides the fitted sampler held by the model.
         """
+        sampler = kwargs.pop("sampler", self.sampler)
+
         if self.run_model_name == "gmm":
-            return plot_gmm(X, sampler=self.sampler, figsize=figsize)
+            return plot_gmm(X, sampler=sampler, figsize=figsize,
+                            **kwargs)
 
         elif self.run_model_name == "dpmm":
-            return self.models.dpmm.plot(X, sampler=self.sampler, figsize=figsize)
+            return self.models.dpmm.plot(X, sampler=sampler,
+                                         figsize=figsize, **kwargs)
 
         elif self.run_model_name == "bnnc":
-            return self.models.bnnc.plot(X, sampler=self.sampler, figsize=figsize)
+            return self.models.bnnc.plot(X, sampler=sampler, figsize=figsize)
 
         elif self.run_model_name == "pca":
             return self.models.pca.plot()

@@ -239,8 +239,25 @@ html.quarto-light *,
   transition: height 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Premium Content & TOC Page Load Animations (Cohesive Fade & Slide Up) */
+/* Premium Content & TOC Page Load Animations (Cohesive Fade & Slide Up)
+ *
+ * `#quarto-document-content` gets the fade ONLY -- never a transform, and
+ * never `will-change: transform`. A transformed ancestor becomes the
+ * offsetParent of every <section> inside it, so Quarto's TOC scroll-spy
+ * compares `window.pageYOffset` with `section.offsetTop` measured from the
+ * top of the content block instead of from the document. The "On this
+ * page" highlight then jumps to / stays on the wrong entry while scrolling.
+ * The slide-up is kept on #TOC only: it contains no <section> targets. */
 @keyframes contentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tocSlideIn {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -251,8 +268,22 @@ html.quarto-light *,
   }
 }
 
-#quarto-document-content,
-#TOC {
+#quarto-document-content {
   animation: contentFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
+}
+
+#TOC {
+  animation: tocSlideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ------------------------------------------------------------------
+ * "On this page" TOC: yellow active highlight instead of the theme
+ * default (Bootstrap blue #0d6efd in light, solar teal in dark).
+ * `#TOC` wins over Quarto's `.sidebar nav[role="doc-toc"] ... a.active`
+ * rule (id selector + !important).
+ * ------------------------------------------------------------------ */
+#TOC .nav-link.active,
+#TOC .nav-link:hover {
+  color: #B58900 !important;
+  border-left-color: #B58900 !important;
 }

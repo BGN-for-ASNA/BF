@@ -2,4 +2,4 @@
 # nbformat, nbclient, jupyter-client, ipykernel) to execute {python} cells.
 # The system /usr/bin/python3 has no Jupyter, which makes executable docs
 # fail to start a kernel ("No module named 'nbformat'") during render.
-QUARTO_PYTHON=/usr/bin/python3.13
+QUARTO_PYTHON=/home/sosa/venv-bf/bin/python

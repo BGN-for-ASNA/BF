@@ -115,12 +115,16 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
 _FEATURES_LINKS_HTML = """
         <li class="darkerli"><span class="nav-text">Min edge weight</span>
           <form><div><span>0</span>
-            <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
-            <span id="edgeThreshV">0</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
+            </div>
+            <span id="edgeThreshV" style="min-width: 32px; text-align: right;">0</span></div></form></li>
         <li class="darkerlishadowdown" id="liArrow"><span class="nav-text">Arrow size</span>
           <form><div><span>0</span>
-            <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
-            <span id="arrowSizeV">9</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
+            </div>
+            <span id="arrowSizeV" style="min-width: 32px; text-align: right;">9</span></div></form></li>
 """
 
 _FEATURES_HTML = """
@@ -360,10 +364,12 @@ _FEATURES_JS = r"""
   /* fit to view --------------------------------------- */
   var bf = document.getElementById('btnFit');
   if (bf) bf.onclick = function () {
-    var xs = G.nodes.map(function (d) { return d.x; }), ys = G.nodes.map(function (d) { return d.y; });
+    var xs = G.nodes.map(function (d) { return d.x; }).filter(isFinite),
+        ys = G.nodes.map(function (d) { return d.y; }).filter(isFinite);
+    if (!xs.length) return;
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs),
         y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 45;
+    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 65;
     var k = Math.min((width - 2 * pad) / w, (height - 2 * pad) / hh, 4);
     var tx = width / 2 - k * (x0 + x1) / 2, ty = height / 2 - k * (y0 + y1) / 2;
     gSel.transition().duration(400).attr('transform', 'translate(' + tx + ',' + ty + ') scale(' + k + ')');
@@ -515,6 +521,128 @@ _FEATURES_JS = r"""
     svgEl.addEventListener('pointermove', function (e) { if (e.buttons) schedule(); });
     svgEl.addEventListener('pointerup', schedule);
     drawCanvas();
+  }
+
+  /* resizable left panel (splitter drag) -------------------------- */
+  var resizer = document.getElementById('menuResizer');
+  var menu = document.querySelector('.main-menu');
+  if (resizer && menu) {
+    var isDragging = false;
+    var startX = 0;
+    var startW = 0;
+
+    resizer.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      isDragging = true;
+      startX = e.clientX;
+      startW = menu.getBoundingClientRect().width;
+      resizer.classList.add('is-resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      var newW = Math.max(200, Math.min(startW + (e.clientX - startX), window.innerWidth * 0.85));
+      document.documentElement.style.setProperty('--panel-w', newW + 'px');
+      menu.style.flex = '0 0 ' + newW + 'px';
+      menu.style.width = newW + 'px';
+      if (typeof autoFit === 'function') autoFit();
+    });
+
+    window.addEventListener('mouseup', function () {
+      if (isDragging) {
+        isDragging = false;
+        resizer.classList.remove('is-resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  }
+
+  /* slider value tooltips (floating bubbles) --------------------- */
+  function formatBubbleVal(v) {
+    var num = parseFloat(v);
+    if (isNaN(num)) return v;
+    if (Math.abs(num) >= 1000) {
+      if (num % 1000 === 0) return (num / 1000) + 'k';
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    if (Number.isInteger(num)) return '' + num;
+    var s = num.toFixed(3);
+    return s.replace(/\.?0+$/, '');
+  }
+
+  var rangeSliders = document.querySelectorAll('input[type="range"]');
+  rangeSliders.forEach(function (slider) {
+    var bubble = document.createElement('div');
+    bubble.className = 'slider-bubble';
+    var parent = slider.parentElement;
+    if (parent) {
+      if (parent.style.position !== 'relative' && parent.style.position !== 'absolute') {
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(bubble);
+    }
+
+    function updateBubble() {
+      bubble.textContent = formatBubbleVal(slider.value);
+      var min = parseFloat(slider.min) || 0;
+      var max = parseFloat(slider.max) || 100;
+      var val = parseFloat(slider.value) || 0;
+      var pct = max > min ? (val - min) / (max - min) : 0;
+      // Compenser la largeur du pouce (15px thumb)
+      var thumbW = 15;
+      var sliderW = slider.offsetWidth || 100;
+      var px = pct * (sliderW - thumbW) + (thumbW / 2);
+      bubble.style.left = px + 'px';
+    }
+
+    function showBubble() {
+      updateBubble();
+      bubble.classList.add('visible');
+    }
+
+    function hideBubble() {
+      bubble.classList.remove('visible');
+    }
+
+    slider.addEventListener('input', updateBubble);
+    slider.addEventListener('focus', showBubble);
+    slider.addEventListener('blur', hideBubble);
+    slider.addEventListener('mouseenter', showBubble);
+    slider.addEventListener('mouseleave', hideBubble);
+    slider.addEventListener('mousedown', showBubble);
+  });
+
+  /* loading spinner dismissal ------------------------------------ */
+  var loader = document.getElementById('netLoader');
+  if (loader) {
+    function hideLoader() {
+      if (loader && !loader.classList.contains('is-hidden')) {
+        loader.classList.add('is-hidden');
+        setTimeout(function () {
+          if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 500);
+      }
+    }
+
+    if (typeof simulation !== 'undefined') {
+      // D3 force simulation: hide spinner when simulation ends, or on tick when alpha is low enough
+      var tickCount = 0;
+      simulation.on('tick.loader', function () {
+        tickCount++;
+        // Once the network has stabilized a few frames or reached low energy
+        if (tickCount > 15 || simulation.alpha() < 0.1) {
+          simulation.on('tick.loader', null);
+          hideLoader();
+        }
+      });
+      simulation.on('end.loader', hideLoader);
+    }
+    // Safety fallback: ensure spinner never stays visible indefinitely
+    setTimeout(hideLoader, 1200);
   }
 })();
 """
@@ -841,7 +969,12 @@ class NetExplorer:
             if not pd.api.types.is_numeric_dtype(d[c]):
                 raise TypeError("col_size column must be numeric")
             ori_size = c
-            d["size"] = d[c].astype(float)
+            s = d[c].to_numpy(dtype=float)
+            fin = np.isfinite(s)
+            if fin.any() and s[fin].min() <= 0:
+                lo, hi = float(s[fin].min()), float(s[fin].max())
+                s = np.where(fin, 1.0 + 4.0 * (s - lo) / (hi - lo if hi > lo else 1.0), 1.0)
+            d["size"] = s
         else:
             ori_size = None
             d["size"] = 1.0
@@ -1622,12 +1755,16 @@ class NetExplorer:
         # pin nodes to whichever precomputed layout is selected + arc link paths
         pin_js = """
     {
-      // map pos[layout] in [0,1] onto a centred square so aspect is preserved
+      // map pos[layout] in [0,1] onto a centred square so aspect is preserved, scaled by Spread slider (dist)
       var _pk = Layout.toLowerCase(),
           _navW = 250, _pad = 40,
-          _S = Math.min(width - _navW, height) - 2 * _pad,
-          _ox = _navW + (width - _navW - _S) / 2,
-          _oy = (height - _S) / 2;
+          _spread = (typeof dist !== 'undefined' && dist > 0) ? (dist / 500) : 1,
+          _baseS = Math.min(width - _navW, height) - 2 * _pad,
+          _S = _baseS * _spread,
+          _cx = _navW + (width - _navW) / 2,
+          _cy = height / 2,
+          _ox = _cx - _S / 2,
+          _oy = _cy - _S / 2;
       if (!window.ScatterMode) graph.nodes.forEach(function(d) {
         var p = d.pos && d.pos[_pk];
         if (p) { d.x = _ox + p[0] * _S; d.y = _oy + p[1] * _S; d.fx = d.x; d.fy = d.y; }

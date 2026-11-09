@@ -34,7 +34,12 @@ __all__ = [
 ]
 
 # layouts whose coordinates come from here (page pins to lx/ly)
-PINNED = ("clustered", "spectral", "mds", "radial", "arc", "layered", "geo")
+# Note: "clustered" is temporarily outcommented
+PINNED = (# "clustered",
+    # "mds",
+    "spectral", "radial", "arc", "layered", "geo"
+)
+
 
 
 # --------------------------------------------------------------------- #

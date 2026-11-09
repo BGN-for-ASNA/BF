@@ -122,7 +122,7 @@ m.models.survival.hazard_rate_prior_scale = 10.0
 
 # 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals
 # make the geometry stiff, so a high acceptance target keeps mixing healthy.
-m.fit(m.models.survival.model, num_samples=2000, num_warmup=2000,
+m.fit(m.models.survival.model, num_samples=100, num_warmup=100,
       num_chains=4, target_accept_prob=0.99, progress_bar=False)
 
 m.summary()
@@ -170,7 +170,7 @@ m$models$survival$hazard_rate_prior_scale <- 10.0
 
 # 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals
 # make the geometry stiff, so a high acceptance target keeps mixing healthy.
-m$fit(m$models$survival$model, num_samples = 2000L, num_warmup = 2000L,
+m$fit(m$models$survival$model, num_samples = 100L, num_warmup = 100L,
       num_chains = 4L, target_accept_prob = 0.99, progress_bar = FALSE)
 
 print(m$summary())
@@ -218,7 +218,7 @@ m.models.survival.hazard_rate_prior_scale = 10.0
 
 # 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals
 # make the geometry stiff, so a high acceptance target keeps mixing healthy.
-m.fit(m.models.survival.model, num_samples=2000, num_warmup=2000,
+m.fit(m.models.survival.model, num_samples=100, num_warmup=100,
       num_chains=4, target_accept_prob=0.99, progress_bar=false)
 
 println(m.summary())
@@ -249,7 +249,7 @@ data, true_labels = make_blobs(
 
 m.data_on_model = {"data": data, "K": 8}
 m.fit(m.models.gmm, progress_bar=False)  # MCMC over the mixture parameters
-_ = m.plot(X=data, sampler=m.sampler)    # ⚠️ Experimental feature
+m.plot(X=data, sampler=m.sampler)    # ⚠️ Experimental feature
 ```
 
 ## R
@@ -312,7 +312,7 @@ data, true_labels = make_blobs(
 m.data_on_model = dict(data=data, T=10, method='marginal')
 m.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,
       progress_bar=False)
-_ = m.plot(data, m.sampler)
+m.plot(data, m.sampler)
 ```
 
 ## R
@@ -392,7 +392,27 @@ def sim_network(kinship, individual_predictor):
 
 network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
 
-m.net.viz(m.net.edgl_to_mat(network))
+# Predictive model ------------------------------------------------
+m.data_on_model = dict(
+    network = network,
+    dyadic_predictors = m.net.mat_to_edgl(kinship),
+    focal_individual_predictors = individual_predictor,
+    target_individual_predictors = individual_predictor
+)
+
+def model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors):
+    N_id = network.shape[0]
+    alpha = m.dist.normal(0, 1, name="alpha")
+    sr = m.net.sender_receiver(
+        focal_individual_predictors,
+        target_individual_predictors,
+        s_mu=0.4, r_mu=-0.4
+    )
+    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)
+    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)
+
+m.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=False)
+m.summary()
 ```
 
 ## R
@@ -407,25 +427,34 @@ N <- 50L
 individual_predictor <- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)
 
 kinship <- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)
-diag <- jnp$diag_indices(N)  # (rows, cols)
+diag <- jnp$diag_indices(N)
 kinship <- kinship$at[diag[[1]], diag[[2]]]$set(0L)
 
 sim_network <- function(kinship, individual_predictor) {
-  # Intercept
   alpha <- -8
-
-  # SR
   sr <- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)
-
-  # D
   DR <- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)
-
   m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)
 }
 
 network <- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)
 
-m$net$viz(m$net$edgl_to_mat(network))
+m$data_on_model <- list(
+  network = network,
+  dyadic_predictors = m$net$mat_to_edgl(kinship),
+  focal_individual_predictors = individual_predictor,
+  target_individual_predictors = individual_predictor
+)
+
+model <- function(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors) {
+  alpha <- m$dist$normal(0, 1, sample = TRUE)
+  sr <- m$net$sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu = 0.4, r_mu = -0.4)
+  dr <- m$net$dyadic_effect(dyadic_predictors, d_sd = 1.0)
+  m$dist$bernoulli(logits = alpha + sr + dr, obs = network)
+}
+
+m$fit(model, num_samples = 500L, num_warmup = 500L, num_chains = 1L, progress_bar = FALSE)
+m$summary()
 ```
 
 ## Julia
@@ -443,20 +472,169 @@ kinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)
 kinship = kinship.at[jnp.diag_indices(N)].set(0)
 
 function sim_network(kinship, individual_predictor)
-    # Intercept
     alpha = -8
-
-    # SR
     sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)
-
-    # D
     DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)
-
     return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)
 end
 
 network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
 
-@pyplot m.net.viz(m.net.edgl_to_mat(network))
+m.data_on_model = pydict(
+    network=network,
+    dyadic_predictors=m.net.mat_to_edgl(kinship),
+    focal_individual_predictors=individual_predictor,
+    target_individual_predictors=individual_predictor
+)
+
+function model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors)
+    alpha = m.dist.normal(0, 1, name="alpha")
+    sr = m.net.sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu=0.4, r_mu=-0.4)
+    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)
+    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)
+end
+
+m.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=false)
+m.summary()
+```
+:::
+
+# Network Visualization
+
+::: {.panel-tabset group="language"}
+## Python
+```{python}
+#| warning: false
+from BayesForge import bf
+import jax.numpy as jnp
+import numpy as np
+import pandas as pd
+
+# Setup device------------------------------------------------
+m = bf(platform='cpu')
+N = 50
+individual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=True)
+
+kinship = m.dist.bernoulli(0.3, shape=(N, N), sample=True)
+kinship = kinship.at[jnp.diag_indices(N)].set(0)
+
+def sim_network(kinship, individual_predictor):
+    alpha = -4
+    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=True)
+    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=True)
+    return m.dist.bernoulli(logits=alpha + sr + DR, sample=True)
+
+network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
+adj = m.net.edgl_to_mat(network)
+
+# Individual characteristics of the nodes ------------------------------------
+rng = np.random.default_rng(1)
+nodes = pd.DataFrame({
+    "id": [f"n{i}" for i in range(N)],
+    "predictor": np.asarray(individual_predictor).ravel(),
+    "sex": rng.choice(["female", "male"], N),
+    "group": rng.choice(["A", "B", "C"], N),
+    "age": rng.integers(1, 30, N),
+    "rank": rng.uniform(0, 1, N),
+})
+
+# Interactive network: each node feature drives one visual channel
+m.net.viz(
+    nodes, adj,
+    col_id="id",
+    col_size="predictor",                                      # node size
+    col_color="group", color_node=("#1b9e77", "#d95f02"),      # node fill colour
+    col_stroke="age",                                          # border width
+    col_strokeColor="rank", color_stroke=("white", "black"),   # border colour
+    col_shape="sex", shapes=("circle", "square"),              # node shape
+)
+```
+
+## R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+np <- reticulate::import("numpy")
+
+m <- importBF(platform = "cpu")
+N <- 50L
+individual_predictor <- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)
+
+kinship <- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)
+diag <- jnp$diag_indices(N)
+kinship <- kinship$at[diag[[1]], diag[[2]]]$set(0L)
+
+sim_network <- function(kinship, individual_predictor) {
+  alpha <- -4
+  sr <- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)
+  DR <- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)
+  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)
+}
+
+network <- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)
+adj <- m$net$edgl_to_mat(network)
+
+nodes <- data.frame(
+  id = paste0("n", 0:(N - 1)),
+  predictor = as.vector(individual_predictor),
+  sex = sample(c("female", "male"), N, replace = TRUE),
+  group = sample(c("A", "B", "C"), N, replace = TRUE),
+  age = sample(1:29, N, replace = TRUE),
+  rank = runif(N, 0, 1)
+)
+
+m$net$viz(
+  nodes, adj,
+  col_id = "id",
+  col_size = "predictor",
+  col_color = "group", color_node = c("#1b9e77", "#d95f02"),
+  col_stroke = "age",
+  col_strokeColor = "rank", color_stroke = c("white", "black"),
+  col_shape = "sex", shapes = c("circle", "square")
+)
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+np = pyimport("numpy")
+pd = pyimport("pandas")
+
+m = importBF(platform="cpu")
+N = 50
+individual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)
+
+kinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)
+kinship = kinship.at[jnp.diag_indices(N)].set(0)
+
+function sim_network(kinship, individual_predictor)
+    alpha = -4
+    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)
+    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)
+    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)
+end
+
+network = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)
+adj = m.net.edgl_to_mat(network)
+
+nodes = pd.DataFrame(pydict(
+    id=[string("n", i) for i in 0:(N-1)],
+    predictor=np.asarray(individual_predictor).ravel(),
+    sex=rand(["female", "male"], N),
+    group=rand(["A", "B", "C"], N),
+    age=rand(1:29, N),
+    rank=rand(N)
+))
+
+@pyplot m.net.viz(
+    nodes, adj,
+    col_id="id",
+    col_size="predictor",
+    col_color="group", color_node=("#1b9e77", "#d95f02"),
+    col_stroke="age",
+    col_strokeColor="rank", color_stroke=("white", "black"),
+    col_shape="sex", shapes=("circle", "square")
+)
 ```
 :::

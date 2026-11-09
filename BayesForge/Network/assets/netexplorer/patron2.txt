@@ -178,7 +178,18 @@ var dist = 500
 
          simulation.alpha(0.5).restart();
        }
+       // MDS, Layered, Arc, Radial and other pinned layouts
+       if(['Circle', 'Linear', 'Multilayer', 'Force', 'Chord'].indexOf(Layout) === -1){
+         dist = size;
+         ticked(dist);
+         simulation.alpha(0.3).restart();
+       }
      }
+
+     d3.select("#sliderNSpace").on("input", function(d){
+               selectedValue = this.value
+               changeNodeSpace(selectedValue)
+     })
 
      d3.select("#sliderNSpace").on("change", function(d){
                selectedValue = this.value
@@ -186,6 +197,11 @@ var dist = 500
      })
 
      d3.select("#sliderNSpaceV").on("input", function(d){
+               selectedValue = this.value
+               changeNodeSpace(selectedValue)
+     })
+
+     d3.select("#sliderNSpace2").on("input", function(d){
                selectedValue = this.value
                changeNodeSpace(selectedValue)
      })

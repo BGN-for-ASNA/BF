@@ -30,6 +30,7 @@ Usage::
 
 import functools
 import inspect
+import re
 from dataclasses import dataclass, field
 
 import jax
@@ -92,7 +93,10 @@ def _model_code(model):
     fn = model
     while isinstance(fn, functools.partial):
         fn = fn.func
-    fn = inspect.unwrap(fn)
+    try:
+        fn = inspect.unwrap(fn)
+    except Exception:
+        pass
     return getattr(fn, "__code__", None)
 
 
@@ -105,6 +109,15 @@ def _base_dist(d):
 def dist_label(d):
     """User-facing distribution name of a NumPyro distribution object."""
     return type(_base_dist(d)).__name__
+
+
+def dist_snake_name(label):
+    """Convert CamelCase distribution class name to BF snake_case label."""
+    if not label:
+        return None
+    # e.g. LKJCholesky -> lkj_cholesky, MultivariateNormal -> multivariate_normal
+    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", label)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 def _param_leaves(d):
@@ -157,25 +170,51 @@ def _split_data(data):
     return arrays, static
 
 
+def _is_literal(v):
+    return type(v).__name__ == "Literal"
+
+
+def _propagate_jaxpr(jaxpr, in_sets, const_sets=()):
+    """Propagate input dependency sets through a Jaxpr to its outputs."""
+    deps = {}
+    for var, s in zip(getattr(jaxpr, "constvars", ()), const_sets):
+        if not _is_literal(var):
+            deps[var] = set(s)
+    for var, s in zip(jaxpr.invars, in_sets):
+        if not _is_literal(var):
+            deps[var] = set(s)
+    for eqn in jaxpr.eqns:
+        in_deps = [set() if _is_literal(v) else deps.get(v, set())
+                   for v in eqn.invars]
+        sub = eqn.params.get("jaxpr") or eqn.params.get("call_jaxpr")
+        sub_jaxpr = getattr(sub, "jaxpr", sub) if sub is not None else None
+        if (sub_jaxpr is not None
+                and hasattr(sub_jaxpr, "invars")
+                and len(sub_jaxpr.invars) == len(eqn.invars)
+                and len(sub_jaxpr.outvars) == len(eqn.outvars)
+                and not getattr(sub_jaxpr, "constvars", ())):
+            out_deps = _propagate_jaxpr(sub_jaxpr, in_deps)
+            for v, od in zip(eqn.outvars, out_deps):
+                if not _is_literal(v):
+                    deps[v] = od
+        else:
+            union_s = set().union(*in_deps) if in_deps else set()
+            for v in eqn.outvars:
+                if not _is_literal(v):
+                    deps[v] = union_s
+    return [set() if _is_literal(v) else deps.get(v, set())
+            for v in jaxpr.outvars]
+
+
 def _jaxpr_dependencies(jaxpr, input_names):
     """Forward dataflow: for each jaxpr output, the set of input names it uses.
 
-    Equations with sub-jaxprs (scan, while, cond, pjit, custom_jvp...) are
-    treated conservatively: every output depends on every input of the
-    equation. That can over-approximate inside a scan but never misses an
-    edge.
+    Equations with sub-jaxprs (pjit, scan, while, cond, custom_jvp...) are
+    propagated per-output when the sub-jaxpr signature matches, and treated
+    conservatively (union of inputs) otherwise.
     """
-    deps = {}
-    for var, name in zip(jaxpr.invars, input_names):
-        deps[var] = {name}
-    for eqn in jaxpr.eqns:
-        s = set()
-        for v in eqn.invars:
-            s |= deps.get(v, set()) if not isinstance(v, jax.core.Literal) else set()
-        for v in eqn.outvars:
-            deps[v] = s
-    return [set() if isinstance(v, jax.core.Literal) else deps.get(v, set())
-            for v in jaxpr.outvars]
+    in_sets = [{name} for name in input_names]
+    return _propagate_jaxpr(jaxpr, in_sets)
 
 
 @dataclass
@@ -201,7 +240,8 @@ def trace_model(model, data=None, seed=0):
     data = dict(data or {})
     code = _model_code(model)
 
-    # 1. Forward run: sites, distributions, shapes, plates, source lines.
+    # 1. Forward run: sites, distributions, shapes, plates, source lines,
+    #    and concrete parameter values.
     rec = _LineRecorder(model, code)
     with handlers.seed(rng_seed=seed):
         tr = handlers.trace(rec).get_trace(**data)
@@ -214,6 +254,9 @@ def trace_model(model, data=None, seed=0):
             if s["fn"] is None:
                 continue
             d = s["fn"]
+            pnames, leaves = _param_leaves(d)
+            params = [Param(pn, np.asarray(leaf), set())
+                      for pn, leaf in zip(pnames, leaves)]
             sites[name] = Site(
                 name=name,
                 kind=OBSERVED if observed else LATENT,
@@ -221,6 +264,7 @@ def trace_model(model, data=None, seed=0):
                 shape=tuple(np.shape(s["value"])),
                 plates=tuple(f.name for f in reversed(s.get("cond_indep_stack", []))),
                 line=rec.lines.get(name),
+                params=params,
                 discrete=bool(getattr(_base_dist(d), "is_discrete", False)),
             )
             if not observed:
@@ -238,7 +282,7 @@ def trace_model(model, data=None, seed=0):
     #    outputs are every site's distribution parameters (or, for a
     #    deterministic site, the value it was computed from).
     arrays, static = _split_data(data)
-    out_index = []        # (site name, param name) per flat output
+    out_index = []        # (site name, param index or -1) per flat output
 
     def mapping(site_values, array_data):
         out_index.clear()
@@ -246,7 +290,7 @@ def trace_model(model, data=None, seed=0):
         kwargs = {**static, **array_data}
         # Deterministic sites are substituted only AFTER their own value has
         # been recorded, so their inputs are traced too: record the raw value
-        # passed to numpyro.deterministic through a messenger.
+        # passed to numpyro.deterministic through a messenger inside substitute.
         raw = {}
 
         class _RawDeterministic(Messenger):
@@ -263,17 +307,16 @@ def trace_model(model, data=None, seed=0):
             if name not in sites:
                 continue
             if s["type"] == "sample" and s["fn"] is not None:
-                pnames, leaves = _param_leaves(s["fn"])
-                for pn, leaf in zip(pnames, leaves):
-                    out_index.append((name, pn))
+                _, leaves = _param_leaves(s["fn"])
+                for idx, leaf in enumerate(leaves):
+                    out_index.append((name, idx))
                     outs.append(jnp.asarray(leaf))
             elif s["type"] == "deterministic" and name in raw:
-                out_index.append((name, "value"))
+                out_index.append((name, -1))
                 outs.append(jnp.asarray(raw[name]))
         return outs
 
     in_names = []
-    flat_vals, _ = jax.tree_util.tree_flatten((values, arrays))
     # tree_flatten sorts dict keys: rebuild the matching name list.
     for k in sorted(values):
         in_names.append(k)
@@ -284,12 +327,11 @@ def trace_model(model, data=None, seed=0):
     try:
         closed = jax.make_jaxpr(mapping)(values, arrays)
         out_deps = _jaxpr_dependencies(closed.jaxpr, in_names)
-        concrete = mapping(values, arrays)
-        for (name, pname), deps, val in zip(list(out_index), out_deps, concrete):
+        for (name, pidx), deps in zip(list(out_index), out_deps):
             deps = {d for d in deps if d != name}
             parents[name] |= deps
-            if pname != "value":
-                sites[name].params.append(Param(pname, np.asarray(val), deps))
+            if pidx >= 0 and pidx < len(sites[name].params):
+                sites[name].params[pidx].parents |= deps
     except Exception as exc:  # pragma: no cover - reported, not fatal
         import warnings
         warnings.warn(f"model_trace: dependency tracing failed ({exc!r}); "
@@ -300,4 +342,3 @@ def trace_model(model, data=None, seed=0):
     return ModelTrace(sites=sites, parents=parents, data_names=data_names,
                       source_lines=code is not None and any(
                           s.line is not None for s in sites.values()))
-

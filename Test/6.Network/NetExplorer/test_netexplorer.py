@@ -231,19 +231,24 @@ def test_layouts_emit_coords_or_chord():
         layout_col="grp", layout_x="x", layout_y="y",
         out_dir=OUT / "lay_all", browser=False,
     ).path.read_text()
-    for want in ("Force", "Circle", "Linear", "Multilayer", "Clustered", "Spectral",
-                 "MDS", "Radial", "Arc", "Layered", "Geo", "Chord"):
+    for want in ("Force", "Circle", "Linear", "Multilayer", # "Clustered",
+                 "Spectral", # "MDS",
+                 "Radial", "Arc", "Layered", "Geo", "Chord"):
         assert f'"{want}"' in html, (want, "missing from dropdown")
     assert "var Layout = 'Spectral'" in html
     assert '"chord"] = {' in html and "drawChordOnce" in html
     m = re.search(r"'pos':\{([^}]*)\}", html).group(1)
-    for k in ("clustered", "spectral", "mds", "radial", "arc", "layered", "geo"):
+    for k in (# "clustered",
+        "spectral", # "mds", "radial", "arc", "layered", "geo"
+        "radial", "arc", "layered", "geo"
+    ):
         assert f"'{k}':[" in m, (k, "missing from node pos map")
     assert 'id="menuToggle"' in html and "--panel-w" in html  # modernised GUI
 
     # each layout can be the initial one too
     for lay, kw in {
-        "clustered": {"layout_col": "grp"}, "radial": {}, "arc": {},
+        # "clustered": {"layout_col": "grp"},
+        "radial": {}, "arc": {},
         "layered": {}, "chord": {"layout_col": "grp"},
         "geo": {"layout_x": "x", "layout_y": "y"},
     }.items():

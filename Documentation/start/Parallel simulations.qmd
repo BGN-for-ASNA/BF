@@ -415,11 +415,13 @@ filter(r -> !ismissing(r.error), res)
 
 Each worker JIT-compiles the model on its first fit. When the model is built fresh inside `one_sim` (a closure, as in the example above), *every* simulation pays full compilation because the JIT cache key changes each time. Defining it at module level lets a worker reuse its compiled executable across all the simulations it handles — often the single largest speedup available.
 
-To do this, ensure your global model function accepts `m` (the simulation's specific `bf` instance) as an argument, and wrap it in a `lambda` when calling `m.fit`:
+To do this, ensure your global model function accepts `m` (the simulation's specific `bf` instance) as an argument, and bind it with `functools.partial` when calling `m.fit`:
 
 ::: {.panel-tabset group="language"}
 ## Python
 ```{.python .no-test}
+from functools import partial
+
 # 1. Define the model globally, requiring 'm' as an argument
 def linreg(m, x=None, y=None):
     a = m.dist.normal(0.0, 5.0, name="a")
@@ -432,8 +434,8 @@ def one_sim(N, b_true, seed, **_):
     
     # [ simulate x and y here ]
     
-    # 2. Use a lambda to inject 'm' into the global function
-    m.fit(lambda x=x, y=y: linreg(m, x, y), 
+    # 2. Bind 'm' to the global function with functools.partial
+    m.fit(partial(linreg, m),
           obs=dict(x=x, y=y),
           num_warmup=500, num_samples=500, num_chains=1,
           progress_bar=False)
