@@ -409,7 +409,7 @@ def model(network, dyadic_predictors, focal_individual_predictors, target_indivi
         s_mu=0.4, r_mu=-0.4
     )
     dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)
-    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)
+    m.dist.bernoulli(logits=alpha + sr + dr, obs=network, name="y")
 
 m.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=False)
 m.summary()
@@ -447,10 +447,10 @@ m$data_on_model <- list(
 )
 
 model <- function(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors) {
-  alpha <- m$dist$normal(0, 1, sample = TRUE)
+  alpha <- m$dist$normal(0, 1, name = "alpha")
   sr <- m$net$sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu = 0.4, r_mu = -0.4)
   dr <- m$net$dyadic_effect(dyadic_predictors, d_sd = 1.0)
-  m$dist$bernoulli(logits = alpha + sr + dr, obs = network)
+  m$dist$bernoulli(logits = alpha + sr + dr, obs = network, name = "y")
 }
 
 m$fit(model, num_samples = 500L, num_warmup = 500L, num_chains = 1L, progress_bar = FALSE)
@@ -487,11 +487,11 @@ m.data_on_model = pydict(
     target_individual_predictors=individual_predictor
 )
 
-function model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors)
+@BF function model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors)
     alpha = m.dist.normal(0, 1, name="alpha")
     sr = m.net.sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu=0.4, r_mu=-0.4)
     dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)
-    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)
+    m.dist.bernoulli(logits=alpha + sr + dr, obs=network, name="y")
 end
 
 m.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=false)
