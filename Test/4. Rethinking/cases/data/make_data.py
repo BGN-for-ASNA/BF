@@ -54,6 +54,28 @@ def make_multinomial():
     df.to_csv(Path(__file__).parent / '8.Multinomial.csv', index=False)
 
 
+def make_multinomial_fixed_income():
+    """Reproduces the simulation of '8b.Multinomial fixed income.py' (np.random.seed(42))."""
+    import jax
+    import jax.numpy as jnp
+
+    np.random.seed(42)
+    N = 200
+    n_trials = 20
+    X = np.random.normal(0, 1, size=N)
+    phi = np.column_stack([0.5 + 1.0 * X, -0.5 + 0.5 * X, np.zeros(N)])
+    theta = np.asarray(jax.nn.softmax(jnp.array(phi), axis=1), dtype=np.float64)
+    theta = theta / theta.sum(axis=1, keepdims=True)
+    Y = np.array([np.random.multinomial(n_trials, theta[i]) for i in range(N)])
+    df = pd.DataFrame({
+        'X': X,
+        'Y0': Y[:, 0],
+        'Y1': Y[:, 1],
+        'Y2': Y[:, 2],
+    })
+    df.to_csv(Path(__file__).parent / '8b.Multinomial fixed income.csv', index=False)
+
+
 def make_zero_inflated():
     """Reproduces the simulation of '10.Zero inflated.py' (np.random.seed(42))."""
     prob_drink = 0.2  # 20% of days
