@@ -244,23 +244,91 @@ class dpmm:
 
         plt.show()
     
-    def predict(self, data, sampler, return_probs=False):
-        """
-        Performs Consensus Clustering. 
-        Robust to Label Switching across multiple chains.
+    def predict(self, data, sampler, return_probs=False, threshold=0.5, linkage_method='average'):
+        """Performs Consensus Clustering from the posterior samples of the DPMM.
+
+        This function extracts the posterior samples from a Dirichlet Process
+        Mixture Model (DPMM) and derives a single, consensus clustering
+        partition of the data points. The consensus procedure operates on the
+        Posterior Similarity Matrix (PSM) and is strictly invariant to label
+        switching across MCMC chains.
+
+        Methodology:
+        1. **Soft Assignment Probabilities**:
+           For each posterior draw (subsampled to an upper limit for memory efficiency),
+           the soft responsibility vector of each data point across all mixture
+           components is computed:
+           ``p(z_i = k | x_i, theta) proportional to w_k * N(x_i | mu_k, Sigma_k)``.
+
+        2. **Posterior Similarity Matrix (PSM)**:
+           The pairwise co-clustering probability matrix is computed by averaging
+           the inner product of soft assignments over all draws:
+           ``S_ij = E_{posterior}[sum_k p(z_i = k) * p(z_j = k)]``.
+           Entry ``(i, j)`` represents the posterior probability that point ``i``
+           and point ``j`` belong to the same cluster.
+
+        3. **Distance Conversion**:
+           The similarity matrix is converted into a metric distance matrix
+           ``D_ij = 1 - S_ij``, bounded in ``[0, 1]`` with zero diagonal.
+
+        4. **Agglomerative Hierarchical Clustering**:
+           Agglomerative clustering is applied to the condensed distance matrix
+           using the specified linkage criterion (e.g. ``'average'``, ``'complete'``).
+           The resulting dendrogram is cut at cophenetic distance ``threshold``
+           via :func:`scipy.cluster.hierarchy.fcluster` to produce the final
+           cluster labels.
 
         Args:
-            data: Data array (N, D).
-            sampler: Fitted BF sampler.
-            return_probs (bool): If True, also return the per-draw soft
-                assignment tensor ``cluster_probs`` of shape
-                ``(N_draws, N_data, T)``. Used by :meth:`plot` to build one
-                credible region per consensus cluster.
+            data: Input data array of shape ``(N, D)``.
+            sampler: Fitted BayesForge sampler instance holding DPMM posterior samples.
+            return_probs (bool, optional): If True, returns additional raw posterior
+                draws and the per-draw soft assignment tensor ``cluster_probs`` of shape
+                ``(N_draws, N_data, T)``, needed by :meth:`plot` to compute credible
+                ellipses per consensus cluster. Defaults to False.
+            threshold (float, optional): Cophenetic distance threshold in ``[0, 1]``
+                used to cut the hierarchical tree (criterion ``'distance'``).
+                A smaller threshold yields more fine-grained clusters, while a larger
+                threshold merges nearby clusters. Defaults to 0.5.
+            linkage_method (str, optional): Linkage criterion used for agglomeration.
+                Supported methods include:
+                - ``'average'``: UPGMA. Merges clusters based on the average pairwise
+                  distance. Good general default, but can exhibit chaining in elongated
+                  clouds.
+                - ``'complete'``: Maximum/farthest-neighbor linkage. Avoids chaining
+                  and produces compact, well-separated clusters; recommended when
+                  clusters are close together.
+                - ``'single'``: Minimum/nearest-neighbor linkage. Highly prone to
+                  chaining; useful only for non-spherical nested manifolds.
+                - ``'weighted'``: WPGMA. Gives equal weight to merging clusters
+                  regardless of their size.
+                - ``'centroid'``: UPGMC. Distance between geometric centroids.
+                - ``'median'``: WPGMC. Distance between weighted centroids.
+                - ``'ward'``: Minimizes the total within-cluster variance. Requires
+                  Euclidean distance geometry.
+                Defaults to ``'average'``.
 
         Returns:
-            Tuple ``(w, mu, sigma, Lcorr, final_labels)``, plus
-            ``cluster_probs`` when ``return_probs`` is True.
+            If ``return_probs`` is False:
+                Tuple ``(w, mu, sigma, Lcorr, final_labels)``:
+                - ``w``: Posterior mixture weights draws (subsampled), shape ``(S, T)``.
+                - ``mu``: Posterior component means draws, shape ``(S, T, D)``.
+                - ``sigma``: Posterior scale vectors draws, shape ``(S, T, D)``.
+                - ``Lcorr``: Posterior correlation Cholesky factors, shape ``(S, T, D, D)``.
+                - ``final_labels``: 1D array of length ``N`` with integer cluster labels.
+            If ``return_probs`` is True:
+                Tuple ``(w, mu, sigma, Lcorr, final_labels, cluster_probs)``, where
+                ``cluster_probs`` has shape ``(S, N, T)``.
+
+        References:
+            * Fritsch, A. & Ickstadt, K. (2009). "Improved criteria for clustering
+              based on the posterior similarity matrix". Bayesian Analysis, 4(2), 367-391.
+            * Dahl, D. B. (2006). "Model-Based Clustering for Expression Data via a
+              Dirichlet Process Mixture Model". In Bayesian Inference and Methods in
+              Investigative Genomics.
+            * Wade, S. & Ghahramani, Z. (2018). "Bayesian cluster analysis: Point
+              estimation and credible balls". Bayesian Analysis, 13(2), 559-626.
         """
+        warn_dev("dpmm")
         # 1. Flatten chains: (N_chains, N_samples) -> (Total_samples)
         posterior_samples = sampler.get_samples(group_by_chain=False)
 
@@ -299,10 +367,10 @@ class dpmm:
         distance_matrix = jnp.clip(distance_matrix, min=0.0)
         
         condensed_dist = squareform(distance_matrix)
-        Z = linkage(condensed_dist, 'average')
+        Z = linkage(condensed_dist, linkage_method)
         
         # Cut tree
-        final_labels = fcluster(Z, t=0.5, criterion='distance')
+        final_labels = fcluster(Z, t=threshold, criterion='distance')
         print(f"Model found {len(np.unique(final_labels))} clusters.")
 
         # NOTE: We return the RAW samples, not the means. 
@@ -397,7 +465,7 @@ class dpmm:
 
     def plot(self, data, sampler, figsize=(10, 8), point_size=10,
              credible=DEFAULT_CREDIBLE, show_density=False, density_levels=7,
-             spread_cap=2.0):
+             spread_cap=2.0, title=None, threshold=0.5, linkage_method='average'):
         """Posterior view of the DPMM clusters.
 
         Instead of a single posterior-predictive contour (whose lowest
@@ -434,10 +502,15 @@ class dpmm:
             spread_cap: Each ellipse axis is capped at this multiple of the
                 cluster's own point-cloud std (see :meth:`_cap_covariance`).
                 Set to ``None`` for the uncapped moment-matched ellipse.
+            title: Custom title for the plot. If None, uses default summary title.
+            threshold: Distance threshold for consensus clustering cut.
+            linkage_method: Linkage criterion ('average', 'complete', etc.).
         """
         (w_samps, mu_samps, sigma_samps, Lcorr_samps,
          final_labels, cluster_probs) = self.predict(data, sampler,
-                                                     return_probs=True)
+                                                     return_probs=True,
+                                                     threshold=threshold,
+                                                     linkage_method=linkage_method)
 
         labels = np.asarray(final_labels)
         unique_labels = np.unique(labels)
@@ -550,11 +623,14 @@ class dpmm:
 
         ax.legend(handles=handles, fontsize=8, loc='best', frameon=True,
                   title=f"{p_max:.0%} credible region (solid)")
-        ax.set_title(
-            f"DPMM clusters — {len(unique_labels)} consensus clusters, "
-            f"{credible[0]:.0%}-{credible[-1]:.0%} credible regions",
-            fontsize=15,
-        )
+        if title is not None:
+            ax.set_title(title, fontsize=15)
+        else:
+            ax.set_title(
+                f"DPMM clusters — {len(unique_labels)} consensus clusters, "
+                f"{credible[0]:.0%}-{credible[-1]:.0%} credible regions",
+                fontsize=15,
+            )
         ax.set_xlabel("Feature 1")
         ax.set_ylabel("Feature 2")
         ax.grid(True, linestyle=':', color='gray', alpha=0.6)

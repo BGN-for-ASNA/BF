@@ -114,6 +114,7 @@ website:
       contents:
         - reference/index.qmd
         - reference/session.qmd
+        - reference/models.qmd
         - reference/data.qmd
         - reference/dist.qmd
         - reference/diag.qmd
@@ -163,7 +164,7 @@ format:
     toc-expand: true
     html-math-method: katex
     grid:
-      body-width: 1000px
+      body-width: 1350px
     code-fold: show
     code-overflow: wrap
     code-tools: false

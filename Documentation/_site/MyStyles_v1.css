@@ -287,3 +287,92 @@ html.quarto-light *,
   color: #B58900 !important;
   border-left-color: #B58900 !important;
 }
+
+#TOC .nav-link.active code,
+#TOC .nav-link:hover code {
+  color: #B58900 !important;
+}
+
+/* ------------------------------------------------------------------
+ * Right-hand TOC links: keep code tags inside TOC clean & light
+ * (inheriting the TOC link color rather than the yellow body inline code)
+ * ------------------------------------------------------------------ */
+#TOC .nav-link:not(.active):not(:hover) {
+  color: rgba(222, 226, 230, 0.85) !important; /* Blanc clair / gris très clair */
+}
+
+#TOC .nav-link:not(.active):not(:hover) code {
+  color: rgba(222, 226, 230, 0.85) !important;
+  background-color: transparent !important;
+  font-weight: inherit !important;
+}
+
+/* Light mode fallback for TOC links */
+html.quarto-light #TOC .nav-link:not(.active):not(:hover),
+html.quarto-light #TOC .nav-link:not(.active):not(:hover) code {
+  color: #495057 !important;
+}
+
+/* ------------------------------------------------------------------
+ * Left sidebar navigation: keep code tags inside links clean & light
+ * (inheriting the navigation link color)
+ * ------------------------------------------------------------------ */
+#quarto-sidebar .sidebar-item-text code,
+#quarto-sidebar .sidebar-link code,
+#quarto-sidebar code {
+  color: inherit !important;
+  background-color: transparent !important;
+  font-weight: inherit !important;
+}
+
+/* ------------------------------------------------------------------
+ * Inline code snippets inside prose paragraphs only
+ * Excludes headings (h1-h6), sidebar, TOC, and source code blocks
+ * ------------------------------------------------------------------ */
+#quarto-document-content p code:not(.sourceCode):not(pre code),
+#quarto-document-content li code:not(.sourceCode):not(pre code),
+#quarto-document-content td code:not(.sourceCode):not(pre code),
+#quarto-document-content th code:not(.sourceCode):not(pre code) {
+  background-color: transparent !important;
+  color: #ecc94b !important; /* Jaune vif / doré */
+  padding: 0 !important;
+  font-weight: 550 !important;
+  border: none !important;
+}
+
+/* ------------------------------------------------------------------
+ * Headings (h1, h2, h3, etc.) code styling: inherit title color (blanc clair)
+ * ------------------------------------------------------------------ */
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code,
+.title code, .quarto-title code {
+  color: inherit !important;
+  background-color: transparent !important;
+  font-weight: inherit !important;
+}
+
+/* ------------------------------------------------------------------
+ * Layout: Wider content area and reduced empty side margins
+ * Replaces the default outer 5fr margins with compact margins (1fr / 20px)
+ * and expands the body content width to utilize modern displays better.
+ * ------------------------------------------------------------------ */
+@media (min-width: 992px) {
+  body .page-columns,
+  body.floating .page-columns,
+  body.docked .page-columns {
+    grid-template-columns: 
+      [screen-start] 1em 
+      [screen-start-inset] minmax(0px, 1fr) 
+      [page-start] minmax(20px, 40px) 
+      [page-start-inset] minmax(50px, 175px) 
+      [body-start-outset] minmax(20px, 40px) 
+      [body-start] 1.5em 
+      [body-content-start] minmax(600px, calc(1400px - 3em)) 
+      [body-content-end] 1.5em 
+      [body-end] minmax(20px, 40px) 
+      [body-end-outset] minmax(50px, 220px) 
+      [page-end-inset] minmax(20px, 40px) 
+      [page-end] minmax(0px, 1fr) 
+      [screen-end-inset] 1em 
+      [screen-end] !important;
+  }
+}

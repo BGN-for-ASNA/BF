@@ -1,8 +1,10 @@
 # BayesForge for Python
 
 <div align="center">
-**A unified probabilistic programming library, bringing JAX-powered BayesForge to the Python, R and Julia ecosystem.**\
-*Run bespoke models on CPU, GPU, or TPU with Julia's native syntax.*
+<br>A unified probabilistic programming library, bringing JAX-powered BayesForge to the Python, R and Julia ecosystem.</br>
+
+
+<i>Run bespoke models on CPU, GPU, or TPU with Julia's native syntax.</i>
 
 [![Website](https://img.shields.io/badge/Website-s--sosa.com/BF-blue?style=flat&logo=google-chrome&logoColor=white)](https://s-sosa.com/BF/) [![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.01.19.700318v1-BD271E?style=flat&logo=biorxiv&logoColor=white)](https://www.biorxiv.org/content/10.64898/2026.01.19.700318v1) ![Python](https://img.shields.io/badge/Python-3+-3776AB?logo=python&logoColor=white) [![License: GPL (\>= 3)](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 

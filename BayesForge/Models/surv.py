@@ -774,6 +774,15 @@ class survival():
         #self.data_on_model['N_cov'] = self.cov_all.shape[1]
 
     def priors(self, sample = False):
+        """
+        Define prior distributions for the survival model.
+
+        Parameters:
+        - sample: If True, draws direct prior samples rather than defining model nodes.
+
+        Returns:
+        - Tuple of (lambda0, beta) priors for baseline hazard and covariate effects.
+        """
         conc, rate = self.baseline_rate_prior
         scale = self.hazard_rate_prior_scale
 
@@ -806,6 +815,15 @@ class survival():
         return lambda0, beta
 
     def model_univariate(self, death, cov,exposure, censoring = None):
+        """
+        Univariate discrete-time survival model with a single fixed covariate.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: Single covariate array.
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -820,6 +838,15 @@ class survival():
         self.parent.dist.poisson(rate = mu + jnp.finfo(mu.dtype).tiny, obs = death)
 
     def model_multivariate(self, death, cov,exposure, censoring = None):
+        """
+        Multivariate discrete-time survival model with multiple fixed covariates.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: 2D covariates array (observations, covariates).
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -834,6 +861,15 @@ class survival():
         self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
 
     def model_time_varying(self, death, cov,exposure, censoring = None):
+        """
+        Time-varying discrete-time survival model with longitudinal covariates.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: 3D time-varying covariates array (observations, intervals, covariates).
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -847,6 +883,15 @@ class survival():
         self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
     
     def model(self, death, cov,exposure, censoring = None):
+        """
+        Bayesian Survival Analysis model dispatching to univariate, multivariate, or time-varying models.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: Covariates array (fixed or time-varying).
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         warn_dev("survival")
 
         if self.cov_all.ndim == 2:
@@ -1093,7 +1138,24 @@ class survival():
     def plot_surv(self, lambda0 = 'Baseline_rate', beta = 'beta',
                   xlab='Time', ylab='Survival', covlab = 'treated', title = "Bayesian survival model",
                   hdi_prob = 0.94):
+        """
+        Plot posterior cumulative hazard Lambda(t) and survival function S(t).
 
+        Draws two subplots: the cumulative hazard on the left and the survival
+        curves on the right, with equal-tailed credible bands.
+
+        Parameters:
+        - lambda0: Posterior variable name for baseline rate draws.
+        - beta: Posterior variable name for covariate effect draws.
+        - xlab: Label for the x-axis.
+        - ylab: Label for the y-axis.
+        - covlab: Label for covariate groups.
+        - title: Super-title for the figure.
+        - hdi_prob: Credible interval probability mass (defaults to 0.94).
+
+        Returns:
+        - Tuple of (fig, (hazard_ax, surv_ax)).
+        """
         base_hazard = self.parent.posteriors[lambda0]
         met_hazard = self.parent.posteriors[lambda0] * self.parent.posteriors[beta]
 

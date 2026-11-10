@@ -1,0 +1,2594 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Built-in models (m.models) – BayesForge (BF)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../reference/data.html" rel="next">
+<link href="../reference/session.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<!-- header-scripts.html -->
+<script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
+  (function() {
+    const isFileUrl = () => window.location.protocol === 'file:';
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : "alternate"; // Default to dark/alternate
+      } else {
+        return "alternate";
+      }
+    };
+    
+    const alternate = (getColorSchemeSentinel() === "alternate");
+    
+    if (alternate) {
+      // Instantly add dark classes to prevent FOUC (flash of unstyled content)
+      document.documentElement.classList.add("quarto-dark");
+      document.documentElement.classList.remove("quarto-light");
+      
+      // Function to instantly swap a stylesheet node to dark
+      const makeNodeDark = (node) => {
+        if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
+          node.removeAttribute('disabled');
+        }
+      };
+
+      // Check already parsed nodes in head
+      if (document.head) {
+        document.head.querySelectorAll('link.quarto-color-alternate').forEach(makeNodeDark);
+      }
+
+      // Set up MutationObserver to catch nodes appended later in head
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(makeNodeDark);
+        });
+      });
+      
+      // Wait for head to exist or observe documentElement if head is loading
+      const target = document.head || document.documentElement;
+      observer.observe(target, { childList: true, subtree: true });
+      
+      // Clean up observer and run final safety check on DOMContentLoaded
+      document.addEventListener("DOMContentLoaded", function() {
+        observer.disconnect();
+        document.querySelectorAll('link.quarto-color-alternate').forEach(makeNodeDark);
+      });
+    } else {
+      document.documentElement.classList.add("quarto-light");
+      document.documentElement.classList.remove("quarto-dark");
+    }
+  })();
+</script>
+
+
+<link rel="stylesheet" href="../MyStyles_v1.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const darkModeDefault = authorPrefersDark;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">BayesForge (BF)</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../start/Installation.html"> 
+<span class="menu-text">Get started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../0.Introduction.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../reference/index.html" aria-current="page"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-help" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Help</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-help">    
+        <li>
+    <a class="dropdown-item" href="https://github.com/BGN-for-ASNA/BF/issues"><i class="bi bi-bug" role="img">
+</i> 
+ <span class="dropdown-text">Report a Bug</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://github.com/BGN-for-ASNA/BF/discussions"><i class="bi bi-chat-dots" role="img">
+</i> 
+ <span class="dropdown-text">Ask a Question</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://twitter.com" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-twitter"></i></a>
+    <a href="https://github.com/BGN-for-ASNA/BF" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/models.html">Built-in models (<code>m.models</code>)</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">API reference</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/session.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Session (<code>m</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/models.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Built-in models (<code>m.models</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/dist.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Distributions (<code>m.dist</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/diag.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diagnostics (<code>m.diag</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/effects.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random effects (<code>m.effects</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/link.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Link functions (<code>m.link</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/net.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Networks (<code>m.net</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/load.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Example data (<code>m.load</code>)</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#dpmm-m.models.dpmm" id="toc-dpmm-m.models.dpmm" class="nav-link active" data-scroll-target="#dpmm-m.models.dpmm">DPMM (<code>m.models.dpmm</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_dpmm_dpmm_latent" id="toc-m_models_dpmm_dpmm_latent" class="nav-link" data-scroll-target="#m_models_dpmm_dpmm_latent"><code>m.models.dpmm.dpmm_latent</code></a></li>
+  <li><a href="#m_models_dpmm_dpmm_marginal" id="toc-m_models_dpmm_dpmm_marginal" class="nav-link" data-scroll-target="#m_models_dpmm_dpmm_marginal"><code>m.models.dpmm.dpmm_marginal</code></a></li>
+  <li><a href="#m_models_dpmm_get_cluster_probs" id="toc-m_models_dpmm_get_cluster_probs" class="nav-link" data-scroll-target="#m_models_dpmm_get_cluster_probs"><code>m.models.dpmm.get_cluster_probs</code></a></li>
+  <li><a href="#m_models_dpmm_mix_weights" id="toc-m_models_dpmm_mix_weights" class="nav-link" data-scroll-target="#m_models_dpmm_mix_weights"><code>m.models.dpmm.mix_weights</code></a></li>
+  <li><a href="#m_models_dpmm_model" id="toc-m_models_dpmm_model" class="nav-link" data-scroll-target="#m_models_dpmm_model"><code>m.models.dpmm.model</code></a></li>
+  <li><a href="#m_models_dpmm_plot" id="toc-m_models_dpmm_plot" class="nav-link" data-scroll-target="#m_models_dpmm_plot"><code>m.models.dpmm.plot</code></a></li>
+  <li><a href="#m_models_dpmm_predict" id="toc-m_models_dpmm_predict" class="nav-link" data-scroll-target="#m_models_dpmm_predict"><code>m.models.dpmm.predict</code></a></li>
+  <li><a href="#m_models_dpmm_proportion_of_data_assigned_to_cluster" id="toc-m_models_dpmm_proportion_of_data_assigned_to_cluster" class="nav-link" data-scroll-target="#m_models_dpmm_proportion_of_data_assigned_to_cluster"><code>m.models.dpmm.proportion_of_data_assigned_to_cluster</code></a></li>
+  </ul></li>
+  <li><a href="#gmm-m.models.gmm" id="toc-gmm-m.models.gmm" class="nav-link" data-scroll-target="#gmm-m.models.gmm">GMM (<code>m.models.gmm</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_gmm_plot" id="toc-m_models_gmm_plot" class="nav-link" data-scroll-target="#m_models_gmm_plot"><code>m.models.gmm.plot</code></a></li>
+  <li><a href="#m_models_gmm_predict" id="toc-m_models_gmm_predict" class="nav-link" data-scroll-target="#m_models_gmm_predict"><code>m.models.gmm.predict</code></a></li>
+  </ul></li>
+  <li><a href="#pca-m.models.pca" id="toc-pca-m.models.pca" class="nav-link" data-scroll-target="#pca-m.models.pca">PCA (<code>m.models.pca</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_pca_align_posterior_samples" id="toc-m_models_pca_align_posterior_samples" class="nav-link" data-scroll-target="#m_models_pca_align_posterior_samples"><code>m.models.pca.align_posterior_samples</code></a></li>
+  <li><a href="#m_models_pca_analyze_aligned_posteriors" id="toc-m_models_pca_analyze_aligned_posteriors" class="nav-link" data-scroll-target="#m_models_pca_analyze_aligned_posteriors"><code>m.models.pca.analyze_aligned_posteriors</code></a></li>
+  <li><a href="#m_models_pca_components" id="toc-m_models_pca_components" class="nav-link" data-scroll-target="#m_models_pca_components"><code>m.models.pca.components</code></a></li>
+  <li><a href="#m_models_pca_confidence_ellipse" id="toc-m_models_pca_confidence_ellipse" class="nav-link" data-scroll-target="#m_models_pca_confidence_ellipse"><code>m.models.pca.confidence_ellipse</code></a></li>
+  <li><a href="#m_models_pca_create_reference_from_posterior" id="toc-m_models_pca_create_reference_from_posterior" class="nav-link" data-scroll-target="#m_models_pca_create_reference_from_posterior"><code>m.models.pca.create_reference_from_posterior</code></a></li>
+  <li><a href="#m_models_pca_cumulative_variance" id="toc-m_models_pca_cumulative_variance" class="nav-link" data-scroll-target="#m_models_pca_cumulative_variance"><code>m.models.pca.cumulative_variance</code></a></li>
+  <li><a href="#m_models_pca_get_model" id="toc-m_models_pca_get_model" class="nav-link" data-scroll-target="#m_models_pca_get_model"><code>m.models.pca.get_model</code></a></li>
+  <li><a href="#m_models_pca_individual_correlation" id="toc-m_models_pca_individual_correlation" class="nav-link" data-scroll-target="#m_models_pca_individual_correlation"><code>m.models.pca.individual_correlation</code></a></li>
+  <li><a href="#m_models_pca_model_sparse_robust_ard" id="toc-m_models_pca_model_sparse_robust_ard" class="nav-link" data-scroll-target="#m_models_pca_model_sparse_robust_ard"><code>m.models.pca.model_sparse_robust_ard</code></a></li>
+  <li><a href="#m_models_pca_pca_ARD" id="toc-m_models_pca_pca_ARD" class="nav-link" data-scroll-target="#m_models_pca_pca_ARD"><code>m.models.pca.pca_ARD</code></a></li>
+  <li><a href="#m_models_pca_pca_classic" id="toc-m_models_pca_pca_classic" class="nav-link" data-scroll-target="#m_models_pca_pca_classic"><code>m.models.pca.pca_classic</code></a></li>
+  <li><a href="#m_models_pca_pca_robust" id="toc-m_models_pca_pca_robust" class="nav-link" data-scroll-target="#m_models_pca_pca_robust"><code>m.models.pca.pca_robust</code></a></li>
+  <li><a href="#m_models_pca_pca_sparse" id="toc-m_models_pca_pca_sparse" class="nav-link" data-scroll-target="#m_models_pca_pca_sparse"><code>m.models.pca.pca_sparse</code></a></li>
+  <li><a href="#m_models_pca_plot" id="toc-m_models_pca_plot" class="nav-link" data-scroll-target="#m_models_pca_plot"><code>m.models.pca.plot</code></a></li>
+  <li><a href="#m_models_pca_process_var" id="toc-m_models_pca_process_var" class="nav-link" data-scroll-target="#m_models_pca_process_var"><code>m.models.pca.process_var</code></a></li>
+  <li><a href="#m_models_pca_set_deterministic_sign" id="toc-m_models_pca_set_deterministic_sign" class="nav-link" data-scroll-target="#m_models_pca_set_deterministic_sign"><code>m.models.pca.set_deterministic_sign</code></a></li>
+  <li><a href="#m_models_pca_variable_correlation" id="toc-m_models_pca_variable_correlation" class="nav-link" data-scroll-target="#m_models_pca_variable_correlation"><code>m.models.pca.variable_correlation</code></a></li>
+  </ul></li>
+  <li><a href="#survival-m.models.survival" id="toc-survival-m.models.survival" class="nav-link" data-scroll-target="#survival-m.models.survival">Survival (<code>m.models.survival</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_survival_build_surv_covariates" id="toc-m_models_survival_build_surv_covariates" class="nav-link" data-scroll-target="#m_models_survival_build_surv_covariates"><code>m.models.survival.build_surv_covariates</code></a></li>
+  <li><a href="#m_models_survival_cum_hazard" id="toc-m_models_survival_cum_hazard" class="nav-link" data-scroll-target="#m_models_survival_cum_hazard"><code>m.models.survival.cum_hazard</code></a></li>
+  <li><a href="#m_models_survival_import_covF" id="toc-m_models_survival_import_covF" class="nav-link" data-scroll-target="#m_models_survival_import_covF"><code>m.models.survival.import_covF</code></a></li>
+  <li><a href="#m_models_survival_import_covV" id="toc-m_models_survival_import_covV" class="nav-link" data-scroll-target="#m_models_survival_import_covV"><code>m.models.survival.import_covV</code></a></li>
+  <li><a href="#m_models_survival_import_time_even" id="toc-m_models_survival_import_time_even" class="nav-link" data-scroll-target="#m_models_survival_import_time_even"><code>m.models.survival.import_time_even</code></a></li>
+  <li><a href="#m_models_survival_model" id="toc-m_models_survival_model" class="nav-link" data-scroll-target="#m_models_survival_model"><code>m.models.survival.model</code></a></li>
+  <li><a href="#m_models_survival_model_multivariate" id="toc-m_models_survival_model_multivariate" class="nav-link" data-scroll-target="#m_models_survival_model_multivariate"><code>m.models.survival.model_multivariate</code></a></li>
+  <li><a href="#m_models_survival_model_time_varying" id="toc-m_models_survival_model_time_varying" class="nav-link" data-scroll-target="#m_models_survival_model_time_varying"><code>m.models.survival.model_time_varying</code></a></li>
+  <li><a href="#m_models_survival_model_univariate" id="toc-m_models_survival_model_univariate" class="nav-link" data-scroll-target="#m_models_survival_model_univariate"><code>m.models.survival.model_univariate</code></a></li>
+  <li><a href="#m_models_survival_observed" id="toc-m_models_survival_observed" class="nav-link" data-scroll-target="#m_models_survival_observed"><code>m.models.survival.observed</code></a></li>
+  <li><a href="#m_models_survival_plot_censoring" id="toc-m_models_survival_plot_censoring" class="nav-link" data-scroll-target="#m_models_survival_plot_censoring"><code>m.models.survival.plot_censoring</code></a></li>
+  <li><a href="#m_models_survival_plot_surv" id="toc-m_models_survival_plot_surv" class="nav-link" data-scroll-target="#m_models_survival_plot_surv"><code>m.models.survival.plot_surv</code></a></li>
+  <li><a href="#m_models_survival_ppc_km_by_cov" id="toc-m_models_survival_ppc_km_by_cov" class="nav-link" data-scroll-target="#m_models_survival_ppc_km_by_cov"><code>m.models.survival.ppc_km_by_cov</code></a></li>
+  <li><a href="#m_models_survival_priors" id="toc-m_models_survival_priors" class="nav-link" data-scroll-target="#m_models_survival_priors"><code>m.models.survival.priors</code></a></li>
+  <li><a href="#m_models_survival_sample_times" id="toc-m_models_survival_sample_times" class="nav-link" data-scroll-target="#m_models_survival_sample_times"><code>m.models.survival.sample_times</code></a></li>
+  <li><a href="#m_models_survival_survival" id="toc-m_models_survival_survival" class="nav-link" data-scroll-target="#m_models_survival_survival"><code>m.models.survival.survival</code></a></li>
+  </ul></li>
+  <li><a href="#bnnc-m.models.bnnc" id="toc-bnnc-m.models.bnnc" class="nav-link" data-scroll-target="#bnnc-m.models.bnnc">BNNC (<code>m.models.bnnc</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_bnnc_get_cluster_probs" id="toc-m_models_bnnc_get_cluster_probs" class="nav-link" data-scroll-target="#m_models_bnnc_get_cluster_probs"><code>m.models.bnnc.get_cluster_probs</code></a></li>
+  <li><a href="#m_models_bnnc_model" id="toc-m_models_bnnc_model" class="nav-link" data-scroll-target="#m_models_bnnc_model"><code>m.models.bnnc.model</code></a></li>
+  <li><a href="#m_models_bnnc_plot" id="toc-m_models_bnnc_plot" class="nav-link" data-scroll-target="#m_models_bnnc_plot"><code>m.models.bnnc.plot</code></a></li>
+  <li><a href="#m_models_bnnc_predict" id="toc-m_models_bnnc_predict" class="nav-link" data-scroll-target="#m_models_bnnc_predict"><code>m.models.bnnc.predict</code></a></li>
+  </ul></li>
+  <li><a href="#nbda-m.models.nbda" id="toc-nbda-m.models.nbda" class="nav-link" data-scroll-target="#nbda-m.models.nbda">NBDA (<code>m.models.nbda</code>)</a>
+  <ul class="collapse">
+  <li><a href="#m_models_nbda" id="toc-m_models_nbda" class="nav-link" data-scroll-target="#m_models_nbda"><code>m.models.nbda</code></a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="models.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Built-in models (<code>m.models</code>)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_api_reference.py; do not edit. -->
+<p>High-level interface for turnkey Bayesian models in BayesForge: DPMM, GMM, PCA, Survival analysis, BNNC, and NBDA.</p>
+<section id="dpmm-m.models.dpmm" class="level1">
+<h1>DPMM (<code>m.models.dpmm</code>)</h1>
+<p>Dirichlet Process Mixture Models with truncated stick-breaking representation and consensus clustering.</p>
+<section id="m_models_dpmm_dpmm_latent" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_dpmm_latent"><code>m.models.dpmm.dpmm_latent</code></h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.dpmm_latent(data, T<span class="op">=</span><span class="dv">10</span>, alpha<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Latent Variable formulation: Explicitly samples ‘z’. Requires a sampler that supports discrete variables (e.g., MixedHMC or DiscreteHMCGibbs).</p>
+</section>
+<section id="m_models_dpmm_dpmm_marginal" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_dpmm_marginal"><code>m.models.dpmm.dpmm_marginal</code></h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.dpmm_marginal(data, T<span class="op">=</span><span class="dv">10</span>, alpha<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Marginalized formulation: Integrates out ‘z’. Standard formulation for NUTS/HMC samplers.</p>
+</section>
+<section id="m_models_dpmm_get_cluster_probs" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_get_cluster_probs"><code>m.models.dpmm.get_cluster_probs</code></h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.get_cluster_probs(data, w, mu, sigma, Lcorr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Get the cluster probabilities for each data point and each sample.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td></td>
+<td>Data array (N, D).</td>
+</tr>
+<tr class="even">
+<td><code>w</code></td>
+<td></td>
+<td>Mixture weights (N_samples, N_components).</td>
+</tr>
+<tr class="odd">
+<td><code>mu</code></td>
+<td></td>
+<td>Cluster means (N_samples, N_components, D).</td>
+</tr>
+<tr class="even">
+<td><code>sigma</code></td>
+<td></td>
+<td>Scale (variance) parameters (N_samples, N_components, D).</td>
+</tr>
+<tr class="odd">
+<td><code>Lcorr</code></td>
+<td></td>
+<td>Cholesky correlation matrices (N_samples, N_components, D, D).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li>Cluster probabilities (N_samples, N_data, N_components).</li>
+</ul>
+</section>
+<section id="m_models_dpmm_mix_weights" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_mix_weights"><code>m.models.dpmm.mix_weights</code></h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.mix_weights(beta)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Mixture weights (stick-breaking) for DPMM. The stick-breaking weights are used to sample the mixture component assignments. Args: beta: Stick-breaking weights (T-1 components) Returns: w: Mixture weights (T components) Reference: https://pyro.ai/examples/dirichlet_process_mixture.html</p>
+</section>
+<section id="m_models_dpmm_model" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_model"><code>m.models.dpmm.model</code></h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.model(data, T<span class="op">=</span><span class="dv">10</span>, method<span class="op">=</span><span class="st">'marginal'</span>, alpha<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Wrapper function for DPMM.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td></td>
+<td>Input data array (N, D)</td>
+</tr>
+<tr class="even">
+<td><code>T</code></td>
+<td></td>
+<td>Truncation level (max number of clusters)</td>
+</tr>
+<tr class="odd">
+<td><code>method</code></td>
+<td></td>
+<td>‘marginal’ (default because it is faster, for NUTS) or ‘latent’ (explicit z, requires MixedHMC/Gibbs)</td>
+</tr>
+<tr class="even">
+<td><code>alpha</code></td>
+<td></td>
+<td>Stick-breaking parameter (default: None)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="m_models_dpmm_plot" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_plot"><code>m.models.dpmm.plot</code></h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.plot(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    sampler,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">8</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    point_size<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    credible<span class="op">=</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    show_density<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    density_levels<span class="op">=</span><span class="dv">7</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    spread_cap<span class="op">=</span><span class="fl">2.0</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">'average'</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Posterior view of the DPMM clusters.</p>
+<p>Instead of a single posterior-predictive contour (whose lowest auto-selected level is a tiny positive number that Matplotlib prints as <code>0.00</code> and which can bridge unrelated clusters through the wide, near-empty components of the truncation), this draws <strong>one credible region per consensus cluster</strong>:</p>
+<ol type="1">
+<li><code>predict</code> performs the consensus clustering on the soft assignments, so the cluster labels are label-switching safe.</li>
+<li>For each cluster, every <code>(draw, component)</code> pair is weighted by the soft mass that component assigns to that cluster, and the spread of the resulting mixture is moment-matched to a single Gaussian <strong>centered on the cluster’s centroid</strong> (anchoring on the mixture mean instead lets overlapping components that swap identities across draws stretch the ellipse across the plot).</li>
+<li>The Gaussian is drawn as an ellipse at each probability in <code>credible</code> (2D Gaussian quantiles <code>-2 ln(1 - p)</code>).</li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td></td>
+<td>Data array (N, D).</td>
+</tr>
+<tr class="even">
+<td><code>sampler</code></td>
+<td></td>
+<td>Fitted BF sampler.</td>
+</tr>
+<tr class="odd">
+<td><code>figsize</code></td>
+<td></td>
+<td>Figure size.</td>
+</tr>
+<tr class="even">
+<td><code>point_size</code></td>
+<td></td>
+<td>Scatter point size.</td>
+</tr>
+<tr class="odd">
+<td><code>credible</code></td>
+<td></td>
+<td>Iterable of credible-mass levels for the ellipses, e.g.&nbsp;<code>[0.5, 0.9]</code> or <code>[0.25, 0.5, 0.75, 0.95]</code>. Values are probabilities in <code>(0, 1)</code>; one nested ellipse is drawn per level (largest level solid, others dashed). Defaults to :data:<code>DEFAULT_CREDIBLE</code> (ten nested levels, 5%-95%).</td>
+</tr>
+<tr class="even">
+<td><code>show_density</code></td>
+<td></td>
+<td>If True, overlay the posterior-predictive density with explicit <em>relative</em> levels (no misleading <code>0.00</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>density_levels</code></td>
+<td></td>
+<td>Number of relative density levels when <code>show_density</code> is True.</td>
+</tr>
+<tr class="even">
+<td><code>spread_cap</code></td>
+<td></td>
+<td>Each ellipse axis is capped at this multiple of the cluster’s own point-cloud std (see <code>_cap_covariance</code>). Set to <code>None</code> for the uncapped moment-matched ellipse.</td>
+</tr>
+<tr class="odd">
+<td><code>title</code></td>
+<td></td>
+<td>Custom title for the plot. If None, uses default summary title.</td>
+</tr>
+<tr class="even">
+<td><code>threshold</code></td>
+<td></td>
+<td>Distance threshold for consensus clustering cut.</td>
+</tr>
+<tr class="odd">
+<td><code>linkage_method</code></td>
+<td></td>
+<td>Linkage criterion (‘average’, ‘complete’, etc.).</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="m_models_dpmm_predict" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_predict"><code>m.models.dpmm.predict</code></h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.predict(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    sampler,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    return_probs<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    threshold<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">'average'</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Performs Consensus Clustering from the posterior samples of the DPMM.</p>
+<p>This function extracts the posterior samples from a Dirichlet Process Mixture Model (DPMM) and derives a single, consensus clustering partition of the data points. The consensus procedure operates on the Posterior Similarity Matrix (PSM) and is strictly invariant to label switching across MCMC chains.</p>
+<p>Methodology: 1. <strong>Soft Assignment Probabilities</strong>: For each posterior draw (subsampled to an upper limit for memory efficiency), the soft responsibility vector of each data point across all mixture components is computed: <code>p(z_i = k | x_i, theta) proportional to w_k * N(x_i | mu_k, Sigma_k)</code>.</p>
+<ol start="2" type="1">
+<li><p><strong>Posterior Similarity Matrix (PSM)</strong>: The pairwise co-clustering probability matrix is computed by averaging the inner product of soft assignments over all draws: <code>S_ij = E_{posterior}[sum_k p(z_i = k) * p(z_j = k)]</code>. Entry <code>(i, j)</code> represents the posterior probability that point <code>i</code> and point <code>j</code> belong to the same cluster.</p></li>
+<li><p><strong>Distance Conversion</strong>: The similarity matrix is converted into a metric distance matrix <code>D_ij = 1 - S_ij</code>, bounded in <code>[0, 1]</code> with zero diagonal.</p></li>
+<li><p><strong>Agglomerative Hierarchical Clustering</strong>: Agglomerative clustering is applied to the condensed distance matrix using the specified linkage criterion (e.g.&nbsp;<code>'average'</code>, <code>'complete'</code>). The resulting dendrogram is cut at cophenetic distance <code>threshold</code> via <code>scipy.cluster.hierarchy.fcluster</code> to produce the final cluster labels.</p></li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td></td>
+<td>Input data array of shape <code>(N, D)</code>.</td>
+</tr>
+<tr class="even">
+<td><code>sampler</code></td>
+<td></td>
+<td>Fitted BayesForge sampler instance holding DPMM posterior samples.</td>
+</tr>
+<tr class="odd">
+<td><code>return_probs</code></td>
+<td>bool</td>
+<td>If True, returns additional raw posterior draws and the per-draw soft assignment tensor <code>cluster_probs</code> of shape <code>(N_draws, N_data, T)</code>, needed by <code>plot</code> to compute credible ellipses per consensus cluster. Defaults to False.</td>
+</tr>
+<tr class="even">
+<td><code>threshold</code></td>
+<td>float</td>
+<td>Cophenetic distance threshold in <code>[0, 1]</code> used to cut the hierarchical tree (criterion <code>'distance'</code>). A smaller threshold yields more fine-grained clusters, while a larger threshold merges nearby clusters. Defaults to 0.5.</td>
+</tr>
+<tr class="odd">
+<td><code>linkage_method</code></td>
+<td>str</td>
+<td>Linkage criterion used for agglomeration. Supported methods include: - <code>'average'</code>: UPGMA. Merges clusters based on the average pairwise distance. Good general default, but can exhibit chaining in elongated clouds. - <code>'complete'</code>: Maximum/farthest-neighbor linkage. Avoids chaining and produces compact, well-separated clusters; recommended when clusters are close together. - <code>'single'</code>: Minimum/nearest-neighbor linkage. Highly prone to chaining; useful only for non-spherical nested manifolds. - <code>'weighted'</code>: WPGMA. Gives equal weight to merging clusters regardless of their size. - <code>'centroid'</code>: UPGMC. Distance between geometric centroids. - <code>'median'</code>: WPGMC. Distance between weighted centroids. - <code>'ward'</code>: Minimizes the total within-cluster variance. Requires Euclidean distance geometry. Defaults to <code>'average'</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li>If <code>return_probs</code> is False: Tuple <code>(w, mu, sigma, Lcorr, final_labels)</code>: - <code>w</code>: Posterior mixture weights draws (subsampled), shape <code>(S, T)</code>. - <code>mu</code>: Posterior component means draws, shape <code>(S, T, D)</code>. - <code>sigma</code>: Posterior scale vectors draws, shape <code>(S, T, D)</code>. - <code>Lcorr</code>: Posterior correlation Cholesky factors, shape <code>(S, T, D, D)</code>. - <code>final_labels</code>: 1D array of length <code>N</code> with integer cluster labels.</li>
+<li>If <code>return_probs</code> is True: Tuple <code>(w, mu, sigma, Lcorr, final_labels, cluster_probs)</code>, where <code>cluster_probs</code> has shape <code>(S, N, T)</code>.</li>
+</ul>
+<p><strong>References</strong></p>
+<ul>
+<li>Fritsch, A. &amp; Ickstadt, K. (2009). “Improved criteria for clustering based on the posterior similarity matrix”. Bayesian Analysis, 4(2), 367-391.</li>
+<li>Dahl, D. B. (2006). “Model-Based Clustering for Expression Data via a Dirichlet Process Mixture Model”. In Bayesian Inference and Methods in Investigative Genomics.</li>
+<li>Wade, S. &amp; Ghahramani, Z. (2018). “Bayesian cluster analysis: Point estimation and credible balls”. Bayesian Analysis, 13(2), 559-626.</li>
+</ul>
+</section>
+<section id="m_models_dpmm_proportion_of_data_assigned_to_cluster" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_dpmm_proportion_of_data_assigned_to_cluster"><code>m.models.dpmm.proportion_of_data_assigned_to_cluster</code></h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.models.dpmm.proportion_of_data_assigned_to_cluster()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plots the proportion of data assigned to clusters, sorted by size.</p>
+<p>Fixes the Label Switching issue in boxplots by visualizing “1st Largest Cluster”, “2nd Largest”, etc., instead of “Index 0”, “Index 1”.</p>
+</section>
+</section>
+<section id="gmm-m.models.gmm" class="level1">
+<h1>GMM (<code>m.models.gmm</code>)</h1>
+<p>Gaussian Mixture Models with fixed components and posterior co-clustering / credible ellipses.</p>
+<section id="m_models_gmm_plot" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_gmm_plot"><code>m.models.gmm.plot</code></h2>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.models.gmm.plot(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    sampler,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">8</span>),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    point_size<span class="op">=</span><span class="dv">15</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    credible<span class="op">=</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    show_density<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    density_levels<span class="op">=</span><span class="dv">7</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    spread_cap<span class="op">=</span><span class="fl">2.0</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Posterior view of the GMM clusters.</p>
+<p>Same visualization as <code>dpmm.plot</code>: one credible ellipse per consensus cluster (labels made switching-safe by the posterior similarity matrix), each axis capped at <code>spread_cap</code> times the cluster’s own point spread. Replaces the old density contour whose lowest auto-selected level printed as a misleading <code>0.00</code>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td></td>
+<td>Data array (N, D).</td>
+</tr>
+<tr class="even">
+<td><code>sampler</code></td>
+<td></td>
+<td>Fitted BF sampler.</td>
+</tr>
+<tr class="odd">
+<td><code>figsize</code></td>
+<td></td>
+<td>Figure size.</td>
+</tr>
+<tr class="even">
+<td><code>point_size</code></td>
+<td></td>
+<td>Scatter point size.</td>
+</tr>
+<tr class="odd">
+<td><code>credible</code></td>
+<td></td>
+<td>Iterable of credible-mass levels for the ellipses, e.g.&nbsp;<code>[0.5, 0.9]</code> or <code>[0.25, 0.5, 0.75, 0.95]</code>. One nested ellipse per level (largest solid, others dashed). Defaults to :data:<code>DEFAULT_CREDIBLE</code> (ten nested levels, 5%-95%).</td>
+</tr>
+<tr class="even">
+<td><code>show_density</code></td>
+<td></td>
+<td>If True, overlay the posterior-predictive density with explicit <em>relative</em> levels (no misleading <code>0.00</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>density_levels</code></td>
+<td></td>
+<td>Number of relative density levels when <code>show_density</code> is True.</td>
+</tr>
+<tr class="even">
+<td><code>spread_cap</code></td>
+<td></td>
+<td>Ellipse axis cap as a multiple of the cluster’s point std (see <code>dpmm._cap_covariance</code>). None to disable.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="m_models_gmm_predict" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_gmm_predict"><code>m.models.gmm.predict</code></h2>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.models.gmm.predict(data, sampler, return_probs<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Predicts the GMM density contours based on posterior samples and final labels.</p>
+<p>This function processes the posterior samples from a Bayesian Gaussian Mixture Model (GMM) to derive a single, representative clustering and the corresponding GMM parameters. The approach is based on two main steps: calculating posterior point estimates and performing co-clustering analysis via a Posterior Similarity Matrix (PSM).</p>
+<p>Methodology: 1. <strong>Posterior Point Estimates</strong>: The function first computes the posterior mean of the GMM parameters (weights, means, and covariance components) by averaging over all samples obtained from the MCMC sampler. This provides a single set of parameters that represents the central tendency of the posterior distribution.</p>
+<ol start="2" type="1">
+<li><strong>Co-clustering via Posterior Similarity Matrix (PSM)</strong>: To obtain a single, robust clustering, this function uses a co-clustering approach that leverages the entire posterior distribution.
+<ol type="a">
+<li>A similarity matrix is constructed where the entry (i, j) represents the posterior probability that data point <code>i</code> and data point <code>j</code> belong to the same cluster. This is calculated by averaging their co-assignment probabilities across all posterior samples.</li>
+<li>This similarity matrix is converted into a distance matrix (1 - similarity).</li>
+<li>Agglomerative hierarchical clustering (‘average’ linkage) is then applied to this distance matrix.</li>
+<li>The resulting hierarchy is cut at a specified distance threshold to produce a final, single set of cluster labels for the data.</li>
+</ol></li>
+</ol>
+<p>This method avoids issues like label switching inherent in MCMC and produces a stable clustering that summarizes the relationships discovered in the full Bayesian posterior.</p>
+<ul>
+<li><p>data (jnp.ndarray): The input data points used for the model, with shape [N, D] where N is the number of samples and D is the number of features.</p></li>
+<li><p>sampler (BF.sampler): The fitted MCMC sampler object from which posterior samples can be extracted.</p></li>
+<li><p>tuple: A tuple containing four elements:</p>
+<ul>
+<li>post_mean_w (jnp.ndarray): The posterior mean of the mixture weights.</li>
+<li>post_mean_mu (jnp.ndarray): The posterior mean of the cluster means.</li>
+<li>post_mean_cov (jnp.ndarray): The reconstructed posterior mean of the cluster covariance matrices.</li>
+<li>final_labels (jnp.ndarray): The final, single-partition cluster labels for each data point. Plus <code>(w_samps, mu_samps, sigma_samps, Lcorr_samps, cluster_probs)</code> when <code>return_probs</code> is True (raw draws + per-draw soft assignments, used by <code>plot_gmm</code> for the credible ellipses).</li>
+</ul></li>
+</ul>
+<p>Reference: * https://www.pure.ed.ac.uk/ws/portalfiles/portal/80251963/1508378464.pdf * https://arxiv.org/abs/2108.11753 * https://en.wikipedia.org/wiki/Mixture_model * https://projecteuclid.org/journals/bayesian-analysis/volume-4/issue-2/Improved-criteria-for-clustering-based-on-the-posterior-similarity-matrix/10.1214/09-BA414.pdf * https://www.pure.ed.ac.uk/ws/portalfiles/portal/80251963/1508378464.pdf * https://pmc.ncbi.nlm.nih.gov/articles/PMC10441802/</p>
+</section>
+</section>
+<section id="pca-m.models.pca" class="level1">
+<h1>PCA (<code>m.models.pca</code>)</h1>
+<p>Probabilistic Principal Component Analysis (classic, ARD, robust Student-t, sparse Laplace/horseshoe).</p>
+<section id="m_models_pca_align_posterior_samples" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_align_posterior_samples"><code>m.models.pca.align_posterior_samples</code></h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.align_posterior_samples(posterior_w, reference_components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Aligns each posterior sample to the reference component matrix using Procrustes analysis. Args: posterior_w: Array of shape (num_samples, data_dim, latent_dim) reference_components: Array of shape (data_dim, latent_dim) Returns: aligned_w: Array of shape (num_samples, data_dim, latent_dim)</p>
+</section>
+<section id="m_models_pca_analyze_aligned_posteriors" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_analyze_aligned_posteriors"><code>m.models.pca.analyze_aligned_posteriors</code></h2>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.analyze_aligned_posteriors(X_scaled, aligned_w_samples)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Calculates final PCA attributes using a self-contained, deterministic sign convention for the components. Args: X_scaled: Scaled data matrix of shape (num_datapoints, data_dim) aligned_w_samples: Aligned posterior samples of shape (num_samples, data_dim, latent_dim) Returns: Dictionary with keys for components, variance, etc.</p>
+</section>
+<section id="m_models_pca_components" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_components"><code>m.models.pca.components</code></h2>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.components(feature_names, bayesian_results<span class="op">=</span><span class="va">None</span>, ax<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plots the final Bayesian component matrix as a heatmap.</p>
+</section>
+<section id="m_models_pca_confidence_ellipse" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_confidence_ellipse"><code>m.models.pca.confidence_ellipse</code></h2>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.confidence_ellipse(x, y, ax, n_std<span class="op">=</span><span class="fl">2.0</span>, facecolor<span class="op">=</span><span class="st">'none'</span>, <span class="op">**</span>kwargs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Create a confidence ellipse for a set of x, y points.</p>
+</section>
+<section id="m_models_pca_create_reference_from_posterior" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_create_reference_from_posterior"><code>m.models.pca.create_reference_from_posterior</code></h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.create_reference_from_posterior(posterior_w)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Creates a reference component matrix from the posterior samples using SVD. This reference will be used to align all posterior samples. Args: posterior_w: Array of shape (num_samples, data_dim, latent_dim) Returns: reference_components: Array of shape (data_dim, latent_dim)</p>
+</section>
+<section id="m_models_pca_cumulative_variance" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_cumulative_variance"><code>m.models.pca.cumulative_variance</code></h2>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.cumulative_variance(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    bayesian_results<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">8</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    fontsize<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    color_bar<span class="op">=</span><span class="st">'blue'</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    color_cumulative_line<span class="op">=</span><span class="st">'red'</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    label_size<span class="op">=</span><span class="dv">16</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plots the cumulative explained variance for Bayesian PCA.</p>
+</section>
+<section id="m_models_pca_get_model" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_get_model"><code>m.models.pca.get_model</code></h2>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.get_model(<span class="bu">type</span><span class="op">=</span><span class="st">'ARD'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Principal Component Analysis (PCA) model using JAX and BF. Args: type (str): Type of PCA model to use. Options are ‘ARD’, ‘robust’, ‘sparse’, ‘sparse_robust_ard’, ‘classic’.<br>
+Returns: PCA model class using JAX and BF.</p>
+</section>
+<section id="m_models_pca_individual_correlation" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_individual_correlation"><code>m.models.pca.individual_correlation</code></h2>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.individual_correlation(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    bayesian_results<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    target_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    color_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    size_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    shape_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">10</span>),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Generates a variable correlation plot with cos2 values for Bayesian PCA results.</p>
+</section>
+<section id="m_models_pca_model_sparse_robust_ard" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_model_sparse_robust_ard"><code>m.models.pca.model_sparse_robust_ard</code></h2>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.model_sparse_robust_ard(X, data_dim, latent_dim, num_data_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A combined Sparse, Robust Bayesian PCA model with Automatic Relevance Determination (ARD).</p>
+<ul>
+<li>Sparsity: Achieved with a Laplace prior on the weights ‘w’.</li>
+<li>Robustness: Achieved with a Student’s t-distribution for the likelihood.</li>
+<li>ARD: Achieved by placing a hierarchical prior on the scale of the Laplace distribution, allowing entire latent dimensions to be pruned.</li>
+</ul>
+</section>
+<section id="m_models_pca_pca_ARD" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_pca_ARD"><code>m.models.pca.pca_ARD</code></h2>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.pca_ARD(X, data_dim, latent_dim, num_data_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Probabilistic PCA model with ARD (Automatic Relevance Determination) prior on weights and a correctly defined noise model. ARD helps in automatic relevance determination of latent dimensions, by allowing the model to learn which dimensions are important. Args: x_train: Observed data matrix of shape (data_dim, num_datapoints). data_dim: Dimensionality of the observed data. latent_dim: Dimensionality of the latent space. num_data_points: Number of data points.</p>
+</section>
+<section id="m_models_pca_pca_classic" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_pca_classic"><code>m.models.pca.pca_classic</code></h2>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.pca_classic(X, data_dim, latent_dim, num_data_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Classic Probabilistic PCA model with standard isotropic Gaussian priors.</p>
+<p>Parameters: - X: Observed data matrix (shape: [num_data_points, data_dim]). - data_dim: Number of features / observed dimensions. - latent_dim: Number of latent principal components. - num_data_points: Number of observations.</p>
+</section>
+<section id="m_models_pca_pca_robust" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_pca_robust"><code>m.models.pca.pca_robust</code></h2>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.pca_robust(X, data_dim, latent_dim, num_data_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Robust Bayesian PCA model using a Student’s t-distribution for the likelihood.</p>
+</section>
+<section id="m_models_pca_pca_sparse" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_pca_sparse"><code>m.models.pca.pca_sparse</code></h2>
+<div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.pca_sparse(X, data_dim, latent_dim, num_data_points)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Sparse Bayesian PCA model using a Laplace prior on the weights (w).</p>
+</section>
+<section id="m_models_pca_plot" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_plot"><code>m.models.pca.plot</code></h2>
+<div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.plot(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    X<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    bayesian_results<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    feature_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    target_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    color_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    size_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    shape_var<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span>(<span class="dv">22</span>, <span class="dv">18</span>),</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Generates a 2x2 dashboard of the four main PCA plots. Args: X (jnp.ndarray, optional): Scaled data matrix. Defaults to self.X. feature_names (list, optional): List of names for the original features. Required for some plots. y (jnp.ndarray, optional): Grouping variable for the individuals plot. target_names (list, optional): Names for the groups in <code>y</code>. figsize (tuple, optional): Overall size of the 2x2 plot.</p>
+</section>
+<section id="m_models_pca_process_var" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_process_var"><code>m.models.pca.process_var</code></h2>
+<div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.process_var(var)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Convert categorical string array to numeric codes; leave numeric as is.</p>
+</section>
+<section id="m_models_pca_set_deterministic_sign" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_set_deterministic_sign"><code>m.models.pca.set_deterministic_sign</code></h2>
+<div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.set_deterministic_sign(components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Enforces a deterministic sign convention on the component matrix. For each component (column), it finds the element with the largest absolute value and flips the sign of the entire component if that element is negative. Args: components: The component matrix of shape (data_dim, latent_dim) Returns: The component matrix with a consistent sign convention.</p>
+</section>
+<section id="m_models_pca_variable_correlation" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_pca_variable_correlation"><code>m.models.pca.variable_correlation</code></h2>
+<div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>m.models.pca.variable_correlation(feature_names, X<span class="op">=</span><span class="va">None</span>, bayesian_results<span class="op">=</span><span class="va">None</span>, ax<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Generates a variable correlation plot with cos2 values.</p>
+</section>
+</section>
+<section id="survival-m.models.survival" class="level1">
+<h1>Survival (<code>m.models.survival</code>)</h1>
+<p>Discrete-time Bayesian survival and hazard rate models with univariate, multivariate, and time-varying covariates.</p>
+<section id="m_models_survival_build_surv_covariates" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_build_surv_covariates"><code>m.models.survival.build_surv_covariates</code></h2>
+<div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.build_surv_covariates()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Build a full covariate array for survival modeling.</p>
+<ul>
+<li>Fixed covariates (N,) are expanded to (N,T)</li>
+<li>Stacked with existing time-varying covariates (N, T, V)</li>
+<li>Updates covariate names with fixed covariates first</li>
+</ul>
+</section>
+<section id="m_models_survival_cum_hazard" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_cum_hazard"><code>m.models.survival.cum_hazard</code></h2>
+<div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.cum_hazard(hazard)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Calculates the cumulative hazard from a given hazard rate.</p>
+<p><strong>Parameters</strong> hazard : numpy.ndarray or jax.numpy.ndarray A 1D or 2D array representing the hazard rate at each time step.</p>
+<p><strong>Returns</strong> numpy.ndarray or jax.numpy.ndarray The cumulative hazard calculated by summing the hazard over time steps.</p>
+<p><strong>Notes</strong> - The cumulative hazard is computed as the cumulative sum of the hazard values, scaled by the <code>interval_length</code> factor.</p>
+</section>
+<section id="m_models_survival_import_covF" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_import_covF"><code>m.models.survival.import_covF</code></h2>
+<div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_covF(cov, names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Import fixed covariates (patient-level).</p>
+</section>
+<section id="m_models_survival_import_covV" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_import_covV"><code>m.models.survival.import_covV</code></h2>
+<div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_covV(cov, names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Import time-varying covariates.</p>
+<p><strong>Parameters</strong> cov : np.ndarray Array of shape (N, T) for one covariate, or (N, T, V) for multiple covariates. names : list of str Names of the covariates.</p>
+</section>
+<section id="m_models_survival_import_time_even" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_import_time_even"><code>m.models.survival.import_time_even</code></h2>
+<div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.import_time_even(time, event, interval_length<span class="op">=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Convert data into of survival information into a surv object. Converts continuous time and event data into discrete time intervals for survival analysis if interval_length &gt; 1.</p>
+<p><strong>Parameters</strong> time : 1D jnp.ndarray of shape (N,) representing the continuous time variable. event : 1D Binary jnp.ndarray of shape (N,) representing the event indicator. interval_length : int, optional The length of each discrete time interval (default is 3).</p>
+<p><strong>Returns</strong> - n_patients : int Number of patients in the dataset - patients : np.array Array of patient indices - time : np.array Array of time points - event : np.array Array of event status - interval_bounds : jnp.ndarray Array of boundaries for discrete time intervals. - n_intervals : int The total number of discrete intervals. - intervals : jnp.ndarray Array of interval indices. - death : jnp.ndarray A binary matrix (n_patients x n_intervals) indicating whether each subject experienced the event in each interval (1 if the event occurred, 0 otherwise). - exposure : jnp.ndarray A matrix (n_patients x n_intervals) indicating the time each subject was exposed in each interval.</p>
+<p><strong>Notes</strong> - The function assumes that subjects who experienced the event did so at the end of the time period. - Exposure is capped by the interval bounds, and the last interval reflects the remaining time to the event or censoring.</p>
+</section>
+<section id="m_models_survival_model" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_model"><code>m.models.survival.model</code></h2>
+<div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.model(death, cov, exposure, censoring<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Bayesian Survival Analysis model dispatching to univariate, multivariate, or time-varying models.</p>
+<p>Parameters: - death: Event occurrence indicator array. - cov: Covariates array (fixed or time-varying). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.</p>
+</section>
+<section id="m_models_survival_model_multivariate" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_model_multivariate"><code>m.models.survival.model_multivariate</code></h2>
+<div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.model_multivariate(death, cov, exposure, censoring<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Multivariate discrete-time survival model with multiple fixed covariates.</p>
+<p>Parameters: - death: Event occurrence indicator array. - cov: 2D covariates array (observations, covariates). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.</p>
+</section>
+<section id="m_models_survival_model_time_varying" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_model_time_varying"><code>m.models.survival.model_time_varying</code></h2>
+<div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.model_time_varying(death, cov, exposure, censoring<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Time-varying discrete-time survival model with longitudinal covariates.</p>
+<p>Parameters: - death: Event occurrence indicator array. - cov: 3D time-varying covariates array (observations, intervals, covariates). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.</p>
+</section>
+<section id="m_models_survival_model_univariate" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_model_univariate"><code>m.models.survival.model_univariate</code></h2>
+<div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.model_univariate(death, cov, exposure, censoring<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Univariate discrete-time survival model with a single fixed covariate.</p>
+<p>Parameters: - death: Event occurrence indicator array. - cov: Single covariate array. - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.</p>
+</section>
+<section id="m_models_survival_observed" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_observed"><code>m.models.survival.observed</code></h2>
+<div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.observed(observed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Add observed data to the survival object. Args: observed (np.ndarray): Array of observed data with shape (N, T). This array represent if individuals have been observed at each time point and thus should be 1 if observed and 0 if censored. Raises: ValueError: If observed data shape does not match the survival object.</p>
+</section>
+<section id="m_models_survival_plot_censoring" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_plot_censoring"><code>m.models.survival.plot_censoring</code></h2>
+<div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.plot_censoring(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    cov<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    event<span class="op">=</span><span class="st">'event'</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    time<span class="op">=</span><span class="st">'time'</span>,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">'Time'</span>,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    ylabel<span class="op">=</span><span class="st">'Subject'</span>,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plots the censoring status of subjects in a time-to-event dataset.</p>
+<p>Uses the arrays populated by <code>import_time_even</code> (<code>self.time</code>, <code>self.event</code>, <code>self.patients</code>) and, when <code>cov</code> names a fixed covariate imported via <code>import_covF</code>, overlays the subjects for which that covariate equals 1.</p>
+<p><strong>Parameters</strong> cov : str, optional Name of a fixed covariate (as passed to <code>import_covF</code>) to overlay as scatter points. If <code>None</code> or not found, no overlay is drawn. event, time : str, optional Kept for backwards compatibility; unused. xlabel : str, optional Label for the x-axis. Default is ‘Time’. ylabel : str, optional Label for the y-axis. Default is ‘Subject’.</p>
+<p><strong>Returns</strong> (fig, ax) The Matplotlib figure and axis showing censored and uncensored subjects along with the specified covariate overlay.</p>
+</section>
+<section id="m_models_survival_plot_surv" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_plot_surv"><code>m.models.survival.plot_surv</code></h2>
+<div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.plot_surv(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    lambda0<span class="op">=</span><span class="st">'Baseline_rate'</span>,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    beta<span class="op">=</span><span class="st">'beta'</span>,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    xlab<span class="op">=</span><span class="st">'Time'</span>,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    ylab<span class="op">=</span><span class="st">'Survival'</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    covlab<span class="op">=</span><span class="st">'treated'</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'Bayesian survival model'</span>,</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    hdi_prob<span class="op">=</span><span class="fl">0.94</span>,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plot posterior cumulative hazard Lambda(t) and survival function S(t).</p>
+<p>Draws two subplots: the cumulative hazard on the left and the survival curves on the right, with equal-tailed credible bands.</p>
+<p>Parameters: - lambda0: Posterior variable name for baseline rate draws. - beta: Posterior variable name for covariate effect draws. - xlab: Label for the x-axis. - ylab: Label for the y-axis. - covlab: Label for covariate groups. - title: Super-title for the figure. - hdi_prob: Credible interval probability mass (defaults to 0.94).</p>
+<p>Returns: - Tuple of (fig, (hazard_ax, surv_ax)).</p>
+</section>
+<section id="m_models_survival_ppc_km_by_cov" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_ppc_km_by_cov"><code>m.models.survival.ppc_km_by_cov</code></h2>
+<div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.ppc_km_by_cov(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    covs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    n_groups<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    n_draws<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    extrapolation_factor<span class="op">=</span><span class="fl">1.2</span>,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>    risk<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    lambda0<span class="op">=</span><span class="st">'Baseline_rate'</span>,</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    beta<span class="op">=</span><span class="st">'beta'</span>,</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>    facet<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Grouped KM-overlay PPCs of the replicated times, one figure per covariate.</p>
+<p>Builds on <code>sample_times()</code> and <code>m.diag.ppc_km_overlay(group=...)</code>: each covariate groups the patients – at most <code>n_groups</code> distinct values are grouped as-is, anything more is binned into <code>n_groups</code> quantile bins (Q1..Qn) – so a multivariate model gets one bayesplot-style grouped KM check per covariate instead of a single pooled curve.</p>
+<p>By default (<code>facet=False</code>), each figure overlays the survival curves of all covariate levels on the same plot with distinct colors per level. Setting <code>facet=True</code> separates the levels into subplots (one panel per level).</p>
+<p>With <code>risk=True</code> the dict also holds a “risk” figure grouping the patients by quantiles of the posterior-mean linear predictor: one panel per quantile of predicted hazard, which checks all covariates at once (Q1 = lowest predicted hazard).</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>covs</code></td>
+<td></td>
+<td>Covariate name, list of names, or None for all of <code>self.cov_names</code>.</td>
+</tr>
+<tr class="even">
+<td><code>n_groups</code></td>
+<td></td>
+<td>Max number of distinct values grouped as-is, and number of quantile bins otherwise.</td>
+</tr>
+<tr class="odd">
+<td><code>n_draws, seed</code></td>
+<td></td>
+<td>Passed to <code>sample_times</code>.</td>
+</tr>
+<tr class="even">
+<td><code>n, extrapolation_factor</code></td>
+<td></td>
+<td>Passed to <code>ppc_km_overlay</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>risk</code></td>
+<td></td>
+<td>Also build the linear-predictor risk-group figure.</td>
+</tr>
+<tr class="even">
+<td><code>lambda0, beta</code></td>
+<td></td>
+<td>Posterior names, as in <code>sample_times</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>facet</code></td>
+<td></td>
+<td>When False (the default), overlays groups on a single plot with distinct colors. When True, separates them into subplots (one panel per level).</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: dict {label: plotly Figure} keyed by covariate name, plus “risk” when <code>risk=True</code>.</p>
+</section>
+<section id="m_models_survival_priors" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_priors"><code>m.models.survival.priors</code></h2>
+<div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.priors(sample<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Define prior distributions for the survival model.</p>
+<p>Parameters: - sample: If True, draws direct prior samples rather than defining model nodes.</p>
+<p>Returns: - Tuple of (lambda0, beta) priors for baseline hazard and covariate effects.</p>
+</section>
+<section id="m_models_survival_sample_times" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_sample_times"><code>m.models.survival.sample_times</code></h2>
+<div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.sample_times(</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    lambda0<span class="op">=</span><span class="st">'Baseline_rate'</span>,</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    beta<span class="op">=</span><span class="st">'beta'</span>,</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    n_draws<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Posterior predictive event times, one row per posterior draw.</p>
+<p>Returns a <code>(n_draws, n_patients)</code> numpy array of replicated event times. For each posterior draw the piecewise-exponential rate is <code>rate[s, i, k] = lambda0[s, k] * exp(cov[i] @ beta[s])</code> and the event time is the exponential draw inverted through its cumulative hazard.</p>
+<p>The interval indicators in <code>yrep</code> are not durations, so this is what a bayesplot-style KM overlay needs: <code>m.diag.ppc_km_overlay(y=s.time, yrep=s.sample_times(), status_y=s.event)</code>. Like bayesplot’s predicted curves these times carry no censoring: a draw beyond the last interval bound is extrapolated with the last interval’s rate, and a zero rate gives <code>np.inf</code>. For one panel per covariate see <code>ppc_km_by_cov</code>.</p>
+</section>
+<section id="m_models_survival_survival" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_survival_survival"><code>m.models.survival.survival</code></h2>
+<div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>m.models.survival.survival(hazard)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Calculates the survival probability from a given hazard rate.</p>
+<p><strong>Parameters</strong> hazard : numpy.ndarray or jax.numpy.ndarray A 1D or 2D array representing the hazard rate at each time step.</p>
+<p><strong>Returns</strong> numpy.ndarray or jax.numpy.ndarray The survival probability, computed as the exponential of the negative cumulative hazard.</p>
+<p><strong>Notes</strong> - Survival is calculated as <code>exp(-cumulative hazard)</code> where the cumulative hazard is calculated using the <code>cum_hazard</code> function.</p>
+</section>
+</section>
+<section id="bnnc-m.models.bnnc" class="level1">
+<h1>BNNC (<code>m.models.bnnc</code>)</h1>
+<p>Bayesian Neural Network Clustering for deep unsupervised representation and clustering.</p>
+<section id="m_models_bnnc_get_cluster_probs" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_bnnc_get_cluster_probs"><code>m.models.bnnc.get_cluster_probs</code></h2>
+<div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>m.models.bnnc.get_cluster_probs(data_pts, theta_prob, mu_p, sigma_p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Compute normalized posterior cluster membership probabilities for data points.</p>
+<p>Parameters: - data_pts: Data array (shape: [N, D]). - theta_prob: Cluster mixture weights (shape: [K] or [N_draws, K]). - mu_p: Cluster component means (shape: [K, D]). - sigma_p: Cluster component standard deviations (shape: [K, D]).</p>
+<p>Returns: - Array of normalized posterior cluster assignment probabilities (shape: [N, K]).</p>
+</section>
+<section id="m_models_bnnc_model" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_bnnc_model"><code>m.models.bnnc.model</code></h2>
+<div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>m.models.bnnc.model(data, K<span class="op">=</span><span class="dv">11</span>, D_H1<span class="op">=</span><span class="dv">10</span>, empirical_bayes<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>BNNC marginal mixture model definition.</p>
+</section>
+<section id="m_models_bnnc_plot" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_bnnc_plot"><code>m.models.bnnc.plot</code></h2>
+<div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>m.models.bnnc.plot(data, sampler, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">8</span>), point_size<span class="op">=</span><span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Posterior predictive plot: a filled contour of the expected cluster index over the feature plane, with the data coloured by their argmax cluster.</p>
+<p>The predictive at a point x is p(k | x) ∝ pi_k * N(x | mu_k, sigma_k), averaged over posterior draws of (global_pi, mu, sigma). The contour shows sum_k k * p(k | x); the colour bar is that expected index.</p>
+</section>
+<section id="m_models_bnnc_predict" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_bnnc_predict"><code>m.models.bnnc.predict</code></h2>
+<div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>m.models.bnnc.predict(data, sampler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Performs Consensus Clustering.</p>
+</section>
+</section>
+<section id="nbda-m.models.nbda" class="level1">
+<h1>NBDA (<code>m.models.nbda</code>)</h1>
+<p>Network-Based Diffusion Analysis separating social and asocial transmission processes.</p>
+<section id="m_models_nbda" class="level2">
+<h2 class="anchored" data-anchor-id="m_models_nbda"><code>m.models.nbda</code></h2>
+<div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>m.models.nbda(CES<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Network-Based Diffusion Analysis (NBDA) probabilistic model.</p>
+<ul>
+<li>CES: If True, uses the Constant Elasticity of Substitution (CES) parameterization to combine social and asocial transmission rates.</li>
+</ul>
+<p>Returns: - Probabilistic model sampling diffusion events conditional on network structure and status.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+function convertMarkdownToHTML(markdown) {
+  const options = {
+    breaks: true,
+    gfm: true,
+  };
+  const htmlContent = marked.parse(markdown, options);
+  return htmlContent;
+}
+
+tippy('#Elasticity', {
+  content: convertMarkdownToHTML('The elasticity of the response variable with respect to the exposure is the percent change in the response with respect to a percent change in the exposure. For example, an elasticity of 1.0 means that doubling the exposure time will double the response'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+
+tippy('#Uncertainty', {
+  content: convertMarkdownToHTML('Bayesian analysis provides a complete probability distribution for each parameter. This full distribution (rather than a single point estimate) allows you to assess uncertainty in a natural and intuitive way.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#priorKnowledge', {
+  content: convertMarkdownToHTML('When data are sparse or noisy, incorporating prior knowledge through the prior distribution can improve the model’s performance. This is especially useful in fields where previous research or expert opinion is available.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#Flexibility', {
+  content: convertMarkdownToHTML('Bayesian approaches naturally extend to complex settings such as hierarchical models, models with latent variables, or situations with missing data. Their ability to blend different sources of information makes them ideal for modern, data-rich applications.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#PPCs', {
+  content: convertMarkdownToHTML('PPCs involve generating *dummy data* (or simulated observations) from the posterior predictive distribution and comparing these simulated datasets with the actual observed data.By comparing summary statistics (e.g., means, variances) or visualizations (e.g., histograms, scatter plots) between \( y^{\text{rep}} \) and the observed data, we can assess if our model is capable of reproducing key features of the data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#HPDI', {
+  content: convertMarkdownToHTML('HPDI is a metric that describe the distribution of a parameter. The Highest Posterior Density Interval is the narrowest interval that contains a specified proportion (e.g., 95%) of the posterior probability. HPDIs are especially useful when the posterior distribution is skewed or multimodal as it help in understanding the uncertainty of parameter estimates and in communicating the degree of uncertainty in predictions.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#convDiag', {
+  content: convertMarkdownToHTML('Convergence diagnostics are statistical tools and methods used to assess whether a Markov Chain Monte Carlo (MCMC) algorithm has sufficiently explored the target posterior distribution in Bayesian analysis. They help ensure that the chain has stabilized and that samples are reliable for inference.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#ESS', {
+  content: convertMarkdownToHTML('ESS estimates how many independent samples our MCMC chain is equivalent to. Low ESS values indicate that samples are highly correlated, which might affect the reliability of posterior summaries.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#Rhat', {
+  content: convertMarkdownToHTML('Rhat compares the variance between multiple chains to the variance within each chain. Values close to 1 (typically below 1.1) indicate good convergence.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+  tippy('#TP', {
+    content: convertMarkdownToHTML('Trace plots are graphical tools used in MCMC diagnostics to visualize the sampled values of a parameter over iterations. They help assess the convergence and mixing behavior of the Markov chain.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+  tippy('#AutoCor', {
+    content: convertMarkdownToHTML('Autocorrelation plots visualize the correlation between samples in an MCMC chain as a function of the lag (distance between samples). They help assess how dependent the samples are and whether the chain is mixing efficiently.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+  tippy('#DesPlot', {
+    content: convertMarkdownToHTML('Density plots visualize the estimated posterior distribution of a parameter based on MCMC samples. They provide a smoothed representation of the distribution, helping assess central tendency, spread, and shape.'),
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+
+
+tippy('#DP', {
+  content: convertMarkdownToHTML('A dependent variable  is the variable being measured or observed in an analysis. It represents the outcome whose variation depends on changes in one or morepredictor. In statistical models, it is often denoted as Y.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#IP', {
+  content: convertMarkdownToHTML('An independent variable is the variable that is manipulated or controlled in an analysis to observe its effect on a dependent variable. It represents the input or cause in a cause-and-effect relationship and is often denoted as X in statistical models.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#lk', {
+  content: convertMarkdownToHTML('Likelihood is a statistical concept representing the probability of observing a given set of data, assuming specific values of the *parameters* in a model.It is not the same as probability; instead, it measures how well a model with certain parameters explains the observed data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#pdist', {
+  content: convertMarkdownToHTML('A probability distribution is a mathematical function that describes the likelihood of different outcomes in a random process. It specifies how probabilities are assigned to values or ranges of a random variable. Distributions can be discrete (e.g.,Binomial, Poisson) or continuous (e.g., Normal, Exponential), depending on whether the variable takes finite or infinite values.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#intercept ', {
+  content: convertMarkdownToHTML('An intercept is the value of the dependent variable when all independent variables are equal to zero in a regression model. It represents the starting point or baseline level of the outcome variable and is often denoted as α in linear models.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#slope ', {
+  content: convertMarkdownToHTML('A slope is the rate of change in the dependent variable for a one-unit change in an independent variable in a regression model. It represents the strength and direction of the relationship and is often denoted as β in linear models. A positive slope indicates an increasing relationship, while a negative slope indicates a decreasing relationship.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+
+tippy('#prior', {
+  content: convertMarkdownToHTML('Priors are distributions that represent the value of the parameter before conditioning it on the data.'),
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#BT', {
+  content: '<span style="color: white;">Bayes\' Theorem describes how to update the probability of a hypothesis given new evidence. It states that the posterior probability of a parameter is proportional to the product of the prior probability and the likelihood of the data given the parameter. This approach allows for the incorporation of prior knowledge and the use ofBayesian updating to improve the accuracy of the model.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#BUpdating', {
+    content: '<span style="color: white;">Bayesian updating is the iterative process of refining beliefs by applying Bayes\' Theorem as new data becomes available.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+  });
+
+
+
+tippy('#overdispersion', {
+  content: '<span style="color: white;">Overdispersion refers to a situation in statistical modeling where the variability of the data exceeds what is expected under the assumed model. In this case, by the binomial distribution.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#linkF', {
+    content: '<span style="color: white;">The link function is a key component of the generalized linear model (GLM) and it is used to transform the mean of the response variable so that it can be modeled as a linear combination of the predictors. Different types of response data(continuous, binary, counts, etc.) have different natural ranges. For example, probabilities must lie between 0 and 1, and a logarithmic link ensures a positive mean for count data. The choice of link function influences how we interpret the regression coefficients.For instance, with a logit link (used in logistic regression), the coefficients relate to the log - odds of the outcome.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#simplex', {
+  content: '<span style="color: white;">A simplex is a vector of k−1 probabilities that sum to one.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+  
+tippy('#triptych', {
+    content: '<span style="color: white;">Three panels arranged side by side to compare multiple datasets or conditions simultaneously. Each panel often represents a different aspect of the data or a different dataset, allowing for easy comparison and analysis. They are particularly useful for displaying complex relationships or patterns across multiple variables or experimental conditions.") plots are very handy for understanding the impact of interactions.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+    
+tippy('#hyperP', {
+  content: '<span style="color: white;">A hyperprior is a prior distribution placed on the parameters (called hyperparameters) of another prior distribution. Essentially, it introduces a second layer of uncertainty by modeling the parameters of the prior as random variables, allowing for more flexibility and robustness in the Bayesian model.</span>',
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#cov', {
+    content: '<span style="color: white;">A covariance matrix is a square matrix that contains the covariances between pairs of elements in a random vector. Each element in the matrix represents the covariance between two variables. The diagonal elements represent the variances of each variable, and the off-diagonal elements represent the covariance between different variables.</span>',
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#centerRF', {
+  content: "<span style='color: white;'>The centered version of the varying intercept model is a statistical approach where the intercepts of a regression model vary across groups or clusters, and these intercepts are centered around a global mean. In this model, each group has its own intercept, but the differences between these intercepts and the global mean are what are explicitly estimated. This helps in understanding how each group's baseline differs from an overall average, making it easier to interpret variations between groups.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#NodeF', {
+    content: "<span style='color: white;'>Nodal categorical (e.g., sex) or continuous (e.g., age) characteristics</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#DyadicF', {
+    content: "<span style='color: white;'>Link-related categorical (e.g., same group membership) or continuous (e.g., genetic distances) characteristics between nodes</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#senderF', {
+    content: "<span style='color: white;'>Node <i>i</i>'s propensity to emit a link.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#receiverF', {
+    content: "<span style='color: white;'>Node <i>j</i>'s propensity to receive a link.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#DyadicF2', {
+    content: "<span style='color: white;'>Propensity of node <i>i</i> and <i>j</i> to receive from each other.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#expoB', {
+    content: "<span style='color: white;'>Heterogeneity in observations between individuals leading to over- and under-sampling of some individuals.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#censoB', {
+    content: "<span style='color: white;'>Missing interactions within observation leading to over- and under-estimation of interactions (e.g., Females birds may have cryptic phenotype compare to male birds, leading to higher probability to miss interactions during observations).</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#assor', {
+    content: "<span style='color: white;'>The tendency of nodes to connect with similar nodes.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+tippy('#disassor', {
+    content: "<span style='color: white;'>The tendency of nodes to connect with dissimilar nodes.</span>",
+    allowHTML: true,
+    interactive: true,
+    delay: 100,
+});
+
+
+tippy('#chol', {
+  content: "<span style='color: white;'>This matrix is special because it encodes correlations between the variables but in a computationally stable way.In multivariate normal distributions, correlation matrices are positive definite and symmetric, but they can be tricky to work with directly. The Cholesky decomposition makes computation easier and more stable because it's lower triangular and simplifies matrix operations.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#uncertainty', {
+  content: "<span style='color: white;'>Model parameter uncertainty refers to the inherent variability in the parameter estimates due to limited or noisy data, represented as probability distributions rather than fixed values. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#posterior', {
+  content: "<span style='color: white;'> Probability distribution of the model parameters after observing the data. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#scaled', {
+  content: "<span style='color: white;'> Scaled data is data that has been transformed to fit within a specific range or to have specific statistical properties, such as a normal distribution with a mean of zero and a standard deviation of one. This transformation helps improve the performance of algorithms and ensures that features contribute equally to the analysis. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#grandMean', {
+  content: "<span style='color: white;'> The average value of the outcome when all predictor variables are at their mean levels. </span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#ohe', {
+  content: "<span style='color: white;'>Convert categorical variables into binary vectors, where each category is represented by a unique vector with all elements set to zero except for one element, which is set to one.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#indices', {
+  content: "<span style='color: white;'>Process of mapping each unique category of a categorical variable to a corresponding integer index, where each category is assigned a distinct numerical value.</span>",
+  allowHTML: true,
+  interactive: true,
+  delay: 100,
+});
+
+tippy('#softmax', {
+  content: `
+  <span style='color: white;'>
+    takes a vector of 𝑛 real-valued scores (logits) and exponentiates each score, 
+    then normalizes them by dividing each exponentiated score by the sum of all exponentiated scores. 
+    The resulting output values lie in the range (0, 1) and sum to 1, making them interpretable as probabilities.<br><br>
+    <strong>Formula:</strong><br>
+    $$softmax(z<sub>i</sub>) = [ \\frac{e^{z_i}}{\\sum_{j=1}^{n} e^{z_j}} ]$$
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#kernel', {
+  content: `
+  <span style='color: white;'>
+    A kernel k(x,x') is a function that computes the similarity/covariance between any two points x and x'
+    in a higher-dimensional feature space without explicitly transforming them. 
+    The kernel function allows for non-linear relationships by mapping input space to feature space, 
+    where linear techniques can then be applied. 
+    Mathematically, like for the covariance matrix it must be symmetric and positive semi-definite.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#kernelMean0', {
+  content: `
+  <span style='color: white;'>
+    GP mean is usually set to zero as by setting the mean to zero, 
+    we center the distribution around the origin. 
+    This helps in interpreting the model, as the values of <i>𝑓(𝑥)<\\i> 
+    can be thought of as deviations from this mean.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#signAmbiguity', {
+  content: `
+  <span style='color: white;'>
+    PCA identifies directions (principal components) that capture the maximum variance in the data. However, the orientation of these components is not unique; both a vector and its negation represent the same principal direction. This means that if 𝑤 is a principal component, −𝑤 is equally valid.
+  </span>
+  `,  allowHTML: true,
+  interactive: true,
+  delay: 100,
+  onShow(instance) {
+    MathJax.typesetPromise([instance.reference]).then(() => {
+      // Optional: if you want to do something after the typesetting
+    });
+  },
+});
+
+tippy('#MatCov', {
+  content: `
+  <span style='color: white;'>
+    A covariance matrix is a square matrix Σ of size $n×n$ for n random variables $X₁, X₂, ..., Xₙ$, where each element $σ_ij$ represents the covariance between variables $X_i$ and $X_j$. The diagonal elements $σ_ii$ are the variances of each variable $X_i$.
+  </span>
+  `, allowHTML: true,
+    interactive: true,
+    delay: 100,
+    onShow(instance) {
+      MathJax.typesetPromise([instance.reference]).then(() => {
+        // Optional: if you want to do something after the typesetting
+      });
+    },
+});
+
+tippy('#RFcentered', {
+  content: `
+  <span style='color: white;'>
+    The centered version of the varying intercept in mixed effects models is a transformation where each group's intercept is expressed as a deviation from the fixed intercept. This results in zero-mean random effects ensures that the random effects are balanced around zero, enhancing model interpretability and estimation efficiency.
+  </span>
+  `, allowHTML: true,
+    interactive: true,
+    delay: 100,
+    onShow(instance) {
+      MathJax.typesetPromise([instance.reference]).then(() => {
+        // Optional: if you want to do something after the typesetting
+      });
+    },
+});
+
+tippy('#LKJcorr', {
+      content: `
+  <span style='color: white;'>
+    The Cholesky Factor is a lower triangular matrix ( $L$ ) with positive diagonal entries such that $( A = LL^T )$ for a given symmetric positive-definite matrix ( $A$ ).
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#unsupervised', {
+      content: `
+  <span style='color: white;'>
+    An unsupervised algorithm is a method that processes unlabeled data to automatically uncover patterns, groupings, or structures without predefined output targets.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#stickProcess', {
+      content: `
+  <span style='color: white;'>
+The stick-breaking process is a way to generate a random distribution by imagining a unit-length stick that gets broken into pieces one step at a time. At each step, a random fraction of whatever stick remains is snapped off to form a new weight, and the rest is left for future breaks. Each weight is paired with a randomly chosen parameter value. Repeating this indefinitely yields a distribution made of infinitely many weighted parameter, where earlier pieces tend to be larger and later ones smaller.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Neurons', {
+      content: `
+  <span style='color: white;'>
+ In a neural network, a neuron (or node) is a fundamental computational unit. It receives inputs, applies a weighted sum and an activation function to these inputs, and produces an output. It's analogous to a biological neuron, processing and transmitting signals.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Layers', {
+      content: `
+  <span style='color: white;'>
+Layers are groups of neurons organized in a 2D array. Each layer processes the output from the previous layer and passes its output to the next. Common layer types include input layers, hidden layers (where the main computation occurs), and output layers (which produce the final predictions).
+</span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+
+tippy('#Dropout', {
+      content: `
+  <span style='color: white;'>
+ Dropout is a regularization technique where, during training, a random subset of neurons (and their connections) are temporarily ignored or "dropped out" for each training iteration. This prevents neurons from co-adapting too much and encourages the network to learn more robust features, thus reducing overfitting.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#L2', {
+      content: `
+  <span style='color: white;'>
+L2 regularization (also known as weight decay) is a technique to prevent overfitting by adding a penalty term to the loss function. This penalty is proportional to the sum of the squares of the network's weights. It encourages the model to use smaller weights, leading to a simpler and more generalized model.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+
+tippy('#Overfitting', {
+      content: `
+  <span style='color: white;'>
+Overfitting occurs when a machine learning model learns the training data too well, including its noise and random fluctuations. As a result, the model performs very poorly on new, unseen data because it has failed to generalize the underlying patterns.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#VI', {
+      content: `
+  <span style='color: white;'>
+An optimization-based method for approximating complex, intractable posterior distributions. Instead of sampling (as in MCMC), VI posits a parameterized family of simpler distributions (e.g., Gaussians) and optimizes their parameters to minimize the Kullback-Leibler (KL) divergence between the approximation and the true posterior. This effectively converts an integration problem into an optimization problem
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+    
+tippy('#SG-MCMC', {
+      content: `
+  <span style='color: white;'>
+A class of algorithms designed to scale Markov Chain Monte Carlo methods to large datasets. It approximates the gradient of the log-posterior using mini-batches (subsets) of data rather than the full dataset. To ensure convergence to the true posterior distribution despite the noise introduced by subsampling, these methods (such as Stochastic Gradient Langevin Dynamics) introduce specific noise injection and step-size schedules.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+
+tippy('#Activation', {
+      content: `
+  <span style='color: white;'>
+An activation function is a nonlinear transformation applied to the pre-activation output of a neuron in a neural network. It enables the network to learn nonlinear relationships between inputs and outputs. Common activation functions include ReLU, tanh, and sigmoid, Softmax, GELU, Swish.
+  </span>
+  `, allowHTML: true,
+      interactive: true,
+      delay: 100,
+      onShow(instance) {
+        MathJax.typesetPromise([instance.reference]).then(() => {
+          // Optional: if you want to do something after the typesetting
+        });
+      },
+    });
+</script>
+<script>
+  // Synchronize body theme class to html/document element for root scrollbar styling
+  function syncThemeClass() {
+    const isDark = document.body.classList.contains('quarto-dark');
+    document.documentElement.classList.toggle('quarto-dark', isDark);
+    document.documentElement.classList.toggle('quarto-light', !isDark);
+  }
+  
+  if (document.body) {
+    syncThemeClass();
+  }
+  document.addEventListener("DOMContentLoaded", syncThemeClass);
+  
+  const themeObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        syncThemeClass();
+      }
+    });
+  });
+  
+  if (document.body) {
+    themeObserver.observe(document.body, { attributes: true });
+  } else {
+    document.addEventListener("DOMContentLoaded", function() {
+      themeObserver.observe(document.body, { attributes: true });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Set the global if Quarto respects it
+    window.quartoDisableCodeFolding = true;
+    
+    // Manually hide any fold buttons that might have been rendered
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .quarto-code-tools-menu, 
+      .quarto-code-collapse-toggle { 
+        display: none !important; 
+      }
+    `;
+    document.head.appendChild(style);
+  });
+
+  // Dynamic sidebar folding: fold everything except the current and NEXT section with smooth transitions
+  (function() {
+    function adjustSidebarFolding(useTransition) {
+      const sidebar = document.querySelector('#quarto-sidebar');
+      if (!sidebar) return;
+
+      const sections = Array.from(sidebar.querySelectorAll('li.sidebar-item-section'));
+      if (sections.length === 0) return;
+
+      // Find the active link
+      const activeLink = sidebar.querySelector('a.active');
+      let currentSectionLi = null;
+      if (activeLink) {
+        currentSectionLi = activeLink.closest('li.sidebar-item-section');
+      }
+
+      // Determine the index of the current section
+      const currentIndex = currentSectionLi ? sections.indexOf(currentSectionLi) : -1;
+
+      sections.forEach((sectionLi, index) => {
+        const shouldOpen = (currentIndex !== -1 && (index === currentIndex || index === currentIndex + 1));
+        
+        const ul = sectionLi.querySelector('ul.sidebar-section');
+        if (ul) {
+          if (useTransition && window.bootstrap && window.bootstrap.Collapse) {
+            try {
+              const bsCollapse = bootstrap.Collapse.getOrCreateInstance(ul, { toggle: false });
+              if (shouldOpen) {
+                bsCollapse.show();
+              } else {
+                bsCollapse.hide();
+              }
+            } catch (e) {
+              toggleDOMDirectly(ul, shouldOpen);
+              toggleTogglesDirectly(sectionLi, shouldOpen);
+            }
+          } else {
+            toggleDOMDirectly(ul, shouldOpen);
+            toggleTogglesDirectly(sectionLi, shouldOpen);
+          }
+        }
+      });
+    }
+
+    function toggleDOMDirectly(ul, shouldOpen) {
+      if (shouldOpen) {
+        ul.classList.add('show');
+      } else {
+        ul.classList.remove('show');
+      }
+    }
+
+    function toggleTogglesDirectly(sectionLi, shouldOpen) {
+      const toggles = sectionLi.querySelectorAll('[data-bs-toggle="collapse"]');
+      toggles.forEach(toggle => {
+        toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        if (!shouldOpen) {
+          toggle.classList.add('collapsed');
+        } else {
+          toggle.classList.remove('collapsed');
+        }
+      });
+    }
+
+    // Save the current active section index before leaving the page
+    window.addEventListener('beforeunload', function() {
+      const activeLink = document.querySelector('#quarto-sidebar a.active');
+      if (activeLink) {
+        const currentSectionLi = activeLink.closest('li.sidebar-item-section');
+        const sections = Array.from(document.querySelectorAll('#quarto-sidebar li.sidebar-item-section'));
+        const currentIndex = sections.indexOf(currentSectionLi);
+        if (currentIndex !== -1) {
+          sessionStorage.setItem('prevActiveSectionIndex', currentIndex);
+        }
+      }
+    });
+
+    // Helper to restore previous page's sidebar state instantly before DOMContentLoaded/paint
+    function restorePreviousSidebarState() {
+      const prevActiveIndexStr = sessionStorage.getItem('prevActiveSectionIndex');
+      if (prevActiveIndexStr !== null) {
+        const prevActiveIndex = parseInt(prevActiveIndexStr, 10);
+        const sidebar = document.querySelector('#quarto-sidebar');
+        if (!sidebar) return;
+        
+        const sections = Array.from(sidebar.querySelectorAll('li.sidebar-item-section'));
+        sections.forEach((sectionLi, index) => {
+          const shouldStartOpen = (index === prevActiveIndex || index === prevActiveIndex + 1);
+          const ul = sectionLi.querySelector('ul.sidebar-section');
+          if (ul) {
+            toggleDOMDirectly(ul, shouldStartOpen);
+          }
+          toggleTogglesDirectly(sectionLi, shouldStartOpen);
+        });
+      }
+    }
+
+    // Try restoring immediately if the DOM elements are already available
+    restorePreviousSidebarState();
+
+    // Trigger smooth sliding folding animation shortly after DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Restore again here just in case the elements weren't loaded when the script parsed
+      restorePreviousSidebarState();
+      
+      setTimeout(function() {
+        adjustSidebarFolding(true);
+      }, 50);
+    });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
+  })();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../reference/session.html" class="pagination-link" aria-label="Session (`m`)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Session (<code>m</code>)</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../reference/data.html" class="pagination-link" aria-label="Data (`m.data`, `m.scale`, ...)">
+        <span class="nav-page-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

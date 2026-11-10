@@ -84,6 +84,15 @@ class pca:
             return self.pca_classic
 
     def pca_classic(self, X, data_dim, latent_dim, num_data_points ): 
+        """
+        Classic Probabilistic PCA model with standard isotropic Gaussian priors.
+
+        Parameters:
+        - X: Observed data matrix (shape: [num_data_points, data_dim]).
+        - data_dim: Number of features / observed dimensions.
+        - latent_dim: Number of latent principal components.
+        - num_data_points: Number of observations.
+        """
         # Gaussian prior for the principal component 'W'.
         w = self.dist.normal(0, 1, shape=(data_dim, latent_dim), name='w')
 

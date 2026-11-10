@@ -89,6 +89,18 @@ class bnnc:
         numpyro.factor('mixture_likelihood', jnp.sum(total_log_likelihood))
 
     def get_cluster_probs(self, data_pts, theta_prob, mu_p, sigma_p):
+        """
+        Compute normalized posterior cluster membership probabilities for data points.
+
+        Parameters:
+        - data_pts: Data array (shape: [N, D]).
+        - theta_prob: Cluster mixture weights (shape: [K] or [N_draws, K]).
+        - mu_p: Cluster component means (shape: [K, D]).
+        - sigma_p: Cluster component standard deviations (shape: [K, D]).
+
+        Returns:
+        - Array of normalized posterior cluster assignment probabilities (shape: [N, K]).
+        """
         X_e = jnp.expand_dims(data_pts, axis=1) # (N, 1, D_X)
         mu_e = jnp.expand_dims(mu_p, axis=0) # (1, K, D_X)
         sig_e = jnp.expand_dims(sigma_p, axis=0) # (1, K, D_X)

@@ -1,12 +1,5 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
-<script>
-  window.MathJax = window.MathJax || {};
-  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
-    typeset: false
-  });
-</script>
-
 
 <meta charset="utf-8">
 <meta name="generator" content="quarto-1.7.32">
@@ -48,8 +41,8 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-314dcc1e229a5b856d7cbf7613715498.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-1dce79d47b0907e8bc9f05052eaceb1e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -78,6 +71,20 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 <!-- header-scripts.html -->
+<script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
 <script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
@@ -381,6 +388,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/session.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Session (<code>m</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Built-in models (<code>m.models</code>)</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -707,7 +720,7 @@ body.quarto-light .bf-popup-link,
 
   <div class="bf-graph-layout">
     <div class="bf-svg-wrap">
-      <svg id="bf-obj-svg" viewbox="0 0 880 420" xmlns="http://www.w3.org/2000/svg"></svg>
+      <svg id="bf-obj-svg" viewbox="0 0 880 450" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <div class="bf-popup-card" id="bf-popup-card">
@@ -719,7 +732,7 @@ body.quarto-light .bf-popup-link,
         </div>
       </div>
       <div class="bf-popup-desc" id="bf-popup-desc">
-        Central BayesForge session object holding your dataset (<code>m.df</code>, <code>m.data_on_model</code>), modeling building blocks (<code>m.dist</code>, <code>m.effects</code>, <code>m.link</code>, <code>m.net</code>), persistence &amp; datasets (<code>m.save()</code>, <code>m.load()</code>), fitted sampler state (<code>m.model</code>, <code>m.sampler</code>), posterior draws (<code>m.posteriors</code>, <code>m.posteriors_full</code>), and diagnostics (<code>m.diag</code>, <code>m.tab_summary</code>).
+        Central BayesForge session object holding your dataset (<code>m.df</code>, <code>m.data_on_model</code>), modeling building blocks (<code>m.dist</code>, <code>m.models</code>, <code>m.effects</code>, <code>m.link</code>, <code>m.net</code>), persistence &amp; datasets (<code>m.save()</code>, <code>m.load()</code>), fitted sampler state (<code>m.model</code>, <code>m.sampler</code>), posterior draws (<code>m.posteriors</code>, <code>m.posteriors_full</code>), and diagnostics (<code>m.diag</code>, <code>m.tab_summary</code>).
       </div>
       <div class="bf-popup-links" id="bf-popup-links">
         <span>Created / updated by:</span>
@@ -746,7 +759,7 @@ body.quarto-light .bf-popup-link,
   const NODES = [
     // Root
     {
-      id: "m", label: "m = bf()", sub: "Session Root", cat: "root", x: 440, y: 210, w: 126, h: 48,
+      id: "m", label: "m = bf()", sub: "Session Root", cat: "root", x: 440, y: 225, w: 126, h: 48,
       type: "BayesForge.bf", stage: "Created by bf()",
       desc: "Central BayesForge session object holding your dataset, modeling building blocks, MCMC/SVI sampler, persistence (save/load), posterior samples, and diagnostic tools.",
       links: [{ text: "Session API (m.*)", href: "session.html" }, { text: "m.fit()", href: "session.html#fit" }, { text: "m.save()", href: "session.html#save" }, { text: "m.load()", href: "session.html#load" }]
@@ -754,31 +767,37 @@ body.quarto-light .bf-popup-link,
 
     // 1. Submodules (Top-Left)
     {
-      id: "dist", label: "m.dist", sub: "Distributions", cat: "submodules", x: 135, y: 52, w: 185, h: 36,
+      id: "models", label: "m.models", sub: "Built-in models", cat: "submodules", x: 135, y: 46, w: 185, h: 32,
+      type: "models", stage: "Available at bf()",
+      desc: "Pre-built turnkey Bayesian models: DPMM (Dirichlet process mixture), GMM (Gaussian mixture), PCA (Bayesian/ARD/sparse/robust), Survival analysis, BNNC (Bayesian neural clustering), and NBDA (network-based diffusion).",
+      links: [{ text: "Built-in models API (m.models.*)", href: "models.html" }]
+    },
+    {
+      id: "dist", label: "m.dist", sub: "Distributions", cat: "submodules", x: 135, y: 84, w: 185, h: 32,
       type: "DistProxy (UnifiedDist)", stage: "Available at bf()",
       desc: "50+ probability distributions (normal, binomial, poisson, lkj_cholesky, ...) used to declare priors (name=), likelihoods (obs=), or simulate data (sample=True).",
       links: [{ text: "Distributions API (m.dist.*)", href: "dist.html" }]
     },
     {
-      id: "effects", label: "m.effects", sub: "Random effects", cat: "submodules", x: 135, y: 96, w: 185, h: 36,
+      id: "effects", label: "m.effects", sub: "Random effects", cat: "submodules", x: 135, y: 122, w: 185, h: 32,
       type: "effects", stage: "Available at bf()",
       desc: "Building blocks for hierarchical / varying effects (centered and non-centered varying intercepts and slopes, correlated LKJ blocks).",
       links: [{ text: "Random effects API (m.effects.*)", href: "effects.html" }]
     },
     {
-      id: "link", label: "m.link", sub: "Link functions", cat: "submodules", x: 135, y: 140, w: 185, h: 36,
+      id: "link", label: "m.link", sub: "Link functions", cat: "submodules", x: 135, y: 160, w: 185, h: 32,
       type: "link", stage: "Available at bf()",
       desc: "Inverse link functions and parameter transforms (inv_logit, exp, softmax, cloglog, ...) for Generalized Linear Models.",
       links: [{ text: "Link functions API (m.link.*)", href: "link.html" }]
     },
     {
-      id: "net", label: "m.net", sub: "Network models", cat: "submodules", x: 135, y: 184, w: 185, h: 36,
+      id: "net", label: "m.net", sub: "Network models", cat: "submodules", x: 135, y: 198, w: 185, h: 32,
       type: "net", stage: "Available at bf()",
       desc: "Social network analysis toolkit: Social Relations Model (sender_receiver, dyadic_effect), Stochastic Block Models (block_model), and JAX graph metrics.",
       links: [{ text: "Networks API (m.net.*)", href: "net.html" }]
     },
     {
-      id: "load", label: "m.save() / m.load()", sub: "Save, load & datasets", cat: "submodules", x: 135, y: 228, w: 185, h: 36,
+      id: "load", label: "m.save() / m.load()", sub: "Save, load & datasets", cat: "submodules", x: 135, y: 236, w: 185, h: 32,
       type: "Persistence & Datasets", stage: "Available at bf()",
       desc: "Save the fitted BF session to disk with m.save(path), reload a saved session with m.load(path), or load bundled benchmark datasets via m.load.<dataset>() (howell1, reedfrogs, chimpanzees, ...).",
       links: [{ text: "m.save()", href: "session.html#save" }, { text: "m.load()", href: "session.html#load" }, { text: "Example data (m.load.*)", href: "load.html" }]
@@ -786,19 +805,19 @@ body.quarto-light .bf-popup-link,
 
     // 2. Data & Preprocessing (Bottom-Left)
     {
-      id: "df", label: "m.df", sub: "Pandas DataFrame", cat: "data", x: 135, y: 294, w: 185, h: 36,
+      id: "df", label: "m.df", sub: "Pandas DataFrame", cat: "data", x: 135, y: 310, w: 185, h: 32,
       type: "pandas.DataFrame", stage: "Created by m.data()",
       desc: "In-memory DataFrame holding the loaded dataset. Modified in-place when you call m.scale(), m.index(), m.OHE(), m.to_float(), or m.to_int().",
       links: [{ text: "m.data()", href: "data.html#data" }, { text: "m.scale()", href: "data.html#scale" }, { text: "m.index()", href: "data.html#index" }, { text: "m.OHE()", href: "data.html#OHE" }]
     },
     {
-      id: "data_on_model", label: "m.data_on_model", sub: "JAX model inputs", cat: "data", x: 135, y: 338, w: 185, h: 36,
+      id: "data_on_model", label: "m.data_on_model", sub: "JAX model inputs", cat: "data", x: 135, y: 348, w: 185, h: 32,
       type: "dict[str, jax.Array]", stage: "Set by m.data_to_model() / m.fit()",
       desc: "Dictionary of JAX arrays passed as arguments to your model function. Populated explicitly by m.data_to_model(cols) or obs=..., or automatically from m.df via m.pd_to_jax().",
       links: [{ text: "m.data_to_model()", href: "data.html#data_to_model" }, { text: "m.pd_to_jax()", href: "data.html#pd_to_jax" }, { text: "m.fit()", href: "session.html#fit" }]
     },
     {
-      id: "index_map", label: "m.index_map", sub: "Category code map", cat: "data", x: 135, y: 382, w: 185, h: 36,
+      id: "index_map", label: "m.index_map", sub: "Category code map", cat: "data", x: 135, y: 386, w: 185, h: 32,
       type: "dict[str, dict[int, str]]", stage: "Created by m.index()",
       desc: "Maps each categorical column encoded by m.index() to its 0-based integer lookup dictionary {code: category_label}, and m.data_modification tracks all column transforms.",
       links: [{ text: "m.index()", href: "data.html#index" }, { text: "Data API", href: "data.html" }]
@@ -806,25 +825,25 @@ body.quarto-light .bf-popup-link,
 
     // 3. Engine & Fit State (Top-Right)
     {
-      id: "model", label: "m.model", sub: "Fitted model fn", cat: "engine", x: 745, y: 52, w: 195, h: 36,
+      id: "model", label: "m.model", sub: "Fitted model fn", cat: "engine", x: 745, y: 46, w: 195, h: 32,
       type: "callable", stage: "Set by m.fit() / m.svi()",
       desc: "The probabilistic model function most recently passed to m.fit() or m.svi(). Used by m.sample(), m.latex(), m.graph(), and m.diag PPC/LOO helpers.",
       links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.latex()", href: "session.html#latex" }, { text: "m.graph()", href: "session.html#graph" }, { text: "m.sample()", href: "session.html#sample" }]
     },
     {
-      id: "sampler", label: "m.sampler", sub: "MCMC / SVI engine", cat: "engine", x: 745, y: 96, w: 195, h: 36,
+      id: "sampler", label: "m.sampler", sub: "MCMC / SVI engine", cat: "engine", x: 745, y: 84, w: 195, h: 32,
       type: "mcmc_numpyro / svi_numpyro", stage: "Set by m.fit() / m.svi()",
       desc: "Underlying sampler wrapper holding the NUTS/HMC/Gibbs kernel or SVI state, warmup adaptation state, and raw chain samples.",
       links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.svi()", href: "session.html#svi" }, { text: "m.sampler_stats()", href: "session.html#sampler_stats" }]
     },
     {
-      id: "seed", label: "m.seed / m._rng", sub: "PRNG key manager", cat: "engine", x: 745, y: 140, w: 195, h: 36,
+      id: "seed", label: "m.seed / m._rng", sub: "PRNG key manager", cat: "engine", x: 745, y: 122, w: 195, h: 32,
       type: "int | bool / RNG", stage: "Set at bf() / m.set_seed()",
       desc: "Controls reproducibility across prior simulation, MCMC warmup/sampling, and posterior predictive draws via a deterministic JAX PRNGKey stream.",
       links: [{ text: "m.get_seed()", href: "session.html#get_seed" }, { text: "m.set_seed()", href: "session.html#set_seed" }]
     },
     {
-      id: "mesh", label: "m.n_devices / m.mesh", sub: "Multi-CPU/GPU sharding", cat: "engine", x: 745, y: 184, w: 195, h: 36,
+      id: "mesh", label: "m.n_devices / m.mesh", sub: "Multi-CPU/GPU sharding", cat: "engine", x: 745, y: 160, w: 195, h: 32,
       type: "int / jax.sharding.Mesh", stage: "Set at bf(cores=...)",
       desc: "Device count and XLA mesh for parallel chains and axis-0 data sharding. Placement decisions from m.fit(shard=True) are inspected via m.shard_report().",
       links: [{ text: "m.shard()", href: "session.html#shard" }, { text: "m.replicate()", href: "session.html#replicate" }, { text: "m.shard_report()", href: "session.html#shard_report" }]
@@ -832,31 +851,31 @@ body.quarto-light .bf-popup-link,
 
     // 4. Posteriors & Diagnostics (Bottom-Right)
     {
-      id: "posteriors", label: "m.posteriors", sub: "Pooled draws (active)", cat: "posteriors", x: 745, y: 244, w: 195, h: 34,
+      id: "posteriors", label: "m.posteriors", sub: "Pooled draws (active)", cat: "posteriors", x: 745, y: 228, w: 195, h: 30,
       type: "dict[str, jax.Array]", stage: "Set by m.fit() · Updated by m.filter_posteriors()",
       desc: "Dictionary of posterior draws pooled across chains {param: Array(n_draws, ...)}. Updated in-place when m.filter_posteriors() or m.summary(include=/exclude=) is called.",
       links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }, { text: "m.get_posterior_means()", href: "session.html#get_posterior_means" }]
     },
     {
-      id: "posteriors_chain", label: "m.posteriors_by_chain", sub: "Per-chain draws (C, S, ...)", cat: "posteriors", x: 745, y: 284, w: 195, h: 34,
+      id: "posteriors_chain", label: "m.posteriors_by_chain", sub: "Per-chain draws (C, S, ...)", cat: "posteriors", x: 745, y: 266, w: 195, h: 30,
       type: "dict[str, jax.Array]", stage: "Set by m.fit() · Updated by m.filter_posteriors()",
       desc: "Posterior draws preserving the leading chain axis (n_chains, n_samples, ...). Used by trace plots, rank plots, R-hat, and ESS calculations.",
       links: [{ text: "m.fit()", href: "session.html#fit" }, { text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }]
     },
     {
-      id: "posteriors_full", label: "m.posteriors_full", sub: "Unfiltered backup draws", cat: "posteriors", x: 745, y: 324, w: 195, h: 34,
+      id: "posteriors_full", label: "m.posteriors_full", sub: "Unfiltered backup draws", cat: "posteriors", x: 745, y: 304, w: 195, h: 30,
       type: "dict[str, jax.Array]", stage: "Set by m.fit() (read-only baseline)",
       desc: "Unfiltered copy of all sampled parameters (alongside m.posteriors_by_chain_full). Ensures repeated calls to m.filter_posteriors() always filter from the full model rather than stacking.",
       links: [{ text: "m.filter_posteriors()", href: "session.html#filter_posteriors" }, { text: "m.diag (filtered=False)", href: "diag.html" }]
     },
     {
-      id: "tab_summary", label: "m.tab_summary", sub: "Summary DataFrame", cat: "posteriors", x: 745, y: 364, w: 195, h: 34,
+      id: "tab_summary", label: "m.tab_summary", sub: "Summary DataFrame", cat: "posteriors", x: 745, y: 342, w: 195, h: 30,
       type: "pandas.DataFrame", stage: "Set by m.summary()",
       desc: "Cached summary table (mean, sd, HDI bounds, mcse, ess_bulk, ess_tail, r_hat) produced by the most recent call to m.summary() or m.summary_jax().",
       links: [{ text: "m.summary()", href: "session.html#summary" }, { text: "m.summary_jax()", href: "session.html#summary_jax" }]
     },
     {
-      id: "diag", label: "m.diag (& .trace)", sub: "Diagnostics & plots", cat: "posteriors", x: 745, y: 402, w: 195, h: 34,
+      id: "diag", label: "m.diag (& .trace)", sub: "Diagnostics & plots", cat: "posteriors", x: 745, y: 380, w: 195, h: 30,
       type: "diagWIP", stage: "Set by m.fit() / m.svi()",
       desc: "Interactive diagnostics suite bound to m: convergence metrics (rhat, ess, loo, waic), Plotly plots (plot_trace, posterior, forest, pair, ppc_*), and ArviZ InferenceData (m.diag.trace).",
       links: [{ text: "Diagnostics API (m.diag.*)", href: "diag.html" }, { text: "m.diag.to_az()", href: "diag.html#to_az" }, { text: "m.sampler_stats()", href: "session.html#sampler_stats" }]
@@ -869,10 +888,10 @@ body.quarto-light .bf-popup-link,
 
   // Group headers
   const headers = [
-    { text: "1. Submodules (at init)", x: 135, y: 22, color: COLORS.submodules.stroke },
-    { text: "2. Data & Preprocessing", x: 135, y: 268, color: COLORS.data.stroke },
-    { text: "3. Model & Sampler", x: 745, y: 22, color: COLORS.engine.stroke },
-    { text: "4. Posteriors & Diagnostics", x: 745, y: 218, color: COLORS.posteriors.stroke }
+    { text: "1. Submodules (at init)", x: 135, y: 20, color: COLORS.submodules.stroke },
+    { text: "2. Data & Preprocessing", x: 135, y: 282, color: COLORS.data.stroke },
+    { text: "3. Model & Sampler", x: 745, y: 20, color: COLORS.engine.stroke },
+    { text: "4. Posteriors & Diagnostics", x: 745, y: 202, color: COLORS.posteriors.stroke }
   ];
   headers.forEach(h => {
     const t = document.createElementNS(NS, "text");
@@ -1012,36 +1031,41 @@ body.quarto-light .bf-popup-link,
 <td>0</td>
 </tr>
 <tr class="even">
+<td><a href="../reference/models.html">Built-in models (<code>m.models</code>)</a></td>
+<td>48</td>
+<td>0</td>
+</tr>
+<tr class="odd">
 <td><a href="../reference/data.html">Data (<code>m.data</code>, <code>m.scale</code>, …)</a></td>
 <td>10</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../reference/dist.html">Distributions (<code>m.dist</code>)</a></td>
 <td>95</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../reference/diag.html">Diagnostics (<code>m.diag</code>)</a></td>
 <td>41</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../reference/effects.html">Random effects (<code>m.effects</code>)</a></td>
 <td>10</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../reference/link.html">Link functions (<code>m.link</code>)</a></td>
 <td>13</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="../reference/net.html">Networks (<code>m.net</code>)</a></td>
 <td>51</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="../reference/load.html">Example data (<code>m.load</code>)</a></td>
 <td>31</td>
 <td>0</td>
@@ -1805,6 +1829,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

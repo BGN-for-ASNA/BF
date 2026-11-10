@@ -154,7 +154,7 @@
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/Build in models.html</loc>
-    <lastmod>2026-11-09T20:16:46.082Z</lastmod>
+    <lastmod>2026-11-09T21:23:25.679Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/Data sharding.html</loc>
@@ -166,7 +166,7 @@
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/build in functions.html</loc>
-    <lastmod>2026-11-02T13:55:02.000Z</lastmod>
+    <lastmod>2026-11-09T14:43:01.146Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/gaussian_copula.html</loc>
@@ -182,39 +182,39 @@
   </url>
   <url>
     <loc>https://s-sosa.com/reference/data.html</loc>
-    <lastmod>2026-11-05T08:10:39.665Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.861Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/diag.html</loc>
-    <lastmod>2026-11-05T08:30:32.946Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.863Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/dist.html</loc>
-    <lastmod>2026-11-05T07:51:43.000Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.866Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/effects.html</loc>
-    <lastmod>2026-11-05T07:49:00.818Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.867Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/index.html</loc>
-    <lastmod>2026-11-09T09:21:21.860Z</lastmod>
+    <lastmod>2026-11-10T10:06:33.860Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/link.html</loc>
-    <lastmod>2026-11-05T07:49:00.818Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.868Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/load.html</loc>
-    <lastmod>2026-11-05T07:49:00.818Z</lastmod>
+    <lastmod>2026-11-10T08:33:34.764Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/net.html</loc>
-    <lastmod>2026-11-05T07:49:00.819Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.869Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/session.html</loc>
-    <lastmod>2026-11-05T08:51:51.048Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.870Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/start/Define model.html</loc>
@@ -222,7 +222,7 @@
   </url>
   <url>
     <loc>https://s-sosa.com/start/Diagnostics.html</loc>
-    <lastmod>2026-11-05T09:55:19.678Z</lastmod>
+    <lastmod>2026-11-10T09:27:35.497Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/start/Fit model.html</loc>
@@ -251,5 +251,9 @@
   <url>
     <loc>https://s-sosa.com/start/Random and fixed seeds.html</loc>
     <lastmod>2026-11-02T12:10:59.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/reference/models.html</loc>
+    <lastmod>2026-11-10T08:45:09.844Z</lastmod>
   </url>
 </urlset>

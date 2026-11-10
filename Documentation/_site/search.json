@@ -3233,7 +3233,7 @@
     "href": "Advance/Build in models.html",
     "title": "Build in models",
     "section": "",
-    "text": "PCA\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\nm= bf()\nm.data(m.load.iris(only_path=True))\nm.data_on_model = dict(\n    X=jnp.array(m.df.iloc[:,0:-2].values)\n)\nm.fit(m.models.pca(type=\"classic\"), progress_bar=False) # or robust, sparse, classic, sparse_robust_ard\n\n_ = m.models.pca.plot(\n    X=m.df.iloc[:,0:-2].values,\n    y=m.df.iloc[:,-2].values, \n    feature_names=m.df.columns[0:-2], \n    target_names=m.df.iloc[:,-1].unique(),\n    color_var=m.df.iloc[:,0].values,\n    shape_var=m.df.iloc[:,-2].values\n)\n\n\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\njnp &lt;- reticulate::import(\"jax.numpy\")\nnp &lt;- reticulate::import(\"numpy\")\n\nd &lt;- read.csv(m$load$iris(only_path = TRUE))\nX &lt;- as.matrix(d[, 1:4])  # all but the last two columns\nm$data_on_model &lt;- list(\n  X = jnp$array(X)\n)\nm$fit(m$models$pca(type = \"classic\"), progress_bar = FALSE) # or robust, sparse, classic, sparse_robust_ard\n\nm$models$pca$plot(\n  X = X,\n  y = np$array(d$target),\n  feature_names = names(d)[1:4],\n  target_names = unique(d$species),\n  color_var = np$array(d[, 1]),\n  shape_var = np$array(d$target)\n)\n\n\nusing PyBayesForge\nusing PythonCall\n\nm = importBF(platform=\"cpu\")\nm.data(m.load.iris(only_path=true))\nX = m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(0, -2)].values  # all but the last two columns\nm.data_on_model = pydict(\n    X=jnp.array(X)\n)\nm.fit(m.models.pca(type=\"classic\"), progress_bar=false) # or robust, sparse, classic, sparse_robust_ard\n\n@pyplot m.models.pca.plot(\n    X=X,\n    y=m.df.iloc[pybuiltins.slice(nothing), -2].values,\n    feature_names=m.df.columns[pybuiltins.slice(0, -2)],\n    target_names=m.df.iloc[pybuiltins.slice(nothing), -1].unique(),\n    color_var=m.df.iloc[pybuiltins.slice(nothing), 0].values,\n    shape_var=m.df.iloc[pybuiltins.slice(nothing), -2].values\n)\n\n\n\n\n\nSurvival analysis\nPiecewise-constant (piecewise-exponential) hazard model. Time is cut into fixed intervals; import_time_even builds the per-interval death and exposure matrices, and censoring is handled by exposure dropping to 0 once a subject leaves the risk set.\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\nm = bf()\ndata_path = m.load.mastectomy(only_path=True)\nm.data(data_path, sep=',')\nm.df.metastasized = (m.df.metastasized.values == \"yes\").astype(jnp.int64)\n\n# Discretise follow-up time into intervals and register the event indicator.\nm.models.survival.import_time_even(\n    m.df.time.values,\n    m.df.event.values, interval_length=3\n)\n\n# Time-fixed (patient-level) covariates.\nm.models.survival.import_covF(\n    m.df.metastasized.values, ['metastasized']\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m.models.survival.import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\nm.models.survival.plot_censoring(cov='metastasized')\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm.models.survival.baseline_rate_prior = (0.01, 0.01)\nm.models.survival.hazard_rate_prior_scale = 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm.fit(m.models.survival.model, num_samples=100, num_warmup=100,\n      num_chains=4, target_accept_prob=0.99, progress_bar=False)\n\nm.summary()\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m.summary().\n_ = m.models.survival.plot_surv(beta='Hazard_rate_metastasized')\n\n\njax.local_device_count 16\n------------------------------------------------------------------------------\nSurvival concern 44 individuals in 76 intervals.\n26.0 individuals experienced the event.\n------------------------------------------------------------------------------\nCovariates imported: ['metastasized']\nSurv object now has 1 covariates: ['metastasized']\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nnp &lt;- reticulate::import(\"numpy\")\n\ndata_path &lt;- m$load$mastectomy(only_path = TRUE)\nm$data(data_path, sep = \",\")\nmet &lt;- np$astype(np$equal(m$df$metastasized, \"yes\"), np$int64)\nm$df$metastasized &lt;- met\n\n# Discretise follow-up time into intervals and register the event indicator.\nm$models$survival$import_time_even(\n  np$asarray(m$df$time),\n  np$asarray(m$df$event), interval_length = 3L\n)\n\n# Time-fixed (patient-level) covariates.\nm$models$survival$import_covF(\n  met, list(\"metastasized\")\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m$models$survival$import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\nm$models$survival$plot_censoring(cov = \"metastasized\")\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm$models$survival$baseline_rate_prior &lt;- c(0.01, 0.01)\nm$models$survival$hazard_rate_prior_scale &lt;- 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm$fit(m$models$survival$model, num_samples = 100L, num_warmup = 100L,\n      num_chains = 4L, target_accept_prob = 0.99, progress_bar = FALSE)\n\nprint(m$summary())\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m$summary().\nm$models$survival$plot_surv(beta = \"Hazard_rate_metastasized\")\n\n\nusing PyBayesForge\nusing PythonCall\nnp = pyimport(\"numpy\")\n\nm = importBF(platform=\"cpu\")\ndata_path = pyconvert(String, m.load.mastectomy(only_path=true))\nm.data(data_path, sep=\",\")\nm.df.metastasized = np.astype(np.equal(m.df.metastasized.values, \"yes\"), np.int64)\n\n# Discretise follow-up time into intervals and register the event indicator.\nm.models.survival.import_time_even(\n    m.df.time.values,\n    m.df.event.values, interval_length=3\n)\n\n# Time-fixed (patient-level) covariates.\nm.models.survival.import_covF(\n    m.df.metastasized.values, [\"metastasized\"]\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m.models.survival.import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\n@pyplot m.models.survival.plot_censoring(cov=\"metastasized\")\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm.models.survival.baseline_rate_prior = (0.01, 0.01)\nm.models.survival.hazard_rate_prior_scale = 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm.fit(m.models.survival.model, num_samples=100, num_warmup=100,\n      num_chains=4, target_accept_prob=0.99, progress_bar=false)\n\nprintln(m.summary())\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m.summary().\n@pyplot m.models.survival.plot_surv(beta=\"Hazard_rate_metastasized\")\n\n\n\n\n\nGaussian Mixture Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nfrom sklearn.datasets import make_blobs\nm = bf()\n\n# Generate synthetic data\ndata, true_labels = make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10,10), random_state=101\n)\n\nm.data_on_model = {\"data\": data, \"K\": 8}\nm.fit(m.models.gmm, progress_bar=False)  # MCMC over the mixture parameters\nm.plot(X=data, sampler=m.sampler)    # ⚠️ Experimental feature\n\n\njax.local_device_count 16\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n(&lt;Figure size 960x576 with 1 Axes&gt;,\n &lt;Axes: title={'center': 'GMM clusters — 8 consensus clusters, 25%-95% credible regions'}, xlabel='Feature 1', ylabel='Feature 2'&gt;)\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nsk_datasets &lt;- reticulate::import(\"sklearn.datasets\")\n\n# Generate synthetic data\noutput &lt;- sk_datasets$make_blobs(\n  n_samples = 500L, centers = 8L, cluster_std = 0.8,\n  center_box = reticulate::tuple(-10, 10), random_state = 101L\n)\ndata &lt;- output[[1]]\n\nm$data_on_model &lt;- list(data = data, K = 8L)\nm$fit(m$models$gmm, progress_bar = FALSE)  # MCMC over the mixture parameters\nm$plot(X = data, sampler = m$sampler)      # ⚠️ Experimental feature\n\n\nusing PyBayesForge\nusing PythonCall\nm = importBF(platform=\"cpu\")\n\n# Generate synthetic data\nsk_datasets = pyimport(\"sklearn.datasets\")\noutput = sk_datasets.make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10, 10), random_state=101\n)\ndata = output[0]\n\nm.data_on_model = pydict(data=data, K=8)\nm.fit(m.models.gmm, progress_bar=false)  # MCMC over the mixture parameters\n@pyplot m.plot(X=data, sampler=m.sampler) # ⚠️ Experimental feature\n\n\n\n\n\nDirichlet Process Mixture Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nfrom sklearn.datasets import make_blobs\nm = bf()\n\n# Generate synthetic data\ndata, true_labels = make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10,10), random_state=101\n)\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm.data_on_model = dict(data=data, T=10, method='marginal')\nm.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,\n      progress_bar=False)\nm.plot(data, m.sampler)\n\n\njax.local_device_count 16\nModel found 7 clusters.\n\n\n(&lt;Figure size 960x576 with 1 Axes&gt;,\n &lt;Axes: title={'center': 'DPMM clusters — 7 consensus clusters, 25%-95% credible regions'}, xlabel='Feature 1', ylabel='Feature 2'&gt;)\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nsk_datasets &lt;- reticulate::import(\"sklearn.datasets\")\n\n# Generate synthetic data\noutput &lt;- sk_datasets$make_blobs(\n  n_samples = 500L, centers = 8L, cluster_std = 0.8,\n  center_box = reticulate::tuple(-10, 10), random_state = 101L\n)\ndata &lt;- output[[1]]\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm$data_on_model &lt;- list(data = data, T = 10L, method = \"marginal\")\nm$fit(m$models$dpmm, num_samples = 500L, num_warmup = 500L, num_chains = 2L,\n      progress_bar = FALSE)\nm$plot(data, m$sampler)\n\n\nusing PyBayesForge\nusing PythonCall\nm = importBF(platform=\"cpu\")\n\n# Generate synthetic data\nsk_datasets = pyimport(\"sklearn.datasets\")\noutput = sk_datasets.make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10, 10), random_state=101\n)\ndata = output[0]\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm.data_on_model = pydict(data=data, T=10, method=\"marginal\")\nm.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,\n      progress_bar=false)\n@pyplot m.plot(data, m.sampler)\n\n\n\n\n\nNetwork Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\n# Setup device------------------------------------------------\nm = bf(platform='cpu')\n# Simulate data ------------------------------------------------\nN = 50\nindividual_predictor = m.dist.normal(0,1, shape = (N,1), sample = True)\n\nkinship = m.dist.bernoulli(0.3, shape = (N,N), sample = True)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\ndef sim_network(kinship, individual_predictor):\n  # Intercept\n  alpha = -8\n\n  # SR\n  sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = True)\n\n  # D\n  DR = m.net.dyadic_effect(kinship, d_sd= 1, sample = True)\n\n  return m.dist.bernoulli(logits = alpha + sr + DR, sample = True)\n\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\n\n# Predictive model ------------------------------------------------\nm.data_on_model = dict(\n    network = network,\n    dyadic_predictors = m.net.mat_to_edgl(kinship),\n    focal_individual_predictors = individual_predictor,\n    target_individual_predictors = individual_predictor\n)\n\ndef model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors):\n    N_id = network.shape[0]\n    alpha = m.dist.normal(0, 1, name=\"alpha\")\n    sr = m.net.sender_receiver(\n        focal_individual_predictors,\n        target_individual_predictors,\n        s_mu=0.4, r_mu=-0.4\n    )\n    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)\n    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)\n\nm.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=False)\nm.summary()\n\n\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\nmean\nsd\neti89_lb\neti89_ub\ness_bulk\ness_tail\nr_hat\nmcse_mean\nmcse_sd\n\n\n\n\nalpha\n-5.14\n0.30\n-5.60\n-4.73\n152.76\n156.86\nNaN\n0.03\n0.02\n\n\ndr_L[0, 0]\n1.00\n0.00\n1.00\n1.00\n500.00\n500.00\nNaN\n0.00\nNaN\n\n\ndr_L[0, 1]\n0.00\n0.00\n0.00\n0.00\n500.00\n500.00\nNaN\n0.00\nNaN\n\n\ndr_L[1, 0]\n0.01\n0.41\n-0.63\n0.70\n184.57\n261.37\nNaN\n0.03\n0.01\n\n\ndr_L[1, 1]\n0.91\n0.11\n0.69\n1.00\n387.69\n422.53\nNaN\n0.01\n0.01\n\n\n...\n...\n...\n...\n...\n...\n...\n...\n...\n...\n\n\nsr_rf[48, 1]\n-0.37\n0.42\n-1.10\n0.16\n244.27\n319.98\nNaN\n0.03\n0.02\n\n\nsr_rf[49, 0]\n-0.02\n0.25\n-0.42\n0.33\n525.26\n379.82\nNaN\n0.01\n0.02\n\n\nsr_rf[49, 1]\n-0.09\n0.39\n-0.75\n0.44\n641.26\n293.73\nNaN\n0.02\n0.03\n\n\nsr_sigma[0]\n0.21\n0.14\n0.03\n0.46\n192.58\n246.31\nNaN\n0.01\n0.01\n\n\nsr_sigma[1]\n0.40\n0.19\n0.10\n0.71\n114.59\n115.90\nNaN\n0.02\n0.01\n\n\n\n\n5115 rows × 9 columns\n\n\n\n\n\nlibrary(BayesForge)\njnp &lt;- reticulate::import(\"jax.numpy\")\n\n# Setup device------------------------------------------------\nm &lt;- importBF(platform = \"cpu\")\n# Simulate data ------------------------------------------------\nN &lt;- 50L\nindividual_predictor &lt;- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)\n\nkinship &lt;- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)\ndiag &lt;- jnp$diag_indices(N)\nkinship &lt;- kinship$at[diag[[1]], diag[[2]]]$set(0L)\n\nsim_network &lt;- function(kinship, individual_predictor) {\n  alpha &lt;- -8\n  sr &lt;- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)\n  DR &lt;- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)\n  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)\n}\n\nnetwork &lt;- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)\n\nm$data_on_model &lt;- list(\n  network = network,\n  dyadic_predictors = m$net$mat_to_edgl(kinship),\n  focal_individual_predictors = individual_predictor,\n  target_individual_predictors = individual_predictor\n)\n\nmodel &lt;- function(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors) {\n  alpha &lt;- m$dist$normal(0, 1, sample = TRUE)\n  sr &lt;- m$net$sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu = 0.4, r_mu = -0.4)\n  dr &lt;- m$net$dyadic_effect(dyadic_predictors, d_sd = 1.0)\n  m$dist$bernoulli(logits = alpha + sr + dr, obs = network)\n}\n\nm$fit(model, num_samples = 500L, num_warmup = 500L, num_chains = 1L, progress_bar = FALSE)\nm$summary()\n\n\nusing PyBayesForge\nusing PythonCall\n\n# Setup device------------------------------------------------\nm = importBF(platform=\"cpu\")\n# Simulate data ------------------------------------------------\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\nfunction sim_network(kinship, individual_predictor)\n    alpha = -8\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)\nend\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\n\nm.data_on_model = pydict(\n    network=network,\n    dyadic_predictors=m.net.mat_to_edgl(kinship),\n    focal_individual_predictors=individual_predictor,\n    target_individual_predictors=individual_predictor\n)\n\nfunction model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors)\n    alpha = m.dist.normal(0, 1, name=\"alpha\")\n    sr = m.net.sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu=0.4, r_mu=-0.4)\n    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)\n    m.dist.bernoulli(logits=alpha + sr + dr, obs=network)\nend\n\nm.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=false)\nm.summary()\n\n\n\n\n\nNetwork Visualization\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\nimport numpy as np\nimport pandas as pd\n\n# Setup device------------------------------------------------\nm = bf(platform='cpu')\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=True)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=True)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\ndef sim_network(kinship, individual_predictor):\n    alpha = -4\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=True)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=True)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=True)\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\nadj = m.net.edgl_to_mat(network)\n\n# Individual characteristics of the nodes ------------------------------------\nrng = np.random.default_rng(1)\nnodes = pd.DataFrame({\n    \"id\": [f\"n{i}\" for i in range(N)],\n    \"predictor\": np.asarray(individual_predictor).ravel(),\n    \"sex\": rng.choice([\"female\", \"male\"], N),\n    \"group\": rng.choice([\"A\", \"B\", \"C\"], N),\n    \"age\": rng.integers(1, 30, N),\n    \"rank\": rng.uniform(0, 1, N),\n})\n\n# Interactive network: each node feature drives one visual channel\nm.net.viz(\n    nodes, adj,\n    col_id=\"id\",\n    col_size=\"predictor\",                                      # node size\n    col_color=\"group\", color_node=(\"#1b9e77\", \"#d95f02\"),      # node fill colour\n    col_stroke=\"age\",                                          # border width\n    col_strokeColor=\"rank\", color_stroke=(\"white\", \"black\"),   # border colour\n    col_shape=\"sex\", shapes=(\"circle\", \"square\"),              # node shape\n)\n\n\njax.local_device_count 16\n\n\n\n\n\n\n\nlibrary(BayesForge)\njnp &lt;- reticulate::import(\"jax.numpy\")\nnp &lt;- reticulate::import(\"numpy\")\n\nm &lt;- importBF(platform = \"cpu\")\nN &lt;- 50L\nindividual_predictor &lt;- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)\n\nkinship &lt;- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)\ndiag &lt;- jnp$diag_indices(N)\nkinship &lt;- kinship$at[diag[[1]], diag[[2]]]$set(0L)\n\nsim_network &lt;- function(kinship, individual_predictor) {\n  alpha &lt;- -4\n  sr &lt;- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)\n  DR &lt;- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)\n  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)\n}\n\nnetwork &lt;- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)\nadj &lt;- m$net$edgl_to_mat(network)\n\nnodes &lt;- data.frame(\n  id = paste0(\"n\", 0:(N - 1)),\n  predictor = as.vector(individual_predictor),\n  sex = sample(c(\"female\", \"male\"), N, replace = TRUE),\n  group = sample(c(\"A\", \"B\", \"C\"), N, replace = TRUE),\n  age = sample(1:29, N, replace = TRUE),\n  rank = runif(N, 0, 1)\n)\n\nm$net$viz(\n  nodes, adj,\n  col_id = \"id\",\n  col_size = \"predictor\",\n  col_color = \"group\", color_node = c(\"#1b9e77\", \"#d95f02\"),\n  col_stroke = \"age\",\n  col_strokeColor = \"rank\", color_stroke = c(\"white\", \"black\"),\n  col_shape = \"sex\", shapes = c(\"circle\", \"square\")\n)\n\n\nusing PyBayesForge\nusing PythonCall\nnp = pyimport(\"numpy\")\npd = pyimport(\"pandas\")\n\nm = importBF(platform=\"cpu\")\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\nfunction sim_network(kinship, individual_predictor)\n    alpha = -4\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)\nend\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\nadj = m.net.edgl_to_mat(network)\n\nnodes = pd.DataFrame(pydict(\n    id=[string(\"n\", i) for i in 0:(N-1)],\n    predictor=np.asarray(individual_predictor).ravel(),\n    sex=rand([\"female\", \"male\"], N),\n    group=rand([\"A\", \"B\", \"C\"], N),\n    age=rand(1:29, N),\n    rank=rand(N)\n))\n\n@pyplot m.net.viz(\n    nodes, adj,\n    col_id=\"id\",\n    col_size=\"predictor\",\n    col_color=\"group\", color_node=(\"#1b9e77\", \"#d95f02\"),\n    col_stroke=\"age\",\n    col_strokeColor=\"rank\", color_stroke=(\"white\", \"black\"),\n    col_shape=\"sex\", shapes=(\"circle\", \"square\")\n)",
+    "text": "PCA\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\nm= bf()\nm.data(m.load.iris(only_path=True))\nm.data_on_model = dict(\n    X=jnp.array(m.df.iloc[:,0:-2].values)\n)\nm.fit(m.models.pca(type=\"classic\"), progress_bar=False) # or robust, sparse, classic, sparse_robust_ard\n\n_ = m.models.pca.plot(\n    X=m.df.iloc[:,0:-2].values,\n    y=m.df.iloc[:,-2].values, \n    feature_names=m.df.columns[0:-2], \n    target_names=m.df.iloc[:,-1].unique(),\n    color_var=m.df.iloc[:,0].values,\n    shape_var=m.df.iloc[:,-2].values\n)\n\n\nbf v 0.0.60 package loaded\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\njnp &lt;- reticulate::import(\"jax.numpy\")\nnp &lt;- reticulate::import(\"numpy\")\n\nd &lt;- read.csv(m$load$iris(only_path = TRUE))\nX &lt;- as.matrix(d[, 1:4])  # all but the last two columns\nm$data_on_model &lt;- list(\n  X = jnp$array(X)\n)\nm$fit(m$models$pca(type = \"classic\"), progress_bar = FALSE) # or robust, sparse, classic, sparse_robust_ard\n\nm$models$pca$plot(\n  X = X,\n  y = np$array(d$target),\n  feature_names = names(d)[1:4],\n  target_names = unique(d$species),\n  color_var = np$array(d[, 1]),\n  shape_var = np$array(d$target)\n)\n\n\nusing PyBayesForge\nusing PythonCall\n\nm = importBF(platform=\"cpu\")\nm.data(m.load.iris(only_path=true))\nX = m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(0, -2)].values  # all but the last two columns\nm.data_on_model = pydict(\n    X=jnp.array(X)\n)\nm.fit(m.models.pca(type=\"classic\"), progress_bar=false) # or robust, sparse, classic, sparse_robust_ard\n\n@pyplot m.models.pca.plot(\n    X=X,\n    y=m.df.iloc[pybuiltins.slice(nothing), -2].values,\n    feature_names=m.df.columns[pybuiltins.slice(0, -2)],\n    target_names=m.df.iloc[pybuiltins.slice(nothing), -1].unique(),\n    color_var=m.df.iloc[pybuiltins.slice(nothing), 0].values,\n    shape_var=m.df.iloc[pybuiltins.slice(nothing), -2].values\n)\n\n\n\n\n\nSurvival analysis\nPiecewise-constant (piecewise-exponential) hazard model. Time is cut into fixed intervals; import_time_even builds the per-interval death and exposure matrices, and censoring is handled by exposure dropping to 0 once a subject leaves the risk set.\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\nm = bf()\ndata_path = m.load.mastectomy(only_path=True)\nm.data(data_path, sep=',')\nm.df.metastasized = (m.df.metastasized.values == \"yes\").astype(jnp.int64)\n\n# Discretise follow-up time into intervals and register the event indicator.\nm.models.survival.import_time_even(\n    m.df.time.values,\n    m.df.event.values, interval_length=3\n)\n\n# Time-fixed (patient-level) covariates.\nm.models.survival.import_covF(\n    m.df.metastasized.values, ['metastasized']\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m.models.survival.import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\nm.models.survival.plot_censoring(cov='metastasized')\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm.models.survival.baseline_rate_prior = (0.01, 0.01)\nm.models.survival.hazard_rate_prior_scale = 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm.fit(m.models.survival.model, num_samples=100, num_warmup=100,\n      num_chains=4, target_accept_prob=0.99, progress_bar=False)\n\nm.summary()\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m.summary().\n_ = m.models.survival.plot_surv(beta='Hazard_rate_metastasized')\n\n\njax.local_device_count 16\n------------------------------------------------------------------------------\nSurvival concern 44 individuals in 76 intervals.\n26.0 individuals experienced the event.\n------------------------------------------------------------------------------\nCovariates imported: ['metastasized']\nSurv object now has 1 covariates: ['metastasized']\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nnp &lt;- reticulate::import(\"numpy\")\n\ndata_path &lt;- m$load$mastectomy(only_path = TRUE)\nm$data(data_path, sep = \",\")\nmet &lt;- np$astype(np$equal(m$df$metastasized, \"yes\"), np$int64)\nm$df$metastasized &lt;- met\n\n# Discretise follow-up time into intervals and register the event indicator.\nm$models$survival$import_time_even(\n  np$asarray(m$df$time),\n  np$asarray(m$df$event), interval_length = 3L\n)\n\n# Time-fixed (patient-level) covariates.\nm$models$survival$import_covF(\n  met, list(\"metastasized\")\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m$models$survival$import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\nm$models$survival$plot_censoring(cov = \"metastasized\")\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm$models$survival$baseline_rate_prior &lt;- c(0.01, 0.01)\nm$models$survival$hazard_rate_prior_scale &lt;- 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm$fit(m$models$survival$model, num_samples = 100L, num_warmup = 100L,\n      num_chains = 4L, target_accept_prob = 0.99, progress_bar = FALSE)\n\nprint(m$summary())\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m$summary().\nm$models$survival$plot_surv(beta = \"Hazard_rate_metastasized\")\n\n\nusing PyBayesForge\nusing PythonCall\nnp = pyimport(\"numpy\")\n\nm = importBF(platform=\"cpu\")\ndata_path = pyconvert(String, m.load.mastectomy(only_path=true))\nm.data(data_path, sep=\",\")\nm.df.metastasized = np.astype(np.equal(m.df.metastasized.values, \"yes\"), np.int64)\n\n# Discretise follow-up time into intervals and register the event indicator.\nm.models.survival.import_time_even(\n    m.df.time.values,\n    m.df.event.values, interval_length=3\n)\n\n# Time-fixed (patient-level) covariates.\nm.models.survival.import_covF(\n    m.df.metastasized.values, [\"metastasized\"]\n)\n\n# Time-varying covariates ⚠️ Experimental feature\n# m.models.survival.import_covV\n\n# Censoring plot: one line per subject (follow-up length), red = censored,\n# grey = event observed, dot = metastasized.\n@pyplot m.models.survival.plot_censoring(cov=\"metastasized\")\n\n# Priors (shown with their defaults, override before fit):\n#   Baseline_rate ~ Gamma(*baseline_rate_prior)  -&gt; near-flat, one rate/interval\n#   Hazard_rate_&lt;cov&gt; ~ Normal(0, hazard_rate_prior_scale)  -&gt; log-hazard effect\nm.models.survival.baseline_rate_prior = (0.01, 0.01)\nm.models.survival.hazard_rate_prior_scale = 10.0\n\n# 4 chains + target_accept_prob=0.99: the near-empty late baseline intervals\n# make the geometry stiff, so a high acceptance target keeps mixing healthy.\nm.fit(m.models.survival.model, num_samples=100, num_warmup=100,\n      num_chains=4, target_accept_prob=0.99, progress_bar=false)\n\nprintln(m.summary())\n\n# Posterior cumulative hazard (left) and survival S(t)=exp(-Lambda(t)) (right)\n# by covariate group. Effect size/direction: read beta (hazard ratio e^beta)\n# from m.summary().\n@pyplot m.models.survival.plot_surv(beta=\"Hazard_rate_metastasized\")\n\n\n\n\n\nGaussian Mixture Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nfrom sklearn.datasets import make_blobs\nm = bf()\n\n# Generate synthetic data\ndata, true_labels = make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10,10), random_state=101\n)\n\nm.data_on_model = {\"data\": data, \"K\": 8}\nm.fit(m.models.gmm, progress_bar=False)  # MCMC over the mixture parameters\nm.plot(X=data, sampler=m.sampler)    # ⚠️ Experimental feature\n\n\njax.local_device_count 16\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n(&lt;Figure size 960x576 with 1 Axes&gt;,\n &lt;Axes: title={'center': 'GMM clusters — 8 consensus clusters, 25%-95% credible regions'}, xlabel='Feature 1', ylabel='Feature 2'&gt;)\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nsk_datasets &lt;- reticulate::import(\"sklearn.datasets\")\n\n# Generate synthetic data\noutput &lt;- sk_datasets$make_blobs(\n  n_samples = 500L, centers = 8L, cluster_std = 0.8,\n  center_box = reticulate::tuple(-10, 10), random_state = 101L\n)\ndata &lt;- output[[1]]\n\nm$data_on_model &lt;- list(data = data, K = 8L)\nm$fit(m$models$gmm, progress_bar = FALSE)  # MCMC over the mixture parameters\nm$plot(X = data, sampler = m$sampler)      # ⚠️ Experimental feature\n\n\nusing PyBayesForge\nusing PythonCall\nm = importBF(platform=\"cpu\")\n\n# Generate synthetic data\nsk_datasets = pyimport(\"sklearn.datasets\")\noutput = sk_datasets.make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10, 10), random_state=101\n)\ndata = output[0]\n\nm.data_on_model = pydict(data=data, K=8)\nm.fit(m.models.gmm, progress_bar=false)  # MCMC over the mixture parameters\n@pyplot m.plot(X=data, sampler=m.sampler) # ⚠️ Experimental feature\n\n\n\n\n\nDirichlet Process Mixture Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nfrom sklearn.datasets import make_blobs\nm = bf()\n\n# Generate synthetic data\ndata, true_labels = make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10,10), random_state=101\n)\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm.data_on_model = dict(data=data, T=10, method='marginal')\nm.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,\n      progress_bar=False)\nm.plot(data, m.sampler)\n\n\njax.local_device_count 16\n⚠️This function is still in development. Use it with caution. ⚠️\nModel found 7 clusters.\n\n\n(&lt;Figure size 960x576 with 1 Axes&gt;,\n &lt;Axes: title={'center': 'DPMM clusters — 7 consensus clusters, 25%-95% credible regions'}, xlabel='Feature 1', ylabel='Feature 2'&gt;)\n\n\n\n\n\n\n\n\n\n\n\nlibrary(BayesForge)\nm &lt;- importBF(platform = \"cpu\")\nsk_datasets &lt;- reticulate::import(\"sklearn.datasets\")\n\n# Generate synthetic data\noutput &lt;- sk_datasets$make_blobs(\n  n_samples = 500L, centers = 8L, cluster_std = 0.8,\n  center_box = reticulate::tuple(-10, 10), random_state = 101L\n)\ndata &lt;- output[[1]]\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm$data_on_model &lt;- list(data = data, T = 10L, method = \"marginal\")\nm$fit(m$models$dpmm, num_samples = 500L, num_warmup = 500L, num_chains = 2L,\n      progress_bar = FALSE)\nm$plot(data, m$sampler)\n\n\nusing PyBayesForge\nusing PythonCall\nm = importBF(platform=\"cpu\")\n\n# Generate synthetic data\nsk_datasets = pyimport(\"sklearn.datasets\")\noutput = sk_datasets.make_blobs(\n    n_samples=500, centers=8, cluster_std=0.8,\n    center_box=(-10, 10), random_state=101\n)\ndata = output[0]\n# T = truncation level (max clusters). method='marginal' integrates out the\n# cluster assignments (NUTS-friendly); 'latent' samples them explicitly.\n# DPMM priors are already centred on the data mean/scale - no flag needed.\nm.data_on_model = pydict(data=data, T=10, method=\"marginal\")\nm.fit(m.models.dpmm, num_samples=500, num_warmup=500, num_chains=2,\n      progress_bar=false)\n@pyplot m.plot(data, m.sampler)\n\n\n\n\n\nNetwork Models\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\n\n# Setup device------------------------------------------------\nm = bf(platform='cpu')\n# Simulate data ------------------------------------------------\nN = 50\nindividual_predictor = m.dist.normal(0,1, shape = (N,1), sample = True)\n\nkinship = m.dist.bernoulli(0.3, shape = (N,N), sample = True)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\ndef sim_network(kinship, individual_predictor):\n  # Intercept\n  alpha = -8\n\n  # SR\n  sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = True)\n\n  # D\n  DR = m.net.dyadic_effect(kinship, d_sd= 1, sample = True)\n\n  return m.dist.bernoulli(logits = alpha + sr + DR, sample = True)\n\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\n\n# Predictive model ------------------------------------------------\nm.data_on_model = dict(\n    network = network,\n    dyadic_predictors = m.net.mat_to_edgl(kinship),\n    focal_individual_predictors = individual_predictor,\n    target_individual_predictors = individual_predictor\n)\n\ndef model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors):\n    N_id = network.shape[0]\n    alpha = m.dist.normal(0, 1, name=\"alpha\")\n    sr = m.net.sender_receiver(\n        focal_individual_predictors,\n        target_individual_predictors,\n        s_mu=0.4, r_mu=-0.4\n    )\n    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)\n    m.dist.bernoulli(logits=alpha + sr + dr, obs=network, name=\"y\")\n\nm.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=False)\nm.summary()\n\n\njax.local_device_count 16\n\n\n\n\n\n\n\n\n\nmean\nsd\neti89_lb\neti89_ub\ness_bulk\ness_tail\nr_hat\nmcse_mean\nmcse_sd\n\n\n\n\nalpha\n-4.35\n0.49\n-5.12\n-3.56\n102.13\n180.30\nNaN\n0.05\n0.03\n\n\ndr_L[0, 0]\n1.00\n0.00\n1.00\n1.00\n500.00\n500.00\nNaN\n0.00\nNaN\n\n\ndr_L[0, 1]\n0.00\n0.00\n0.00\n0.00\n500.00\n500.00\nNaN\n0.00\nNaN\n\n\ndr_L[1, 0]\n-0.03\n0.42\n-0.70\n0.62\n305.31\n325.50\nNaN\n0.02\n0.01\n\n\ndr_L[1, 1]\n0.90\n0.13\n0.66\n1.00\n268.71\n296.49\nNaN\n0.01\n0.01\n\n\n...\n...\n...\n...\n...\n...\n...\n...\n...\n...\n\n\nsr_rf[48, 1]\n2.65\n0.77\n1.42\n3.90\n160.47\n222.80\nNaN\n0.06\n0.03\n\n\nsr_rf[49, 0]\n3.57\n0.58\n2.70\n4.51\n178.49\n248.71\nNaN\n0.04\n0.03\n\n\nsr_rf[49, 1]\n-1.26\n1.17\n-3.15\n0.55\n488.22\n271.60\nNaN\n0.05\n0.05\n\n\nsr_sigma[0]\n2.31\n0.37\n1.79\n2.93\n79.07\n133.97\nNaN\n0.04\n0.02\n\n\nsr_sigma[1]\n2.47\n0.38\n1.89\n3.14\n123.89\n246.89\nNaN\n0.03\n0.02\n\n\n\n\n5115 rows × 9 columns\n\n\n\n\n\nlibrary(BayesForge)\njnp &lt;- reticulate::import(\"jax.numpy\")\n\n# Setup device------------------------------------------------\nm &lt;- importBF(platform = \"cpu\")\n# Simulate data ------------------------------------------------\nN &lt;- 50L\nindividual_predictor &lt;- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)\n\nkinship &lt;- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)\ndiag &lt;- jnp$diag_indices(N)\nkinship &lt;- kinship$at[diag[[1]], diag[[2]]]$set(0L)\n\nsim_network &lt;- function(kinship, individual_predictor) {\n  alpha &lt;- -8\n  sr &lt;- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)\n  DR &lt;- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)\n  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)\n}\n\nnetwork &lt;- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)\n\nm$data_on_model &lt;- list(\n  network = network,\n  dyadic_predictors = m$net$mat_to_edgl(kinship),\n  focal_individual_predictors = individual_predictor,\n  target_individual_predictors = individual_predictor\n)\n\nmodel &lt;- function(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors) {\n  alpha &lt;- m$dist$normal(0, 1, name = \"alpha\")\n  sr &lt;- m$net$sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu = 0.4, r_mu = -0.4)\n  dr &lt;- m$net$dyadic_effect(dyadic_predictors, d_sd = 1.0)\n  m$dist$bernoulli(logits = alpha + sr + dr, obs = network, name = \"y\")\n}\n\nm$fit(model, num_samples = 500L, num_warmup = 500L, num_chains = 1L, progress_bar = FALSE)\nm$summary()\n\n\nusing PyBayesForge\nusing PythonCall\n\n# Setup device------------------------------------------------\nm = importBF(platform=\"cpu\")\n# Simulate data ------------------------------------------------\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\nfunction sim_network(kinship, individual_predictor)\n    alpha = -8\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)\nend\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\n\nm.data_on_model = pydict(\n    network=network,\n    dyadic_predictors=m.net.mat_to_edgl(kinship),\n    focal_individual_predictors=individual_predictor,\n    target_individual_predictors=individual_predictor\n)\n\n@BF function model(network, dyadic_predictors, focal_individual_predictors, target_individual_predictors)\n    alpha = m.dist.normal(0, 1, name=\"alpha\")\n    sr = m.net.sender_receiver(focal_individual_predictors, target_individual_predictors, s_mu=0.4, r_mu=-0.4)\n    dr = m.net.dyadic_effect(dyadic_predictors, d_sd=1.0)\n    m.dist.bernoulli(logits=alpha + sr + dr, obs=network, name=\"y\")\nend\n\nm.fit(model, num_samples=500, num_warmup=500, num_chains=1, progress_bar=false)\nm.summary()\n\n\n\n\n\nNetwork Visualization\n\nPythonRJulia\n\n\n\n\nCode\nfrom BayesForge import bf\nimport jax.numpy as jnp\nimport numpy as np\nimport pandas as pd\n\n# Setup device------------------------------------------------\nm = bf(platform='cpu')\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=True)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=True)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\ndef sim_network(kinship, individual_predictor):\n    alpha = -4\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=True)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=True)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=True)\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\nadj = m.net.edgl_to_mat(network)\n\n# Individual characteristics of the nodes ------------------------------------\nrng = np.random.default_rng(1)\nnodes = pd.DataFrame({\n    \"id\": [f\"n{i}\" for i in range(N)],\n    \"predictor\": np.asarray(individual_predictor).ravel(),\n    \"sex\": rng.choice([\"female\", \"male\"], N),\n    \"group\": rng.choice([\"A\", \"B\", \"C\"], N),\n    \"age\": rng.integers(1, 30, N),\n    \"rank\": rng.uniform(0, 1, N),\n})\n\n# Interactive network: each node feature drives one visual channel\nm.net.viz(\n    nodes, adj,\n    col_id=\"id\",\n    col_size=\"predictor\",                                      # node size\n    col_color=\"group\", color_node=(\"#1b9e77\", \"#d95f02\"),      # node fill colour\n    col_stroke=\"age\",                                          # border width\n    col_strokeColor=\"rank\", color_stroke=(\"white\", \"black\"),   # border colour\n    col_shape=\"sex\", shapes=(\"circle\", \"square\"),              # node shape\n)\n\n\njax.local_device_count 16\n\n\n\n\n\n\n\nlibrary(BayesForge)\njnp &lt;- reticulate::import(\"jax.numpy\")\nnp &lt;- reticulate::import(\"numpy\")\n\nm &lt;- importBF(platform = \"cpu\")\nN &lt;- 50L\nindividual_predictor &lt;- m$dist$normal(0, 1, shape = reticulate::tuple(N, 1L), sample = TRUE)\n\nkinship &lt;- m$dist$bernoulli(0.3, shape = reticulate::tuple(N, N), sample = TRUE)\ndiag &lt;- jnp$diag_indices(N)\nkinship &lt;- kinship$at[diag[[1]], diag[[2]]]$set(0L)\n\nsim_network &lt;- function(kinship, individual_predictor) {\n  alpha &lt;- -4\n  sr &lt;- m$net$sender_receiver(individual_predictor, individual_predictor, s_mu = 0.4, r_mu = -0.4, sample = TRUE)\n  DR &lt;- m$net$dyadic_effect(kinship, d_sd = 1, sample = TRUE)\n  m$dist$bernoulli(logits = alpha + sr + DR, sample = TRUE)\n}\n\nnetwork &lt;- sim_network(m$net$mat_to_edgl(kinship), individual_predictor)\nadj &lt;- m$net$edgl_to_mat(network)\n\nnodes &lt;- data.frame(\n  id = paste0(\"n\", 0:(N - 1)),\n  predictor = as.vector(individual_predictor),\n  sex = sample(c(\"female\", \"male\"), N, replace = TRUE),\n  group = sample(c(\"A\", \"B\", \"C\"), N, replace = TRUE),\n  age = sample(1:29, N, replace = TRUE),\n  rank = runif(N, 0, 1)\n)\n\nm$net$viz(\n  nodes, adj,\n  col_id = \"id\",\n  col_size = \"predictor\",\n  col_color = \"group\", color_node = c(\"#1b9e77\", \"#d95f02\"),\n  col_stroke = \"age\",\n  col_strokeColor = \"rank\", color_stroke = c(\"white\", \"black\"),\n  col_shape = \"sex\", shapes = c(\"circle\", \"square\")\n)\n\n\nusing PyBayesForge\nusing PythonCall\nnp = pyimport(\"numpy\")\npd = pyimport(\"pandas\")\n\nm = importBF(platform=\"cpu\")\nN = 50\nindividual_predictor = m.dist.normal(0, 1, shape=(N, 1), sample=true)\n\nkinship = m.dist.bernoulli(0.3, shape=(N, N), sample=true)\nkinship = kinship.at[jnp.diag_indices(N)].set(0)\n\nfunction sim_network(kinship, individual_predictor)\n    alpha = -4\n    sr = m.net.sender_receiver(individual_predictor, individual_predictor, s_mu=0.4, r_mu=-0.4, sample=true)\n    DR = m.net.dyadic_effect(kinship, d_sd=1, sample=true)\n    return m.dist.bernoulli(logits=alpha + sr + DR, sample=true)\nend\n\nnetwork = sim_network(m.net.mat_to_edgl(kinship), individual_predictor)\nadj = m.net.edgl_to_mat(network)\n\nnodes = pd.DataFrame(pydict(\n    id=[string(\"n\", i) for i in 0:(N-1)],\n    predictor=np.asarray(individual_predictor).ravel(),\n    sex=rand([\"female\", \"male\"], N),\n    group=rand([\"A\", \"B\", \"C\"], N),\n    age=rand(1:29, N),\n    rank=rand(N)\n))\n\n@pyplot m.net.viz(\n    nodes, adj,\n    col_id=\"id\",\n    col_size=\"predictor\",\n    col_color=\"group\", color_node=(\"#1b9e77\", \"#d95f02\"),\n    col_stroke=\"age\",\n    col_strokeColor=\"rank\", color_stroke=(\"white\", \"black\"),\n    col_shape=\"sex\", shapes=(\"circle\", \"square\")\n)",
     "crumbs": [
       "Get started",
       "Advance",
@@ -5294,7 +5294,7 @@
     "href": "reference/index.html",
     "title": "API reference",
     "section": "",
-    "text": "Interactive Map of BF session object\n      Hover or click any attribute/submodule of m to inspect its role, type, and the methods that create or update it.\n    \n    \n      All objects\n      Submodules\n      Data & Prep\n      Model & Sampler\n      Posteriors & Diagnostics\n    \n  \n\n  \n    \n      \n    \n\n    \n      \n        m = bf(...)\n        \n          BayesForge.bf\n          Session Root\n        \n      \n      \n        Central BayesForge session object holding your dataset (m.df, m.data_on_model), modeling building blocks (m.dist, m.effects, m.link, m.net), persistence & datasets (m.save(), m.load()), fitted sampler state (m.model, m.sampler), posterior draws (m.posteriors, m.posteriors_full), and diagnostics (m.diag, m.tab_summary).\n      \n      \n        Created / updated by:\n        m.fit()\n        m.svi()\n        m.data()\n        m.save()\n        m.load()\n      \n    \n  \n\n\n\n\n\n\nSection\nFunctions\nUndocumented\n\n\n\n\nSession (m)\n24\n0\n\n\nData (m.data, m.scale, …)\n10\n0\n\n\nDistributions (m.dist)\n95\n0\n\n\nDiagnostics (m.diag)\n41\n0\n\n\nRandom effects (m.effects)\n10\n0\n\n\nLink functions (m.link)\n13\n0\n\n\nNetworks (m.net)\n51\n0\n\n\nExample data (m.load)\n31\n0",
+    "text": "Interactive Map of BF session object\n      Hover or click any attribute/submodule of m to inspect its role, type, and the methods that create or update it.\n    \n    \n      All objects\n      Submodules\n      Data & Prep\n      Model & Sampler\n      Posteriors & Diagnostics\n    \n  \n\n  \n    \n      \n    \n\n    \n      \n        m = bf(...)\n        \n          BayesForge.bf\n          Session Root\n        \n      \n      \n        Central BayesForge session object holding your dataset (m.df, m.data_on_model), modeling building blocks (m.dist, m.models, m.effects, m.link, m.net), persistence & datasets (m.save(), m.load()), fitted sampler state (m.model, m.sampler), posterior draws (m.posteriors, m.posteriors_full), and diagnostics (m.diag, m.tab_summary).\n      \n      \n        Created / updated by:\n        m.fit()\n        m.svi()\n        m.data()\n        m.save()\n        m.load()\n      \n    \n  \n\n\n\n\n\n\nSection\nFunctions\nUndocumented\n\n\n\n\nSession (m)\n24\n0\n\n\nBuilt-in models (m.models)\n48\n0\n\n\nData (m.data, m.scale, …)\n10\n0\n\n\nDistributions (m.dist)\n95\n0\n\n\nDiagnostics (m.diag)\n41\n0\n\n\nRandom effects (m.effects)\n10\n0\n\n\nLink functions (m.link)\n13\n0\n\n\nNetworks (m.net)\n51\n0\n\n\nExample data (m.load)\n31\n0",
     "crumbs": [
       "Get started",
       "API reference"
@@ -6663,6 +6663,749 @@
       "Get started",
       "Pipeline",
       "Define model"
+    ]
+  },
+  {
+    "objectID": "reference/models.html",
+    "href": "reference/models.html",
+    "title": "Built-in models (m.models)",
+    "section": "",
+    "text": "High-level interface for turnkey Bayesian models in BayesForge: DPMM, GMM, PCA, Survival analysis, BNNC, and NBDA.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_dpmm_latent",
+    "href": "reference/models.html#m_models_dpmm_dpmm_latent",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.dpmm_latent",
+    "text": "m.models.dpmm.dpmm_latent\nm.models.dpmm.dpmm_latent(data, T=10, alpha=None)\nLatent Variable formulation: Explicitly samples ‘z’. Requires a sampler that supports discrete variables (e.g., MixedHMC or DiscreteHMCGibbs).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_dpmm_marginal",
+    "href": "reference/models.html#m_models_dpmm_dpmm_marginal",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.dpmm_marginal",
+    "text": "m.models.dpmm.dpmm_marginal\nm.models.dpmm.dpmm_marginal(data, T=10, alpha=None)\nMarginalized formulation: Integrates out ‘z’. Standard formulation for NUTS/HMC samplers.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_get_cluster_probs",
+    "href": "reference/models.html#m_models_dpmm_get_cluster_probs",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.get_cluster_probs",
+    "text": "m.models.dpmm.get_cluster_probs\nm.models.dpmm.get_cluster_probs(data, w, mu, sigma, Lcorr)\nGet the cluster probabilities for each data point and each sample.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\n\nData array (N, D).\n\n\nw\n\nMixture weights (N_samples, N_components).\n\n\nmu\n\nCluster means (N_samples, N_components, D).\n\n\nsigma\n\nScale (variance) parameters (N_samples, N_components, D).\n\n\nLcorr\n\nCholesky correlation matrices (N_samples, N_components, D, D).\n\n\n\nReturns\n\nCluster probabilities (N_samples, N_data, N_components).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_mix_weights",
+    "href": "reference/models.html#m_models_dpmm_mix_weights",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.mix_weights",
+    "text": "m.models.dpmm.mix_weights\nm.models.dpmm.mix_weights(beta)\nMixture weights (stick-breaking) for DPMM. The stick-breaking weights are used to sample the mixture component assignments. Args: beta: Stick-breaking weights (T-1 components) Returns: w: Mixture weights (T components) Reference: https://pyro.ai/examples/dirichlet_process_mixture.html",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_model",
+    "href": "reference/models.html#m_models_dpmm_model",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.model",
+    "text": "m.models.dpmm.model\nm.models.dpmm.model(data, T=10, method='marginal', alpha=None)\nWrapper function for DPMM.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\n\nInput data array (N, D)\n\n\nT\n\nTruncation level (max number of clusters)\n\n\nmethod\n\n‘marginal’ (default because it is faster, for NUTS) or ‘latent’ (explicit z, requires MixedHMC/Gibbs)\n\n\nalpha\n\nStick-breaking parameter (default: None)",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_plot",
+    "href": "reference/models.html#m_models_dpmm_plot",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.plot",
+    "text": "m.models.dpmm.plot\nm.models.dpmm.plot(\n    data,\n    sampler,\n    figsize=(10, 8),\n    point_size=10,\n    credible=(0.25, 0.5, 0.75, 0.95),\n    show_density=False,\n    density_levels=7,\n    spread_cap=2.0,\n    title=None,\n    threshold=0.5,\n    linkage_method='average',\n)\nPosterior view of the DPMM clusters.\nInstead of a single posterior-predictive contour (whose lowest auto-selected level is a tiny positive number that Matplotlib prints as 0.00 and which can bridge unrelated clusters through the wide, near-empty components of the truncation), this draws one credible region per consensus cluster:\n\npredict performs the consensus clustering on the soft assignments, so the cluster labels are label-switching safe.\nFor each cluster, every (draw, component) pair is weighted by the soft mass that component assigns to that cluster, and the spread of the resulting mixture is moment-matched to a single Gaussian centered on the cluster’s centroid (anchoring on the mixture mean instead lets overlapping components that swap identities across draws stretch the ellipse across the plot).\nThe Gaussian is drawn as an ellipse at each probability in credible (2D Gaussian quantiles -2 ln(1 - p)).\n\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\n\nData array (N, D).\n\n\nsampler\n\nFitted BF sampler.\n\n\nfigsize\n\nFigure size.\n\n\npoint_size\n\nScatter point size.\n\n\ncredible\n\nIterable of credible-mass levels for the ellipses, e.g. [0.5, 0.9] or [0.25, 0.5, 0.75, 0.95]. Values are probabilities in (0, 1); one nested ellipse is drawn per level (largest level solid, others dashed). Defaults to :data:DEFAULT_CREDIBLE (ten nested levels, 5%-95%).\n\n\nshow_density\n\nIf True, overlay the posterior-predictive density with explicit relative levels (no misleading 0.00).\n\n\ndensity_levels\n\nNumber of relative density levels when show_density is True.\n\n\nspread_cap\n\nEach ellipse axis is capped at this multiple of the cluster’s own point-cloud std (see _cap_covariance). Set to None for the uncapped moment-matched ellipse.\n\n\ntitle\n\nCustom title for the plot. If None, uses default summary title.\n\n\nthreshold\n\nDistance threshold for consensus clustering cut.\n\n\nlinkage_method\n\nLinkage criterion (‘average’, ‘complete’, etc.).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_predict",
+    "href": "reference/models.html#m_models_dpmm_predict",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.predict",
+    "text": "m.models.dpmm.predict\nm.models.dpmm.predict(\n    data,\n    sampler,\n    return_probs=False,\n    threshold=0.5,\n    linkage_method='average',\n)\nPerforms Consensus Clustering from the posterior samples of the DPMM.\nThis function extracts the posterior samples from a Dirichlet Process Mixture Model (DPMM) and derives a single, consensus clustering partition of the data points. The consensus procedure operates on the Posterior Similarity Matrix (PSM) and is strictly invariant to label switching across MCMC chains.\nMethodology: 1. Soft Assignment Probabilities: For each posterior draw (subsampled to an upper limit for memory efficiency), the soft responsibility vector of each data point across all mixture components is computed: p(z_i = k | x_i, theta) proportional to w_k * N(x_i | mu_k, Sigma_k).\n\nPosterior Similarity Matrix (PSM): The pairwise co-clustering probability matrix is computed by averaging the inner product of soft assignments over all draws: S_ij = E_{posterior}[sum_k p(z_i = k) * p(z_j = k)]. Entry (i, j) represents the posterior probability that point i and point j belong to the same cluster.\nDistance Conversion: The similarity matrix is converted into a metric distance matrix D_ij = 1 - S_ij, bounded in [0, 1] with zero diagonal.\nAgglomerative Hierarchical Clustering: Agglomerative clustering is applied to the condensed distance matrix using the specified linkage criterion (e.g. 'average', 'complete'). The resulting dendrogram is cut at cophenetic distance threshold via scipy.cluster.hierarchy.fcluster to produce the final cluster labels.\n\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\n\nInput data array of shape (N, D).\n\n\nsampler\n\nFitted BayesForge sampler instance holding DPMM posterior samples.\n\n\nreturn_probs\nbool\nIf True, returns additional raw posterior draws and the per-draw soft assignment tensor cluster_probs of shape (N_draws, N_data, T), needed by plot to compute credible ellipses per consensus cluster. Defaults to False.\n\n\nthreshold\nfloat\nCophenetic distance threshold in [0, 1] used to cut the hierarchical tree (criterion 'distance'). A smaller threshold yields more fine-grained clusters, while a larger threshold merges nearby clusters. Defaults to 0.5.\n\n\nlinkage_method\nstr\nLinkage criterion used for agglomeration. Supported methods include: - 'average': UPGMA. Merges clusters based on the average pairwise distance. Good general default, but can exhibit chaining in elongated clouds. - 'complete': Maximum/farthest-neighbor linkage. Avoids chaining and produces compact, well-separated clusters; recommended when clusters are close together. - 'single': Minimum/nearest-neighbor linkage. Highly prone to chaining; useful only for non-spherical nested manifolds. - 'weighted': WPGMA. Gives equal weight to merging clusters regardless of their size. - 'centroid': UPGMC. Distance between geometric centroids. - 'median': WPGMC. Distance between weighted centroids. - 'ward': Minimizes the total within-cluster variance. Requires Euclidean distance geometry. Defaults to 'average'.\n\n\n\nReturns\n\nIf return_probs is False: Tuple (w, mu, sigma, Lcorr, final_labels): - w: Posterior mixture weights draws (subsampled), shape (S, T). - mu: Posterior component means draws, shape (S, T, D). - sigma: Posterior scale vectors draws, shape (S, T, D). - Lcorr: Posterior correlation Cholesky factors, shape (S, T, D, D). - final_labels: 1D array of length N with integer cluster labels.\nIf return_probs is True: Tuple (w, mu, sigma, Lcorr, final_labels, cluster_probs), where cluster_probs has shape (S, N, T).\n\nReferences\n\nFritsch, A. & Ickstadt, K. (2009). “Improved criteria for clustering based on the posterior similarity matrix”. Bayesian Analysis, 4(2), 367-391.\nDahl, D. B. (2006). “Model-Based Clustering for Expression Data via a Dirichlet Process Mixture Model”. In Bayesian Inference and Methods in Investigative Genomics.\nWade, S. & Ghahramani, Z. (2018). “Bayesian cluster analysis: Point estimation and credible balls”. Bayesian Analysis, 13(2), 559-626.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_dpmm_proportion_of_data_assigned_to_cluster",
+    "href": "reference/models.html#m_models_dpmm_proportion_of_data_assigned_to_cluster",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.dpmm.proportion_of_data_assigned_to_cluster",
+    "text": "m.models.dpmm.proportion_of_data_assigned_to_cluster\nm.models.dpmm.proportion_of_data_assigned_to_cluster()\nPlots the proportion of data assigned to clusters, sorted by size.\nFixes the Label Switching issue in boxplots by visualizing “1st Largest Cluster”, “2nd Largest”, etc., instead of “Index 0”, “Index 1”.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_gmm_plot",
+    "href": "reference/models.html#m_models_gmm_plot",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.gmm.plot",
+    "text": "m.models.gmm.plot\nm.models.gmm.plot(\n    data,\n    sampler,\n    figsize=(10, 8),\n    point_size=15,\n    credible=(0.25, 0.5, 0.75, 0.95),\n    show_density=False,\n    density_levels=7,\n    spread_cap=2.0,\n)\nPosterior view of the GMM clusters.\nSame visualization as dpmm.plot: one credible ellipse per consensus cluster (labels made switching-safe by the posterior similarity matrix), each axis capped at spread_cap times the cluster’s own point spread. Replaces the old density contour whose lowest auto-selected level printed as a misleading 0.00.\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\n\nData array (N, D).\n\n\nsampler\n\nFitted BF sampler.\n\n\nfigsize\n\nFigure size.\n\n\npoint_size\n\nScatter point size.\n\n\ncredible\n\nIterable of credible-mass levels for the ellipses, e.g. [0.5, 0.9] or [0.25, 0.5, 0.75, 0.95]. One nested ellipse per level (largest solid, others dashed). Defaults to :data:DEFAULT_CREDIBLE (ten nested levels, 5%-95%).\n\n\nshow_density\n\nIf True, overlay the posterior-predictive density with explicit relative levels (no misleading 0.00).\n\n\ndensity_levels\n\nNumber of relative density levels when show_density is True.\n\n\nspread_cap\n\nEllipse axis cap as a multiple of the cluster’s point std (see dpmm._cap_covariance). None to disable.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_gmm_predict",
+    "href": "reference/models.html#m_models_gmm_predict",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.gmm.predict",
+    "text": "m.models.gmm.predict\nm.models.gmm.predict(data, sampler, return_probs=False)\nPredicts the GMM density contours based on posterior samples and final labels.\nThis function processes the posterior samples from a Bayesian Gaussian Mixture Model (GMM) to derive a single, representative clustering and the corresponding GMM parameters. The approach is based on two main steps: calculating posterior point estimates and performing co-clustering analysis via a Posterior Similarity Matrix (PSM).\nMethodology: 1. Posterior Point Estimates: The function first computes the posterior mean of the GMM parameters (weights, means, and covariance components) by averaging over all samples obtained from the MCMC sampler. This provides a single set of parameters that represents the central tendency of the posterior distribution.\n\nCo-clustering via Posterior Similarity Matrix (PSM): To obtain a single, robust clustering, this function uses a co-clustering approach that leverages the entire posterior distribution.\n\nA similarity matrix is constructed where the entry (i, j) represents the posterior probability that data point i and data point j belong to the same cluster. This is calculated by averaging their co-assignment probabilities across all posterior samples.\nThis similarity matrix is converted into a distance matrix (1 - similarity).\nAgglomerative hierarchical clustering (‘average’ linkage) is then applied to this distance matrix.\nThe resulting hierarchy is cut at a specified distance threshold to produce a final, single set of cluster labels for the data.\n\n\nThis method avoids issues like label switching inherent in MCMC and produces a stable clustering that summarizes the relationships discovered in the full Bayesian posterior.\n\ndata (jnp.ndarray): The input data points used for the model, with shape [N, D] where N is the number of samples and D is the number of features.\nsampler (BF.sampler): The fitted MCMC sampler object from which posterior samples can be extracted.\ntuple: A tuple containing four elements:\n\npost_mean_w (jnp.ndarray): The posterior mean of the mixture weights.\npost_mean_mu (jnp.ndarray): The posterior mean of the cluster means.\npost_mean_cov (jnp.ndarray): The reconstructed posterior mean of the cluster covariance matrices.\nfinal_labels (jnp.ndarray): The final, single-partition cluster labels for each data point. Plus (w_samps, mu_samps, sigma_samps, Lcorr_samps, cluster_probs) when return_probs is True (raw draws + per-draw soft assignments, used by plot_gmm for the credible ellipses).\n\n\nReference: * https://www.pure.ed.ac.uk/ws/portalfiles/portal/80251963/1508378464.pdf * https://arxiv.org/abs/2108.11753 * https://en.wikipedia.org/wiki/Mixture_model * https://projecteuclid.org/journals/bayesian-analysis/volume-4/issue-2/Improved-criteria-for-clustering-based-on-the-posterior-similarity-matrix/10.1214/09-BA414.pdf * https://www.pure.ed.ac.uk/ws/portalfiles/portal/80251963/1508378464.pdf * https://pmc.ncbi.nlm.nih.gov/articles/PMC10441802/",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_align_posterior_samples",
+    "href": "reference/models.html#m_models_pca_align_posterior_samples",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.align_posterior_samples",
+    "text": "m.models.pca.align_posterior_samples\nm.models.pca.align_posterior_samples(posterior_w, reference_components)\nAligns each posterior sample to the reference component matrix using Procrustes analysis. Args: posterior_w: Array of shape (num_samples, data_dim, latent_dim) reference_components: Array of shape (data_dim, latent_dim) Returns: aligned_w: Array of shape (num_samples, data_dim, latent_dim)",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_analyze_aligned_posteriors",
+    "href": "reference/models.html#m_models_pca_analyze_aligned_posteriors",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.analyze_aligned_posteriors",
+    "text": "m.models.pca.analyze_aligned_posteriors\nm.models.pca.analyze_aligned_posteriors(X_scaled, aligned_w_samples)\nCalculates final PCA attributes using a self-contained, deterministic sign convention for the components. Args: X_scaled: Scaled data matrix of shape (num_datapoints, data_dim) aligned_w_samples: Aligned posterior samples of shape (num_samples, data_dim, latent_dim) Returns: Dictionary with keys for components, variance, etc.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_components",
+    "href": "reference/models.html#m_models_pca_components",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.components",
+    "text": "m.models.pca.components\nm.models.pca.components(feature_names, bayesian_results=None, ax=None)\nPlots the final Bayesian component matrix as a heatmap.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_confidence_ellipse",
+    "href": "reference/models.html#m_models_pca_confidence_ellipse",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.confidence_ellipse",
+    "text": "m.models.pca.confidence_ellipse\nm.models.pca.confidence_ellipse(x, y, ax, n_std=2.0, facecolor='none', **kwargs)\nCreate a confidence ellipse for a set of x, y points.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_create_reference_from_posterior",
+    "href": "reference/models.html#m_models_pca_create_reference_from_posterior",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.create_reference_from_posterior",
+    "text": "m.models.pca.create_reference_from_posterior\nm.models.pca.create_reference_from_posterior(posterior_w)\nCreates a reference component matrix from the posterior samples using SVD. This reference will be used to align all posterior samples. Args: posterior_w: Array of shape (num_samples, data_dim, latent_dim) Returns: reference_components: Array of shape (data_dim, latent_dim)",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_cumulative_variance",
+    "href": "reference/models.html#m_models_pca_cumulative_variance",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.cumulative_variance",
+    "text": "m.models.pca.cumulative_variance\nm.models.pca.cumulative_variance(\n    X=None,\n    bayesian_results=None,\n    figsize=(16, 8),\n    alpha=0.7,\n    fontsize=10,\n    color_bar='blue',\n    color_cumulative_line='red',\n    label_size=16,\n    ax=None,\n)\nPlots the cumulative explained variance for Bayesian PCA.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_get_model",
+    "href": "reference/models.html#m_models_pca_get_model",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.get_model",
+    "text": "m.models.pca.get_model\nm.models.pca.get_model(type='ARD')\nPrincipal Component Analysis (PCA) model using JAX and BF. Args: type (str): Type of PCA model to use. Options are ‘ARD’, ‘robust’, ‘sparse’, ‘sparse_robust_ard’, ‘classic’.\nReturns: PCA model class using JAX and BF.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_individual_correlation",
+    "href": "reference/models.html#m_models_pca_individual_correlation",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.individual_correlation",
+    "text": "m.models.pca.individual_correlation\nm.models.pca.individual_correlation(\n    X=None,\n    bayesian_results=None,\n    y=None,\n    feature_names=None,\n    target_names=None,\n    color_var=None,\n    size_var=None,\n    shape_var=None,\n    ax=None,\n    figsize=(10, 10),\n)\nGenerates a variable correlation plot with cos2 values for Bayesian PCA results.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_model_sparse_robust_ard",
+    "href": "reference/models.html#m_models_pca_model_sparse_robust_ard",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.model_sparse_robust_ard",
+    "text": "m.models.pca.model_sparse_robust_ard\nm.models.pca.model_sparse_robust_ard(X, data_dim, latent_dim, num_data_points)\nA combined Sparse, Robust Bayesian PCA model with Automatic Relevance Determination (ARD).\n\nSparsity: Achieved with a Laplace prior on the weights ‘w’.\nRobustness: Achieved with a Student’s t-distribution for the likelihood.\nARD: Achieved by placing a hierarchical prior on the scale of the Laplace distribution, allowing entire latent dimensions to be pruned.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_pca_ARD",
+    "href": "reference/models.html#m_models_pca_pca_ARD",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.pca_ARD",
+    "text": "m.models.pca.pca_ARD\nm.models.pca.pca_ARD(X, data_dim, latent_dim, num_data_points)\nProbabilistic PCA model with ARD (Automatic Relevance Determination) prior on weights and a correctly defined noise model. ARD helps in automatic relevance determination of latent dimensions, by allowing the model to learn which dimensions are important. Args: x_train: Observed data matrix of shape (data_dim, num_datapoints). data_dim: Dimensionality of the observed data. latent_dim: Dimensionality of the latent space. num_data_points: Number of data points.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_pca_classic",
+    "href": "reference/models.html#m_models_pca_pca_classic",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.pca_classic",
+    "text": "m.models.pca.pca_classic\nm.models.pca.pca_classic(X, data_dim, latent_dim, num_data_points)\nClassic Probabilistic PCA model with standard isotropic Gaussian priors.\nParameters: - X: Observed data matrix (shape: [num_data_points, data_dim]). - data_dim: Number of features / observed dimensions. - latent_dim: Number of latent principal components. - num_data_points: Number of observations.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_pca_robust",
+    "href": "reference/models.html#m_models_pca_pca_robust",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.pca_robust",
+    "text": "m.models.pca.pca_robust\nm.models.pca.pca_robust(X, data_dim, latent_dim, num_data_points)\nRobust Bayesian PCA model using a Student’s t-distribution for the likelihood.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_pca_sparse",
+    "href": "reference/models.html#m_models_pca_pca_sparse",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.pca_sparse",
+    "text": "m.models.pca.pca_sparse\nm.models.pca.pca_sparse(X, data_dim, latent_dim, num_data_points)\nSparse Bayesian PCA model using a Laplace prior on the weights (w).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_plot",
+    "href": "reference/models.html#m_models_pca_plot",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.plot",
+    "text": "m.models.pca.plot\nm.models.pca.plot(\n    X=None,\n    bayesian_results=None,\n    y=None,\n    feature_names=None,\n    target_names=None,\n    color_var=None,\n    size_var=None,\n    shape_var=None,\n    figsize=(22, 18),\n)\nGenerates a 2x2 dashboard of the four main PCA plots. Args: X (jnp.ndarray, optional): Scaled data matrix. Defaults to self.X. feature_names (list, optional): List of names for the original features. Required for some plots. y (jnp.ndarray, optional): Grouping variable for the individuals plot. target_names (list, optional): Names for the groups in y. figsize (tuple, optional): Overall size of the 2x2 plot.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_process_var",
+    "href": "reference/models.html#m_models_pca_process_var",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.process_var",
+    "text": "m.models.pca.process_var\nm.models.pca.process_var(var)\nConvert categorical string array to numeric codes; leave numeric as is.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_set_deterministic_sign",
+    "href": "reference/models.html#m_models_pca_set_deterministic_sign",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.set_deterministic_sign",
+    "text": "m.models.pca.set_deterministic_sign\nm.models.pca.set_deterministic_sign(components)\nEnforces a deterministic sign convention on the component matrix. For each component (column), it finds the element with the largest absolute value and flips the sign of the entire component if that element is negative. Args: components: The component matrix of shape (data_dim, latent_dim) Returns: The component matrix with a consistent sign convention.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_pca_variable_correlation",
+    "href": "reference/models.html#m_models_pca_variable_correlation",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.pca.variable_correlation",
+    "text": "m.models.pca.variable_correlation\nm.models.pca.variable_correlation(feature_names, X=None, bayesian_results=None, ax=None)\nGenerates a variable correlation plot with cos2 values.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_build_surv_covariates",
+    "href": "reference/models.html#m_models_survival_build_surv_covariates",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.build_surv_covariates",
+    "text": "m.models.survival.build_surv_covariates\nm.models.survival.build_surv_covariates()\nBuild a full covariate array for survival modeling.\n\nFixed covariates (N,) are expanded to (N,T)\nStacked with existing time-varying covariates (N, T, V)\nUpdates covariate names with fixed covariates first",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_cum_hazard",
+    "href": "reference/models.html#m_models_survival_cum_hazard",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.cum_hazard",
+    "text": "m.models.survival.cum_hazard\nm.models.survival.cum_hazard(hazard)\nCalculates the cumulative hazard from a given hazard rate.\nParameters hazard : numpy.ndarray or jax.numpy.ndarray A 1D or 2D array representing the hazard rate at each time step.\nReturns numpy.ndarray or jax.numpy.ndarray The cumulative hazard calculated by summing the hazard over time steps.\nNotes - The cumulative hazard is computed as the cumulative sum of the hazard values, scaled by the interval_length factor.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_import_covF",
+    "href": "reference/models.html#m_models_survival_import_covF",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.import_covF",
+    "text": "m.models.survival.import_covF\nm.models.survival.import_covF(cov, names)\nImport fixed covariates (patient-level).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_import_covV",
+    "href": "reference/models.html#m_models_survival_import_covV",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.import_covV",
+    "text": "m.models.survival.import_covV\nm.models.survival.import_covV(cov, names)\nImport time-varying covariates.\nParameters cov : np.ndarray Array of shape (N, T) for one covariate, or (N, T, V) for multiple covariates. names : list of str Names of the covariates.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_import_time_even",
+    "href": "reference/models.html#m_models_survival_import_time_even",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.import_time_even",
+    "text": "m.models.survival.import_time_even\nm.models.survival.import_time_even(time, event, interval_length=1)\nConvert data into of survival information into a surv object. Converts continuous time and event data into discrete time intervals for survival analysis if interval_length &gt; 1.\nParameters time : 1D jnp.ndarray of shape (N,) representing the continuous time variable. event : 1D Binary jnp.ndarray of shape (N,) representing the event indicator. interval_length : int, optional The length of each discrete time interval (default is 3).\nReturns - n_patients : int Number of patients in the dataset - patients : np.array Array of patient indices - time : np.array Array of time points - event : np.array Array of event status - interval_bounds : jnp.ndarray Array of boundaries for discrete time intervals. - n_intervals : int The total number of discrete intervals. - intervals : jnp.ndarray Array of interval indices. - death : jnp.ndarray A binary matrix (n_patients x n_intervals) indicating whether each subject experienced the event in each interval (1 if the event occurred, 0 otherwise). - exposure : jnp.ndarray A matrix (n_patients x n_intervals) indicating the time each subject was exposed in each interval.\nNotes - The function assumes that subjects who experienced the event did so at the end of the time period. - Exposure is capped by the interval bounds, and the last interval reflects the remaining time to the event or censoring.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_model",
+    "href": "reference/models.html#m_models_survival_model",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.model",
+    "text": "m.models.survival.model\nm.models.survival.model(death, cov, exposure, censoring=None)\nBayesian Survival Analysis model dispatching to univariate, multivariate, or time-varying models.\nParameters: - death: Event occurrence indicator array. - cov: Covariates array (fixed or time-varying). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_model_multivariate",
+    "href": "reference/models.html#m_models_survival_model_multivariate",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.model_multivariate",
+    "text": "m.models.survival.model_multivariate\nm.models.survival.model_multivariate(death, cov, exposure, censoring=None)\nMultivariate discrete-time survival model with multiple fixed covariates.\nParameters: - death: Event occurrence indicator array. - cov: 2D covariates array (observations, covariates). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_model_time_varying",
+    "href": "reference/models.html#m_models_survival_model_time_varying",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.model_time_varying",
+    "text": "m.models.survival.model_time_varying\nm.models.survival.model_time_varying(death, cov, exposure, censoring=None)\nTime-varying discrete-time survival model with longitudinal covariates.\nParameters: - death: Event occurrence indicator array. - cov: 3D time-varying covariates array (observations, intervals, covariates). - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_model_univariate",
+    "href": "reference/models.html#m_models_survival_model_univariate",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.model_univariate",
+    "text": "m.models.survival.model_univariate\nm.models.survival.model_univariate(death, cov, exposure, censoring=None)\nUnivariate discrete-time survival model with a single fixed covariate.\nParameters: - death: Event occurrence indicator array. - cov: Single covariate array. - exposure: Exposure times array across intervals. - censoring: Optional censoring indicators.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_observed",
+    "href": "reference/models.html#m_models_survival_observed",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.observed",
+    "text": "m.models.survival.observed\nm.models.survival.observed(observed)\nAdd observed data to the survival object. Args: observed (np.ndarray): Array of observed data with shape (N, T). This array represent if individuals have been observed at each time point and thus should be 1 if observed and 0 if censored. Raises: ValueError: If observed data shape does not match the survival object.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_plot_censoring",
+    "href": "reference/models.html#m_models_survival_plot_censoring",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.plot_censoring",
+    "text": "m.models.survival.plot_censoring\nm.models.survival.plot_censoring(\n    cov=None,\n    event='event',\n    time='time',\n    xlabel='Time',\n    ylabel='Subject',\n)\nPlots the censoring status of subjects in a time-to-event dataset.\nUses the arrays populated by import_time_even (self.time, self.event, self.patients) and, when cov names a fixed covariate imported via import_covF, overlays the subjects for which that covariate equals 1.\nParameters cov : str, optional Name of a fixed covariate (as passed to import_covF) to overlay as scatter points. If None or not found, no overlay is drawn. event, time : str, optional Kept for backwards compatibility; unused. xlabel : str, optional Label for the x-axis. Default is ‘Time’. ylabel : str, optional Label for the y-axis. Default is ‘Subject’.\nReturns (fig, ax) The Matplotlib figure and axis showing censored and uncensored subjects along with the specified covariate overlay.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_plot_surv",
+    "href": "reference/models.html#m_models_survival_plot_surv",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.plot_surv",
+    "text": "m.models.survival.plot_surv\nm.models.survival.plot_surv(\n    lambda0='Baseline_rate',\n    beta='beta',\n    xlab='Time',\n    ylab='Survival',\n    covlab='treated',\n    title='Bayesian survival model',\n    hdi_prob=0.94,\n)\nPlot posterior cumulative hazard Lambda(t) and survival function S(t).\nDraws two subplots: the cumulative hazard on the left and the survival curves on the right, with equal-tailed credible bands.\nParameters: - lambda0: Posterior variable name for baseline rate draws. - beta: Posterior variable name for covariate effect draws. - xlab: Label for the x-axis. - ylab: Label for the y-axis. - covlab: Label for covariate groups. - title: Super-title for the figure. - hdi_prob: Credible interval probability mass (defaults to 0.94).\nReturns: - Tuple of (fig, (hazard_ax, surv_ax)).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_ppc_km_by_cov",
+    "href": "reference/models.html#m_models_survival_ppc_km_by_cov",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.ppc_km_by_cov",
+    "text": "m.models.survival.ppc_km_by_cov\nm.models.survival.ppc_km_by_cov(\n    covs=None,\n    n_groups=3,\n    n_draws=None,\n    seed=0,\n    n=50,\n    extrapolation_factor=1.2,\n    risk=True,\n    lambda0='Baseline_rate',\n    beta='beta',\n    facet=False,\n)\nGrouped KM-overlay PPCs of the replicated times, one figure per covariate.\nBuilds on sample_times() and m.diag.ppc_km_overlay(group=...): each covariate groups the patients – at most n_groups distinct values are grouped as-is, anything more is binned into n_groups quantile bins (Q1..Qn) – so a multivariate model gets one bayesplot-style grouped KM check per covariate instead of a single pooled curve.\nBy default (facet=False), each figure overlays the survival curves of all covariate levels on the same plot with distinct colors per level. Setting facet=True separates the levels into subplots (one panel per level).\nWith risk=True the dict also holds a “risk” figure grouping the patients by quantiles of the posterior-mean linear predictor: one panel per quantile of predicted hazard, which checks all covariates at once (Q1 = lowest predicted hazard).\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ncovs\n\nCovariate name, list of names, or None for all of self.cov_names.\n\n\nn_groups\n\nMax number of distinct values grouped as-is, and number of quantile bins otherwise.\n\n\nn_draws, seed\n\nPassed to sample_times.\n\n\nn, extrapolation_factor\n\nPassed to ppc_km_overlay.\n\n\nrisk\n\nAlso build the linear-predictor risk-group figure.\n\n\nlambda0, beta\n\nPosterior names, as in sample_times.\n\n\nfacet\n\nWhen False (the default), overlays groups on a single plot with distinct colors. When True, separates them into subplots (one panel per level).\n\n\n\nReturns: dict {label: plotly Figure} keyed by covariate name, plus “risk” when risk=True.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_priors",
+    "href": "reference/models.html#m_models_survival_priors",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.priors",
+    "text": "m.models.survival.priors\nm.models.survival.priors(sample=False)\nDefine prior distributions for the survival model.\nParameters: - sample: If True, draws direct prior samples rather than defining model nodes.\nReturns: - Tuple of (lambda0, beta) priors for baseline hazard and covariate effects.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_sample_times",
+    "href": "reference/models.html#m_models_survival_sample_times",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.sample_times",
+    "text": "m.models.survival.sample_times\nm.models.survival.sample_times(\n    lambda0='Baseline_rate',\n    beta='beta',\n    n_draws=None,\n    seed=0,\n)\nPosterior predictive event times, one row per posterior draw.\nReturns a (n_draws, n_patients) numpy array of replicated event times. For each posterior draw the piecewise-exponential rate is rate[s, i, k] = lambda0[s, k] * exp(cov[i] @ beta[s]) and the event time is the exponential draw inverted through its cumulative hazard.\nThe interval indicators in yrep are not durations, so this is what a bayesplot-style KM overlay needs: m.diag.ppc_km_overlay(y=s.time, yrep=s.sample_times(), status_y=s.event). Like bayesplot’s predicted curves these times carry no censoring: a draw beyond the last interval bound is extrapolated with the last interval’s rate, and a zero rate gives np.inf. For one panel per covariate see ppc_km_by_cov.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_survival_survival",
+    "href": "reference/models.html#m_models_survival_survival",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.survival.survival",
+    "text": "m.models.survival.survival\nm.models.survival.survival(hazard)\nCalculates the survival probability from a given hazard rate.\nParameters hazard : numpy.ndarray or jax.numpy.ndarray A 1D or 2D array representing the hazard rate at each time step.\nReturns numpy.ndarray or jax.numpy.ndarray The survival probability, computed as the exponential of the negative cumulative hazard.\nNotes - Survival is calculated as exp(-cumulative hazard) where the cumulative hazard is calculated using the cum_hazard function.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_bnnc_get_cluster_probs",
+    "href": "reference/models.html#m_models_bnnc_get_cluster_probs",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.bnnc.get_cluster_probs",
+    "text": "m.models.bnnc.get_cluster_probs\nm.models.bnnc.get_cluster_probs(data_pts, theta_prob, mu_p, sigma_p)\nCompute normalized posterior cluster membership probabilities for data points.\nParameters: - data_pts: Data array (shape: [N, D]). - theta_prob: Cluster mixture weights (shape: [K] or [N_draws, K]). - mu_p: Cluster component means (shape: [K, D]). - sigma_p: Cluster component standard deviations (shape: [K, D]).\nReturns: - Array of normalized posterior cluster assignment probabilities (shape: [N, K]).",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_bnnc_model",
+    "href": "reference/models.html#m_models_bnnc_model",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.bnnc.model",
+    "text": "m.models.bnnc.model\nm.models.bnnc.model(data, K=11, D_H1=10, empirical_bayes=False)\nBNNC marginal mixture model definition.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_bnnc_plot",
+    "href": "reference/models.html#m_models_bnnc_plot",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.bnnc.plot",
+    "text": "m.models.bnnc.plot\nm.models.bnnc.plot(data, sampler, figsize=(10, 8), point_size=30)\nPosterior predictive plot: a filled contour of the expected cluster index over the feature plane, with the data coloured by their argmax cluster.\nThe predictive at a point x is p(k | x) ∝ pi_k * N(x | mu_k, sigma_k), averaged over posterior draws of (global_pi, mu, sigma). The contour shows sum_k k * p(k | x); the colour bar is that expected index.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_bnnc_predict",
+    "href": "reference/models.html#m_models_bnnc_predict",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.bnnc.predict",
+    "text": "m.models.bnnc.predict\nm.models.bnnc.predict(data, sampler)\nPerforms Consensus Clustering.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#m_models_nbda",
+    "href": "reference/models.html#m_models_nbda",
+    "title": "Built-in models (m.models)",
+    "section": "m.models.nbda",
+    "text": "m.models.nbda\nm.models.nbda(CES=True)\nNetwork-Based Diffusion Analysis (NBDA) probabilistic model.\n\nCES: If True, uses the Constant Elasticity of Substitution (CES) parameterization to combine social and asocial transmission rates.\n\nReturns: - Probabilistic model sampling diffusion events conditional on network structure and status.",
+    "crumbs": [
+      "Get started",
+      "Built-in models (`m.models`)"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html",
+    "href": "start/Diagnostics.html",
+    "title": "Model Diagnostic",
+    "section": "",
+    "text": "The BF class can compute model diagnostics for a given model.\nLets consider the following model for a linear regression:\nY_i \\sim \\text{Normal}(\\alpha + \\beta   X_i, \\sigma)\n\\alpha \\sim \\text{Normal}(0, 1)\n\\beta \\sim \\text{Normal}(0, 1)\n\\sigma \\sim \\text{Uniform}(0, 50)\nFor additional documentation check the diagnostics API reference\nEvery plot takes x_label= and y_label= to replace the axis titles (title= for the plot title). A string sets the title of every panel; a list sets one per panel, in order (None keeps a panel’s own title), for example m.diag.posterior(x_label=[\"intercept\", \"slope\", \"sigma\"]).",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#predictions-from-model-based-on-specific-data-value",
+    "href": "start/Diagnostics.html#predictions-from-model-based-on-specific-data-value",
+    "title": "Model Diagnostic",
+    "section": "Predictions from model based on specific data value",
+    "text": "Predictions from model based on specific data value\nBy default (posterior=True, samples=None), m.sample(...) evaluates the predictive distribution across all posterior MCMC draws (here 500 \\times 4 = 2000 draws). To obtain a single predicted value instead of the full posterior predictive vector, you can draw a single sample (samples=1), take the posterior predictive mean, or evaluate at fixed parameter values (posterior=...):\n\nPythonRJulia\n\n\n\n\nCode\nm.sample()  # Predictions from model based on data in data_on_model\npred = m.sample(data=dict(weight=jnp.array([0.4])), remove_obs=False)  # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm.sample(data=dict(weight=jnp.array([0.4])), remove_obs=False, samples=1)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp.mean(pred[\"height\"])\n\n# 3. Single draw at fixed parameter values\nm.sample(\n    data=dict(weight=jnp.array([0.4])),\n    posterior=dict(a=154.6, b=5.8, s=5.1),\n    remove_obs=False,\n)\n\n\n{'height': Array([[152.07847752]], dtype=float64)}\n\n\n\n\nm$sample() # Predictions from model based on data in data_on_model\npred &lt;- m$sample(data = list(weight = jnp$array(c(0.4))), remove_obs = FALSE) # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm$sample(data = list(weight = jnp$array(c(0.4))), remove_obs = FALSE, samples = 1L)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp$mean(pred$height)\n\n# 3. Single draw at fixed parameter values\nm$sample(\n    data = list(weight = jnp$array(c(0.4))),\n    posterior = list(a = 154.6, b = 5.8, s = 5.1),\n    remove_obs = FALSE\n)\n\n\nm.sample() # Predictions from model based on data in data_on_model\npred = m.sample(data = pydict(weight = jnp.array([0.4])), remove_obs = false) # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm.sample(data = pydict(weight = jnp.array([0.4])), remove_obs = false, samples = 1)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp.mean(pred[\"height\"])\n\n# 3. Single draw at fixed parameter values\nm.sample(\n    data = pydict(weight = jnp.array([0.4])),\n    posterior = pydict(a = 154.6, b = 5.8, s = 5.1),\n    remove_obs = false\n)",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#forest-plot-of-estimated-values",
+    "href": "start/Diagnostics.html#forest-plot-of-estimated-values",
+    "title": "Model Diagnostic",
+    "section": "Forest plot of estimated values",
+    "text": "Forest plot of estimated values\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.forest()\n\n\n        \n        \n        \n\n\n                            \n                                            \n\n\n\n\nm$diag$forest()\n\n\n@pyplot m.diag.forest()\n\n\n\nSee m.diag.forest for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#density-plots-of-the-posterior-distribution",
+    "href": "start/Diagnostics.html#density-plots-of-the-posterior-distribution",
+    "title": "Model Diagnostic",
+    "section": "Density plots of the posterior distribution",
+    "text": "Density plots of the posterior distribution\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.density()\n\n\n                            \n                                            \n\n\n\n\nm$diag$density()\n\n\n@pyplot m.diag.density()\n\n\n\nSee m.diag.density for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#posterior-distribution-plots",
+    "href": "start/Diagnostics.html#posterior-distribution-plots",
+    "title": "Model Diagnostic",
+    "section": "Posterior distribution plots",
+    "text": "Posterior distribution plots\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.posterior()\n\n\n                            \n                                            \n\n\n\n\nm$diag$posterior()\n\n\n@pyplot m.diag.posterior()\n\n\n\nSee m.diag.posterior for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#trace-plots-for-mcmc-chains",
+    "href": "start/Diagnostics.html#trace-plots-for-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Trace plots for MCMC chains",
+    "text": "Trace plots for MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_trace()\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_trace()\n\n\n@pyplot m.diag.plot_trace()\n\n\n\nSee m.diag.plot_trace for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#pairwise-plots-of-the-posterior-distribution",
+    "href": "start/Diagnostics.html#pairwise-plots-of-the-posterior-distribution",
+    "title": "Model Diagnostic",
+    "section": "Pairwise plots of the posterior distribution",
+    "text": "Pairwise plots of the posterior distribution\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.pair()\n\n\n                            \n                                            \n\n\n\n\nm$diag$pair()\n\n\n@pyplot m.diag.pair()\n\n\n\nSee m.diag.pair for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#plot-autocorrelation-of-mcmc-chains",
+    "href": "start/Diagnostics.html#plot-autocorrelation-of-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Plot autocorrelation of MCMC chains",
+    "text": "Plot autocorrelation of MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.autocor()\n\n\n                            \n                                            \n\n\n\n\nm$diag$autocor()\n\n\n@pyplot m.diag.autocor()\n\n\n\nSee m.diag.autocor for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#create-rank-plots-for-mcmc-chains",
+    "href": "start/Diagnostics.html#create-rank-plots-for-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Create rank plots for MCMC chains",
+    "text": "Create rank plots for MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.rank()\n\n\n                            \n                                            \n\n\n\n\nm$diag$rank()\n\n\n@pyplot m.diag.rank()\n\n\n\nSee m.diag.rank for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#evolution-of-effective-sample-size-across-iterations",
+    "href": "start/Diagnostics.html#evolution-of-effective-sample-size-across-iterations",
+    "title": "Model Diagnostic",
+    "section": "Evolution of effective sample size across iterations",
+    "text": "Evolution of effective sample size across iterations\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_ess()\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_ess()\n\n\n@pyplot m.diag.plot_ess()\n\n\n\nSee m.diag.plot_ess for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#hmc-diagnostics-divergences-and-energy",
+    "href": "start/Diagnostics.html#hmc-diagnostics-divergences-and-energy",
+    "title": "Model Diagnostic",
+    "section": "HMC diagnostics: divergences and energy",
+    "text": "HMC diagnostics: divergences and energy\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nCheck this plot first: if the sampler failed, the other diagnostics are not meaningful.\n\nTop row, one panel per chain: the distribution of the energy E around its mean (blue, marginal energy) and of its change between two successive iterations, ΔE (orange, energy transition). When the two histograms have about the same width, the sampler can cross the whole posterior from one iteration to the next. When ΔE is much narrower than E, it explores the tails badly (typical of a hierarchical “funnel”). The panel title gives E-BFMI = Σ ΔE² / Σ (E − Ē)²; values below 0.3 are flagged with ⚠.\nBottom row: the number of divergent transitions per chain (ideal: 0). A divergence means that the integrator failed in a region of strong curvature, which is then under-explored. With a few divergences, raise target_accept (0.95–0.99); with many, reparametrise (for example a non-centred random effect).\n\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.divergence_energy()\n\n\n                            \n                                            \n\n\n\n\nm$diag$divergence_energy()\n\n\n@pyplot m.diag.divergence_energy()\n\n\n\nSee m.diag.divergence_energy for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#posterior-predictive-checks",
+    "href": "start/Diagnostics.html#posterior-predictive-checks",
+    "title": "Model Diagnostic",
+    "section": "Posterior predictive checks",
+    "text": "Posterior predictive checks\nAll posterior predictive checks compare the observed outcome with predictions: datasets of the outcome simulated by the fitted model, one per posterior draw (m.diag.get_yrep()). Both are taken from the fitted model automatically, and the plots are labelled with the name of the observed site (here height, from obs=height). With several observed sites, each function returns one figure per site; pass site= to choose one. The idea is always the same: if the model is good, the data it simulates should look like the real data. For count or categorical outcomes, m.diag.ppc_bars() and m.diag.ppc_rootogram() instead compare observed counts with predicted counts per category.\nWhich check for which model. The model pages show the checks that matter for each kind of model:\n\nVarying effects, one panel per group (group=): Varying slopes, Nested varying effects, Categorical variable.\nA group effect the model leaves out: Binomial model (one intercept for all chimpanzees).\nPredictions along a covariate (x=, optionally with group=): Interaction between continuous variables, Poisson model with offset, Gaussian processes.\nCounts and over-dispersion (ppc_rootogram, ppc_stat(stat=\"sd\")): Gamma-Poisson, Beta binomial model.\nExcess of zeros (ppc_stat(stat=\"n_zero\")): Zero inflated.\nCategorical outcomes (ppc_bars): Categorical model.\nSurvival times with censoring (ppc_km_overlay): Survival analysis.\nCalibration of the predictive distributions (ppc_loo_pit): Phylogenetic analysis, Feature extraction - R2D2.\nMeasurement error and shrinkage (ppc_error_scatter): Measuring error.\n\n\nDensity overlay\nOverlays the density of the observed data (black) with the densities of n predicted datasets (blue). The black curve should look like one more blue curve; a different shape (two modes, skewness, mass below 0 for a positive outcome) points to a missing group or a wrong likelihood.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_density()\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_density()\n\n\n@pyplot m.diag.ppc_density()\n\n\n\nSee m.diag.ppc_density for further information regarding the list of arguments.\n\n\nHistogram small multiples\nThe histogram of the observed data (first panel, black) next to the histograms of n predicted datasets (“Prediction 1”, “Prediction 2”, …). The observed histogram should not stand out among the predictions; look at the number of modes, the skewness, the range and the number of zeros.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_hist()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_hist()\n\n\n@pyplot m.diag.ppc_hist()\n\n\n\nSee m.diag.ppc_hist for further information regarding the list of arguments.\n\n\nBoxplots\nThe box of the observed data (left, black) next to the boxes of n predicted datasets (“pred 1”, “pred 2”, …): median, quartiles, whiskers and extreme points. The observed box should look like the others; an observed box that is systematically higher, wider or narrower, or extreme values that the predictions never produce (tails too light: try a Student-t likelihood), signal misfit.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_boxplot()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_boxplot()\n\n\n@pyplot m.diag.ppc_boxplot()\n\n\n\nSee m.diag.ppc_boxplot for further information regarding the list of arguments.\n\n\nTest statistic\nEach predicted dataset is summarised by one number T (the curve is the distribution of T over the predictions) and T of the observed data is marked by the vertical line. The title gives the Bayesian p-value P(T(predicted) ≥ T(observed)) and its two-sided version: around 0.5 is fine, a two-sided value below 0.05 means the model does not reproduce this aspect of the data.\nChoose the statistic with stat=: \"mean\" (default), \"median\", \"sd\", \"var\", \"min\", \"max\", \"q25\", \"q75\", \"skew\", \"n_zero\", \"n_pos\", or (Python) any function of a 1D array, for example stat=lambda v: np.percentile(v, 90). The mean is almost always reproduced because the model has a parameter for it; statistics the model does not fit directly (\"sd\" for over-dispersion, \"max\"/\"min\" for the tails, \"skew\", \"n_zero\" for counts) are more informative.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_stat(stat=\"sd\")\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_stat(stat = \"sd\")\n\n\n@pyplot m.diag.ppc_stat(stat = \"sd\")\n\n\n\nSee m.diag.ppc_stat for further information regarding the list of arguments.\n\n\nPredictive intervals\nOne vertical bar per observation: the thin line is the 90% predictive interval (prob_outer), the thick line the 50% interval (prob), the white point the median prediction and the black point the observed value. About 50% of the black points should fall on the thick bars and 90% on the thin ones. Many points outside mean the model is over-confident; all points close to the median mean it is too cautious. Pass x= (a predictor) to see where the model misses; a discrete x (a few distinct levels, e.g. a normalized 1/2/3 design) gets one tick per level instead of plotly’s default ticks, which would fall between the bars. Pass group= to get one panel per level of a second variable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_intervals()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_intervals()\n\n\n@pyplot m.diag.ppc_intervals()\n\n\n\nSee m.diag.ppc_intervals for further information regarding the list of arguments.\n\n\nPredictive ribbon\nThe same intervals drawn as continuous ribbons (light: 90%, dark: 50%; line: median prediction) with the observed values as points. Easier to read than the bars when x is a continuous variable, here the predictor weight: the ribbon should follow the cloud of points over the whole range of x, without a curvature it misses.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_ribbon(x=m.df.weight)\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_ribbon(x = m$df$weight)\n\n\n@pyplot m.diag.ppc_ribbon(x = m.df.weight)\n\n\n\nSee m.diag.ppc_ribbon for further information regarding the list of arguments.\n\n\nAverage predictive error\nAverage predictive error e_i = observed_i − mean prediction_i of each observation (x axis) against the observed value (y axis); the dashed vertical line at 0 is where a perfectly calibrated observation sits. Read it like a residual plot: no pattern in the cloud is good. A slope means the errors depend on the observed value (the model under-predicts at one end and over-predicts at the other), a funnel (spread growing with the observed value) indicates heteroscedasticity, and a shift off 0 a systematic bias.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_error_scatter()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_error_scatter()\n\n\n@pyplot m.diag.ppc_error_scatter()\n\n\n\nSee m.diag.ppc_error_scatter for further information regarding the list of arguments.\n\n\nBinned residuals\nFor binary (or proportion) outcomes: observations are grouped into bins by their expected value (posterior probability), and each panel — one per posterior draw — plots the average error per bin against that expected value, with a ±2 SE band around the dashed line at 0. Read it: most points inside the band and no trend across bins is good; points systematically above or below the band, or a slope, mean the predicted probabilities are mis-calibrated. The model on this page has a continuous outcome, so no example is shown here.\n\n\nKaplan–Meier overlay (ppc_km_overlay)\nFor time-to-event outcomes: status_y marks each observation as an event (1) or censored (0), and the plot overlays the Kaplan–Meier survival curve of the observed data (thick line) on the Kaplan–Meier curves of the posterior predictive replications (thin lines), which — as in bayesplot — carry no censoring. Read it: the observed curve should lie inside the band of predicted curves; a curve systematically above or below the band means the model mis-predicts survival times. The model on this page has a continuous outcome, so no example is shown here; see Survival analysis.\n\n\nResiduals\nHistogram of the residuals r_i = observed_i − mean prediction_i. It should be centred on 0 and roughly symmetric; a shift is a systematic bias, skewness a wrong likelihood family, two modes a missing group, and long tails a few badly predicted observations (see LOO influence).\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_error_hist()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_error_hist()\n\n\n@pyplot m.diag.ppc_error_hist()\n\n\n\nSee m.diag.ppc_error_hist for further information regarding the list of arguments.\n\n\nObserved versus individual predictions\nEach panel plots the observed data against one predicted dataset (not the mean), so the observation noise is included and the cloud is wider than in the plot above. The width of the cloud around the diagonal should be similar from one panel to the next; observed values that systematically overshoot on one side mean the simulated noise is mis-calibrated.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_scatter()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_scatter()\n\n\n@pyplot m.diag.ppc_scatter()\n\n\n\nSee m.diag.ppc_scatter for further information regarding the list of arguments.\n\n\nLOO-PIT uniformity check\nFor each observation, the PIT (probability integral transform) is the quantile of its predictive distribution at which the observed value falls: PIT_i = P(prediction_i ≤ y_i). If the model is calibrated these values are uniform between 0 and 1, so their density (blue) is flat around the dashed line at 1. The grey curves are densities of the same number of truly uniform values: they show how far from flat a perfectly calibrated model can be by chance, so a blue curve that stays inside the grey band is fine.\n\n\n\n\n\n\n\nShape of the blue curve\nDiagnosis\n\n\n\n\nflat, inside the grey band\ncalibrated\n\n\nU-shaped (high at 0 and 1)\npredictions too narrow: the model is over-confident\n\n\nbell-shaped (peak at 0.5)\npredictions too wide: the model is too cautious\n\n\ntilted to one side\nbias: the model over- or under-predicts\n\n\n\nPIT versus LOO-PIT. The plain PIT scores each observation with draws from a posterior that was fitted to that same observation, so the predictions are pulled towards it and the PIT values towards 0.5: a model that is over-confident can look calibrated. The LOO-PIT uses the leave-one-out predictive distribution instead, each observation being scored by a posterior fitted without it. Refitting n times is not needed: Pareto-smoothed importance sampling reweights the draws with the pointwise log-likelihood. m.diag.ppc_loo_pit() computes that log-likelihood from the fitted model automatically. When you pass your own predictions with yrep=, also pass log_likelihood= with the pointwise log-likelihood of the same draws, shape (draws, observations); without it the plain PIT is plotted and a warning is raised.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_loo_pit()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_loo_pit()\n\n\n@pyplot m.diag.ppc_loo_pit()\n\n\n\nSee m.diag.ppc_loo_pit for further information regarding the list of arguments.\n\n\nPredictive intervals sorted by observed value\nThe predictive intervals with the observations ordered by their observed value, so the black points rise from left to right. The medians should follow the black points. A little “regression towards the mean” is normal (the smallest values slightly over-predicted, the largest slightly under-predicted, because the posterior shrinks them); a strong and systematic gap means the model flattens the extremes, for example because a predictor or a variance term is missing.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_intervals_sorted()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_intervals_sorted()\n\n\n@pyplot m.diag.ppc_intervals_sorted()\n\n\n\nSee m.diag.ppc_intervals_sorted for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#regression-plot",
+    "href": "start/Diagnostics.html#regression-plot",
+    "title": "Model Diagnostic",
+    "section": "Regression plot",
+    "text": "Regression plot\nObserved data plus n smooth posterior regression lines E[y | x, theta] and their posterior mean, overlaid against a predictor variable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_regression(\"weight\", n = 20)\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_regression(\"weight\", n = 20L)\n\n\n@pyplot m.diag.plot_regression(\"weight\", n = 20)\n\n\n\nSee m.diag.plot_regression for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#sensitivity",
+    "href": "start/Diagnostics.html#sensitivity",
+    "title": "Model Diagnostic",
+    "section": "Sensitivity",
+    "text": "Sensitivity\n\nPrior sensitivity\nOverlays the posteriors from models fitted with different priors to assess how much the conclusions change when the priors vary.\n\nPythonRJulia\n\n\n\n\nCode\n# Refit the same model with a tighter prior on b\nposteriors_weak = m.posteriors\n\ndef model_strong(weight, height):\n    a = m.dist.normal(178, 20, name=\"a\")\n    b = m.dist.log_normal(0, 0.1, name=\"b\")\n    s = m.dist.uniform(0, 50, name=\"s\")\n    m.dist.normal(a + b * weight, s, obs=height, shape=(weight.shape[0],))\n\nm.fit(model_strong, num_samples=500, num_chains=4)\n\nm.diag.prior_sensitivity([posteriors_weak, m.posteriors],\n                         labels=[\"weak prior\", \"strong prior\"])\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n                            \n                                            \n\n\n\n\n# Refit the same model with a tighter prior on b\nposteriors_weak &lt;- m$posteriors\n\nmodel_strong &lt;- function(weight, height) {\n    a &lt;- bf.dist.normal(178, 20, name = \"a\")\n    b &lt;- bf.dist.log_normal(0, 0.1, name = \"b\")\n    s &lt;- bf.dist.uniform(0, 50, name = \"s\")\n    bf.dist.normal(a + b * weight, s, obs = height)\n}\n\nm$fit(model_strong, num_samples = 500, num_chains = 4)\n\nm$diag$prior_sensitivity(list(posteriors_weak, m$posteriors),\n                         labels = list(\"weak prior\", \"strong prior\"))\n\n\n# Refit the same model with a tighter prior on b\nposteriors_weak = m.posteriors\n\n@BF function model_strong(weight, height)\n    a = m.dist.normal(178, 20, name = \"a\")\n    b = m.dist.log_normal(0, 0.1, name = \"b\")\n    s = m.dist.uniform(0, 50, name = \"s\")\n    m.dist.normal(a + b * weight, s, obs = height)\nend\n\nm.fit(model_strong, num_samples = 500, num_chains = 4)\n\n@pyplot m.diag.prior_sensitivity([posteriors_weak, m.posteriors],\n                                 labels = [\"weak prior\", \"strong prior\"])\n\n\n\n\nDeclaring the prior variations (parallel)\nInstead of refitting by hand, declare which priors vary. The model takes the bf instance m first, then the data, then the prior hyper-parameters (their defaults are the baseline). prior_sensitivity fits the baseline plus one variation at a time (each prior moved alone, the others at baseline) in parallel, through run_simulations, and plots the results.\n\nPythonRJulia\n\n\n\n\nCode\ndef model_decl(m, weight, height, a_sd=20.0, b_sd=1.0):\n    a = m.dist.normal(178, a_sd, name=\"a\")\n    b = m.dist.log_normal(0, b_sd, name=\"b\")\n    s = m.dist.uniform(0, 50, name=\"s\")\n    m.dist.normal(a + b * weight, s, obs=height, shape=(weight.shape[0],))\n\nfig, table = m.diag.prior_sensitivity(\n    model_decl,\n    priors={\"b_sd\": [0.1, 0.5, 2.0], \"a_sd\": [5, 50]},   # 1 + 5 = 6 fits\n    obs=dict(weight=m.df.weight.to_numpy(dtype=\"float32\"),\n             height=m.df.height.to_numpy(dtype=\"float32\")),\n    fit_kwargs=dict(num_samples=500, num_chains=1),\n    progress=False,\n    return_results=True)       # table: mean, sd, HDI and shift_sd vs baseline\nfig\n\n\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\n\n\n                            \n                                            \n\n\n\n\nmodel &lt;- function(m, weight, height, a_sd = 20, b_sd = 1) {\n    a &lt;- m$dist$normal(178, a_sd, name = \"a\")\n    b &lt;- m$dist$log_normal(0, b_sd, name = \"b\")\n    s &lt;- m$dist$uniform(0, 50, name = \"s\")\n    m$dist$normal(a + b * weight, s, obs = height, name = \"height\")\n}\n\nout &lt;- m$diag$prior_sensitivity(\n    model,\n    priors = list(b_sd = list(0.1, 0.5, 2.0), a_sd = list(5, 50)),   # 1 + 5 = 6 fits\n    obs = list(weight = weight, height = height),\n    fit_kwargs = list(num_samples = 500L, num_chains = 1L),\n    return_results = TRUE)     # out[[1]]: figure, out[[2]]: table\n\n\n@sim function model(m, weight, height; a_sd = 20.0, b_sd = 1.0)\n    a = m.dist.normal(178, a_sd, name = \"a\")\n    b = m.dist.log_normal(0, b_sd, name = \"b\")\n    s = m.dist.uniform(0, 50, name = \"s\")\n    m.dist.normal(a + b * weight, s, obs = height, name = \"height\")\nend\n\nfig, table = m.diag.prior_sensitivity(\n    model,\n    priors = Dict(\"b_sd\" =&gt; [0.1, 0.5, 2.0], \"a_sd\" =&gt; [5, 50]),   # 1 + 5 = 6 fits\n    obs = Dict(\"weight\" =&gt; weight, \"height\" =&gt; height),\n    fit_kwargs = Dict(\"num_samples\" =&gt; 500, \"num_chains\" =&gt; 1),\n    return_results = true)\n\n\n\nThe default plot (plot=\"by_prior\") has one row per varied prior and one column per parameter: each cell shows the baseline posterior (grey, dashed) and the posteriors when that prior alone is varied. plot=\"shift\" gives a dot plot of the posterior-mean shift (in baseline sd) per variation, and plot=\"overlay\" puts every fit in one panel per parameter.\nmode=\"grid\" crosses all the lists instead (captures interactions, but the number of fits is the product of the list lengths); joint={\"all tighter\": {\"a_sd\": 5, \"b_sd\": 0.1}} adds scenarios where several priors move together. shift_sd is the change of the posterior mean from the baseline, in baseline posterior sd.\nSee m.diag.prior_sensitivity for further information regarding the list of arguments.\n\n\n\nLOO influence\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nOne point per observation with its Pareto k, from PSIS-LOO: how much the posterior would change if this observation were left out.\n\n\n\n\n\n\n\nk\nReading\n\n\n\n\n&lt; 0.5\nfine\n\n\n0.5 – 0.7 (orange line)\nnoticeable influence, the LOO estimate is still reliable\n\n\n&gt; 0.7 (red line, red points)\nvery influential observation; LOO is unreliable for it\n\n\n\nA few red points are often outliers or data errors (hover to see their index and value). Many red points mean the model is misspecified or too flexible (for example one parameter per observation); try a robust likelihood (Student-t) or a more structured model. When some k exceed 0.7, model comparison with m.diag.loo() / compare is not reliable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.influence()\n\n\n                            \n                                            \n\n\n\n\nm$diag$influence()\n\n\n@pyplot m.diag.influence()\n\n\n\nSee m.diag.influence for further information regarding the list of arguments.\n\n\nCalibration\nFor several interval levels (50%, 60%, …, 99%), the share of observed values that actually fall inside the predictive interval of that level (y axis) against the level itself (x axis); the dashed diagonal is perfect calibration. Points below the diagonal (the “90%” interval contains only, say, 70% of the data) mean the model is over-confident, which is the most serious case; points above it mean the model is too cautious. These intervals are not leave-one-out, so a slight over-coverage is expected.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.calibration()\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n                            \n                                            \n\n\n\n\nm$diag$calibration()\n\n\n@pyplot m.diag.calibration()\n\n\n\nSee m.diag.calibration for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#multimodality-check",
+    "href": "start/Diagnostics.html#multimodality-check",
+    "title": "Model Diagnostic",
+    "section": "Multimodality check",
+    "text": "Multimodality check\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nFlags parameters whose posterior density has more than one local maximum (potential multimodality) and overlays the densities of the individual chains.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.multimodality()\n\n\n                            \n                                            \n\n\n\n\nm$diag$multimodality()\n\n\n@pyplot m.diag.multimodality()\n\n\n\nSee m.diag.multimodality for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#pareto-smoothed",
+    "href": "start/Diagnostics.html#pareto-smoothed",
+    "title": "Model Diagnostic",
+    "section": "Pareto-smoothed",
+    "text": "Pareto-smoothed\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.loo()\n\n\nComputed from 2000 posterior samples and 346 observations log-likelihood matrix.\n\n         Estimate       SE\nelpd_loo -1140.98    11.92\np_loo        2.40        -\n\n\n\n\nm$diag$loo()\n\n\nm.diag.loo()\n\n\n\nSee m.diag.loo for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#widely-applicable-information-criterion",
+    "href": "start/Diagnostics.html#widely-applicable-information-criterion",
+    "title": "Model Diagnostic",
+    "section": "Widely applicable information criterion",
+    "text": "Widely applicable information criterion\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.WAIC()\n\n\nelpd_waic       -1140.974451\nse                  11.90685\np_waic               2.39249\nn_samples               2000\nn_data_points            346\nscale                    log\ndtype: object\n\n\n\n\nm$diag$WAIC()\n\n\nm.diag.WAIC()\n\n\n\nSee m.diag.WAIC for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
     ]
   }
 ]

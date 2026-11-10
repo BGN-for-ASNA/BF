@@ -1,0 +1,11 @@
+sim,seed,true_centers,detected_clusters,cluster_std,plot_path
+1,61755,6,4,0.9,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_01_vrais_6_detectes_4.png
+2,62809,7,6,0.68,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_02_vrais_7_detectes_6.png
+3,14920,5,5,0.96,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_03_vrais_5_detectes_5.png
+4,83712,3,3,0.88,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_04_vrais_3_detectes_3.png
+5,49201,7,5,1.0,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_05_vrais_7_detectes_5.png
+6,75019,5,13,0.83,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_06_vrais_5_detectes_13.png
+7,31940,5,5,0.73,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_07_vrais_5_detectes_5.png
+8,92831,3,3,0.9,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_08_vrais_3_detectes_3.png
+9,58102,7,6,0.96,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_09_vrais_7_detectes_6.png
+10,27491,6,5,0.84,/home/sosa/work/BF/Test/11.MGM and DPMM/Ellipse_Validation/plots/sim_10_vrais_6_detectes_5.png

@@ -16,6 +16,8 @@ class models():
         """
         pass
         self.gmm = gmm
+        self.gmm.predict = predict_gmm
+        self.gmm.plot = plot_gmm
         self.dpmm = dpmm(parent)
         self.bnnc = bnnc(parent)
         self.pca =  pca

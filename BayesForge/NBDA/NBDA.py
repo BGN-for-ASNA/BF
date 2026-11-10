@@ -554,6 +554,16 @@ class NBDA:
             return soc, asoc
     
     def model(self, CES = True):
+        """
+        Network-Based Diffusion Analysis (NBDA) probabilistic model.
+
+        Parameters:
+        - CES: If True, uses the Constant Elasticity of Substitution (CES) parameterization
+          to combine social and asocial transmission rates.
+
+        Returns:
+        - Probabilistic model sampling diffusion events conditional on network structure and status.
+        """
         status = self.status
         network = self.network
         D_asocial = self.T_asocial

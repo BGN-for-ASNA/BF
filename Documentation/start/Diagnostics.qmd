@@ -106,7 +106,7 @@ m.summary()
 ```
 :::
 
-# List of all available diagnostics
+
 
 ```{python .lang-only}
 #| echo: false
