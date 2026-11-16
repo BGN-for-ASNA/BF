@@ -209,7 +209,8 @@ m$summary()
 
 ## Julia
 ```julia
-using BayesForge
+using PyBayesForge
+using PythonCall
 
 # Setup device------------------------------------------------
 m = importBF(platform="cpu")
@@ -231,12 +232,10 @@ end
 # Candidate summary statistics ------------------------------------------------
 w = jnp.array(m.df.weight)
 X = jnp.stack([jnp.ones(length(w)), w], axis = 1)
-function stats(height)
-    coef = jnp.linalg.lstsq(X, height)[1]
-    jnp.concatenate([jnp.stack([coef[1], coef[2], jnp.std(height - X * coef),
-                                jnp.mean(height), jnp.std(height), jnp.corrcoef(height, w)[1, 2]]),
-                     jnp.quantile(height, jnp.array([0.25, 0.5, 0.75]))])
-end
+# summary_stats is traced by JAX: it must be a Python function, not a Julia one
+stats = pyeval(Py,
+    "lambda height: jnp.concatenate([jnp.stack([(c := jnp.linalg.lstsq(X, height)[0])[0], c[1], jnp.std(height - X @ c), jnp.mean(height), jnp.std(height), jnp.corrcoef(height, w)[0, 1]]), jnp.quantile(height, jnp.array([0.25, 0.5, 0.75]))])",
+    pydict(Dict("jnp" => jnp, "X" => X, "w" => w)))
 
 # Run ABC random forest ------------------------------------------------
 m.abc_rf(model, summary_stats = stats, num_simulations = 20_000, max_features = 1.0)
