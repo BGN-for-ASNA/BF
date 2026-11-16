@@ -42,15 +42,17 @@ class bnn(activation):
         """
         return list(self._activation_map.keys())
 
-    def layer_linear(self, X, dist, activation=None, bias=False):
-        """        
-        Adds a layer to the BNN with the specified prior distribution and activation function.       
+    def layer_linear(self, X, dist, activation=None, bias=False, verbose=True):
+        """
+        Adds a layer to the BNN with the specified prior distribution and activation function.
 
         Parameters:
         - prior_dist (bf.dist): The prior distribution for the weights of the layer. The shape of the distribution defines the layer's input/output dimensions.
-        - activation (str): The name of the activation function to use after this layer ('relu', 'tanh', 'sigmoid', 'softmax').  
+        - activation (str): The name of the activation function to use after this layer ('relu', 'tanh', 'sigmoid', 'softmax').
+        - verbose (bool): Print the in-development warning (default True).
         """
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+        if verbose:
+            print("⚠️This function is still in development. Use it with caution. ⚠️")
         if bias is not False:
             prod = jnp.matmul(X, dist) + bias
         else:
@@ -65,6 +67,83 @@ class bnn(activation):
             except AttributeError:
                 raise ValueError(f"Unknown activation function: '{activation}'")    
             return activation_func(prod)
+
+    def layer_cholesky(self, X, dim, min_diag=1e-3, diag_offset=0.0):
+        """
+        Maps the last axis of X to lower-triangular Cholesky factors.
+
+        The D(D+1)/2 values of the last axis fill the lower triangle (row-major,
+        as jnp.tril_indices); the diagonal is made positive with
+        softplus(x + diag_offset) + min_diag, so L @ L.T is always a valid
+        covariance matrix. Works on any batch shape, e.g. (n, K, D(D+1)/2) ->
+        (n, K, D, D): one factor per row and per mixture component.
+
+        Parameters:
+        - X (jnp.ndarray): Input of shape (..., dim * (dim + 1) // 2).
+        - dim (int): Dimension D of the factors.
+        - min_diag (float): Lower bound added to the diagonal.
+        - diag_offset (float): Shift inside the softplus (0.5413 makes the
+          diagonal start at 1 when X is 0).
+
+        Returns:
+        - jnp.ndarray of shape (..., dim, dim).
+        """
+        n_tril = dim * (dim + 1) // 2
+        if X.shape[-1] != n_tril:
+            raise ValueError(f"layer_cholesky: last axis has {X.shape[-1]} values, "
+                             f"expected dim*(dim+1)/2 = {n_tril}.")
+        rows, cols = jnp.tril_indices(dim)
+        L = jnp.zeros(X.shape[:-1] + (dim, dim)).at[..., rows, cols].set(X)
+        diag = jnp.arange(dim)
+        return L.at[..., diag, diag].set(jax.nn.softplus(L[..., diag, diag] + diag_offset) + min_diag)
+
+    @staticmethod
+    def mixture_normal_size(n_components, dim):
+        """Number of network outputs needed by layer_mixture_normal: K * (1 + D + D(D+1)/2)."""
+        return n_components * (1 + dim + dim * (dim + 1) // 2)
+
+    def layer_mixture_normal(self, X, n_components, dim, min_diag=1e-3, diag_offset=0.0,
+                             sample=False, shape=(), seed=None, name=None, obs=None):
+        """
+        Output layer of a mixture density network.
+
+        Splits the last axis of X into the parameters of a mixture of
+        n_components multivariate Normal distributions in dim dimensions:
+        K mixture logits, K means of size D, and K Cholesky factors
+        (through layer_cholesky). Works on any batch shape of X.
+
+        Parameters:
+        - X (jnp.ndarray): Network output of shape (..., mixture_normal_size(K, D)).
+        - n_components (int): Number of mixture components K.
+        - dim (int): Dimension D of each component.
+        - min_diag, diag_offset: Passed to layer_cholesky.
+        - sample (bool): If False (default), return the BF distribution object
+          (with log_prob / sample). If True, draw `shape` samples from it.
+        - shape (tuple): Number of draws when sample=True.
+        - seed: Seed for sample=True draws (default: the model's RNG stream).
+        - name, obs: Inside a model, declare a sample site `name` (observed at
+          `obs` if given), e.g. the likelihood of a mixture density network
+          trained with m.svi() or m.fit().
+
+        Returns:
+        - MixtureSameFamily distribution, samples of shape shape + batch + (D,),
+          or the value of the sample site when `name` is given.
+        """
+        K, D = n_components, dim
+        size = self.mixture_normal_size(K, D)
+        if X.shape[-1] != size:
+            raise ValueError(f"layer_mixture_normal: last axis has {X.shape[-1]} values, "
+                             f"expected K*(1+D+D(D+1)/2) = {size}.")
+        logits = X[..., :K]
+        loc = X[..., K:K + K * D].reshape(X.shape[:-1] + (K, D))
+        L = self.layer_cholesky(X[..., K + K * D:].reshape(X.shape[:-1] + (K, D * (D + 1) // 2)),
+                                D, min_diag=min_diag, diag_offset=diag_offset)
+        mixing = self.dist.categorical(logits=logits, create_obj=True)
+        components = self.dist.multivariate_normal(loc, scale_tril=L, create_obj=True)
+        if name is not None and not sample:
+            return self.dist.mixture_same_family(mixing, components, name=name, obs=obs)
+        return self.dist.mixture_same_family(mixing, components, create_obj=not sample,
+                                             sample=sample, shape=shape, seed=seed)
 
     def layer_attention(self, b_kv, b_q, d_model=32,  sample=True, name = '', seed = None):
         print("⚠️This function is still in development. Use it with caution. ⚠️")

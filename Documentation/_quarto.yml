@@ -109,6 +109,13 @@ website:
             - 34. BNN for classification.qmd
             - 35. BNN for multiclass classification.qmd
 
+        - section: "Simulation-Based Inference"
+          contents:
+            - 38. Approximate Bayesian Computation.qmd
+            - 39. ABC random forests.qmd
+            - 40. Neural Posterior Estimation.qmd
+            - 41. Bayesian Neural Posterior Estimation.qmd
+
     - id: api
       title: "API Reference"
       contents:

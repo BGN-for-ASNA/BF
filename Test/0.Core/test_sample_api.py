@@ -80,6 +80,22 @@ def test_posterior_dict_fixed_values(fitted):
     assert np.asarray(out["y"]).shape == (3, 30)
 
 
+def test_posterior_draws_uses_each_draw(fitted):
+    # Two distinct draws on axis 0: each one is used, not repeated as one fixed draw.
+    draws = dict(a=jnp.array([0.0, 10.0]), b=jnp.array([0.0, 0.0]), s=jnp.array([0.01, 0.01]))
+    y = np.asarray(fitted.sample(posterior_draws=draws, seed=0)["y"])
+    assert y.shape == (2, 30)
+    assert np.allclose(y[0], 0.0, atol=0.1) and np.allclose(y[1], 10.0, atol=0.1)
+    # samples= subsamples them, as with the fitted posterior
+    assert np.asarray(fitted.sample(posterior_draws=draws, samples=1, seed=0)["y"]).shape == (1, 30)
+    with pytest.raises(ValueError):
+        fitted.sample(posterior_draws=draws, samples=3, seed=0)
+    with pytest.raises(ValueError):          # draw counts must agree
+        fitted.sample(posterior_draws=dict(a=jnp.zeros(2), b=jnp.zeros(3), s=jnp.ones(2)))
+    with pytest.raises(ValueError):          # not together with a posterior dict
+        fitted.sample(posterior=dict(a=1.0, b=2.0, s=0.1), posterior_draws=draws)
+
+
 def test_remove_obs_false_drops_observed_site(fitted):
     out = fitted.sample(remove_obs=False, seed=0)
     assert "y" not in out

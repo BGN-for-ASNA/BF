@@ -19,11 +19,47 @@ provided for advanced users experimenting with structured-covariance and attenti
 `m.bnn.layer_linear` is the documented layer used across the BNN tutorials. It performs a linear
 transform `X @ W` (optionally `+ bias`) followed by an optional activation.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
+from BayesForge import bf
+m = bf(platform='cpu')
+X = m.dist.normal(0, 1, shape=(20, 3), sample=True)   # 20 rows, n_in = 3 inputs
+
 # W is a prior over the weight array; its shape sets the layer's in/out dimensions
-W = m.dist.normal(0, 1, shape=(n_in, n_hidden))
-h = m.bnn.layer_linear(X, W, activation='tanh')
+# (inside a model: W = m.dist.normal(0, 1, shape=(n_in, n_hidden), name='W'))
+W = m.dist.normal(0, 1, shape=(3, 5), sample=True)    # n_in = 3, n_hidden = 5
+h = m.bnn.layer_linear(X, W, activation='tanh')       # (20, 5)
+print(m.bnn.available_activations())
 ```
+
+##### R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+X <- m$dist$normal(0, 1, shape = reticulate::tuple(20L, 3L), sample = TRUE)   # 20 rows, n_in = 3 inputs
+
+# W is a prior over the weight array; its shape sets the layer's in/out dimensions
+# (inside a model: W <- m$dist$normal(0, 1, shape = reticulate::tuple(n_in, n_hidden), name = "W"))
+W <- m$dist$normal(0, 1, shape = reticulate::tuple(3L, 5L), sample = TRUE)    # n_in = 3, n_hidden = 5
+h <- m$bnn$layer_linear(X, W, activation = "tanh")                            # (20, 5)
+print(m$bnn$available_activations())
+```
+
+##### Julia
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+X = m.dist.normal(0, 1, shape=(20, 3), sample=true)   # 20 rows, n_in = 3 inputs
+
+# W is a prior over the weight array; its shape sets the layer's in/out dimensions
+# (inside a model: W = m.dist.normal(0, 1, shape=(n_in, n_hidden), name="W"))
+W = m.dist.normal(0, 1, shape=(3, 5), sample=true)    # n_in = 3, n_hidden = 5
+h = m.bnn.layer_linear(X, W, activation="tanh")       # (20, 5)
+println(m.bnn.available_activations())
+```
+:::
 
 - `X`: layer input.
 - `dist`: prior array for the weights (shape defines input/output dimensions).
@@ -43,25 +79,64 @@ than for standard feed-forward prediction.
 ## Diagonal
 Independent variables — only per-variable variances are learned.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-C = m.bnn.layer_diagonal(block_size=8)      # (8, 8) diagonal SPD block
+C = m.bnn.layer_diagonal(block_size=8, sample=True, seed=0)      # (8, 8) diagonal SPD block
 ```
+
+##### R
+```r
+C <- m$bnn$layer_diagonal(block_size = 8L, sample = TRUE, seed = 0L)      # (8, 8) diagonal SPD block
+```
+
+##### Julia
+```julia
+C = m.bnn.layer_diagonal(block_size=8, sample=true, seed=0)      # (8, 8) diagonal SPD block
+```
+:::
 
 ## Compound symmetry
 All variables share a common variance and a common correlation `rho`:
 `C = sigma^2 * ((1 - rho) I + rho 11^T)`.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-C = m.bnn.layer_compound_symmetry(block_size=8)
+C = m.bnn.layer_compound_symmetry(block_size=8, sample=True, seed=0)
 ```
+
+##### R
+```r
+C <- m$bnn$layer_compound_symmetry(block_size = 8L, sample = TRUE, seed = 0L)
+```
+
+##### Julia
+```julia
+C = m.bnn.layer_compound_symmetry(block_size=8, sample=true, seed=0)
+```
+:::
 
 ## Toeplitz
 A decaying-correlation structure: correlation falls off with the lag between variables
 (`sigma * alpha^{|i-j|}`), plus a learned diagonal.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-C = m.bnn.layer_toeplitz(block_size=8)
+C = m.bnn.layer_toeplitz(block_size=8, sample=True, seed=0)
 ```
+
+##### R
+```r
+C <- m$bnn$layer_toeplitz(block_size = 8L, sample = TRUE, seed = 0L)
+```
+
+##### Julia
+```julia
+C = m.bnn.layer_toeplitz(block_size=8, sample=true, seed=0)
+```
+:::
 :::
 
 Common arguments:
@@ -78,9 +153,22 @@ Common arguments:
 `m.bnn.layer_attention` builds a learnable coupling block through a scaled dot-product attention
 mechanism over learnable query / key-value embeddings. It returns a `(b_q, b_kv)` matrix.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-block = m.bnn.layer_attention(b_kv=8, b_q=8, d_model=32)
+block = m.bnn.layer_attention(b_kv=8, b_q=8, d_model=32, sample=True, seed=0)   # (8, 8)
 ```
+
+##### R
+```r
+block <- m$bnn$layer_attention(b_kv = 8L, b_q = 8L, d_model = 32L, sample = TRUE, seed = 0L)   # (8, 8)
+```
+
+##### Julia
+```julia
+block = m.bnn.layer_attention(b_kv=8, b_q=8, d_model=32, sample=true, seed=0)   # (8, 8)
+```
+:::
 
 - `b_q`, `b_kv`: query- and key/value-block sizes (the output shape is `(b_q, b_kv)`).
 - `d_model`: embedding / projection dimension.
@@ -90,11 +178,28 @@ block = m.bnn.layer_attention(b_kv=8, b_q=8, d_model=32)
 
 `m.bnn.cov` is a small two-layer BNN used to estimate per-unit offsets for a covariance structure. It
 maps a one-hot encoding of `N` units through a hidden `tanh` layer to two offsets per unit, added to
-the supplied `a` and `b`, and registers the result as the deterministic site `'rf'`.
+the supplied `a` and `b`, and registers the result as the deterministic site `'rf'`
+(shape `(N, 2)`). The examples on this page use `sample=True` to draw the layers directly, outside a model.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-rf = m.bnn.cov(hidden_dim=16, N=N_units, a=a, b=b)   # deterministic 'rf', shape (2, N)
+N_units = 10
+rf = m.bnn.cov(hidden_dim=16, N=N_units, a=0.0, b=0.0, sample=True)   # 'rf', shape (N, 2)
 ```
+
+##### R
+```r
+N_units <- 10L
+rf <- m$bnn$cov(hidden_dim = 16L, N = N_units, a = 0.0, b = 0.0, sample = TRUE)   # 'rf', shape (N, 2)
+```
+
+##### Julia
+```julia
+N_units = 10
+rf = m.bnn.cov(hidden_dim=16, N=N_units, a=0.0, b=0.0, sample=true)   # "rf", shape (N, 2)
+```
+:::
 
 - `hidden_dim`: number of hidden units.
 - `N`: number of units (rows of the one-hot input).

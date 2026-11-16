@@ -1,0 +1,2032 @@
+---
+title: "Bayesian Neural Posterior Estimation"
+description: "Neural posterior estimation, and its Bayesian version with a prior on the network weights: how a network learns the posterior from simulations, and calibrated posteriors from small simulation budgets."
+categories: [Simulation-based inference, Neural Networks]
+order: 41
+reading-time: true
+execute:
+  enabled: false
+---
+
+
+## General Principles
+
+### When the likelihood is out of reach: Simulation-Based Inference
+
+In classical Bayesian inference, updating our beliefs requires two ingredients: a **prior distribution** describing what is plausible before seeing the data, and a **likelihood function** measuring how probable the observed data are under any given set of parameters. Algorithms such as Markov Chain Monte Carlo (MCMC) rely on evaluating this likelihood thousands of times to explore the posterior landscape.
+
+In many scientific domains—such as ecology, epidemiology, evolutionary biology, neuroscience, or agent-based social modeling—we face a fundamental obstacle: we can easily write a computer program that **simulates** the phenomenon step by step, but we cannot write down or compute the mathematical formula for the likelihood of the final outcome. Because a realistic simulation involves many unobserved random events along the way, calculating the exact probability of the observed data would require summing or integrating over every possible hidden trajectory that could have produced them, which quickly becomes intractable.
+
+**Simulation-Based Inference (SBI)**—also known as *likelihood-free inference*—overcomes this barrier [@cranmer2020frontier]. Its core premise is simple: even if we cannot *evaluate* the likelihood formula, we can still use our model as a **simulator** to generate synthetic datasets from known parameters, and learn to infer the parameters from those examples.
+
+### From rejection to learning: Neural Posterior Estimation
+
+**Approximate Bayesian Computation (ABC)**, works by trial and error: it draws candidate parameters from the prior, runs the simulator to produce a synthetic dataset, and keeps the parameters only if the synthetic data look sufficiently close to the real observations. While intuitive, this rejection process is extremely wasteful. Almost all simulations are thrown away, and narrowing the tolerance to get an accurate posterior can require millions of simulations—an impossible price when each run of the simulator is computationally expensive.
+
+**Neural Posterior Estimation (NPE)** replaces rejection with *learning* [@papamakarios2016fast]. Instead of discarding simulations that do not match our specific dataset, NPE uses *every* simulation to train a neural network to understand how the model behaves across the entire parameter space. Conceptually, the method unfolds in four stages:
+
+1. **Building a library of simulated examples**: We draw many parameter sets from the prior distribution and run the simulator once for each set. Even a simulation that looks nothing like our actual observations is valuable, because it teaches the network what kind of data that region of the parameter space produces.
+
+2. **Summarizing or encoding the data**: Raw datasets are often high-dimensional and noisy. Before feeding them to the density estimator, we compress each simulated dataset into a vector of informative **summary statistics** or **learned embeddings**. This compression can be performed either by a deterministic domain-specific function (such as means, variances, quantiles, correlations, or regression coefficients) or by a dedicated **feature-extraction neural network** (such as a CNN, RNN, Transformer, DeepSet, or GNN) trained jointly with the rest of the pipeline.
+
+3. **Learning to predict a probability distribution**: A standard neural network takes an input and predicts a single point (a number or a class). In contrast, an NPE network is a **conditional density estimator**: given the compressed representation of a dataset as input, its output is an entire **probability distribution** over the model parameters. While the two most widespread density heads are **Mixture Density Networks (MDNs)** [@bishop1994mixture] and **Normalizing Flows** [@dinh2017density], NPE is not restricted to them—any parametric distribution head or continuous generative model capable of evaluating or approximating conditional log-densities and generating samples can be plugged in (see the complete architectural taxonomy below).
+   
+   During training, the network adjusts its internal weights so that, for every simulated dataset in our library, the predicted probability distribution assigns high probability to the true parameter values that generated it.
+
+4. **Amortized inference on observed data**: Once training is complete, the network has learned a general mapping from *any* plausible dataset to its corresponding posterior distribution. To analyze our real observations, we simply compute their summary statistics and pass them through the network. In a single forward pass—taking a fraction of a second and requiring no new simulations—the network returns the approximate posterior distribution. This property is called **amortization**: the computational cost is paid once upfront during simulation and training, after which inferring the posterior for one, ten, or thousands of new datasets is virtually instantaneous.
+
+### The pitfall of small simulation budgets: Overconfidence
+
+Despite its efficiency, standard NPE has a critical vulnerability when simulations are expensive and the training budget is small (for instance, a few hundred or a thousand simulations).
+
+During training, a standard neural network searches for the **single best set of internal weights** that maximizes performance on the available simulations. When examples are scarce, the network has large blind spots between the training points and inevitably **overfits** the small sample of simulations it has seen.
+
+In the context of Bayesian inference, overfitting translates into a dangerous pathology: **overconfident posteriors** [@hermans2022trust]. In regions where training simulations were sparse, the network's predicted posterior is often slightly miscentered or distorted, yet the network does not account for its own approximation error. Note that "overconfident" does not necessarily mean narrower than the true mathematical posterior (such as the one obtained by MCMC); rather, it means that the predicted distribution is **too narrow relative to the network's own prediction error**, causing its credible intervals to miss the true parameter far more often than advertised. For a practitioner, this is the worst possible failure mode: a reported $90\%$ credible interval may contain the true parameter only $60\%$ of the time, creating a false sense of precision.
+
+### The solution: Bayesian Neural Posterior Estimation
+
+Why does standard NPE become overconfident when simulations are scarce? Because committing to a single trained network ignores **epistemic uncertainty**—our ignorance about the network weights themselves. When the library of simulations is small, there is not just one neural network compatible with the training pairs; there is an entire family of different networks that fit the few observed simulations equally well, yet produce noticeably different posteriors when evaluated on our real data.
+
+**Bayesian Neural Posterior Estimation (BNPE)** resolves this by turning the density estimator itself into a **Bayesian Neural Network (BNN)** [@delaunoy2024low]:
+
+1. **Placing a prior on the network weights**: Instead of treating the neural network's weights and biases as fixed numbers to optimize, BNPE treats them as unknown random variables governed by a prior distribution.
+2. **Learning a distribution of networks**: Rather than selecting a single network, BNPE approximates the **posterior distribution of the network weights** given the limited simulation library (using Variational Inference).
+3. **Averaging over a committee of networks**: To estimate the posterior for our observed data, we draw an ensemble—a "committee"—of plausible neural networks from this weight distribution. Each network in the committee predicts its own posterior distribution for the model parameters, and BNPE combines them by **averaging their predicted distributions**.
+
+This ensemble averaging naturally adapts the width of the posterior to the size of the simulation budget:
+
+- **With a small simulation budget**, many different weight configurations are compatible with the few training examples. The networks in the committee disagree with one another, each shifting or shaping its predicted posterior slightly differently. Averaging their predictions spreads out the combined distribution, trading artificial sharpness for **reliable calibration**. The resulting credible intervals become conservative (slightly wider than the exact posterior) rather than dangerously narrow.
+- **With a large simulation budget**, the training simulations tightly constrain the network weights. All members of the committee converge toward the same mapping, their disagreements vanish, and BNPE smoothly recovers the sharp posterior of standard NPE.
+
+### Global Network Structure and Neural Alternatives
+
+A common misconception is that Neural Posterior Estimation (and its Bayesian counterpart) is restricted to a **Mixture Density Network (MDN)** or a **Normalizing Flow**. In reality, NPE and BNPE define a **general modular framework** composed of **four sequential stages**, where different neural network architectures can be plugged in depending on the modality of the simulated data $Y$, the geometry and dimensionality of the parameter space $\theta \in \Theta_P$, and the simulation budget $M$:
+
+$$
+\underbrace{Y}_{\substack{\text{Raw simulated or}\\ \text{observed dataset}}}
+\;\xrightarrow{\;\textbf{Stage 1: } s_\psi(Y)\;}\;
+\underbrace{c}_{\substack{\text{Standardized}\\ \text{context vector}}}
+\;\xrightarrow{\;\textbf{Stage 2: } h_\omega(c)\;}\;
+\underbrace{h}_{\substack{\text{Latent conditioning}\\ \text{representation}}}
+\;\xrightarrow{\;\textbf{Stage 3: } q_\phi(u \mid h)\;}\;
+\underbrace{q_\Theta(u \mid c)}_{\substack{\text{Unconstrained}\\ \text{conditional density}}}
+\;\xrightarrow[\Theta \sim q_\lambda(\Theta)]{\;\textbf{Stage 4: Marginalization & } g^{-1}(u)\;}\;
+\underbrace{q(\theta \mid Y)}_{\substack{\text{Calibrated posterior}\\ \text{on natural support}}}
+$$
+
+The only mathematical requirement on the overall network with trainable weights $\Theta = (\psi, \omega, \phi)$ is that it defines a conditional probability distribution over the unconstrained parameters $u = g(\theta) \in \mathbb{R}^D$ that supports:
+
+1. **Tractable training objective** (evaluating the conditional log-density $\log q_\Theta(u_j \mid c_j)$ for maximum likelihood / ELBO, or a continuous-time flow/score matching loss);
+2. **Tractable posterior sampling** (drawing $u \sim q_\Theta(\cdot \mid c_{\text{obs}})$ and mapping back via $\theta = g^{-1}(u)$).
+
+Explore the interactive diagram below by selecting a **Preset Scientific Scenario** or clicking any neural block across the **4 stages** to inspect how the global pipeline adapts and how each alternative is implemented in BayesForge:
+
+```{=html}
+<div id="bnpe-arch-explorer" class="bnpe-explorer-wrap">
+  <style>
+    #bnpe-arch-explorer {
+      --bnpe-bg: #073642;
+      --bnpe-bg-alt: #002b36;
+      --bnpe-card: #0a404e;
+      --bnpe-card-hover: #0f4c5c;
+      --bnpe-border: rgba(181, 137, 0, 0.35);
+      --bnpe-border-subtle: rgba(255, 255, 255, 0.12);
+      --bnpe-text: #e2e8f0;
+      --bnpe-muted: #93a1a1;
+      --bnpe-accent: #B58900;
+      --bnpe-accent-soft: rgba(181, 137, 0, 0.18);
+      --bnpe-cyan: #2aa198;
+      --bnpe-blue: #268bd2;
+      --bnpe-green: #859900;
+      --bnpe-purple: #6c71c4;
+      --bnpe-code-bg: rgba(0, 20, 26, 0.65);
+      font-family: inherit;
+      color: var(--bnpe-text);
+      background: var(--bnpe-bg);
+      border: 1px solid var(--bnpe-border);
+      border-radius: 12px;
+      padding: 1.1rem 1.25rem;
+      margin: 1.25rem 0 1.75rem 0;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+    }
+    html.quarto-light #bnpe-arch-explorer,
+    body.quarto-light #bnpe-arch-explorer,
+    [data-bs-theme="light"] #bnpe-arch-explorer {
+      --bnpe-bg: #f8fafc;
+      --bnpe-bg-alt: #f1f5f9;
+      --bnpe-card: #ffffff;
+      --bnpe-card-hover: #eef2ff;
+      --bnpe-border: rgba(13, 110, 253, 0.3);
+      --bnpe-border-subtle: rgba(15, 23, 42, 0.12);
+      --bnpe-text: #1e293b;
+      --bnpe-muted: #64748b;
+      --bnpe-accent: #0D6EFD;
+      --bnpe-accent-soft: rgba(13, 110, 253, 0.12);
+      --bnpe-cyan: #0d9488;
+      --bnpe-blue: #2563eb;
+      --bnpe-green: #16a34a;
+      --bnpe-purple: #7c3aed;
+      --bnpe-code-bg: #0f172a;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+    }
+    .bnpe-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--bnpe-border-subtle);
+    }
+    .bnpe-title {
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--bnpe-accent);
+      letter-spacing: 0.01em;
+    }
+    .bnpe-subtitle {
+      font-size: 0.8rem;
+      color: var(--bnpe-muted);
+    }
+    .bnpe-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.9rem;
+      align-items: center;
+    }
+    .bnpe-preset-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--bnpe-muted);
+      margin-right: 0.25rem;
+    }
+    .bnpe-preset-btn {
+      background: var(--bnpe-bg-alt);
+      color: var(--bnpe-text);
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 999px;
+      padding: 0.26rem 0.7rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .bnpe-preset-btn:hover {
+      border-color: var(--bnpe-accent);
+      background: var(--bnpe-card-hover);
+    }
+    .bnpe-preset-btn.active {
+      background: var(--bnpe-accent-soft);
+      border-color: var(--bnpe-accent);
+      color: var(--bnpe-accent);
+      font-weight: 700;
+    }
+    .bnpe-svg-box {
+      background: var(--bnpe-bg-alt);
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 10px;
+      padding: 0.5rem;
+      margin-bottom: 0.95rem;
+      overflow-x: auto;
+    }
+    .bnpe-svg-box svg {
+      width: 100%;
+      min-width: 720px;
+      height: auto;
+      display: block;
+    }
+    .bnpe-stages-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.95rem;
+    }
+    @media (max-width: 992px) {
+      .bnpe-stages-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 576px) {
+      .bnpe-stages-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .bnpe-stage-col {
+      background: var(--bnpe-bg-alt);
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 9px;
+      padding: 0.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
+    }
+    .bnpe-stage-head {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--bnpe-border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bnpe-stage-math {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--bnpe-muted);
+      text-transform: none;
+    }
+    .bnpe-opt-card {
+      background: var(--bnpe-card);
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 7px;
+      padding: 0.42rem 0.55rem;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .bnpe-opt-card:hover {
+      background: var(--bnpe-card-hover);
+      border-color: var(--bnpe-accent);
+      transform: translateY(-1px);
+    }
+    .bnpe-opt-card.selected {
+      border-color: var(--bnpe-accent);
+      background: var(--bnpe-accent-soft);
+      box-shadow: inset 3px 0 0 var(--bnpe-accent);
+    }
+    .bnpe-opt-card.inspected {
+      outline: 2px solid var(--bnpe-accent);
+      outline-offset: 1px;
+    }
+    .bnpe-opt-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .bnpe-opt-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--bnpe-text);
+      line-height: 1.25;
+    }
+    .bnpe-badge {
+      font-size: 0.63rem;
+      font-weight: 700;
+      padding: 0.08rem 0.38rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .bnpe-badge-npe {
+      background: rgba(133, 153, 0, 0.22);
+      color: #a3be00;
+      border: 1px solid rgba(133, 153, 0, 0.45);
+    }
+    html.quarto-light .bnpe-badge-npe,
+    [data-bs-theme="light"] .bnpe-badge-npe {
+      background: rgba(22, 163, 74, 0.12);
+      color: #15803d;
+      border-color: rgba(22, 163, 74, 0.35);
+    }
+    .bnpe-badge-bnn {
+      background: rgba(38, 139, 210, 0.22);
+      color: #58a6ff;
+      border: 1px solid rgba(38, 139, 210, 0.45);
+    }
+    html.quarto-light .bnpe-badge-bnn,
+    [data-bs-theme="light"] .bnpe-badge-bnn {
+      background: rgba(37, 99, 235, 0.12);
+      color: #1d4ed8;
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+    .bnpe-badge-ext {
+      background: rgba(108, 113, 196, 0.2);
+      color: #a5a9f6;
+      border: 1px solid rgba(108, 113, 196, 0.45);
+    }
+    html.quarto-light .bnpe-badge-ext,
+    [data-bs-theme="light"] .bnpe-badge-ext {
+      background: rgba(124, 58, 237, 0.12);
+      color: #6d28d9;
+      border-color: rgba(124, 58, 237, 0.35);
+    }
+    .bnpe-opt-tag {
+      font-size: 0.71rem;
+      color: var(--bnpe-muted);
+      line-height: 1.2;
+    }
+    .bnpe-inspector {
+      background: var(--bnpe-bg-alt);
+      border: 1px solid var(--bnpe-border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .bnpe-inspector {
+        grid-template-columns: 1fr;
+      }
+    }
+    .bnpe-insp-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--bnpe-accent);
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .bnpe-insp-formula {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.79rem;
+      background: var(--bnpe-card);
+      border-left: 3px solid var(--bnpe-cyan);
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      margin: 0.4rem 0 0.6rem 0;
+      color: var(--bnpe-text);
+      overflow-x: auto;
+    }
+    .bnpe-insp-desc {
+      font-size: 0.84rem;
+      line-height: 1.5;
+      margin-bottom: 0.55rem;
+      color: var(--bnpe-text);
+    }
+    .bnpe-insp-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem;
+      font-size: 0.78rem;
+    }
+    .bnpe-meta-box {
+      background: var(--bnpe-card);
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 6px;
+      padding: 0.4rem 0.55rem;
+    }
+    .bnpe-meta-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--bnpe-muted);
+      margin-bottom: 0.15rem;
+    }
+    .bnpe-code-panel {
+      background: var(--bnpe-code-bg);
+      color: #e2e8f0;
+      border: 1px solid var(--bnpe-border-subtle);
+      border-radius: 8px;
+      padding: 0.65rem 0.8rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.76rem;
+      line-height: 1.45;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .bnpe-code-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #B58900;
+      margin-bottom: 0.35rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bnpe-hover-popup {
+      --bnpe-bg: #042630;
+      --bnpe-bg-alt: #001e26;
+      --bnpe-border-subtle: rgba(255, 255, 255, 0.14);
+      --bnpe-text: #e2e8f0;
+      --bnpe-muted: #93a1a1;
+      --bnpe-accent: #B58900;
+      --bnpe-cyan: #2aa198;
+      position: fixed;
+      z-index: 2147483647;
+      width: 390px;
+      max-width: calc(100vw - 24px);
+      background-color: #042630;
+      color: var(--bnpe-text);
+      border: 1.5px solid var(--bnpe-accent);
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.78);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px) scale(0.98);
+      transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
+      font-size: 0.78rem;
+      line-height: 1.42;
+      isolation: isolate;
+    }
+    html.quarto-light .bnpe-hover-popup,
+    body.quarto-light .bnpe-hover-popup,
+    [data-bs-theme="light"] .bnpe-hover-popup {
+      --bnpe-bg: #ffffff;
+      --bnpe-bg-alt: #f1f5f9;
+      --bnpe-border-subtle: rgba(15, 23, 42, 0.12);
+      --bnpe-text: #1e293b;
+      --bnpe-muted: #64748b;
+      --bnpe-accent: #0D6EFD;
+      --bnpe-cyan: #0d9488;
+      background-color: #ffffff;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22);
+    }
+    .bnpe-hover-popup.visible {
+      opacity: 1 !important;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+    .bnpe-pop-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.4rem;
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
+      border-bottom: 1px solid var(--bnpe-border-subtle);
+    }
+    .bnpe-pop-stage {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--bnpe-cyan);
+    }
+    .bnpe-pop-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--bnpe-accent);
+      margin-bottom: 0.4rem;
+      line-height: 1.25;
+    }
+    .bnpe-pop-sec {
+      margin-bottom: 0.42rem;
+    }
+    .bnpe-pop-sec:last-child {
+      margin-bottom: 0;
+    }
+    .bnpe-pop-lbl {
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--bnpe-muted);
+      margin-bottom: 0.1rem;
+    }
+    .bnpe-pop-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      background: var(--bnpe-bg-alt);
+      border-left: 2.5px solid var(--bnpe-accent);
+      padding: 0.25rem 0.45rem;
+      border-radius: 4px;
+      margin: 0.25rem 0 0.4rem 0;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      color: var(--bnpe-text);
+    }
+    .bnpe-pop-hint {
+      margin-top: 0.42rem;
+      padding-top: 0.32rem;
+      border-top: 1px dashed var(--bnpe-border-subtle);
+      font-size: 0.68rem;
+      color: var(--bnpe-muted);
+      font-style: italic;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bnpe-svg-hoverable {
+      transition: filter 0.15s ease;
+    }
+    .bnpe-svg-hoverable:hover {
+      filter: brightness(1.12);
+    }
+  </style>
+
+  <div id="bnpe-hover-popup" class="bnpe-hover-popup" role="tooltip" aria-hidden="true"></div>
+
+  <div class="bnpe-header">
+    <div>
+      <div class="bnpe-title">Interactive (B)NPE Modular Network Explorer</div>
+      <div class="bnpe-subtitle">Hover over any diagram cell or card for a detailed structural popup; click any block or preset to assemble a pipeline and view its BayesForge code.</div>
+    </div>
+  </div>
+
+  <div class="bnpe-presets">
+    <span class="bnpe-preset-label">Presets:</span>
+    <button type="button" class="bnpe-preset-btn active" data-preset="bf_default">1. BF Default (Tabular + Low Budget)</button>
+    <button type="button" class="bnpe-preset-btn" data-preset="banana_flow">2. Non-Linear / Multimodal Posterior (Flow)</button>
+    <button type="button" class="bnpe-preset-btn" data-preset="timeseries">3. Raw Time-Series / Grids (CNN/RNN + Flow)</button>
+    <button type="button" class="bnpe-preset-btn" data-preset="exchangeable">4. Exchangeable i.i.d. Replicates (DeepSets)</button>
+    <button type="button" class="bnpe-preset-btn" data-preset="network_gnn">5. Graph / Phylogenetic Data (GNN)</button>
+    <button type="button" class="bnpe-preset-btn" data-preset="high_dim">6. High-Dim Parameters D &gt; 50 (Flow Matching)</button>
+  </div>
+
+  <div class="bnpe-svg-box">
+    <svg id="bnpe-pipeline-svg" viewBox="0 0 960 220" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="bnpe-stages-grid">
+    <!-- STAGE 1 -->
+    <div class="bnpe-stage-col">
+      <div class="bnpe-stage-head" style="color: var(--bnpe-cyan);">
+        <span>1. Summary / Encoder</span>
+        <span class="bnpe-stage-math">Y &rarr; c</span>
+      </div>
+      <button type="button" class="bnpe-opt-card selected inspected" data-stage="s1" data-id="handcrafted">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Hand-Crafted Stats s(Y)</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">OLS, moments, quantiles, domain summaries</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s1" data-id="mlp_enc">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">MLP Feature Encoder</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Fixed-size tabular or vector observations</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s1" data-id="cnn_enc">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">1D / 2D CNN (ResNet)</span><span class="bnpe-badge bnpe-badge-ext">Custom JAX</span></div>
+        <div class="bnpe-opt-tag">Regular time series, images, spatial grids</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s1" data-id="rnn_transf">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">RNN / GRU / Transformer</span><span class="bnpe-badge bnpe-badge-ext">Custom JAX</span></div>
+        <div class="bnpe-opt-tag">Sequential trajectories, SDEs, irregular series</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s1" data-id="deepsets">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">DeepSets / Set Transformer</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Exchangeable unordered sets {y₁, …, yₙ}</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s1" data-id="gnn_enc">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Graph Neural Net (GNN)</span><span class="bnpe-badge bnpe-badge-ext">Custom JAX</span></div>
+        <div class="bnpe-opt-tag">Social networks, contact graphs, phylogenies</div>
+      </button>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div class="bnpe-stage-col">
+      <div class="bnpe-stage-head" style="color: var(--bnpe-blue);">
+        <span>2. Conditioning Net</span>
+        <span class="bnpe-stage-math">c &rarr; h</span>
+      </div>
+      <button type="button" class="bnpe-opt-card selected" data-stage="s2" data-id="mlp_cond">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Feed-Forward MLP</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">Dense layers (GELU, SiLU, Tanh, ReLU)</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s2" data-id="res_mlp">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Residual MLP (ResNet)</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Skip connections for deep conditioning</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s2" data-id="attn_cond">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Attention Backbone</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Scaled dot-product cross-feature attention</div>
+      </button>
+    </div>
+
+    <!-- STAGE 3 -->
+    <div class="bnpe-stage-col">
+      <div class="bnpe-stage-head" style="color: var(--bnpe-accent);">
+        <span>3. Density Head</span>
+        <span class="bnpe-stage-math">q(u | h)</span>
+      </div>
+      <button type="button" class="bnpe-opt-card" data-stage="s3" data-id="single_mvn">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Single MVNormal (K=1)</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Cholesky, Toeplitz, or Compound Symmetry</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s3" data-id="student_t">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Multivariate Student-t</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Unimodal posteriors with heavy tails</div>
+      </button>
+      <button type="button" class="bnpe-opt-card selected" data-stage="s3" data-id="mdn_head">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Mixture Density (MDN)</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">K full-covariance Gaussians (default)</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s3" data-id="coupling_flow">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Coupling Flow (RealNVP)</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">Invertible affine coupling layers</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s3" data-id="spline_flow">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Neural Spline / MAF Flow</span><span class="bnpe-badge bnpe-badge-ext">Custom JAX</span></div>
+        <div class="bnpe-opt-tag">Rational-quadratic splines / autoregressive</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s3" data-id="flow_matching">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Flow Matching / Diffusion</span><span class="bnpe-badge bnpe-badge-ext">Custom JAX</span></div>
+        <div class="bnpe-opt-tag">Continuous ODE/SDE vector field (FMPE/NPSE)</div>
+      </button>
+    </div>
+
+    <!-- STAGE 4 -->
+    <div class="bnpe-stage-col">
+      <div class="bnpe-stage-head" style="color: var(--bnpe-green);">
+        <span>4. Weight Inference</span>
+        <span class="bnpe-stage-math">&Theta; ~ q(&Theta;)</span>
+      </div>
+      <button type="button" class="bnpe-opt-card" data-stage="s4" data-id="point_npe">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Point Estimate (NPE)</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">Single optimal weight set (AutoDelta / MAP)</div>
+      </button>
+      <button type="button" class="bnpe-opt-card selected" data-stage="s4" data-id="vi_bnpe">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Variational BNN (BNPE)</span><span class="bnpe-badge bnpe-badge-npe">m.npe</span></div>
+        <div class="bnpe-opt-tag">Mean-field Normal SVI over weights (AutoNormal)</div>
+      </button>
+      <button type="button" class="bnpe-opt-card" data-stage="s4" data-id="deep_ensemble">
+        <div class="bnpe-opt-top"><span class="bnpe-opt-name">Deep Ensemble / Laplace</span><span class="bnpe-badge bnpe-badge-bnn">m.bnn</span></div>
+        <div class="bnpe-opt-tag">Multi-seed independent runs or Hessian approx</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- INSPECTOR PANEL -->
+  <div class="bnpe-inspector">
+    <div>
+      <div class="bnpe-insp-title" id="bnpe-insp-title"></div>
+      <div class="bnpe-insp-formula" id="bnpe-insp-formula"></div>
+      <div class="bnpe-insp-desc" id="bnpe-insp-desc"></div>
+      <div class="bnpe-insp-meta">
+        <div class="bnpe-meta-box">
+          <div class="bnpe-meta-label">When to Use (Data &amp; Geometry)</div>
+          <div id="bnpe-insp-when"></div>
+        </div>
+        <div class="bnpe-meta-box">
+          <div class="bnpe-meta-label">Simulation Budget &amp; Scaling</div>
+          <div id="bnpe-insp-budget"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="bnpe-code-label">
+        <span>BayesForge Implementation Pattern</span>
+        <span id="bnpe-insp-status"></span>
+      </div>
+      <div class="bnpe-code-panel" id="bnpe-insp-code"></div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    const DB = {
+      handcrafted: {
+        stage: "Stage 1 — Data Compression",
+        title: "Hand-Crafted Summary Statistics s(Y)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "Hand-Crafted s(Y)",
+        svgSub: "OLS / Moments / Quantiles",
+        svgIcon: "stats",
+        formula: "c = (s(Y) - mean(s)) / sd(s),   dim(c) = D_S << dim(Y)",
+        purpose: "Compresses high-dimensional, noisy raw observations Y into a low-dimensional vector of domain-informed summary statistics c before entering the neural network.",
+        layerSpec: "Deterministic, parameter-free JAX transformation (e.g. least-squares projection (X^T X)^{-1} X^T Y, sample moments, octiles, or autocorrelations) followed by z-score standardization across the M training simulations.",
+        tensors: "Input: Raw dataset Y in R^{M x N_obs}  -->  Output: Standardized context c in R^{M x D_S}",
+        desc: "Compresses raw simulated datasets Y into low-dimensional domain statistics (e.g., regression coefficients, sample moments, octiles, or autocorrelations) before passing them to the neural network. Unlike ABC, adding moderately redundant statistics does not hurt NPE because the downstream network learns to downweight uninformative inputs.",
+        when: "Whenever domain theory suggests informative low-dimensional summaries (e.g., OLS in linear models, quantiles in g-and-k, epidemic peak/duration).",
+        budget: "Ideal for small budgets (M = 500 – 5,000): no encoder weights need to be learned from scratch.",
+        code: `# Built-in summary sets or custom JAX function:
+m.npe(model, data=obs, summary_stats="quantiles", # or "moments", "robust", custom fn
+      estimator="mdn", bayesian=True, num_simulations=1_000)`
+      },
+      mlp_enc: {
+        stage: "Stage 1 — Data Compression",
+        title: "Multi-Layer Perceptron (MLP) Encoder",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "MLP Encoder s_ψ(Y)",
+        svgSub: "Dense Feature Extractor",
+        svgIcon: "mlp",
+        formula: "c = MLP_ψ(Y) = GELU(Y W_1 + b_1) W_2 + b_2",
+        purpose: "Learns a non-linear low-dimensional summary vector c directly from fixed-size raw data vectors Y when domain sufficient statistics are unknown.",
+        layerSpec: "Stack of dense linear projections `m.bnn.layer_linear(Y, W, activation='gelu', bias=b)` with fan-in scaled Gaussian priors W ~ N(0, 1/sqrt(N_in)). Trained end-to-end with the density head.",
+        tensors: "Input: Vector Y in R^{M x N_obs}  -->  Hidden: R^{M x H}  -->  Output: Embedding c in R^{M x D_S}",
+        desc: "Feeds raw fixed-length observation vectors directly into trainable dense layers (`m.bnn.layer_linear`) that learn informative summary features jointly with the density estimator by maximizing the posterior log-likelihood.",
+        when: "Fixed-size tabular data or moderate-length vectors where sufficient statistics are unknown.",
+        budget: "Requires moderate budgets (M >= 2,000) to avoid overfitting the input encoder layers.",
+        code: `# Pass raw data directly (summary_stats="identity")
+# so the first BNN layers act as a learned MLP encoder:
+m.npe(model, data=obs, summary_stats="identity",
+      hidden=(128, 64, 64), bayesian=True)`
+      },
+      cnn_enc: {
+        stage: "Stage 1 — Data Compression",
+        title: "1D / 2D Convolutional Neural Network (CNN / ResNet)",
+        badge: "Custom JAX + m.bnn",
+        badgeClass: "bnpe-badge-ext",
+        svgTitle: "1D/2D CNN s_ψ(Y)",
+        svgSub: "Conv Filters + Pooling",
+        svgIcon: "cnn",
+        formula: "c = GlobalPool(ConvBlock_L(...ConvBlock_1(Y)))",
+        purpose: "Extracts translation-invariant spatial or temporal motifs (peaks, oscillations, spatial clusters, spectra) from regular grids, images, or long time series.",
+        layerSpec: "Hierarchy of strided 1D/2D convolutional kernels (weight-sharing across time/space) + GELU activations + residual skip connections, terminated by global average/max pooling to produce a fixed-length vector c.",
+        tensors: "Input: Grid/Series Y in R^{M x T x C} or R^{M x H x W x C}  -->  Output: Context c in R^{M x D_S}",
+        desc: "Applies translation-equivariant convolutional filters across temporal or spatial axes to extract local motifs, spectral peaks, or spatial textures from high-dimensional gridded simulations.",
+        when: "High-frequency time series (1D CNN), spatial ecological grids, medical/astronomical images (2D CNN), or spatio-temporal fields (3D CNN).",
+        budget: "Medium to large budgets (M >= 5,000); weight sharing across space/time keeps parameter count manageable.",
+        code: `# Extract spatial/temporal features via JAX conv layers
+# inside the model or summary pipeline:
+h_conv = jax.lax.conv_general_dilated(Y, W_conv, strides, "SAME")
+c = jnp.mean(jax.nn.gelu(h_conv), axis=-2)  # global average pooling`
+      },
+      rnn_transf: {
+        stage: "Stage 1 — Data Compression",
+        title: "Sequential Encoder (RNN / GRU / Transformer)",
+        badge: "Custom JAX + m.bnn",
+        badgeClass: "bnpe-badge-ext",
+        svgTitle: "RNN / Transformer",
+        svgSub: "Temporal Context c_T",
+        svgIcon: "seq",
+        formula: "h_t = GRU(y_t, h_{t-1})  or  c = Pool(SelfAttention(Y + PosEnc))",
+        purpose: "Summarizes sequential, autoregressive, or irregularly sampled dynamical trajectories into a fixed-size context vector c capturing temporal dependencies.",
+        layerSpec: "Either recurrent gated cells (GRU/LSTM) updating a hidden state h_t across time steps t = 1..T, or a scaled dot-product self-attention layer (`m.bnn.layer_attention`) attending across all time steps simultaneously.",
+        tensors: "Input: Sequence Y in R^{M x T x d_y}  -->  Output: Temporal summary c in R^{M x D_S}",
+        desc: "Processes sequential observations step-by-step via recurrent gating (GRU/LSTM) or multi-head self-attention (`m.bnn.layer_attention`) to capture long-range temporal dependencies and regime switches.",
+        when: "Stochastic differential equations (SDEs), population dynamics, irregularly sampled longitudinal trajectories.",
+        budget: "Medium to large budgets (M >= 5,000 – 20,000); Transformers excel on long sequences when simulations are plentiful.",
+        code: `# Attention-based temporal summary using m.bnn:
+attn_block = m.bnn.layer_attention(b_kv=T, b_q=D_S, d_model=32, name="seq")
+c = jnp.einsum("ij,bjk->bik", attn_block, Y_seq).reshape(batch, -1)`
+      },
+      deepsets: {
+        stage: "Stage 1 — Data Compression",
+        title: "Permutation-Invariant Network (DeepSets / Set Transformer)",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "DeepSets Encoder",
+        svgSub: "c = ρ( Σ_i φ(y_i) )",
+        svgIcon: "sets",
+        formula: "c = ρ_ψ( (1/N) Σ_{i=1}^N φ_ψ(y_i) )   [invariant to row order]",
+        purpose: "Compresses an unordered set of N exchangeable observations {y_1, ..., y_N} into learned sufficient statistics while guaranteeing mathematically exact permutation invariance.",
+        layerSpec: "Two-stage architecture: (1) shared per-element MLP φ_ψ (`layer_linear`) applied identically to each observation y_i; (2) symmetric pooling (mean/sum across axis i=1..N); (3) outer MLP ρ_ψ mapping the pooled embedding to c.",
+        tensors: "Input: Set Y in R^{M x N x d_y}  -->  Per-item φ: R^{M x N x H}  -->  Pooled c in R^{M x D_S}",
+        desc: "By theorem, any function invariant to the ordering of i.i.d. observations {y_1, ..., y_N} can be decomposed as a per-observation network φ(y_i), a symmetric aggregation (mean/sum/max pooling), and a post-aggregation network ρ. It learns neural sufficient statistics automatically.",
+        when: "Exchangeable replicates, individual-level survey/ecological records, particle physics events, or multi-trial behavioral data.",
+        budget: "Highly sample-efficient (M >= 1,000) because φ shares weights across all N individuals.",
+        code: `# DeepSets in BayesForge (From scratch with m.bnn):
+h_indiv = m.bnn.layer_linear(Y_set, W_phi, activation="gelu", bias=b_phi)
+h_pool  = jnp.mean(h_indiv, axis=1)  # permutation-invariant mean over N units
+c       = m.bnn.layer_linear(h_pool, W_rho, activation="gelu", bias=b_rho)`
+      },
+      gnn_enc: {
+        stage: "Stage 1 — Data Compression",
+        title: "Graph Neural Network (GNN / Message Passing)",
+        badge: "Custom JAX + m.bnn",
+        badgeClass: "bnpe-badge-ext",
+        svgTitle: "Graph Neural Net",
+        svgSub: "Node/Edge Message Passing",
+        svgIcon: "gnn",
+        formula: "H^{(l+1)} = GELU( Ã H^{(l)} W^{(l)} ),   c = Readout(H^{(L)})",
+        purpose: "Extracts topological and relational summaries from network-structured data (graphs, social networks, contact trees, phylogenies) while respecting node-permutation invariance.",
+        layerSpec: "L message-passing layers multiplying normalized adjacency matrix Ã with node embeddings H^{(l)} and trainable weight matrices W^{(l)} (`m.bnn.layer_linear`), followed by permutation-invariant graph readout (mean/sum/max over nodes).",
+        tensors: "Input: Node features X in R^{N x d_v}, Adjacency A in R^{N x N}  -->  Graph summary c in R^{D_S}",
+        desc: "Propagates node and edge features across an adjacency matrix A over L message-passing layers before graph-level pooling, capturing topological motifs and network diffusion patterns.",
+        when: "Social transmission (NBDA), epidemic spread on contact networks, animal social networks, or phylogenetic trees.",
+        budget: "Moderate budgets (M = 2,000 – 10,000); node-level weight sharing prevents parameter explosion.",
+        code: `# Graph convolution layer using normalized adjacency A_hat and m.bnn:
+h_msg = jnp.matmul(A_hat, node_features)
+h_gnn = m.bnn.layer_linear(h_msg, W_gnn, activation="gelu", bias=b_gnn)
+c     = jnp.mean(h_gnn, axis=1)  # graph-level readout`
+      },
+      mlp_cond: {
+        stage: "Stage 2 — Conditioning Backbone",
+        title: "Feed-Forward MLP Conditioning Backbone (`layer_linear`)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "MLP Backbone h_ω(c)",
+        svgSub: "Dense + GELU / SiLU",
+        svgIcon: "mlp",
+        formula: "H_l = Act(H_{l-1} W_l + b_l),   Act in {GELU, SiLU, Tanh, ReLU}",
+        purpose: "Maps the standardized summary vector c into a high-dimensional non-linear latent representation h that parameterizes or conditions the downstream density head.",
+        layerSpec: "2 or more fully connected layers (`m.bnn.layer_linear`) with smooth, non-vanishing activations (`gelu` default, `silu`, `tanh`, `elu`) and fan-in scaled weight initialization W_l ~ N(0, 1/sqrt(D_{l-1})) to preserve activation variance.",
+        tensors: "Input: Summary c in R^{M x D_S}  -->  Hidden layers: R^{M x 64} -> R^{M x 64}  -->  Latent h in R^{M x H}",
+        desc: "A stack of fully connected layers (`m.bnn.layer_linear`) with smooth non-linear activations (`gelu` by default) that maps the standardized summary statistics c to a latent representation h conditioning the density head.",
+        when: "Default choice for almost all NPE and BNPE models once data are compressed into a summary vector c.",
+        budget: "2 layers of 64–128 units work reliably from M = 500 up to M = 100,000+ simulations.",
+        code: `# Built-in m.npe() configuration:
+m.npe(model, data=obs, summary_stats=ols,
+      hidden=(64, 64), activation="gelu", bayesian=True)`
+      },
+      res_mlp: {
+        stage: "Stage 2 — Conditioning Backbone",
+        title: "Residual MLP Backbone (Skip-Connections)",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "Residual MLP h_ω(c)",
+        svgSub: "H_{l+1} = H_l + f(H_l)",
+        svgIcon: "res",
+        formula: "H_{l+1} = H_l + m.bnn.layer_linear(GELU(H_l W_{l,1} + b_{l,1}), W_{l,2})",
+        purpose: "Enables deeper conditioning networks (4–8+ layers) for highly non-linear inverse problems without gradient degradation or over-smoothing.",
+        layerSpec: "Two-layer dense blocks (`layer_linear` + GELU + `layer_linear`) wrapped in an identity skip-connection H_{l+1} = H_l + f(H_l). Under a zero-mean Bayesian prior on W_{l,2}, unnecessary blocks naturally shrink to the identity.",
+        tensors: "Input: Projected c in R^{M x H}  -->  L Residual blocks in R^{M x H}  -->  Latent h in R^{M x H}",
+        desc: "Adds identity skip-connections around pairs of `layer_linear` blocks. Preserves gradient flow in deeper conditioning networks (4–8 layers) and allows the prior on residual weights to shrink unneeded non-linearities toward the identity mapping.",
+        when: "Complex simulators where the mapping from summary statistics c to posterior parameters is highly non-linear.",
+        budget: "Best for M >= 2,000; in Bayesian NPE, zero-centered priors on residual branches naturally regularize depth.",
+        code: `# Residual block with m.bnn.layer_linear:
+res = m.bnn.layer_linear(h, W1, activation="gelu", bias=b1, verbose=False)
+h   = h + m.bnn.layer_linear(res, W2, activation=None, bias=b2, verbose=False)`
+      },
+      attn_cond: {
+        stage: "Stage 2 — Conditioning Backbone",
+        title: "Scaled Dot-Product Attention Backbone (`layer_attention`)",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "Attention Backbone",
+        svgSub: "Softmax(Q K^T / √d) V",
+        svgIcon: "attn",
+        formula: "Attn(Q, K, V) = Softmax(Q K^T / d^{1/4}) V   [m.bnn.layer_attention]",
+        purpose: "Dynamically weights and routes information among a large number of summary statistics so each posterior parameter attends to the summaries most informative for it.",
+        layerSpec: "Learnable Query (emb_q), Key/Value (emb_kv) embeddings projected via linear layers Q = X W_Q, K = X W_K, V = X W_V (`m.bnn.layer_attention`), combined via scaled dot-product Softmax attention and a final linear projection.",
+        tensors: "Input: Summary c in R^{M x D_S}  -->  Attention coupling matrix in R^{H x D_S}  -->  Latent h in R^{M x H}",
+        desc: "Uses BayesForge's `m.bnn.layer_attention` to compute data-dependent interaction weights between summary features, allowing different target parameters to attend to specific subsets of summary statistics.",
+        when: "High-dimensional summary vectors (D_S > 20) where different summaries inform different subsets of parameters.",
+        budget: "Moderate budgets (M >= 2,000); combines naturally with SVI weight priors in BNPE.",
+        code: `# Attention coupling block in a custom BF model:
+A = m.bnn.layer_attention(b_kv=D_S, b_q=H, d_model=32, sample=False, name="cond")
+h = jax.nn.gelu(jnp.matmul(c, A.T))`
+      },
+      single_mvn: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Single Multivariate Normal Head (K = 1) & Structured Covariance",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "Single MVNormal (K=1)",
+        svgSub: "μ(h), Σ(h) = L(h)L(h)^T",
+        svgIcon: "mvn",
+        formula: "u | c ~ MVNormal(μ(h), L(h) L(h)^T)   [or Toeplitz / Compound Symmetry]",
+        purpose: "Models a unimodal posterior over unconstrained parameters u with a single mean vector and a guaranteed symmetric positive-definite (SPD) covariance matrix.",
+        layerSpec: "Output layer splits into D mean values μ(h) and D(D+1)/2 lower-triangular Cholesky entries (`m.bnn.layer_cholesky`), with strictly positive diagonal L_{dd} = softplus(ψ_{dd} + 0.5413) + 1e-3. Structured alternatives (`layer_diagonal`, `layer_toeplitz`, `layer_compound_symmetry`) reduce parameter count.",
+        tensors: "Input: Latent h in R^{M x H}  -->  Linear head: R^{M x (D + D(D+1)/2)}  -->  Dist: MVNormal in R^D",
+        desc: "The simplest conditional density estimator: the network predicts a single mean vector μ(h) and a covariance matrix via `m.bnn.layer_cholesky` (or `layer_mixture_normal` with K=1). When parameters share structural correlations, `layer_diagonal`, `layer_toeplitz`, or `layer_compound_symmetry` can further reduce the number of covariance parameters.",
+        when: "Unimodal, approximately Gaussian posteriors (after unconstrained support transforms) or Laplace-like approximations.",
+        budget: "Extremely robust for tiny budgets (M = 100 – 1,000) because it has the fewest output parameters.",
+        code: `# Single Gaussian head (K=1) via m.npe or m.bnn:
+m.npe(model, data=obs, estimator="mdn", n_components=1, bayesian=True)
+# Or in a custom BNN model:
+m.bnn.layer_mixture_normal(h, n_components=1, dim=D, name="u", obs=u)`
+      },
+      student_t: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Multivariate Student-t Density Head",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "Student-t Head",
+        svgSub: "Heavy Tails (ν, μ, L)",
+        svgIcon: "student",
+        formula: "u | c ~ MultivariateStudentT(df = softplus(ν(h)) + 2, loc = μ(h), scale_tril = L(h))",
+        purpose: "Models unimodal posteriors with power-law heavy tails so extreme parameter values or outlier simulations do not distort credible intervals.",
+        layerSpec: "Predicts 1 scalar degree-of-freedom parameter ν(h) mapped to (2, inf) via softplus(ν)+2 (ensuring finite variance), D location parameters μ(h), and D(D+1)/2 Cholesky scale entries via `m.bnn.layer_cholesky`.",
+        tensors: "Input: Latent h in R^{M x H}  -->  Output head: R^{M x (1 + D + D(D+1)/2)}  -->  StudentT in R^D",
+        desc: "Replaces the Gaussian bell curve with a heavy-tailed Student-t distribution whose degrees of freedom ν(h), location μ(h), and Cholesky scale factor L(h) (`m.bnn.layer_cholesky`) are predicted by the network.",
+        when: "Unimodal posteriors with heavy tails, outlier-prone simulations, or when extra tail conservatism is desired.",
+        budget: "Works well on small-to-medium budgets (M = 500 – 5,000) with only 1 extra output unit over MVNormal.",
+        code: `# Heavy-tailed head in a From-Scratch BF model:
+df  = jax.nn.softplus(h[..., :1]) + 2.0
+loc = h[..., 1:1+D]
+L   = m.bnn.layer_cholesky(h[..., 1+D:], dim=D, diag_offset=0.5413)`
+      },
+      mdn_head: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Mixture Density Network (MDN — K Full-Covariance Gaussians)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "MDN Head (K Gaussians)",
+        svgSub: "Σ_k π_k(h) N(μ_k(h), L_k L_k^T)",
+        svgIcon: "mdn",
+        formula: "q_Θ(u | c) = Σ_{k=1}^K π_k(h) MVNormal(u | μ_k(h), L_k(h) L_k(h)^T)",
+        purpose: "Approximates arbitrary skewed, multimodal, or locally correlated posteriors by blending K full-covariance multivariate Gaussians conditioned on h.",
+        layerSpec: "Final linear layer (`m.bnn.layer_mixture_normal`) outputs K*(1 + D + D(D+1)/2) values split into: (1) K logits -> Softmax mixing weights π_k; (2) K mean vectors μ_k in R^D; (3) K Cholesky factors L_k in R^{D x D} (`layer_cholesky` with diag_offset=0.5413 so L_k ≈ I at initialization).",
+        tensors: "Input: h in R^{M x H}  -->  Linear: R^{M x K(1+D+D(D+1)/2)}  -->  MixtureSameFamily in R^D",
+        desc: "Outputs K mixture logits, K mean vectors of length D, and K lower-triangular Cholesky factors of size D(D+1)/2 (`m.bnn.layer_mixture_normal`). Capable of approximating any smooth density as K grows, while keeping both log-density evaluation and ancestral sampling exact and instantaneous in a single pass.",
+        when: "Default workhorse for low-to-moderate parameter dimensions (D <= 15) with skewness, multimodality, or local parameter correlations.",
+        budget: "Fast and stable from M = 500 to M = 50,000. Note: output size scales quadratically as K * D(D+3)/2.",
+        code: `# Built-in MDN (default in m.npe):
+m.npe(model, data=obs, summary_stats=ols,
+      estimator="mdn", n_components=5, bayesian=True)`
+      },
+      coupling_flow: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Conditional Affine Coupling Flow (RealNVP)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "Coupling Flow (RealNVP)",
+        svgSub: "Invertible Bijections z ↔ u",
+        svgIcon: "flow",
+        formula: "u_B = z_B ⊙ exp(s_θ(z_A, h)) + t_θ(z_A, h),   log q(u|c) = log p_0(z) + Σ_l log|det J_l|",
+        purpose: "Sculpts a simple standard Normal base distribution z ~ N(0, I) into strongly curved, banana-shaped, or non-linear posterior manifolds via a chain of L invertible neural bijections.",
+        layerSpec: "Each coupling layer l=1..L applies a binary mask m_l (alternating odd/even coordinates). Unmasked coordinates pass with context h into an MLP that predicts scale s = 2*tanh(raw_s/2) and shift t, transforming the remaining coordinates with a triangular Jacobian (exact O(D) log-determinant) and exact analytical inverse.",
+        tensors: "Base noise z ~ N(0, I_D)  <--[L invertible coupling MLPs conditioned on h]-->  Target u in R^D",
+        desc: "Chains L invertible affine coupling transformations conditioned on h that warp a standard Normal base distribution N(0, I) into complex, non-Gaussian geometries. Because each coupling layer splits coordinates with alternating binary masks, the Jacobian determinant is triangular and both log_prob(u) and sample() run in a single fast pass.",
+        when: "Curved, banana-shaped, ring-shaped, or strongly non-linear posteriors where Gaussian mixtures would require too many components.",
+        budget: "Best with M >= 2,000 simulations; combined with `bayesian=True` (BNPE), it remains well-calibrated even at M = 1,000.",
+        code: `# Built-in Conditional Coupling Flow in m.npe():
+m.npe(model, data=obs, summary_stats=ols,
+      estimator="flow", n_layers=6, hidden=(64, 64), bayesian=True)`
+      },
+      spline_flow: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Autoregressive (MAF) & Neural Spline Flows (NSF)",
+        badge: "Custom JAX",
+        badgeClass: "bnpe-badge-ext",
+        svgTitle: "Spline / MAF Flow",
+        svgSub: "Monotonic Rational Splines",
+        svgIcon: "spline",
+        formula: "u_d = Spline_{θ_d}(z_d; u_{1:d-1}, h)   [piecewise rational-quadratic bijections]",
+        purpose: "Provides maximum single-layer flexibility for sharp ridges, multimodal marginals, and intricate conditional dependencies by replacing affine transforms with monotonic splines.",
+        layerSpec: "Conditioner network (masked MADE autoregressive MLP or coupling MLP) outputs K_knots bin widths, heights, and positive derivatives for a piecewise rational-quadratic spline per coordinate d. Analytical derivative gives exact log|det J|; analytical quadratic root gives exact inverse.",
+        tensors: "Base z in R^D  <--[Monotonic Spline Bijections parameterized by K_knots x 3 outputs]-->  u in R^D",
+        desc: "Replaces the simple affine scale-and-shift transformation of RealNVP with monotonic rational-quadratic splines (NSF) or masked autoregressive conditioners (MAF). A single spline layer can sculpt sharp, multi-peaked 1D marginals and intricate conditional dependencies.",
+        when: "Highly structured posteriors with sharp ridges, topological holes, or multimodal marginals in D = 3 to 50 dimensions.",
+        budget: "Requires larger budgets (M >= 5,000 – 20,000) due to the higher capacity of spline knot parameters; MAF sampling requires D sequential passes.",
+        code: `# Custom bijective transform inside a NumPyro / BF model:
+# Use numpyro.distributions.transforms (e.g. AutoregressiveNN / Spline)
+# wrapped in a TransformedDistribution(base_dist, transforms)`
+      },
+      flow_matching: {
+        stage: "Stage 3 — Conditional Density Head",
+        title: "Continuous Generative Heads: Flow Matching (FMPE) & Diffusion (NPSE)",
+        badge: "Custom JAX",
+        badgeClass: "bnpe-badge-ext",
+        svgTitle: "Flow Matching / Diffusion",
+        svgSub: "du_t = v_Θ(u_t, t, h) dt",
+        svgIcon: "ode",
+        formula: "du_t / dt = v_Θ(u_t, t, h),   t in [0, 1],   u_0 ~ N(0, I)  -->  u_1 ~ q_Θ(u | c)",
+        purpose: "Removes all architectural invertibility constraints (no triangular Jacobians or coupling splits) by transporting Gaussian noise to the posterior along a continuous-time ODE or SDE.",
+        layerSpec: "Free-form unconstrained Residual MLP v_Θ(u_t, t, h) taking current state u_t in R^D, sinusoidal time embedding t in [0,1], and context h, outputting a velocity vector in R^D. Trained via simple MSE regression on linear conditional transport paths u_t = (1-t)z_0 + t u_1.",
+        tensors: "Input: (u_t in R^D, time t in R^{d_t}, context h in R^H)  -->  Velocity vector v_Θ in R^D",
+        desc: "Instead of restricting the network to invertible layers with triangular Jacobians, Flow Matching Posterior Estimation (FMPE) and Score-Based Diffusion (NPSE) train an unconstrained MLP/ResNet vector field v_Θ(u_t, t, h) to transport noise u_0 ~ N(0, I) to posterior samples u_1 via a continuous ODE or SDE.",
+        when: "High-dimensional parameter spaces (D = 50 to 1,000+, e.g. spatial latent fields) or distributions with disconnected supports.",
+        budget: "Scales gracefully to high D, but posterior sampling requires 20–100 ODE solver steps and exact log-density evaluation requires the Hutchinson trace estimator.",
+        code: `# Flow Matching regression loss (simulation-free conditional path):
+u_t = (1 - t) * z_0 + t * u_1
+loss = jnp.mean((net(u_t, t, h) - (u_1 - z_0)) ** 2)`
+      },
+      point_npe: {
+        stage: "Stage 4 — Weight Inference Regime",
+        title: "Point-Mass Weight Estimate — Standard NPE (`AutoDelta` / MAP)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "Standard NPE (1 Net)",
+        svgSub: "q_λ(Θ) = δ(Θ - Θ̂)",
+        svgIcon: "point",
+        formula: "Θ̂ = argmax_Θ [ Σ_{j=1}^M log q_Θ(u_j | c_j) + log p(Θ) ]   -->   q(u | c) = q_{Θ̂}(u | c)",
+        purpose: "Finds a single point-estimate parameter vector Θ̂ for all neural layers by minimizing negative log-likelihood on the simulated training library.",
+        layerSpec: "Dirac delta variational guide `AutoDelta` (or direct Adam optimization with validation early stopping). Every weight matrix W_l and bias b_l is a fixed deterministic array at inference time.",
+        tensors: "Weights: Single pytree Θ̂  -->  Predictive density: 1 forward pass q_{Θ̂}(u | c_obs)",
+        desc: "Finds a single optimal set of neural network weights Θ̂ (via Adam + early stopping in `m.npe(bayesian=False)` or `AutoDelta` in `m.svi()`). Ignores epistemic uncertainty about the network weights themselves.",
+        when: "Large simulation budgets (M >= 10,000 – 50,000) where the training data tightly constrain the network across the prior support.",
+        budget: "Fastest training and inference, but produces overconfident (miscalibrated) posteriors when M is small.",
+        code: `# Standard NPE (single network point estimate):
+m.npe(model, data=obs, summary_stats=ols,
+      num_simulations=20_000, bayesian=False)`
+      },
+      vi_bnpe: {
+        stage: "Stage 4 — Weight Inference Regime",
+        title: "Mean-Field Variational BNN — Bayesian NPE (`AutoNormal` SVI)",
+        badge: "Built-in m.npe()",
+        badgeClass: "bnpe-badge-npe",
+        svgTitle: "Bayesian NPE (S Nets)",
+        svgSub: "q(u|c) = (1/S) Σ_s q_{Θ^(s)}(u|c)",
+        svgIcon: "bnpe",
+        formula: "q_λ(Θ) = Π_m Normal(Θ_m | ν_m, τ_m^2),   q(u | c) = (1/S) Σ_{s=1}^S q_{Θ^{(s)}}(u | c)",
+        purpose: "Quantifies epistemic uncertainty over the neural network weights when simulations are scarce, preventing overfitting and overconfident posteriors.",
+        layerSpec: "Doubles the trainable parameters to λ = (ν_m, log τ_m) via `AutoNormal`, initialized at the NPE mode ν = Θ̂ with small initial scale τ_0 = 1e-3, and optimized via Trace_ELBO. At inference, draws S = 100 networks and vectorizes forward passes with `jax.vmap`.",
+        tensors: "Weights: Stacked pytree Θ^{(1:S)} with leading axis S=100  -->  Marginal log-density via logsumexp",
+        desc: "Places a Normal prior p(Θ) over all network weights and fits a mean-field Gaussian variational posterior q_λ(Θ) initialized at the standard NPE mode. Averaging predictions across S = 100 drawn networks inflates posterior variance in sparsely simulated regions, preventing overconfidence.",
+        when: "Expensive simulators and small-to-moderate simulation budgets (M = 200 – 5,000) where reliable, conservative calibration is critical.",
+        budget: "Adds an SVI phase (`svi_steps=5000`) after standard training; smoothly converges to standard NPE as M grows.",
+        code: `# Bayesian NPE (committee of S=100 variational networks):
+m.npe(model, data=obs, summary_stats=ols,
+      num_simulations=1_000, bayesian=True, num_weight_samples=100)`
+      },
+      deep_ensemble: {
+        stage: "Stage 4 — Weight Inference Regime",
+        title: "Deep Ensembles / Last-Layer Laplace / SWAG",
+        badge: "Built-in m.bnn",
+        badgeClass: "bnpe-badge-bnn",
+        svgTitle: "Deep Ensemble (K Modes)",
+        svgSub: "Multi-Basin Committee",
+        svgIcon: "ensemble",
+        formula: "q(u | c) = (1/K_ens) Σ_{k=1}^{K_ens} q_{Θ̂^{(k)}}(u | c)   [independent seeds / basins]",
+        purpose: "Approximates epistemic uncertainty across multiple distinct local optima (basins of attraction) of the neural weight loss landscape.",
+        layerSpec: "Trains K_ens = 5–10 independent density networks from different random PRNG keys (or fits a post-hoc Gaussian curvature approximation around the final layer's Hessian in Laplace/SWAG), forming an equally weighted mixture of density estimators.",
+        tensors: "Weights: K_ens independent parameter pytrees {Θ̂^{(1)}, ..., Θ̂^{(K_ens)}}  -->  Mixture over modes",
+        desc: "Instead of a single Gaussian variational distribution around one weight mode, Deep Ensembles train K_ens = 5–10 independent NPE networks from different random initializations (or combine Laplace / SWAG approximations around each mode) to capture multi-basin epistemic uncertainty.",
+        when: "When exploring multiple distinct modes of the weight landscape or when parallelizing independent trainings across GPUs.",
+        budget: "Computationally K_ens times the training cost of standard NPE, using the exact same M simulations.",
+        code: `# Deep Ensemble of 5 independent NPE fits over the same simulations:
+draws = [m.npe(model, data=obs, summary_stats=ols, bayesian=False)
+         or dict(m.posteriors) for seed in range(5)]`
+      }
+    };
+
+    const EXTRA_POPUPS = {
+      sim_cell: {
+        stage: "Forward Generative Model",
+        title: "Prior Predictive Simulator: (θ_j, Y_j)",
+        badge: "Simulator",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Generates the synthetic training library D = {(θ_j, Y_j)}_{j=1}^M by sampling parameters from the prior and running the scientific model forward.",
+        layerSpec: "Purely forward stochastic execution (no likelihood evaluation needed). Any non-finite simulation (NaN or Inf) is automatically masked out before standardization.",
+        tensors: "Prior draws θ in R^{M x D}  -->  Simulated observations Y in R^{M x N_obs}",
+        formula: "θ_j ~ p(θ),   Y_j ~ p(Y | θ_j),   j = 1, ..., M"
+      },
+      weight_bar: {
+        stage: "Global Bayesian Hierarchy Across Stages 1–3",
+        title: "Weight Priors p(Θ) & Variational Posterior q_λ(Θ)",
+        badge: "Weight Regularization",
+        badgeClass: "bnpe-badge-bnn",
+        purpose: "Places every trainable weight matrix W_l and bias vector b_l across Stages 1, 2, and 3 under a unified Bayesian probabilistic model.",
+        layerSpec: "Fan-in scaled Normal priors W_l ~ Normal(0, σ_w / sqrt(D_in^{(l)})) keep pre-activation variances O(1) across depth. During SVI, the KL divergence KL(q_λ(Θ) || p(Θ)) prevents the network from memorizing small simulation budgets.",
+        tensors: "All layer weights Θ = {W_1, b_1, ..., W_L, b_L} governed by prior scale σ_w (`prior_scale=1.0`)",
+        formula: "ELBO(λ) = E_{q_λ(Θ)}[ Σ_{j=1}^M log q_Θ(u_j | c_j) ] - KL( q_λ(Θ) || p(Θ) )"
+      },
+      bijection_bar: {
+        stage: "Parameter Space Bijection & Standardization",
+        title: "Support Transform: θ ↔ v = T(θ) ↔ u",
+        badge: "Automatic Bijection",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Maps constrained scientific parameters (e.g., σ > 0, p in [0,1], simplexes) to the unconstrained real space R^D so the neural density head never predicts invalid values.",
+        layerSpec: "Applies smooth invertible bijections per prior support (log for R+, logit for [a,b], stick-breaking for simplex) followed by z-score standardization u = (v - mean(v))/sd(v). Includes the exact Jacobian correction -Σ_d log sd(v_d) in log_q_u.",
+        tensors: "Constrained θ in Support(p)  -->  Unconstrained standardized u in R^D  -->  Inverse θ = g^{-1}(u)",
+        formula: "v = T(θ),   u = (v - v̄) / sd(v)   <==>   θ = T^{-1}(u * sd(v) + v̄)"
+      },
+      arrow_y: {
+        stage: "Data Tensor Flow",
+        title: "Raw Simulated or Observed Dataset Y",
+        badge: "Tensor Flow",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Passes raw synthetic datasets Y_j (during training) or the real observed dataset Y_obs (during amortized inference) into Stage 1.",
+        layerSpec: "Can be a tabular matrix, a multi-channel time series, a spatial grid, an unordered set of individuals, or a graph adjacency structure.",
+        tensors: "Training batch: (batch_size, N_obs, ...)  |  Inference: (1, N_obs, ...)",
+        formula: "Y_j ~ p(Y | θ_j)   or   Y_obs (real observations)"
+      },
+      arrow_c: {
+        stage: "Context Tensor Flow",
+        title: "Standardized Summary / Embedding Vector c",
+        badge: "Tensor Flow",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Carries the compressed, standardized information extracted from the dataset into the conditioning backbone.",
+        layerSpec: "Centered and scaled using the training-set mean and standard deviation: c = (s(Y) - s̄) / sd(s) so all input features enter Stage 2 on a unit scale.",
+        tensors: "Context tensor c in R^{batch_size x D_S}",
+        formula: "c_j = (s_ψ(Y_j) - mean(s)) / (sd(s) + 10^{-8})"
+      },
+      arrow_h: {
+        stage: "Latent Conditioning Flow",
+        title: "High-Level Conditioning Representation h",
+        badge: "Tensor Flow",
+        badgeClass: "bnpe-badge-bnn",
+        purpose: "Provides the non-linear latent features that control the location, covariance structure, or coupling transformations of the density head.",
+        layerSpec: "Output of the last hidden layer of Stage 2 (typically H = 64 or 128 units with GELU activation).",
+        tensors: "Latent conditioning tensor h in R^{batch_size x H}",
+        formula: "h_j = h_ω(c_j) in R^H"
+      },
+      arrow_q: {
+        stage: "Conditional Distribution Output",
+        title: "Unconstrained Conditional Density q_Θ(u | c)",
+        badge: "Density Object",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Represents the full conditional probability distribution over unconstrained parameters u given context c for a specific network weight configuration Θ.",
+        layerSpec: "Supports exact `.log_prob(u)` evaluation for training/SBC coverage and `.sample(key, n)` for fast amortized posterior generation.",
+        tensors: "Distribution over u in R^D conditioned on c in R^{D_S}",
+        formula: "log q_Θ(u | c)   and   u ~ q_Θ(· | c)"
+      },
+      stage_s1: {
+        stage: "Stage 1 Overview",
+        title: "Data Compression & Summary Network (Y → c)",
+        badge: "Stage 1",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Reduces high-dimensional, noisy observations Y into a compact vector c while encoding domain symmetries (translation, permutation, or graph invariance).",
+        layerSpec: "Choose between deterministic domain statistics s(Y) (best for small budgets) or a trainable neural encoder s_ψ(Y) (MLP, CNN, RNN/Transformer, DeepSets, GNN) trained jointly with Stages 2–3.",
+        tensors: "Raw data Y  -->  Standardized context vector c in R^{D_S}",
+        formula: "c = Standardize( s_ψ(Y) )"
+      },
+      stage_s2: {
+        stage: "Stage 2 Overview",
+        title: "Conditioning Backbone Network (c → h)",
+        badge: "Stage 2",
+        badgeClass: "bnpe-badge-bnn",
+        purpose: "Extracts non-linear combinations of the summary statistics c to condition the parameters or transformations of the density estimator head.",
+        layerSpec: "Typically a 2-to-4 layer Feed-Forward MLP (`layer_linear`), a Residual MLP with skip connections, or a Scaled Dot-Product Attention block (`layer_attention`).",
+        tensors: "Standardized context c in R^{D_S}  -->  Latent representation h in R^H",
+        formula: "h = h_ω(c)"
+      },
+      stage_s3: {
+        stage: "Stage 3 Overview",
+        title: "Conditional Density Estimator Head q_φ(u | h)",
+        badge: "Stage 3",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Turns the conditioning vector h into a normalized probability distribution over the unconstrained parameters u in R^D.",
+        layerSpec: "Not limited to MDNs and Flows: can be a single Gaussian (Cholesky/Toeplitz/Compound Symmetry), a heavy-tailed Student-t, an MDN, a Coupling/Spline/Autoregressive Flow, or a continuous Flow Matching / Diffusion head.",
+        tensors: "Latent h in R^H  -->  Normalized distribution q_Θ(u | c) over R^D",
+        formula: "u | c ~ q_φ(u | h_ω(s_ψ(Y)))"
+      },
+      stage_s4: {
+        stage: "Stage 4 Overview",
+        title: "Weight Inference Regime & Marginalization",
+        badge: "Stage 4",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Determines how the neural network weights Θ = (ψ, ω, φ) are inferred from the M simulations and how epistemic uncertainty is propagated to the posterior.",
+        layerSpec: "Standard NPE uses a single point estimate Θ̂ (`AutoDelta`), whereas Bayesian NPE fits a variational posterior q_λ(Θ) (`AutoNormal`) and averages predictions across S = 100 sampled networks.",
+        tensors: "S network draws Θ^{(1:S)} ~ q_λ(Θ)  -->  Calibrated posterior draws θ = g^{-1}(u)",
+        formula: "q(u | c_obs) = (1/S) Σ_{s=1}^S q_{Θ^{(s)}}(u | c_obs)"
+      },
+      preset_bf_default: {
+        stage: "Preset 1 — Default BayesForge Pipeline",
+        title: "Tabular / Low-Budget Scientific Model",
+        badge: "Preset 1",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "The default `m.npe(bayesian=True)` pipeline used in this chapter's linear regression example.",
+        layerSpec: "Combines Hand-Crafted Summary Statistics s(Y) + 2-Layer GELU MLP Backbone + 5-Component Full-Covariance MDN Head + Mean-Field Variational BNN (S=100 networks).",
+        tensors: "Optimal for D <= 15 parameters and small budgets (M = 500 – 5,000 simulations).",
+        formula: "s(Y) -> MLP(64,64) -> MDN(K=5) -> SVI AutoNormal(S=100)"
+      },
+      preset_banana_flow: {
+        stage: "Preset 2 — Non-Linear Posterior Geometry",
+        title: "Banana-Shaped or Strongly Correlated Posterior",
+        badge: "Preset 2",
+        badgeClass: "bnpe-badge-npe",
+        purpose: "Replaces the Gaussian mixture head with an invertible Conditional Coupling Flow (`estimator='flow'`) to capture curved, non-Gaussian ridges.",
+        layerSpec: "Hand-Crafted Summaries + MLP Embedding + 6-Layer RealNVP Affine Coupling Flow + Variational BNN over all coupling layer weights.",
+        tensors: "Ideal when parameters exhibit non-linear trade-offs (e.g. product or ratio identifiability).",
+        formula: "s(Y) -> MLP(64,64) -> RealNVP(L=6) -> SVI AutoNormal(S=100)"
+      },
+      preset_timeseries: {
+        stage: "Preset 3 — Dynamical & Spatial Simulators",
+        title: "Raw Time-Series or Gridded Observations",
+        badge: "Preset 3",
+        badgeClass: "bnpe-badge-ext",
+        purpose: "Extracts features directly from raw temporal curves or spatial grids using convolutional filters before flexible spline flow density estimation.",
+        layerSpec: "1D/2D CNN Feature Encoder + Residual MLP Conditioning + Neural Spline Flow (NSF) + Variational BNN.",
+        tensors: "Suited for ecology, epidemiology, or physics simulators producing trajectories or spatial maps.",
+        formula: "CNN(Y) -> ResMLP -> SplineFlow -> SVI AutoNormal"
+      },
+      preset_exchangeable: {
+        stage: "Preset 4 — Exchangeable Population Data",
+        title: "Unordered Set of i.i.d. Replicates {y_1, ..., y_N}",
+        badge: "Preset 4",
+        badgeClass: "bnpe-badge-bnn",
+        purpose: "Automatically learns permutation-invariant sufficient statistics from individual-level observations without hand-crafted summaries.",
+        layerSpec: "DeepSets Encoder φ(y_i) + Mean Pooling + Attention Conditioning (`layer_attention`) + Mixture Density Network (MDN) + Variational BNN.",
+        tensors: "Ideal for multi-individual behavioral, survey, or population genetics datasets.",
+        formula: "ρ(mean_i φ(y_i)) -> Attention -> MDN(K=5) -> SVI AutoNormal"
+      },
+      preset_network_gnn: {
+        stage: "Preset 5 — Relational & Graph Simulators",
+        title: "Social Networks, Contact Graphs & Phylogenies",
+        badge: "Preset 5",
+        badgeClass: "bnpe-badge-ext",
+        purpose: "Summarizes network topology and node attributes via message passing before inferring transmission or evolutionary parameters.",
+        layerSpec: "Graph Neural Network (GNN) + Feed-Forward MLP Backbone + Conditional Coupling Flow + Variational BNN.",
+        tensors: "Tailored for Network-Based Diffusion Analysis (NBDA), dyadic models, and phylogenetic trees.",
+        formula: "GNN(A, X) -> MLP(64,64) -> RealNVP(L=6) -> SVI AutoNormal"
+      },
+      preset_high_dim: {
+        stage: "Preset 6 — High-Dimensional Parameter Inference",
+        title: "High-Dimensional Parameter Space (D > 50)",
+        badge: "Preset 6",
+        badgeClass: "bnpe-badge-ext",
+        purpose: "Scales SBI to dozens or hundreds of parameters where Cholesky factors O(D^2) or coupling splits become bottlenecked.",
+        layerSpec: "Learned MLP/CNN Encoder + Deep Residual MLP + Continuous Flow Matching (FMPE) vector field v_Θ(u_t, t, h) + Deep Ensemble across multiple seeds.",
+        tensors: "Scales linearly with parameter dimension D via ODE integration from z_0 ~ N(0, I_D).",
+        formula: "Encoder(Y) -> ResMLP -> ODE Flow Matching -> Deep Ensemble"
+      }
+    };
+
+    const PRESETS = {
+      bf_default:   { s1: "handcrafted", s2: "mlp_cond",  s3: "mdn_head",      s4: "vi_bnpe",       focus: "mdn_head" },
+      banana_flow:  { s1: "handcrafted", s2: "mlp_cond",  s3: "coupling_flow", s4: "vi_bnpe",       focus: "coupling_flow" },
+      timeseries:   { s1: "cnn_enc",     s2: "res_mlp",   s3: "spline_flow",   s4: "vi_bnpe",       focus: "cnn_enc" },
+      exchangeable: { s1: "deepsets",    s2: "attn_cond", s3: "mdn_head",      s4: "vi_bnpe",       focus: "deepsets" },
+      network_gnn:  { s1: "gnn_enc",     s2: "mlp_cond",  s3: "coupling_flow", s4: "vi_bnpe",       focus: "gnn_enc" },
+      high_dim:     { s1: "mlp_enc",     s2: "res_mlp",   s3: "flow_matching", s4: "deep_ensemble", focus: "flow_matching" }
+    };
+
+    const state = {
+      s1: "handcrafted",
+      s2: "mlp_cond",
+      s3: "mdn_head",
+      s4: "vi_bnpe",
+      inspected: "mdn_head"
+    };
+
+    const popupEl = document.getElementById("bnpe-hover-popup");
+    if (popupEl && document.body && popupEl.parentNode !== document.body) {
+      document.body.appendChild(popupEl);
+    }
+
+    function showPopup(key, evt, isClickableCard) {
+      const item = DB[key] || EXTRA_POPUPS[key];
+      if (!item || !popupEl) return;
+      popupEl.innerHTML = `
+        <div class="bnpe-pop-head">
+          <span class="bnpe-pop-stage">${item.stage}</span>
+          <span class="bnpe-badge ${item.badgeClass || 'bnpe-badge-npe'}">${item.badge}</span>
+        </div>
+        <div class="bnpe-pop-title">${item.title}</div>
+        <div class="bnpe-pop-sec">
+          <div class="bnpe-pop-lbl">Purpose of this Step</div>
+          <div>${item.purpose}</div>
+        </div>
+        <div class="bnpe-pop-sec">
+          <div class="bnpe-pop-lbl">Neural Layer Structure &amp; Specificities</div>
+          <div>${item.layerSpec}</div>
+        </div>
+        <div class="bnpe-pop-mono">${item.formula}</div>
+        <div class="bnpe-pop-sec">
+          <div class="bnpe-pop-lbl">Tensor Shapes &amp; Constraints</div>
+          <div>${item.tensors}</div>
+        </div>
+        <div class="bnpe-pop-hint">
+          <span>${isClickableCard ? "Click to select in pipeline &amp; pin in Inspector" : "Hovering diagram component"}</span>
+          <span>&#9432;</span>
+        </div>
+      `;
+      popupEl.classList.add("visible");
+      movePopup(evt);
+    }
+
+    function movePopup(evt) {
+      if (!popupEl || !popupEl.classList.contains("visible")) return;
+      const pad = 14;
+      const rect = popupEl.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const explorerEl = document.getElementById("bnpe-arch-explorer");
+      const explorerRight = explorerEl ? explorerEl.getBoundingClientRect().right : (vw - pad);
+      const maxRight = Math.min(vw - pad, explorerRight);
+      let x = evt.clientX + 16;
+      let y = evt.clientY + 16;
+      if (x + rect.width > maxRight) {
+        x = Math.max(pad, evt.clientX - rect.width - 16);
+      }
+      if (y + rect.height + pad > vh) {
+        y = Math.max(pad, evt.clientY - rect.height - 14);
+      }
+      popupEl.style.left = x + "px";
+      popupEl.style.top = y + "px";
+    }
+
+    function hidePopup() {
+      if (popupEl) popupEl.classList.remove("visible");
+    }
+
+    function bindHover(el, key, isClickableCard) {
+      if (!el) return;
+      el.addEventListener("mouseenter", (e) => showPopup(key, e, isClickableCard));
+      el.addEventListener("mousemove", (e) => movePopup(e));
+      el.addEventListener("mouseleave", () => hidePopup());
+    }
+
+    function drawIcon(type, x, y, color) {
+      if (type === "stats") {
+        return `<rect x="${x}" y="${y+16}" width="8" height="16" rx="2" fill="${color}" opacity="0.85"/>
+                <rect x="${x+12}" y="${y+6}" width="8" height="26" rx="2" fill="${color}"/>
+                <rect x="${x+24}" y="${y+11}" width="8" height="21" rx="2" fill="${color}" opacity="0.7"/>
+                <rect x="${x+36}" y="${y+20}" width="8" height="12" rx="2" fill="${color}" opacity="0.55"/>`;
+      }
+      if (type === "cnn") {
+        return `<rect x="${x}" y="${y+4}" width="18" height="18" rx="2" fill="none" stroke="${color}" stroke-width="1.8"/>
+                <rect x="${x+8}" y="${y+10}" width="18" height="18" rx="2" fill="none" stroke="${color}" stroke-width="1.8"/>
+                <rect x="${x+16}" y="${y+16}" width="18" height="18" rx="2" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="1.8"/>`;
+      }
+      if (type === "seq") {
+        return `<circle cx="${x+6}" cy="${y+18}" r="5" fill="${color}"/>
+                <circle cx="${x+22}" cy="${y+18}" r="5" fill="${color}"/>
+                <circle cx="${x+38}" cy="${y+18}" r="5" fill="${color}"/>
+                <line x1="${x+11}" y1="${y+18}" x2="${x+17}" y2="${y+18}" stroke="${color}" stroke-width="2"/>
+                <line x1="${x+27}" y1="${y+18}" x2="${x+33}" y2="${y+18}" stroke="${color}" stroke-width="2"/>`;
+      }
+      if (type === "sets") {
+        return `<circle cx="${x+6}" cy="${y+8}" r="4" fill="${color}"/>
+                <circle cx="${x+6}" cy="${y+18}" r="4" fill="${color}"/>
+                <circle cx="${x+6}" cy="${y+28}" r="4" fill="${color}"/>
+                <path d="M ${x+12} ${y+8} L ${x+26} ${y+18} M ${x+12} ${y+18} L ${x+26} ${y+18} M ${x+12} ${y+28} L ${x+26} ${y+18}" stroke="${color}" stroke-width="1.5"/>
+                <rect x="${x+26}" y="${y+10}" width="16" height="16" rx="4" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="1.8"/>
+                <text x="${x+34}" y="${y+22}" text-anchor="middle" font-size="11" font-weight="bold" fill="${color}">&Sigma;</text>`;
+      }
+      if (type === "gnn") {
+        return `<line x1="${x+8}" y1="${y+8}" x2="${x+26}" y2="${y+6}" stroke="${color}" stroke-width="1.5"/>
+                <line x1="${x+8}" y1="${y+8}" x2="${x+16}" y2="${y+26}" stroke="${color}" stroke-width="1.5"/>
+                <line x1="${x+26}" y1="${y+6}" x2="${x+16}" y2="${y+26}" stroke="${color}" stroke-width="1.5"/>
+                <line x1="${x+26}" y1="${y+6}" x2="${x+38}" y2="${y+22}" stroke="${color}" stroke-width="1.5"/>
+                <line x1="${x+16}" y1="${y+26}" x2="${x+38}" y2="${y+22}" stroke="${color}" stroke-width="1.5"/>
+                <circle cx="${x+8}" cy="${y+8}" r="4.5" fill="${color}"/>
+                <circle cx="${x+26}" cy="${y+6}" r="4.5" fill="${color}"/>
+                <circle cx="${x+16}" cy="${y+26}" r="4.5" fill="${color}"/>
+                <circle cx="${x+38}" cy="${y+22}" r="4.5" fill="${color}"/>`;
+      }
+      if (type === "res" || type === "mlp" || type === "attn") {
+        const skip = type === "res" ? `<path d="M ${x+6} ${y+4} Q ${x+22} ${y-6} ${x+38} ${y+4}" fill="none" stroke="${color}" stroke-width="1.8" stroke-dasharray="3,2"/>` : "";
+        return `${skip}
+                <circle cx="${x+6}" cy="${y+10}" r="3.5" fill="${color}"/><circle cx="${x+6}" cy="${y+24}" r="3.5" fill="${color}"/>
+                <circle cx="${x+22}" cy="${y+6}" r="3.5" fill="${color}"/><circle cx="${x+22}" cy="${y+17}" r="3.5" fill="${color}"/><circle cx="${x+22}" cy="${y+28}" r="3.5" fill="${color}"/>
+                <circle cx="${x+38}" cy="${y+10}" r="3.5" fill="${color}"/><circle cx="${x+38}" cy="${y+24}" r="3.5" fill="${color}"/>
+                <line x1="${x+9}" y1="${y+10}" x2="${x+19}" y2="${y+6}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+9}" y1="${y+10}" x2="${x+19}" y2="${y+17}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+9}" y1="${y+24}" x2="${x+19}" y2="${y+17}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+9}" y1="${y+24}" x2="${x+19}" y2="${y+28}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+25}" y1="${y+6}" x2="${x+35}" y2="${y+10}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+25}" y1="${y+17}" x2="${x+35}" y2="${y+10}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+25}" y1="${y+17}" x2="${x+35}" y2="${y+24}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>
+                <line x1="${x+25}" y1="${y+28}" x2="${x+35}" y2="${y+24}" stroke="${color}" stroke-width="1.1" opacity="0.6"/>`;
+      }
+      if (type === "mdn") {
+        return `<path d="M ${x} ${y+30} Q ${x+12} ${y+2} ${x+24} ${y+30}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="1.8"/>
+                <path d="M ${x+14} ${y+30} Q ${x+28} ${y+8} ${x+42} ${y+30}" fill="${color}" fill-opacity="0.2" stroke="${color}" stroke-width="1.8"/>`;
+      }
+      if (type === "mvn" || type === "student") {
+        return `<ellipse cx="${x+22}" cy="${y+18}" rx="18" ry="10" transform="rotate(-20 ${x+22} ${y+18})" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-width="1.8"/>
+                <circle cx="${x+22}" cy="${y+18}" r="2.5" fill="${color}"/>`;
+      }
+      if (type === "flow" || type === "spline" || type === "ode") {
+        return `<circle cx="${x+6}" cy="${y+18}" r="6" fill="none" stroke="${color}" stroke-width="1.6" stroke-dasharray="2,2"/>
+                <path d="M ${x+14} ${y+18} C ${x+20} ${y+6}, ${x+24} ${y+30}, ${x+30} ${y+18}" fill="none" stroke="${color}" stroke-width="1.8"/>
+                <path d="M ${x+33} ${y+8} C ${x+44} ${y+10}, ${x+44} ${y+26}, ${x+33} ${y+28} C ${x+38} ${y+20}, ${x+38} ${y+16}, ${x+33} ${y+8} Z" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="1.6"/>`;
+      }
+      if (type === "bnpe" || type === "ensemble") {
+        return `<path d="M ${x+2} ${y+28} Q ${x+18} ${y+6} ${x+36} ${y+28}" fill="none" stroke="${color}" stroke-width="1.3" opacity="0.55"/>
+                <path d="M ${x+6} ${y+28} Q ${x+22} ${y+4} ${x+40} ${y+28}" fill="none" stroke="${color}" stroke-width="1.3" opacity="0.55"/>
+                <path d="M ${x+10} ${y+28} Q ${x+26} ${y+8} ${x+42} ${y+28}" fill="none" stroke="${color}" stroke-width="1.3" opacity="0.55"/>
+                <path d="M ${x+2} ${y+28} Q ${x+22} ${y+2} ${x+42} ${y+28}" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-width="2.2"/>`;
+      }
+      return `<path d="M ${x+6} ${y+28} Q ${x+22} ${y+2} ${x+38} ${y+28}" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-width="2"/>`;
+    }
+
+    function renderSVG() {
+      const svg = document.getElementById("bnpe-pipeline-svg");
+      const d1 = DB[state.s1], d2 = DB[state.s2], d3 = DB[state.s3], d4 = DB[state.s4];
+      const isLight = document.documentElement.classList.contains("quarto-light") ||
+                      document.body.classList.contains("quarto-light") ||
+                      document.documentElement.getAttribute("data-bs-theme") === "light";
+
+      const fg = isLight ? "#1e293b" : "#e2e8f0";
+      const muted = isLight ? "#64748b" : "#93a1a1";
+      const cardBg = isLight ? "#ffffff" : "#0a404e";
+      const strokeSubtle = isLight ? "#cbd5e1" : "rgba(255,255,255,0.18)";
+      const c1 = isLight ? "#0d9488" : "#2aa198";
+      const c2 = isLight ? "#2563eb" : "#268bd2";
+      const c3 = isLight ? "#0D6EFD" : "#B58900";
+      const c4 = isLight ? "#16a34a" : "#859900";
+
+      const box = (x, y, w, h, col, stageLbl, title, sub, iconType, stageKey, itemId) => {
+        const isInsp = state.inspected === itemId;
+        const sw = isInsp ? 2.6 : 1.5;
+        return `
+          <g class="bnpe-svg-node bnpe-svg-hoverable" data-stage="${stageKey}" data-id="${itemId}" data-hover-id="${itemId}" style="cursor:pointer">
+            <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${cardBg}" stroke="${col}" stroke-width="${sw}"/>
+            <rect x="${x}" y="${y}" width="${w}" height="24" rx="10" fill="${col}" fill-opacity="0.18"/>
+            <text x="${x + 10}" y="${y + 16}" font-size="10.5" font-weight="700" fill="${col}">${stageLbl}</text>
+            ${drawIcon(iconType, x + w - 52, y + 34, col)}
+            <text x="${x + 10}" y="${y + 48}" font-size="12" font-weight="700" fill="${fg}">${title}</text>
+            <text x="${x + 10}" y="${y + 66}" font-size="10.5" fill="${muted}">${sub}</text>
+            <text x="${x + 10}" y="${y + 88}" font-size="9.5" font-family="monospace" fill="${col}">${DB[itemId].badge}</text>
+          </g>`;
+      };
+
+      const arrow = (x1, y1, x2, y2, lbl, hoverKey) => `
+        <g class="bnpe-svg-hoverable" data-hover-id="${hoverKey}" style="cursor:help">
+          <rect x="${x1}" y="${y1 - 22}" width="${x2 - x1}" height="32" fill="transparent"/>
+          <line x1="${x1}" y1="${y1}" x2="${x2 - 6}" y2="${y2}" stroke="${muted}" stroke-width="1.8"/>
+          <polygon points="${x2},${y2} ${x2-7},${y2-4} ${x2-7},${y2+4}" fill="${muted}"/>
+          ${lbl ? `<text x="${(x1+x2)/2}" y="${y1 - 8}" text-anchor="middle" font-size="10.5" font-family="monospace" font-weight="600" fill="${fg}">${lbl}</text>` : ""}
+        </g>`;
+
+      svg.innerHTML = `
+        <!-- Raw Data Input -->
+        <g class="bnpe-svg-hoverable" data-hover-id="sim_cell" style="cursor:help">
+          <rect x="8" y="64" width="74" height="84" rx="8" fill="${cardBg}" stroke="${strokeSubtle}" stroke-width="1.5"/>
+          <text x="45" y="92" text-anchor="middle" font-size="11" font-weight="700" fill="${fg}">Simulator</text>
+          <text x="45" y="110" text-anchor="middle" font-size="12" font-family="monospace" font-weight="700" fill="${c1}">(&theta;_j, Y_j)</text>
+          <text x="45" y="130" text-anchor="middle" font-size="9.5" fill="${muted}">M runs</text>
+        </g>
+
+        ${arrow(82, 106, 114, 106, "Y", "arrow_y")}
+        ${box(114, 54, 176, 104, c1, "STAGE 1: SUMMARY", d1.svgTitle, d1.svgSub, d1.svgIcon, "s1", state.s1)}
+        ${arrow(290, 106, 326, 106, "c", "arrow_c")}
+        ${box(326, 54, 172, 104, c2, "STAGE 2: BACKBONE", d2.svgTitle, d2.svgSub, d2.svgIcon, "s2", state.s2)}
+        ${arrow(498, 106, 534, 106, "h", "arrow_h")}
+        ${box(534, 54, 186, 104, c3, "STAGE 3: DENSITY HEAD", d3.svgTitle, d3.svgSub, d3.svgIcon, "s3", state.s3)}
+        ${arrow(720, 106, 756, 106, "q_Θ(u|c)", "arrow_q")}
+        ${box(756, 54, 194, 104, c4, "STAGE 4: WEIGHTS & POST", d4.svgTitle, d4.svgSub, d4.svgIcon, "s4", state.s4)}
+
+        <!-- Top Weight Prior / SVI Bar spanning Stages 1-3 -->
+        <g class="bnpe-svg-hoverable" data-hover-id="weight_bar" style="cursor:help">
+          <path d="M 202 54 L 202 24 L 853 24 L 853 54" fill="none" stroke="${c4}" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle cx="202" cy="54" r="3.5" fill="${c4}"/>
+          <circle cx="412" cy="54" r="3.5" fill="${c4}"/>
+          <line x1="412" y1="24" x2="412" y2="54" stroke="${c4}" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <circle cx="627" cy="54" r="3.5" fill="${c4}"/>
+          <line x1="627" y1="24" x2="627" y2="54" stroke="${c4}" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <rect x="335" y="8" width="365" height="22" rx="11" fill="${cardBg}" stroke="${c4}" stroke-width="1.2"/>
+          <text x="517" y="23" text-anchor="middle" font-size="10.5" font-weight="600" fill="${c4}">
+            ${state.s4 === "point_npe" ? "Point Estimate Θ̂ = (ψ̂, ω̂, φ̂) via Max Likelihood / AutoDelta" :
+              state.s4 === "vi_bnpe" ? "Bayesian Prior p(Θ) & Variational Posterior q_λ(Θ) over All Network Weights" :
+              "Ensemble of K Independent Weight Modes {Θ̂^(1), …, Θ̂^(K)} Across Stages 1–3"}
+          </text>
+        </g>
+
+        <!-- Bottom Parameter Constraint Bijection Bar -->
+        <g class="bnpe-svg-hoverable" data-hover-id="bijection_bar" style="cursor:help">
+          <path d="M 45 148 L 45 194 L 627 194 L 627 158" fill="none" stroke="${muted}" stroke-width="1.3" stroke-dasharray="3,3"/>
+          <path d="M 627 194 L 853 194 L 853 158" fill="none" stroke="${c3}" stroke-width="1.5"/>
+          <polygon points="853,158 849,165 857,165" fill="${c3}"/>
+          <rect x="240" y="180" width="490" height="24" rx="6" fill="${cardBg}" stroke="${strokeSubtle}" stroke-width="1"/>
+          <text x="485" y="196" text-anchor="middle" font-size="10.5" fill="${fg}">
+            Support Bijection: &theta; &isin; Support(Prior) &rarr; u = g(&theta;) &isin; &Ropf;^D (Training) &rarr; &theta; = g⁻¹(u) (Calibrated Posterior Samples)
+          </text>
+        </g>
+      `;
+
+      svg.querySelectorAll(".bnpe-svg-node").forEach(node => {
+        node.addEventListener("click", () => {
+          state.inspected = node.getAttribute("data-id");
+          updateUI();
+        });
+      });
+
+      svg.querySelectorAll("[data-hover-id]").forEach(el => {
+        const key = el.getAttribute("data-hover-id");
+        bindHover(el, key, Boolean(DB[key]));
+      });
+    }
+
+    function updateUI() {
+      const container = document.getElementById("bnpe-arch-explorer");
+      container.querySelectorAll(".bnpe-opt-card").forEach(card => {
+        const st = card.getAttribute("data-stage");
+        const id = card.getAttribute("data-id");
+        card.classList.toggle("selected", state[st] === id);
+        card.classList.toggle("inspected", state.inspected === id);
+      });
+
+      const info = DB[state.inspected];
+      document.getElementById("bnpe-insp-title").innerHTML =
+        `<span>[${info.stage}] ${info.title}</span> <span class="bnpe-badge ${info.badgeClass}">${info.badge}</span>`;
+      document.getElementById("bnpe-insp-formula").textContent = info.formula;
+      document.getElementById("bnpe-insp-desc").textContent = info.desc;
+      document.getElementById("bnpe-insp-when").textContent = info.when;
+      document.getElementById("bnpe-insp-budget").textContent = info.budget;
+      document.getElementById("bnpe-insp-status").textContent = info.badge;
+      document.getElementById("bnpe-insp-code").textContent = info.code;
+
+      renderSVG();
+    }
+
+    const root = document.getElementById("bnpe-arch-explorer");
+    root.querySelectorAll(".bnpe-opt-card").forEach(card => {
+      const id = card.getAttribute("data-id");
+      bindHover(card, id, true);
+      card.addEventListener("click", () => {
+        const st = card.getAttribute("data-stage");
+        state[st] = id;
+        state.inspected = id;
+        root.querySelectorAll(".bnpe-preset-btn").forEach(b => b.classList.remove("active"));
+        updateUI();
+      });
+    });
+
+    const stageKeys = ["stage_s1", "stage_s2", "stage_s3", "stage_s4"];
+    root.querySelectorAll(".bnpe-stage-head").forEach((head, idx) => {
+      head.style.cursor = "help";
+      bindHover(head, stageKeys[idx], false);
+    });
+
+    root.querySelectorAll(".bnpe-preset-btn").forEach(btn => {
+      const pName = btn.getAttribute("data-preset");
+      bindHover(btn, "preset_" + pName, true);
+      btn.addEventListener("click", () => {
+        const p = PRESETS[pName];
+        if (!p) return;
+        state.s1 = p.s1;
+        state.s2 = p.s2;
+        state.s3 = p.s3;
+        state.s4 = p.s4;
+        state.inspected = p.focus;
+        root.querySelectorAll(".bnpe-preset-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateUI();
+      });
+    });
+
+    const obs = new MutationObserver(() => renderSVG());
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+    if (document.body) {
+      obs.observe(document.body, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+    }
+
+    updateUI();
+  })();
+  </script>
+</div>
+```
+
+#### Exhaustive Taxonomy of Neural Network Alternatives by Stage
+
+To choose the right combination of neural architectures for a given scientific simulator, we examine each of the four modular stages in detail:
+
+##### 1. Stage 1 — Data Compression & Summary Networks $s_\psi(Y) \to c$
+
+When domain-specific summary statistics $s(Y)$ are known and low-dimensional, computing them deterministically saves training budget. When raw data are complex or sufficient statistics are unknown, a neural encoder $s_\psi(Y)$ can be placed at the front of the NPE network and trained end-to-end:
+
+| Architecture | Target Data Structure | Inductive Bias & Mechanism | Simulation Budget | BayesForge Support |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hand-Crafted Statistics** $s(Y)$ | Any dataset with known domain summaries | Deterministic compression (OLS coefficients, moments, quantiles, octiles, autocorrelation) | Very Low ($M \ge 200$) | **Built-in `m.npe()`** (`summary_stats="moments"`, `"quantiles"`, `"robust"`, or custom function) |
+| **Multi-Layer Perceptron (MLP)** | Fixed-size tabular vectors $Y \in \mathbb{R}^{D_Y}$ | Dense linear projections (`m.bnn.layer_linear`) + non-linear activations | Moderate ($M \ge 2\,000$) | **Built-in `m.npe()`** (`summary_stats="identity"`) & **`m.bnn`** |
+| **1D / 2D / 3D CNN (ResNet)** | Regular time series, spectrograms, spatial grids, images | Translation invariance & local receptive fields via strided convolutions and global pooling | Moderate–High ($M \ge 5\,000$) | **Custom JAX** inside `summary_stats` or custom model |
+| **RNN (GRU / LSTM) or Transformer** | Sequential trajectories, SDEs, irregularly sampled series | Recurrent state propagation or temporal self-attention (`m.bnn.layer_attention`) | Moderate–High ($M \ge 5\,000$) | **Built-in `m.bnn`** (`layer_attention`) / **Custom JAX** |
+| **DeepSets / Set Transformer** | Exchangeable i.i.d. observations $Y = \{y_1, \dots, y_N\}$ | Permutation invariance: $c = \rho_\psi\!\left(\frac{1}{N}\sum_{i=1}^N \phi_\psi(y_i)\right)$ | Low–Moderate ($M \ge 1\,000$) | **Built-in `m.bnn`** (`layer_linear` + `jnp.mean` pooling) |
+| **Graph Neural Network (GNN)** | Social networks, contact networks, phylogenetic trees | Permutation equivariance over graph nodes via message passing along adjacency matrix $A$ | Moderate ($M \ge 2\,000$) | **Custom JAX** + **`m.bnn.layer_linear`** |
+
+##### 2. Stage 2 — Conditioning Backbones $h_\omega(c) \to h$
+
+Once the dataset is summarized into a standardized context vector $c \in \mathbb{R}^{D_S}$, the conditioning backbone transforms $c$ into latent features $h$ that control the density head:
+
+| Architecture | Mechanism | When to Prefer | BayesForge Support |
+| :--- | :--- | :--- | :--- |
+| **Feed-Forward MLP (`layer_linear`)** | Stack of dense layers with smooth activations (`gelu`, `silu`, `tanh`, `elu`, `relu`) | Standard default for low- to medium-dimensional summary vectors ($D_S \le 50$) | **Built-in `m.npe()`** (`hidden=(64, 64)`, `activation="gelu"`) & **`m.bnn.layer_linear`** |
+| **Residual MLP (Skip-Connections)** | Identity shortcuts $H_{\ell+1} = H_\ell + f_\ell(H_\ell)$ across layer pairs | Deeper conditioning networks ($\ge 4$ layers) or highly non-linear simulator inversions | **Built-in `m.bnn`** (composing `layer_linear` with residual addition) |
+| **Attention Backbone (`layer_attention`)** | Scaled dot-product attention $\text{Softmax}(QK^\top / \sqrt{d})V$ across feature blocks | Large sets of summary statistics where different summaries inform different parameters | **Built-in `m.bnn.layer_attention`** |
+
+##### 3. Stage 3 — Conditional Density Estimator Heads $q_\phi(u \mid h)$
+
+This is the core generative head that outputs a probability distribution over the unconstrained parameter vector $u \in \mathbb{R}^D$. While **MDN** and **Normalizing Flows** are the two classic families, six distinct classes of density heads can be used depending on posterior complexity and parameter dimension $D$:
+
+| Density Estimator Head | Mathematical Form | Posterior Geometry & Dimension $D$ | Exact $\log q(u\mid c)$ | Sampling Speed | BayesForge Support |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Single Multivariate Normal ($K=1$)** | $\text{MVNormal}\!\big(\mu(h),\, L(h)L(h)^\top\big)$ (or Toeplitz / Compound Symmetry / Diagonal) | Unimodal, elliptical posteriors; ideal for very small budgets ($M < 1\,000$) | Yes (1 pass) | Instant (1 pass) | **Built-in `m.npe()`** (`n_components=1`) & **`m.bnn`** (`layer_cholesky`, `layer_toeplitz`, `layer_compound_symmetry`, `layer_diagonal`) |
+| **Multivariate Student-$t$ Head** | $\text{StudentT}\!\big(\nu(h),\, \mu(h),\, L(h)\big)$ | Unimodal posteriors with heavy tails or outlier sensitivity | Yes (1 pass) | Instant (1 pass) | **Built-in `m.bnn`** (`layer_cholesky` + `m.dist.student_t`) |
+| **Mixture Density Network (MDN)** [@bishop1994mixture] | $\sum_{k=1}^K \pi_k(h)\, \text{MVNormal}\!\big(\mu_k(h),\, L_k(h)L_k(h)^\top\big)$ | Unimodal, skewed, or multimodal posteriors in low-to-medium dimension ($D \lesssim 15$) | Yes (1 pass) | Instant (1 pass) | **Built-in `m.npe(estimator="mdn")`** & **`m.bnn.layer_mixture_normal`** |
+| **Affine Coupling Flow (RealNVP)** [@dinh2017density] | Invertible coupling chain $u = f_{\phi,K} \circ \dots \circ f_{\phi,1}(z; h)$, $z \sim \mathcal{N}(0, I)$ | Curved, banana-shaped, ring-shaped, or strongly correlated posteriors ($D \le 50$) | Yes (1 pass) | Fast (1 pass through $L$ layers) | **Built-in `m.npe(estimator="flow")`** |
+| **Autoregressive (MAF) & Neural Spline Flows (NSF)** | Monotonic rational-quadratic splines or masked autoregressive conditioners $u_d = g_d(z_d; u_{<d}, h)$ | Sharp ridges, complex multimodal topologies, and intricate conditional dependencies ($D \le 50$) | Yes (1 pass) | Fast for NSF Coupling; $D$ sequential passes for MAF | **Custom JAX / NumPyro** transforms |
+| **Flow Matching (FMPE) & Score Diffusion (NPSE)** | Continuous ODE vector field $\frac{du_t}{dt} = v_\phi(u_t, t, h)$ or SDE score $\nabla_u \log q_t(u_t \mid h)$ | High-dimensional parameter spaces ($D = 50$ to $1\,000+$) or complex manifolds | Requires ODE trace integration | Multi-step ODE/SDE solver (20–100 steps) | **Custom JAX** |
+
+##### 4. Stage 4 — Weight Inference Regimes $q_\lambda(\Theta)$ (Standard NPE vs. Bayesian NPE)
+
+Regardless of which architectures are chosen in Stages 1–3, the trainable weights $\Theta = (\psi, \omega, \phi)$ can be inferred under different regimes:
+
+| Weight Regime | Approximation $q_\lambda(\Theta)$ | Epistemic Uncertainty & Calibration | Computational Cost | BayesForge Support |
+| :--- | :--- | :--- | :--- | :--- |
+| **Standard NPE (Point Estimate)** | Dirac delta $q_\lambda(\Theta) = \delta(\Theta - \hat{\Theta})$ (MAP / Early-stopped MLE) | None — prone to **overconfident** posteriors when $M$ is small [@hermans2022trust] | $1\times$ baseline training, $1$ forward pass at inference | **Built-in `m.npe(bayesian=False)`** & **`m.svi(guide=AutoDelta)`** |
+| **Bayesian NPE (Mean-Field SVI)** [@delaunoy2024low] | Factorized Gaussian $q_\lambda(\Theta) = \prod_m \mathcal{N}(\nu_m, \tau_m^2)$ around the NPE mode | Captures weight uncertainty; yields **conservative, well-calibrated** posteriors at low budgets | Standard NPE + SVI refinement (`svi_steps`), $S$ parallel forward passes via `jax.vmap` | **Built-in `m.npe(bayesian=True)`** & **`m.svi(guide=AutoNormal)`** |
+| **Deep Ensembles / Laplace / SWAG** | Mixture of $K_{\text{ens}}$ independent MAP modes $\frac{1}{K_{\text{ens}}}\sum_{k=1}^{K_{\text{ens}}} \delta(\Theta - \hat{\Theta}^{(k)})$ or local Gaussian Hessian | Captures multi-basin weight uncertainty across distinct local optima | $K_{\text{ens}}\times$ training cost (or post-hoc Hessian for Laplace) | **Built-in `m.bnn` / Multi-seed `m.npe()`** |
+
+### Verifying trustworthiness: Simulation-Based Calibration
+
+Because any neural posterior is an approximation, we should never trust its credible intervals blindly. Fortunately, having a simulator allows us to audit the trained network before interpreting our scientific results.
+
+We can administer a synthetic exam known as **expected coverage** (or *Simulation-Based Calibration*) [@hermans2022trust]: we generate a separate test set of simulated datasets whose true generating parameters are known, ask the trained estimator to produce its $10\%$, $50\%$, or $90\%$ highest-density credible regions for each test dataset, and measure the empirical fraction of times the true parameter actually falls inside.
+
+Plotting the empirical coverage against the nominal credibility level yields a simple diagnostic curve:
+
+- **On the diagonal**: A $90\%$ credible region contains the truth $90\%$ of the time across all levels—the posterior is **well-calibrated**.
+- **Below the diagonal**: The credible regions contain the truth less often than advertised—the estimator is **overconfident** (typical of standard NPE with too few simulations).
+- **Above the diagonal**: The credible regions contain the truth more often than advertised—the estimator is **conservative** (typical of BNPE with small budgets: wider than ideal, but on the safe side of error).
+
+
+## Considerations
+
+::: callout-note
+**Practical aspects of NPE**
+
+-   **Respecting parameter constraints**: Model parameters often live on restricted domains (for example, a standard deviation must be positive, $\sigma > 0$, or a probability must lie in $[0, 1]$). Before training, parameters are automatically mapped to the unconstrained real line via smooth bijections (such as logarithmic or logit transforms) and standardized. The neural network learns the distribution in this unconstrained space, and predictions are transformed back to the original scale so that every posterior sample strictly respects its prior support.
+
+-   **Choosing the modular architecture (summary encoder, backbone, and density head)**: In `m.npe()`, two conditional density estimators are built-in via `estimator`: `"mdn"` (default), which models the posterior as a weighted mixture of $K$ multivariate Gaussians (`n_components=5`) and is fast, stable, and well-suited to unimodal, skewed, or moderately multimodal posteriors in low-to-medium dimensions; and `"flow"`, which chains `n_layers` conditional RealNVP affine-coupling transformations and excels when the posterior has strong non-linear correlations (such as banana-shaped ridges). In *From scratch* mode (`m.bnn` + `m.svi`), any combination of feature encoders (DeepSets, attention via `layer_attention`), conditioning backbones (residual MLPs), and parametric heads (single Gaussian with `layer_cholesky`, `layer_toeplitz`, `layer_compound_symmetry`, `layer_diagonal`, or heavy-tailed Student-$t$) can be assembled directly as a BayesForge model.
+
+-   **Validity outside the prior predictive space**: A neural estimator only knows the world it was shown during simulation. If the real observed data fall far outside the range of synthetic datasets generated by the prior predictive distribution (*model misspecification*), the network is forced to extrapolate and its posterior cannot be trusted.
+
+**Practical aspects of Bayesian NPE**
+
+-   **Why Variational Inference on the weights?**: A neural network contains thousands of weights whose posterior landscape has many symmetric modes. Exploring this space with full MCMC would be prohibitively slow and prone to poor mixing. Instead, BNPE first trains a standard NPE network to locate a good mode, and then fits a Gaussian variational distribution around those weights using Stochastic Variational Inference (SVI).
+
+-   **A unified probabilistic perspective**: Standard NPE and Bayesian NPE share the exact same underlying probabilistic model—where the network weights have Normal priors and the density estimator defines the likelihood of the simulated parameters. The only difference is how the weights are inferred: finding a single point estimate (the posterior mode) of the weights yields standard NPE, whereas inferring a full distribution over the weights yields Bayesian NPE.
+:::
+
+## Example
+
+Below is an example code snippet demonstrating *Bayesian Neural Posterior Estimation* using the BayesForge (**BF**) package, on the linear regression of height on weight of [chapter 1](1.%20Linear%20Regression%20for%20continuous%20variable.qmd) [@mcelreath2018statistical], with the least-squares intercept, slope and residual standard deviation as summary statistics. The simulation budget is deliberately small: 1 000 simulated datasets. NPE and BNPE are trained on them, and their calibration is checked on 200 new simulated datasets.
+
+The *From scratch* tab builds the Bayesian network directly with BF's BNN layers (`m.bnn.layer_linear` and the output layer `m.bnn.layer_mixture_normal`), BF distributions as weight priors, and BF's stochastic variational inference (`m.svi`); the *Built-in function* tab obtains the same result with `m.npe(bayesian=True)` and `m.sbc_coverage()`.
+
+::: {.panel-tabset group="language"}
+## Python
+
+``` {python}
+from BayesForge import bf
+import jax
+import jax.numpy as jnp
+import numpyro
+import matplotlib.pyplot as plt
+
+# Setup device------------------------------------------------
+m = bf(platform="cpu", rand_seed=0)
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = m.load.howell1(only_path=True)
+m.data(data_path, sep=";")
+m.df = m.df[m.df.age > 18]  # Subset data to adults
+m.scale(["weight"])  # Normalize
+
+
+# Define model ------------------------------------------------
+def model(weight, height):
+    a = m.dist.normal(178, 20, name="a")
+    b = m.dist.log_normal(0, 1, name="b")
+    s = m.dist.uniform(0, 50, name="s")
+    m.dist.normal(a + b * weight, s, obs=height)
+
+
+# Summary statistics ------------------------------------------------
+weight = jnp.asarray(m.df.weight.values)
+height_obs = jnp.asarray(m.df.height.values)
+X = jnp.stack([jnp.ones_like(weight), weight], axis=1)
+
+def ols(height):
+    """Least-squares intercept, slope and residual sd: sufficient for this model."""
+    coef = jnp.linalg.lstsq(X, height)[0]
+    return jnp.array([coef[0], coef[1], jnp.std(height - X @ coef)])
+
+
+# Reference: exact posterior with MCMC ------------------------------------------------
+m.fit(model, progress_bar=False)
+nuts = dict(m.posteriors)
+howell = {"weight": weight, "height": height_obs}
+```
+
+::: {.panel-tabset}
+
+#### From scratch
+
+Bayesian NPE written out with BF functions only. The network is a BF model: its weights are `m.dist.normal` priors, its layers `m.bnn.layer_linear`, and its output layer `m.bnn.layer_mixture_normal` is the likelihood of the simulated parameters. The *same* model gives both estimators; only the guide of BF's stochastic variational inference (`m.svi`) changes: a point-mass guide (`AutoDelta`) gives standard NPE (one network), and a mean-field Normal guide (`AutoNormal`), started at the NPE network, gives Bayesian NPE (a distribution over networks). Posterior draws are predictions of the model (`m.sample`), one per network draw.
+
+``` {python}
+import numpy as np
+from numpyro.infer import Trace_ELBO, log_likelihood
+from numpyro.infer.autoguide import AutoDelta, AutoNormal
+from numpyro.infer.initialization import init_to_sample, init_to_value
+
+# 1. Simulations: 1 000 for training, 200 to test calibration -------------------------
+M, M_test = 1_000, 200
+a = m.dist.normal(178, 20, sample=True, shape=(M + M_test,))
+b = m.dist.log_normal(0, 1, sample=True, shape=(M + M_test,))
+s = m.dist.uniform(0, 50, sample=True, shape=(M + M_test,))
+height = m.dist.normal(a[:, None] + b[:, None] * weight, s[:, None], sample=True)
+stats = jax.vmap(ols)(height)
+
+# 2. Unconstrained parameters, standardised with the training set ---------------------
+u = jnp.stack([a, jnp.log(b), jax.scipy.special.logit(s / 50)], axis=1)
+u_mean, u_sd = u[:M].mean(0), u[:M].std(0)
+s_mean, s_sd = stats[:M].mean(0), stats[:M].std(0)
+un, sn = (u - u_mean) / u_sd, (stats - s_mean) / s_sd
+
+def to_params(u_std):
+    u = u_std * u_sd + u_mean
+    return {"a": u[:, 0], "b": jnp.exp(u[:, 1]), "s": 50 * jax.nn.sigmoid(u[:, 2])}
+
+# 3. The network as a BF model: weight priors, BNN layers, mixture likelihood -------
+D, K, H = 3, 5, 64
+sizes = [3, H, H, m.bnn.mixture_normal_size(K, D)]
+
+def npe_net(c, u=None, batch_size=None):
+    params = [(m.dist.normal(0, 1 / jnp.sqrt(n_in), shape=(n_in, n_out), name=f"W{i}"),
+               m.dist.normal(0, 1, shape=(n_out,), name=f"b{i}"))
+              for i, (n_in, n_out) in enumerate(zip(sizes[:-1], sizes[1:]))]
+    with m.dist.plate("sims", c.shape[0], subsample_size=batch_size) as idx:
+        h = c[idx]
+        for i, (W, bias) in enumerate(params):
+            act = "gelu" if i < len(params) - 1 else None
+            h = m.bnn.layer_linear(h, W, activation=act, bias=bias, verbose=False)
+        m.bnn.layer_mixture_normal(h, K, D, diag_offset=0.5413, name="u",
+                                   obs=u if u is None else u[idx])
+
+m.data_on_model = {"c": sn[:M], "u": un[:M], "batch_size": 256}
+```
+
+``` {python}
+#| output: false
+# 4. NPE: point estimate of the weights (AutoDelta) -----------------------------------
+m.svi(npe_net, guide=AutoDelta(npe_net, init_loc_fn=init_to_sample),
+      optim=numpyro.optim.Adam(1e-3), loss=Trace_ELBO(), num_steps=10_000, num_samples=100)
+w_npe = dict(m.posteriors)                                              # 100 copies of one network
+
+# 5. Bayesian NPE: Normal distribution over the weights (AutoNormal), from the NPE network
+start = {name: draws[0] for name, draws in w_npe.items()}
+m.svi(npe_net, guide=AutoNormal(npe_net, init_loc_fn=init_to_value(values=start), init_scale=1e-3),
+      optim=numpyro.optim.Adam(1e-3), loss=Trace_ELBO(), num_steps=10_000, num_samples=100)
+w_bnpe = dict(m.posteriors)                                             # 100 different networks
+```
+
+``` {python}
+# 6. Posterior draws (m.sample) and densities (average over the network draws) --------
+def draw(weights, c, n_per_net):
+    """Posterior draws for each row of c: n_per_net per network -> (rows, 100 * n_per_net, D)."""
+    data = {"c": jnp.repeat(c, n_per_net, axis=0), "u": None, "batch_size": None}
+    u = m.sample(posterior_draws=weights, data=data)["u"]                 # (100 nets, rows * n, D)
+    u = u.reshape(100, c.shape[0], n_per_net, D)
+    return jnp.moveaxis(u, 0, 1).reshape(c.shape[0], -1, D)
+
+def log_q(weights, n_nets, u, c):
+    """log of the average density over n_nets network draws, for rows (u, c)."""
+    w = {name: draws[:n_nets] for name, draws in weights.items()}
+    ll = log_likelihood(npe_net, w, c=c, u=u)["u"]                        # (n_nets, rows)
+    return jax.scipy.special.logsumexp(ll, axis=0) - jnp.log(n_nets)
+
+estimators = {"NPE": (w_npe, 1), "BNPE": (w_bnpe, 100)}
+
+# 7. Posterior of the observed data ----------------------------------------------------
+c_obs = (ols(height_obs) - s_mean) / s_sd
+raw = {name: to_params(draw(w, c_obs[None], 10)[0]) for name, (w, _) in estimators.items()}
+for name, post in raw.items():
+    print(name, {p: f"{post[p].mean():.2f} ± {post[p].std():.2f}" for p in ["a", "b", "s"]})
+
+# 8. Expected coverage on the 200 test simulations ------------------------------------
+u_test, c_test = un[M:], sn[M:]
+levels = np.linspace(0.01, 0.99, 50)
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+ax.plot([0, 1], [0, 1], "k--", lw=1)
+for name, (w, n_nets) in estimators.items():
+    draws = draw(w, c_test, 5)                                           # (200, 500, D)
+    ranks = []
+    for i in range(0, M_test, 10):                                       # 10 test sets at a time
+        u_d, c_d = draws[i:i + 10], c_test[i:i + 10]
+        lq_draws = log_q(w, n_nets, u_d.reshape(-1, D), jnp.repeat(c_d, 500, axis=0)).reshape(-1, 500)
+        lq_true = log_q(w, n_nets, u_test[i:i + 10], c_d)
+        # mass of the smallest highest-density region containing the true value
+        ranks.append(np.asarray(jnp.mean(lq_draws > lq_true[:, None], axis=1)))
+    ranks = np.concatenate(ranks)
+    ax.plot(levels, [(ranks <= q).mean() for q in levels], lw=2, label=name)
+ax.set_xlabel("Nominal credibility level")
+ax.set_ylabel("Empirical coverage")
+ax.set_title("From scratch, 1 000 simulations")
+ax.legend()
+plt.show()
+```
+
+![](_freeze/41.%20Bayesian%20Neural%20Posterior%20Estimation/figure-html/cell-5-output-2.png)
+
+#### Built-in function
+
+The same analysis with `m.npe()`: `bayesian=False` gives standard NPE and `bayesian=True` Bayesian NPE; `m.sbc_coverage()` checks calibration on new simulations.
+
+``` {python}
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+builtin = {}
+for name, bay in [("NPE", False), ("BNPE", True)]:
+    m.npe(model, data=howell, summary_stats=ols, num_simulations=1_000,
+          bayesian=bay, progress_bar=False)
+    builtin[name] = dict(m.posteriors)
+    m.sbc_coverage(n_test=200, ax=ax, label=name)
+ax.set_title("m.npe(), 1 000 simulations")
+plt.show()
+
+# Summary of the Bayesian NPE posterior ------------------------------------------------
+m.summary()
+```
+
+![](_freeze/41.%20Bayesian%20Neural%20Posterior%20Estimation/figure-html/cell-6-output-2.png)
+
+:::
+
+``` {python}
+# Posteriors vs exact posterior ------------------------------------------------
+fig, axes = plt.subplots(1, 3, figsize=(12, 3.5), constrained_layout=True)
+series = [
+    ("MCMC (NUTS)", nuts),
+    ("NPE (m.npe)", builtin["NPE"]),
+    ("BNPE (m.npe)", builtin["BNPE"]),
+    ("NPE (from scratch)", raw["NPE"]),
+    ("BNPE (from scratch)", raw["BNPE"]),
+]
+for ax, p in zip(axes, ["a", "b", "s"]):
+    all_vals = np.concatenate([np.asarray(post[p]) for _, post in series])
+    lo, hi = np.percentile(all_vals, [1, 99])
+    for label, post in series:
+        ax.hist(post[p], bins=40, range=(lo, hi), density=True, alpha=0.35, label=label)
+    ax.set_title(p)
+axes[0].legend()
+plt.show()
+```
+
+![](_freeze/41.%20Bayesian%20Neural%20Posterior%20Estimation/figure-html/cell-7-output-1.png)
+
+## R
+
+``` r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+m$data(m$load$howell1(only_path = T), sep = ";")
+m$df <- m$df[m$df$age > 18, ] # Subset data to adults
+m$scale(list("weight")) # Normalize
+m$data_to_model(list("weight", "height"))
+
+# Define model ------------------------------------------------
+model <- function(height, weight) {
+    a <- bf.dist.normal(178, 20, name = "a")
+    b <- bf.dist.log_normal(0, 1, name = "b")
+    s <- bf.dist.uniform(0, 50, name = "s")
+    bf.dist.normal(a + b * weight, s, obs = height)
+}
+
+# Summary statistics ------------------------------------------------
+X <- jnp$stack(list(jnp$ones_like(m$data_on_model$weight), m$data_on_model$weight), axis = 1L)
+ols <- function(height) {
+    coef <- jnp$linalg$lstsq(X, height)[[1]]
+    jnp$stack(list(coef[0], coef[1], jnp$std(height - jnp$matmul(X, coef))))
+}
+
+# Run Bayesian NPE ------------------------------------------------
+m$npe(model, summary_stats = ols, num_simulations = 1000L, bayesian = TRUE)
+
+# Summary and calibration ------------------------------------------------
+m$summary()
+m$sbc_coverage(n_test = 200L)
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# Setup device------------------------------------------------
+m = importBF(platform="cpu")
+
+# Import Data & Data Manipulation ------------------------------------------------
+data_path = m.load.howell1(only_path = true)
+m.data(data_path, sep=';')
+m.df = m.df[m.df.age > 18] # Subset data to adults
+m.scale(["weight"]) # Normalize
+
+# Define model ------------------------------------------------
+@BF function model(weight, height)
+    a = m.dist.normal(178, 20, name = 'a')
+    b = m.dist.log_normal(0, 1, name = 'b')
+    s = m.dist.uniform(0, 50, name = 's')
+    m.dist.normal(a + b * weight, s, obs = height)
+end
+
+# Summary statistics ------------------------------------------------
+X = jnp.stack([jnp.ones(length(m.df.weight)), jnp.array(m.df.weight)], axis = 1)
+# summary_stats is traced by JAX: it must be a Python function, not a Julia one
+ols = pyeval(Py,
+    "lambda height: (lambda coef: jnp.stack([coef[0], coef[1], jnp.std(height - X @ coef)]))(jnp.linalg.lstsq(X, height)[0])",
+    pydict(Dict("jnp" => jnp, "X" => X)))
+
+# Run Bayesian NPE ------------------------------------------------
+m.npe(model, summary_stats = ols, num_simulations = 1_000, bayesian = true)
+
+# Summary and calibration ------------------------------------------------
+m.summary()
+m.sbc_coverage(n_test = 200)
+```
+:::
+
+## Mathematical Details
+
+### *1. Forward Generative Model and Parameter Standardization*
+
+The underlying scientific model is the linear regression of [chapter 1](1.%20Linear%20Regression%20for%20continuous%20variable.qmd), which is used to simulate $M$ synthetic training pairs $(\theta_j, Y_j)$ from the joint prior predictive distribution:
+
+$$
+\begin{aligned}
+Y_{j,i} &\sim \text{Normal}(\alpha_j + \beta_j X_i, \sigma_j) \\
+\alpha_j &\sim \text{Normal}(178, 20) \\
+\beta_j &\sim \text{LogNormal}(0, 1) \\
+\sigma_j &\sim \text{Uniform}(0, 50) \\
+\end{aligned}
+$$
+
+Before passing the simulated pairs to the neural network, each constrained parameter vector $\theta_j = (\alpha_j, \beta_j, \sigma_j)$ is mapped to the unconstrained real space $\mathbb{R}^D$ via the bijection of its prior support, and both the unconstrained parameters and the summary statistics $s(Y_j) = (\hat{\alpha}_j, \hat{\beta}_j, \hat{\sigma}_j)$ are standardized across the $M$ training simulations:
+
+$$
+\begin{aligned}
+v_j &= \left[\alpha_j,\; \log(\beta_j),\; \text{logit}\!\left(\frac{\sigma_j}{50}\right)\right] \\
+u_j &= \frac{v_j - \bar{v}}{\text{sd}(v)} \\
+c_j &= \frac{s(Y_j) - \bar{s}}{\text{sd}(s)} \\
+\end{aligned}
+$$
+
+where:
+
+* $Y_{j,i}$ is the simulated height of the $i$-th individual in the $j$-th synthetic dataset ($j \in \{1, \dots, M\}$).
+* $X_i$ is the centered weight predictor for the $i$-th individual.
+* $\alpha_j$, $\beta_j$, and $\sigma_j$ are the ground-truth intercept, slope, and residual standard deviation drawn from their priors for the $j$-th simulation.
+* $s(Y_j)$ is the $D_S$-dimensional vector of ordinary least-squares summary statistics ($D_S = 3$) extracted from the $j$-th simulated dataset.
+* $v_j$ is the unconstrained parameter vector in $\mathbb{R}^D$ ($D = 3$), ensuring that any neural network prediction mapped back through the inverse bijection automatically satisfies $\beta > 0$ and $0 < \sigma < 50$.
+* $u_j$ is the standardized unconstrained target vector of length $D = 3$, centered and scaled by the training-set mean $\bar{v}$ and standard deviation $\text{sd}(v)$.
+* $c_j$ is the standardized summary-statistic input row vector of length $D_S = 3$, centered and scaled by the training-set mean $\bar{s}$ and standard deviation $\text{sd}(s)$.
+
+---
+
+### *2. Bayesian Neural Density Estimator Formulation*
+
+In the Bayesian formulation, we place [<span style="color:#0D6EFD">priors 🛈</span>]{#prior} on all weights and biases of the density estimation network and define a conditional Gaussian mixture likelihood for the unconstrained parameters $u_j$ given the summary statistics $c_j$ [@bishop1994mixture; @delaunoy2024low]. For the code example, we consider two hidden layers with a Gaussian Error Linear Unit ($\text{GELU}$) [<span style="color:#0D6EFD">activation function 🛈</span>]{#Activation} mapped to a $K$-component multivariate Normal mixture output layer:
+
+$$
+\begin{aligned}
+u_j &\sim \sum_{k=1}^{K} \pi_{j,k}\, \text{MVNormal}\!\left(\mu_{j,k},\, \Sigma_{j,k}\right) \\
+\Sigma_{j,k} &= L_{j,k} L_{j,k}^\top \\
+\pi_j &= \text{Softmax}(\phi_j) \\
+[\phi_j,\, \mu_j,\, \psi_j] &= H_{j,2} W_3 + b_3 \\
+H_{j,2} &= \text{GELU}(H_{j,1} W_2 + b_2) \\
+H_{j,1} &= \text{GELU}(c_j W_1 + b_1) \\
+W_\ell &\sim \text{Normal}\!\left(0,\, \frac{\sigma_w}{\sqrt{D_{\text{in}}^{(\ell)}}}\right), \qquad \ell \in \{1, 2, 3\} \\
+b_\ell &\sim \text{Normal}(0,\, \sigma_w), \qquad \ell \in \{1, 2, 3\} \\
+\end{aligned}
+$$
+
+where:
+
+* $u_j$ is the $D$-dimensional vector of standardized unconstrained parameters ($D = 3$) for the $j$-th simulation, which serves as the observed outcome of the neural network during training.
+* $c_j$ is the input row vector of standardized summary statistics for the $j$-th simulation, with length $D_S = 3$.
+* $H_{j,1}$ is the first hidden layer representation vector for the $j$-th simulation, with length $D_{H1} = 64$.
+* $H_{j,2}$ is the second hidden layer representation vector for the $j$-th simulation, with length $D_{H2} = 64$.
+* $W_1$ and $b_1$ are the weight matrix ($3 \times 64$) and bias vector ($64$) of the first hidden layer.
+* $W_2$ and $b_2$ are the weight matrix ($64 \times 64$) and bias vector ($64$) of the second hidden layer.
+* $W_3$ and $b_3$ are the final output layer weight matrix and bias vector mapping the hidden features $H_{j,2}$ to the $K(1 + D + D(D+1)/2)$ mixture parameters (for $K = 5$ and $D = 3$, shape $64 \times 50$).
+* $\phi_j$ is the $K$-dimensional vector of unnormalized component logits, transformed via the $\text{Softmax}$ function into the mixture weights $\pi_j = (\pi_{j,1}, \dots, \pi_{j,K})$ summing to $1$.
+* $\mu_{j,k}$ is the $D$-dimensional predicted mean vector of the $k$-th Gaussian mixture component ($k \in \{1, \dots, K\}$).
+* $\psi_{j,k}$ is the vector of $D(D+1)/2$ unconstrained covariance parameters for the $k$-th component, which populates the lower-triangular Cholesky factor $L_{j,k}$ with strictly positive diagonal entries $L_{j,k,dd} = \text{softplus}(\psi_{j,k,dd} + \delta) + 10^{-3}$ ($\delta = 0.5413$ so that $L_{j,k,dd} \approx 1$ at initialization), guaranteeing a symmetric positive-definite covariance matrix $\Sigma_{j,k} = L_{j,k} L_{j,k}^\top$.
+* $\sigma_w$ is the prior scale hyperparameter governing weight regularization, scaled by $1/\sqrt{D_{\text{in}}^{(\ell)}}$ on each weight matrix $W_\ell$ to preserve activation variance across layers.
+
+---
+
+### *3. Variational Inference over Weights and Posterior Marginalization*
+
+Let $\Theta = \{W_1, b_1, W_2, b_2, W_3, b_3\}$ denote the complete collection of neural network weights and biases, and let $q_\Theta(u_j \mid c_j)$ denote the conditional mixture density defined above. Given the simulated training dataset $\mathcal{D} = \{(u_j, c_j)\}_{j=1}^{M}$, Bayesian NPE approximates the intractable posterior distribution $p(\Theta \mid \mathcal{D})$ with a variational distribution $q_\lambda(\Theta)$ by maximizing the Evidence Lower Bound ($\text{ELBO}$):
+
+$$
+\begin{aligned}
+\text{ELBO}(\lambda) &= \mathbb{E}_{q_\lambda(\Theta)}\!\left[\sum_{j=1}^{M} \log q_\Theta(u_j \mid c_j)\right] - \text{KL}\!\left(q_\lambda(\Theta) \,\Big\|\, p(\Theta)\right) \\
+q(u \mid c_{\text{obs}}) &= \int q_\Theta(u \mid c_{\text{obs}})\, p(\Theta \mid \mathcal{D})\, d\Theta \approx \frac{1}{S} \sum_{s=1}^{S} q_{\Theta^{(s)}}(u \mid c_{\text{obs}}) \\
+\Theta^{(s)} &\sim q_\lambda(\Theta), \qquad s \in \{1, \dots, S\} \\
+\end{aligned}
+$$
+
+where:
+
+* $\Theta$ is the full vector of neural network parameters (weights and biases across all layers).
+* $p(\Theta)$ is the joint Normal prior distribution placed over all network weights and biases.
+* $q_\lambda(\Theta)$ is the variational approximation to the weight posterior $p(\Theta \mid \mathcal{D})$, parameterized by $\lambda$:
+  * In **standard NPE**, $q_\lambda(\Theta) = \delta(\Theta - \hat{\Theta})$ is a Dirac point mass centered at a single network $\hat{\Theta}$, reducing inference to a single point-estimate density $q_{\hat{\Theta}}(u \mid c_{\text{obs}})$ that ignores weight uncertainty.
+  * In **Bayesian NPE**, $q_\lambda(\Theta) = \prod_m \text{Normal}(\Theta_m \mid \nu_m, \tau_m^2)$ is a mean-field Normal distribution assigning a posterior mean $\nu_m$ and standard deviation $\tau_m$ to every network weight and bias.
+* $\text{KL}\big(q_\lambda(\Theta) \,\|\, p(\Theta)\big)$ is the Kullback–Leibler divergence penalizing variational weight distributions that stray too far from the prior $p(\Theta)$, which naturally prevents the network from memorizing small simulation budgets.
+* $\Theta^{(s)}$ is the $s$-th network weight configuration drawn from the fitted variational distribution $q_\lambda(\Theta)$ ($S = 100$ network draws).
+* $q(u \mid c_{\text{obs}})$ is the final marginalized posterior density evaluated at the observed summary statistics $c_{\text{obs}}$, obtained by averaging the predictive densities of all $S$ sampled networks.
+
+---
+
+### *4. Simulation-Based Calibration (Expected Coverage)*
+
+To assess whether the resulting posterior distribution $q(\theta \mid s(Y))$ is statistically calibrated across the prior predictive space, expected coverage is evaluated on $N_{\text{test}}$ independent validation pairs $(\theta^*_i, Y^*_i)$ simulated from the forward model [@hermans2022trust]:
+
+$$
+\begin{aligned}
+r_i &= \frac{1}{K_{\text{post}}} \sum_{k=1}^{K_{\text{post}}} \mathbb{1}\!\left[q\!\left(u_{i,k} \mid c^*_i\right) > q\!\left(u^*_i \mid c^*_i\right)\right] \\
+\hat{C}(1 - \alpha) &= \frac{1}{N_{\text{test}}} \sum_{i=1}^{N_{\text{test}}} \mathbb{1}\!\left[r_i \le 1 - \alpha\right] \\
+\end{aligned}
+$$
+
+where:
+
+* $(\theta^*_i, Y^*_i)$ is the $i$-th held-out test simulation ($i \in \{1, \dots, N_{\text{test}}\}$), with standardized unconstrained true parameters $u^*_i$ and standardized summary statistics $c^*_i$.
+* $u_{i,k} \sim q(\cdot \mid c^*_i)$ is the $k$-th posterior sample ($k \in \{1, \dots, K_{\text{post}}\}$) drawn from the amortized posterior for the $i$-th test dataset.
+* $r_i \in [0, 1]$ is the probability mass of the smallest highest-density region (HDR) containing the true parameter vector $u^*_i$.
+* $1 - \alpha \in (0, 1)$ is the nominal credibility level under evaluation.
+* $\hat{C}(1 - \alpha)$ is the empirical coverage rate across the $N_{\text{test}}$ test datasets; an ideally calibrated estimator satisfies $\hat{C}(1 - \alpha) = 1 - \alpha$ along the diagonal, whereas curves falling below the diagonal ($\hat{C}(1 - \alpha) < 1 - \alpha$) indicate over-confident posteriors.
+
+## Notes
+::: callout-note
+-   NPE trades simulations for training: 20 000 simulations instead of the million used by ABC-SMC, but a network must be trained. It pays off when simulations are expensive or when many datasets must be analysed with the same model (amortization).
+
+-   Two trainings of the same network (here `m.npe()` and the from-scratch code, which use the same settings but different random draws) give slightly different posteriors: over several seeds, both place the posterior means within about half an exact-posterior standard deviation of NUTS. This is the approximation error of a single trained network; more simulations reduce it.
+
+-   An NPE posterior is only as good as the network fit. Always inspect the training curve (`m.sampler.plot_loss()`) and the expected coverage (`m.sbc_coverage()`) before interpreting the results.
+
+-   The trained network is only valid for data similar to the simulations: observed data far outside the prior predictive distribution (model misspecification) give unreliable posteriors.
+
+-   With 1 000 simulations, the standard NPE network is over-confident: its credible intervals contain the true parameters less often than their nominal level. Bayesian NPE is conservative: its intervals are too wide rather than too narrow, which is the safe side of the error, and both converge to the exact posterior as the simulation budget grows.
+
+-   The BNPE posterior of the observed data is much wider than the exact one here: with 1 000 simulations, the network weights are poorly determined, and BNPE honestly reports this uncertainty. Increase `num_simulations` when simulations are affordable.
+
+-   BNPE is slower than NPE, as it adds a variational fit of all network weights after the standard training.
+:::
+
+## Reference(s)
+
+@bishop1994mixture; @cranmer2020frontier; @delaunoy2024low; @dinh2017density; @greenberg2019automatic; @hermans2022trust; @papamakarios2016fast
+
+::: {#refs}
+:::

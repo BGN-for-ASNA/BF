@@ -361,8 +361,8 @@ class diagWIP:
             self.trace: The arviz trace object containing the diagnostic data
         """
         if backend == "numpyro":
-            if hasattr(self.sampler, "svi"):
-                # Handle SVI wrapper
+            if hasattr(self.sampler, "svi") or getattr(self.sampler, "az_from_dict", False):
+                # Handle SVI / simulation-based (ABC, NPE) wrappers
                 posterior_samples = self.sampler.get_samples(group_by_chain=True)
                 self.trace = _az_from_dict({"posterior": posterior_samples})
             else:
