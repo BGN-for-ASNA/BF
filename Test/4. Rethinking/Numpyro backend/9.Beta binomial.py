@@ -5,6 +5,12 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Priors are identical to the previous local
+# copy: phi ~ exponential(1), alpha ~ normal(0, 1.5) shape (2,), theta = phi + 2.
+PAGE_MODEL = doc_model("6. Beta binomial model.qmd", 0)
 
 model_name = "9.Beta binomial"
 
@@ -22,14 +28,7 @@ m.data_on_model = {
     'admit': jnp.array(m.df.admit.values),
 }
 
-def model_BF(gid, applications, admit):
-    phi = m.dist.exponential(1.0, name='phi')
-    alpha = m.dist.normal(0.0, 1.5, shape=(2,), name='alpha')
-    theta = phi + 2.0
-    pbar = m.link.inv_logit(alpha[gid])
-    concentration1 = pbar * theta
-    concentration0 = (1.0 - pbar) * theta
-    m.dist.beta_binomial(total_count=applications, concentration1=concentration1, concentration0=concentration0, obs=admit)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -87,12 +86,7 @@ def param_recovery(gid, applications, a_sims, phi_sims, nsim):
 
     m_rec = bf(print_devices_found=False)
 
-    def model_rec(gid, applications, admit):
-        phi = m_rec.dist.exponential(1.0, name='phi')
-        alpha = m_rec.dist.normal(0.0, 1.5, shape=(2,), name='alpha')
-        theta = phi + 2.0
-        pbar = m_rec.link.inv_logit(alpha[gid])
-        m_rec.dist.beta_binomial(total_count=applications, concentration1=pbar * theta, concentration0=(1 - pbar) * theta, obs=admit)
+    model_rec = PAGE_MODEL
 
     for i in range(nsim):
         a_true = a_sims[i]
@@ -127,6 +121,7 @@ def param_recovery(gid, applications, a_sims, phi_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Drawn from the page priors: alpha ~ normal(0, 1.5) shape (2,), phi ~ exponential(1)
 a_sims = np.random.normal(0, 1.5, size=(nsim_test, 2))
 phi_sims = np.random.exponential(1.0, size=(nsim_test, 1))
 

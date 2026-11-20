@@ -5,6 +5,13 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page.
+# Priors identical to the previous local copy (a ~ normal(0,0.2), beta,eta ~ normal(0,0.5),
+# s ~ exponential(1)).
+PAGE_MODEL = doc_model("20. Measuring error.qmd", 0)
 
 model_name = "15.Measuring error"
 
@@ -24,14 +31,7 @@ dat = dict(
 )
 m.data_on_model = dat
 
-def model_BF(D_obs, D_sd, A, N, M):
-    a = m.dist.normal(0, 0.2, name='a')
-    beta = m.dist.normal(0, 0.5, name='beta')
-    eta = m.dist.normal(0, 0.5, name='eta')
-    s = m.dist.exponential(1, name='s')
-    mu = a + beta * A + eta * M
-    D_true = m.dist.normal(mu, s, name='D_true')
-    m.dist.normal(D_true, D_sd, obs=D_obs)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -99,14 +99,7 @@ def estimate(A_vec, M_vec, D_sd_vec, a_true, beta_true, eta_true, s_true):
         'M': jnp.array(M_vec),
         'N': len(A_vec),
     }
-    def model_rec(D_obs, D_sd, A, N, M):
-        a = m_rec.dist.normal(0, 0.2, name='a')
-        beta = m_rec.dist.normal(0, 0.5, name='beta')
-        eta = m_rec.dist.normal(0, 0.5, name='eta')
-        s = m_rec.dist.exponential(1, name='s')
-        mu = a + beta * A + eta * M
-        D_true = m_rec.dist.normal(mu, s, name='D_true')
-        m_rec.dist.normal(D_true, D_sd, obs=D_obs)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     summ = m_rec.summary()
@@ -131,10 +124,12 @@ def param_recovery(A_vec, M_vec, D_sd_vec, a_sims, beta_sims, eta_sims, s_sims, 
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Sample true params from the page model's priors, untruncated:
+# a ~ normal(0, 0.2); beta, eta ~ normal(0, 0.5); s ~ exponential(1)
 a_sims = np.random.normal(0, 0.2, size=nsim_test)
 beta_sims = np.random.normal(0, 0.5, size=nsim_test)
 eta_sims = np.random.normal(0, 0.5, size=nsim_test)
-s_sims = np.random.uniform(0.3, 1.2, size=nsim_test)
+s_sims = np.random.exponential(1.0, size=nsim_test)
 
 A_ext = np.tile(np.asarray(dat['A']), 4)
 M_ext = np.tile(np.asarray(dat['M']), 4)

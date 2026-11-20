@@ -1,28 +1,28 @@
 Comparison Table for 6b.Poisson with offset
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-     b[0] -0.0980   -0.0982  0.0002 0.0309
-     a[1]  3.4878    3.4879 -0.0001 0.0535
-     a[0]  2.4884    2.4884  0.0001 0.0294
-     b[1]  0.1879    0.1881 -0.0002 0.0564
+     a[0]  2.4885    2.4889 -0.0004 0.1046
+     b[0] -0.0978   -0.0979  0.0000 0.0574
+     b[1]  0.1884    0.1882  0.0001 0.0453
+     a[1]  3.4878    3.4873  0.0004 0.0751
 ============================================================
 
 ================================================================
 WAIC cross-check  -  6b.Poisson with offset
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -391.542519    p_waic = 6.585976
+      elpd_waic = -391.523163    p_waic = 6.570286
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -391.542519    p_waic = 6.585976
+      elpd_waic = -391.523163    p_waic = 6.570286
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=100)
 ----------------------------------------------------------------
 LOO cross-check  -  6b.Poisson with offset
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -391.643129    p_loo  = 6.686586
+      elpd_loo  = -391.612673    p_loo  = 6.659796
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -391.643237    p_loo  = 6.686694
-|delta elpd_loo| = 1.080e-04      |delta p_loo| = 1.080e-04
+      elpd_loo  = -391.612732    p_loo  = 6.659855
+|delta elpd_loo| = 5.893e-05      |delta p_loo| = 5.893e-05
 RESULT: PASS
 ================================================================

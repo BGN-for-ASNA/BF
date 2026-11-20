@@ -3,3 +3,5 @@
 # The system /usr/bin/python3 has no Jupyter, which makes executable docs
 # fail to start a kernel ("No module named 'nbformat'") during render.
 QUARTO_PYTHON=/home/sosa/venv-bf/bin/python
+# Record the BF functions each page calls (scripts/invalidate_freeze.py).
+BF_TRACK_DEPS=1

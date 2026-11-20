@@ -1,29 +1,29 @@
 Comparison Table for 14.Dirichlet
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-  beta[0]  1.0773    1.0784 -0.0011 0.0421
- alpha[1] -0.4971   -0.4940 -0.0031 0.0351
-  beta[1]  0.6285    0.6309 -0.0024 0.0699
-    kappa  9.8326    9.8061  0.0266 0.0612
- alpha[0]  0.4416    0.4423 -0.0006 0.0934
+ alpha[1] -0.4988   -0.4966 -0.0022 0.0924
+  beta[0]  1.0763    1.0783 -0.0020 0.0396
+  beta[1]  0.6277    0.6291 -0.0015 0.0802
+    kappa  9.8105    9.8097  0.0008 0.0597
+ alpha[0]  0.4409    0.4414 -0.0005 0.0388
 ============================================================
 
 ================================================================
 WAIC cross-check  -  14.Dirichlet
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = +336.668942    p_waic = 4.508130
+      elpd_waic = +336.571652    p_waic = 4.574261
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = +336.668942    p_waic = 4.508130
+      elpd_waic = +336.571652    p_waic = 4.574261
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=200)
 ----------------------------------------------------------------
 LOO cross-check  -  14.Dirichlet
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = +336.661581    p_loo  = 4.515490
+      elpd_loo  = +336.562770    p_loo  = 4.583144
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = +336.661459    p_loo  = 4.515612
-|delta elpd_loo| = 1.221e-04      |delta p_loo| = 1.221e-04
+      elpd_loo  = +336.562774    p_loo  = 4.583140
+|delta elpd_loo| = 4.434e-06      |delta p_loo| = 4.434e-06
 RESULT: PASS
 ================================================================

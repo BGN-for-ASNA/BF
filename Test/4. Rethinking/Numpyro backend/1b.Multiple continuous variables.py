@@ -5,6 +5,17 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Same likelihood and same
+# parameters (alpha, beta1, beta2, sigma) as the previous local copy; priors
+# identical for the main fit (alpha ~ normal(178,20), beta1/beta2 ~ normal(0,0.5),
+# sigma ~ uniform(0,50)).
+# The recovery model differs: this page uses alpha ~ normal(178,20) and
+# sigma ~ uniform(0,50) where the old local recovery model used
+# alpha ~ normal(0,1) and sigma ~ exponential(1).
+PAGE_MODEL = doc_model("2. Multiple continuous variables.qmd", 0)
 
 model_name = "1b.Multiple continuous variables"
 
@@ -18,12 +29,7 @@ m.df = m.df[m.df.age > 18]
 m.scale(['weight', 'age'])
 
 # 2. Define model ------------------------------------------------
-def model_BF(height, weight, age):
-    alpha = m.dist.normal(178, 20, name='alpha')
-    beta1 = m.dist.normal(0, 0.5, name='beta1')
-    beta2 = m.dist.normal(0, 0.5, name='beta2')
-    sigma = m.dist.uniform(0, 50, name='sigma')
-    m.dist.normal(alpha + beta1 * weight + beta2 * age, sigma, obs=height)
+model_BF = PAGE_MODEL
 
 # 3. Run sampler ------------------------------------------------
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -74,12 +80,9 @@ plot_comparaison(m, stan_df, param_map=param_map, model_name=model_name)
 
 # 5. Parameter Recovery (DGP-IF pipeline) ------------------------------------------------
 print('Running Parameters recovery')
-def model_rec(height, weight, age):
-    alpha = m.dist.normal(0, 1, name='alpha')
-    beta1 = m.dist.normal(0, 0.5, name='beta1')
-    beta2 = m.dist.normal(0, 0.5, name='beta2')
-    sigma = m.dist.exponential(1, name='sigma')
-    m.dist.normal(alpha + beta1 * weight + beta2 * age, sigma, obs=height)
+# Page priors (alpha ~ normal(178,20), sigma ~ uniform(0,50)) replace the old
+# recovery priors (alpha ~ normal(0,1), sigma ~ exponential(1)).
+model_rec = PAGE_MODEL
 
 def simulate_height(weight, age, alpha, beta1, beta2, sigma):
     weight_scaled = (weight - weight.mean()) / weight.std()
@@ -118,10 +121,10 @@ def param_recovery(weight_data, age_data, alpha_sims, beta1_sims, beta2_sims, si
 
 N = 200
 nsim = int(os.environ.get("BF_NSIM", 10))
-alpha_sims = np.random.normal(0, 1, size=(nsim, 1))
+alpha_sims = np.random.normal(178, 20, size=(nsim, 1))
 beta1_sims = np.random.normal(0, 0.5, size=(nsim, 1))
 beta2_sims = np.random.normal(0, 0.5, size=(nsim, 1))
-sigma_sims = np.random.exponential(1, size=(nsim, 1))
+sigma_sims = np.random.uniform(0, 50, size=(nsim, 1))
 weight_data = np.random.normal(80, 30, size=(nsim, N))
 age_data = np.random.normal(40, 15, size=(nsim, N))
 

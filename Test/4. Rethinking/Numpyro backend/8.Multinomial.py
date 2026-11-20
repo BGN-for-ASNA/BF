@@ -5,6 +5,13 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. The categorical page is the page of this
+# model (one career per person); the multinomial page models Y with 20 trials per observation.
+# Priors are identical to the previous local copy: a ~ normal(0, 1) shape (2,), b ~ half_normal(1.0).
+PAGE_MODEL = doc_model("10. Categorical model.qmd", 0)
 
 model_name = "8.Multinomial"
 
@@ -42,17 +49,7 @@ df = pd.DataFrame({
 m.df = df
 m.data_to_model(['career', 'inc0', 'inc1', 'inc2'])
 
-def model_BF(career, inc0, inc1, inc2):
-    a = m.dist.normal(0, 1, shape=(2,))
-    b = m.dist.half_normal(1.0)
-    
-    s1 = a[0] + b * inc0
-    s2 = a[1] + b * inc1
-    s3 = b * inc2
-    
-    # BF handles vector-to-vector softmax if inputs are vectors
-    p = jax.nn.softmax(jnp.stack([s1, s2, s3], axis=1), axis=1)
-    m.dist.categorical(probs=p, obs=career)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -119,15 +116,7 @@ def estimate(income_sim, a_true, b_true):
         'inc1': jnp.array(income_sim[:, 1]),
         'inc2': jnp.array(income_sim[:, 2])
     }
-    def model_rec(career, inc0, inc1, inc2):
-        a = m_rec.dist.normal(0, 1, shape=(2,))
-        b = m_rec.dist.half_normal(1.0)
-        s1 = a[0] + b * inc0
-        s2 = a[1] + b * inc1
-        s3 = b * inc2
-        p = jax.nn.softmax(jnp.stack([s1, s2, s3], axis=1), axis=1)
-        m_rec.dist.categorical(probs=p, obs=career)
-        
+    model_rec = PAGE_MODEL
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
     return s.iloc[:, 0]

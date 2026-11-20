@@ -792,6 +792,13 @@ class bf(manip):
                 (num_warmup, "num_warmup", 0), (num_samples, "num_samples", 1),
                 (num_chains, "num_chains", 1), (thinning, "thinning", 1),
                 (max_tree_depth, "max_tree_depth", 1)))
+        # BF_DOC_FAST=1 (documentation smoke tests): cap the sampler sizes so
+        # every example runs in seconds. Results are not meant to be read.
+        import os as _os
+        if _os.environ.get("BF_DOC_FAST", "0") == "1":
+            num_warmup = min(num_warmup, 50)
+            num_samples = min(num_samples, 50)
+            num_chains = min(num_chains, 2)
         self.num_chains = num_chains
 
         # Sharding is declared here, per fit. fit(shard=None) (the default)

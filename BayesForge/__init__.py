@@ -52,3 +52,6 @@ if _os.environ.get("BF_QUIET", "0") != "1":
     print(f"bf v {__version__} package loaded")
 __all__ = ["bf", "BF", "BayesForge", "setup_device", "load",
            "run_simulations", "grid"]
+if _os.environ.get("BF_TRACK_DEPS") == "1":
+    from .Utils import doc_deps as _doc_deps
+    _doc_deps.install()

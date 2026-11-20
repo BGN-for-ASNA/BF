@@ -165,3 +165,29 @@ def language_tabs(page):
                 if level == tabset[3]:
                     tabset[2] = line.lstrip("#").strip().lower()
     return out
+
+
+def doc_model(page, index=0, name="model"):
+    """The ``index``-th function ``name`` defined in the python blocks of a doc page.
+
+    Each block defining it is executed in a fresh namespace up to (not including)
+    its first top-level line starting with ``m.fit(``, so no sampling runs.
+    The returned function closes over that block's ``m`` (its ``m.dist``).
+    Deep tests fit it with their own bf object: the model as published is the
+    model tested.
+    """
+    path = pathlib.Path(page)
+    if not path.exists():
+        path = DOCS / page
+    candidates = [b for b in blocks(path, "python") if f"def {name}(" in b]
+    if not -len(candidates) <= index < len(candidates):
+        raise LookupError(f"no python block #{index} defining {name} in "
+                          f"{pathlib.Path(page).name}")
+    lines = candidates[index].splitlines()
+    for n, line in enumerate(lines):
+        if line.startswith("m.fit("):
+            lines = lines[:n]
+            break
+    ns = {"__name__": "doc_page"}
+    exec("\n".join(lines), ns)
+    return ns[name]

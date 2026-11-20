@@ -5,6 +5,14 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Identical to the previous
+# local copy: same likelihood, same parameters (a, b, shape=(4,)) and same priors
+# (a ~ normal(0,0.5), b ~ normal(0,0.5), s ~ exponential(1)) for both the main
+# fit and the recovery fit.
+PAGE_MODEL = doc_model("4. Categorical variable.qmd", 0)
 
 model_name = "2.Categorical variable"
 
@@ -20,12 +28,7 @@ m.df = m.df.rename(columns={'kcal.per.g': 'kcal_per_g'})
 m.index(["clade"])
 m.scale(['kcal_per_g', 'mass'])
 
-def model_BF(kcal_per_g, index_clade, mass):
-    a = m.dist.normal(0, 0.5, shape=(4,), name='a')
-    b = m.dist.normal(0, 0.5, shape=(4,), name='b')
-    s = m.dist.exponential(1, name='s')
-    mu = a[index_clade] + b[index_clade] * mass
-    m.dist.normal(mu, s, obs=kcal_per_g)
+model_BF = PAGE_MODEL
 
 m.data_to_model(['kcal_per_g', 'index_clade', 'mass'])
 m.fit(model_BF)
@@ -81,12 +84,7 @@ param_map = {
 plot_comparaison(m, stan_df, param_map=param_map, model_name=model_name)
 
 print('Running Parameters recovery')
-def model_rec(kcal_per_g, index_clade, mass):
-    a = m.dist.normal(0, 0.5, shape=(4,), name='a')
-    b = m.dist.normal(0, 0.5, shape=(4,), name='b')
-    s = m.dist.exponential(1, name='s')
-    mu = a[index_clade] + b[index_clade] * mass
-    m.dist.normal(mu, s, obs=kcal_per_g)
+model_rec = PAGE_MODEL
 
 def simulate_data(index_clade, mass, a, b, s):
     kcal_per_g = m.dist.normal(a[index_clade] + b[index_clade] * mass, s, sample=True)

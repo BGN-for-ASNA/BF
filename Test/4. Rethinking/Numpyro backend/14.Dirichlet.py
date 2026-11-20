@@ -6,6 +6,12 @@ import numpy as np
 import jax.numpy as jnp
 import jax
 from jax.nn import softmax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page.
+# Priors identical to the previous local copy (alpha,beta ~ normal(0,5), kappa ~ exponential(1)).
+PAGE_MODEL = doc_model("12. Dirichlet model.qmd", 0, name="model_dirichlet")
 
 model_name = "14.Dirichlet"
 
@@ -33,19 +39,7 @@ for i in range(N):
 
 m.data_on_model = dict(X=jnp.array(X), Y=jnp.array(Y))
 
-def model_BF(X, Y):
-    alpha = m.dist.normal(0, 5, shape=(2,), name="alpha")
-    beta = m.dist.normal(0, 5, shape=(2,), name="beta")
-    kappa = m.dist.exponential(1.0, name="kappa")
-
-    s1 = alpha[0] + beta[0] * X
-    s2 = alpha[1] + beta[1] * X
-    s3 = jnp.zeros_like(s1)
-
-    phi = jnp.stack([s1, s2, s3], axis=1)
-    theta = jax.nn.softmax(phi, axis=1)
-
-    m.dist.dirichlet(theta * kappa, obs=Y)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -114,16 +108,7 @@ def estimate(X_vec, alpha_true, beta_true, kappa_true):
 
     m_rec = bf(print_devices_found=False)
     m_rec.data_on_model = {'X': jnp.array(X_vec), 'Y': jnp.array(Y_sim)}
-    def model_rec(X, Y):
-        alpha = m_rec.dist.normal(0, 5, shape=(2,), name="alpha")
-        beta = m_rec.dist.normal(0, 5, shape=(2,), name="beta")
-        kappa = m_rec.dist.exponential(1.0, name="kappa")
-        s1 = alpha[0] + beta[0] * X
-        s2 = alpha[1] + beta[1] * X
-        s3 = jnp.zeros_like(s1)
-        phi = jnp.stack([s1, s2, s3], axis=1)
-        theta = jax.nn.softmax(phi, axis=1)
-        m_rec.dist.dirichlet(theta * kappa, obs=Y)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
@@ -145,9 +130,11 @@ def param_recovery(X_vec, alpha_sims, beta_sims, kappa_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
-alpha_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
-beta_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
-kappa_sims = np.random.uniform(5.0, 15.0, size=(nsim_test,))
+# Sample true params from the page model's priors, untruncated:
+# alpha, beta ~ normal(0, 5); kappa ~ exponential(1)
+alpha_sims = np.random.normal(0, 5.0, size=(nsim_test, 2))
+beta_sims = np.random.normal(0, 5.0, size=(nsim_test, 2))
+kappa_sims = np.random.exponential(1.0, size=(nsim_test,))
 
 recovery_results = param_recovery(X, alpha_sims, beta_sims, kappa_sims, nsim=nsim_test)
 

@@ -1,26 +1,26 @@
 Comparison Table for 10.Zero inflated
 ============================================================
-Parameter BF Mean Stan Mean   Diff KL Div
-       al -0.0156   -0.0217 0.0061 0.1037
-       ap -1.4296   -1.4665 0.0369 0.1256
+Parameter BF Mean Stan Mean    Diff KL Div
+       al -0.0171   -0.0156 -0.0015 0.0650
+       ap -1.4348   -1.4367  0.0019 0.0957
 ============================================================
 
 ================================================================
 WAIC cross-check  -  10.Zero inflated
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -437.320977    p_waic = 1.846884
+      elpd_waic = -437.401695    p_waic = 1.933487
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -437.320977    p_waic = 1.846884
+      elpd_waic = -437.401695    p_waic = 1.933487
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=365)
 ----------------------------------------------------------------
 LOO cross-check  -  10.Zero inflated
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -437.323536    p_loo  = 1.849444
+      elpd_loo  = -437.404635    p_loo  = 1.936427
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -437.324109    p_loo  = 1.850017
-|delta elpd_loo| = 5.733e-04      |delta p_loo| = 5.733e-04
+      elpd_loo  = -437.405478    p_loo  = 1.937270
+|delta elpd_loo| = 8.431e-04      |delta p_loo| = 8.431e-04
 RESULT: PASS
 ================================================================

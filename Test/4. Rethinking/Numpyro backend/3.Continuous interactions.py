@@ -5,6 +5,15 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Same likelihood and same
+# parameters (sigma, bws, bs, bw, a) and the same priors as the previous local
+# copy, for both the main fit and the recovery fit
+# (sigma ~ exponential(1), bws/bs/bw ~ normal(0,0.25), a ~ normal(0.5,0.25)).
+# The page's argument order is (blooms_scaled, shade_scaled, water_scaled).
+PAGE_MODEL = doc_model("3. Interaction between continuous variables.qmd", 0)
 
 model_name = "3.Continuous interactions"
 
@@ -21,14 +30,7 @@ df['shade_scaled'] = df.shade - df.shade.mean()
 m.df = df
 m.data_to_model(['blooms_scaled', 'water_scaled', 'shade_scaled'])
 
-def model_BF(blooms_scaled, water_scaled, shade_scaled):
-    sigma = m.dist.exponential(1)
-    bws = m.dist.normal(0, 0.25)
-    bs = m.dist.normal(0, 0.25)
-    bw = m.dist.normal(0, 0.25)
-    a = m.dist.normal(0.5, 0.25)
-    mu = a + bw*water_scaled + bs*shade_scaled + bws*water_scaled*shade_scaled
-    m.dist.normal(mu, sigma, obs=blooms_scaled)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -89,17 +91,12 @@ def sim_blooms(water, shade, sigma, bws, bs, bw, a):
 def estimate(water, shade, sigma, bws, bs, bw, a):
     blooms_sim = sim_blooms(water, shade, sigma, bws, bs, bw, a)
     m_rec = bf(print_devices_found=False)
-    m_rec.df = pd.DataFrame({"water": water, "shade": shade, "blooms": blooms_sim})
-    
-    def model_rec(blooms, shade, water):
-        sigma = m_rec.dist.exponential(1)
-        bws = m_rec.dist.normal(0, 0.25)
-        bs = m_rec.dist.normal(0, 0.25)
-        bw = m_rec.dist.normal(0, 0.25)
-        a = m_rec.dist.normal(0.5, 0.25)
-        mu = a + bw*water + bs*shade + bws*water*shade
-        m_rec.dist.normal(mu, sigma, obs=blooms)
-        
+    m_rec.df = pd.DataFrame({"water_scaled": water, "shade_scaled": shade,
+                             "blooms_scaled": blooms_sim})
+
+    # Page model; same priors as the old local recovery model.
+    model_rec = PAGE_MODEL
+
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
     return s.iloc[:, 0]

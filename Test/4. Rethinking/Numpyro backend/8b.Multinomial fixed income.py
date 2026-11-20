@@ -6,6 +6,14 @@ from pathlib import Path
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Priors are identical to the previous local
+# copy: alpha ~ normal(0, 1) and beta ~ normal(0, 1), both shape (2,). The page hardcodes
+# total_count=20 in the multinomial likelihood, which is the trial count of this data set
+# (n_trials below), so the likelihood is the same.
+PAGE_MODEL = doc_model("11. Multinomial model.qmd", 0)
 
 model_name = "8b.Multinomial fixed income"
 
@@ -24,15 +32,7 @@ np.random.seed(42)  # parameter recovery below draws from the numpy global state
 
 m.data_on_model = dict(X=jnp.array(X), Y=jnp.array(Y))
 
-def model_BF(X, Y):
-    alpha = m.dist.normal(0, 1, shape=(2,), name='alpha')
-    beta = m.dist.normal(0, 1, shape=(2,), name='beta')
-    s1 = alpha[0] + beta[0] * X
-    s2 = alpha[1] + beta[1] * X
-    s3 = jnp.zeros_like(s1)
-    phi = jnp.stack([s1, s2, s3], axis=1)
-    theta = jax.nn.softmax(phi, axis=1)
-    m.dist.multinomial(total_count=n_trials, probs=theta, obs=Y)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -98,15 +98,7 @@ def estimate(X_sim, alpha_true, beta_true):
         'X': jnp.array(X_sim),
         'Y': jnp.array(Y_sim),
     }
-    def model_rec(X, Y):
-        alpha = m_rec.dist.normal(0, 1, shape=(2,), name='alpha')
-        beta = m_rec.dist.normal(0, 1, shape=(2,), name='beta')
-        s1 = alpha[0] + beta[0] * X
-        s2 = alpha[1] + beta[1] * X
-        s3 = jnp.zeros_like(s1)
-        phi = jnp.stack([s1, s2, s3], axis=1)
-        theta = jax.nn.softmax(phi, axis=1)
-        m_rec.dist.multinomial(total_count=n_trials, probs=theta, obs=Y)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
@@ -128,8 +120,9 @@ def param_recovery(X_sim, alpha_sims, beta_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
-alpha_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
-beta_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
+# Drawn from the page priors: alpha ~ normal(0, 1) shape (2,), beta ~ normal(0, 1) shape (2,)
+alpha_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
+beta_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
 X_rec = np.random.normal(0, 1, size=200)
 
 recovery_results = param_recovery(X_rec, alpha_sims, beta_sims, nsim=nsim_test)
