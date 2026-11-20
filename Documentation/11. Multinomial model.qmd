@@ -26,26 +26,41 @@ Below is an example code snippet demonstrating a Bayesian multinomial model usin
 from BayesForge import bf
 import jax.numpy as jnp
 import jax
+import numpy as np
+
 # Setup device ------------------------------------------------
 m = bf('cpu')
 
-# Import Data & Data Manipulation ------------------------------------------------
-# Import
-data_path = m.load.sim_multinomial(only_path=True)
-m.data(data_path, sep=',') 
+# Simulated data ------------------------------------------------
+np.random.seed(42)
+N = 200
+n_trials = 20
+X = np.random.normal(0, 1, size=N)
+
+true_alpha = np.array([0.5, -0.5])
+true_beta = np.array([1.0, 0.5])
+
+phi = np.column_stack([
+    true_alpha[0] + true_beta[0] * X,
+    true_alpha[1] + true_beta[1] * X,
+    np.zeros(N),
+])
+theta = np.asarray(jax.nn.softmax(jnp.array(phi), axis=1))
+Y = np.array([np.random.multinomial(n_trials, theta[i]) for i in range(N)])
+
+m.data_on_model = dict(X=jnp.array(X), Y=jnp.array(Y))
 
 # Define model ------------------------------------------------
-def model(income, career):
-    # Parameter prior distributions
-    alpha = m.dist.normal(0, 1, shape=(2,), name='a')
-    beta = m.dist.half_normal(0.5, shape=(1,), name='b')
-    s_1 = alpha[0] + beta * income[0]
-    s_2 = alpha[1] + beta * income[1]
-    s_3 = [0]
-    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
-    # Likelihood
-    m.dist.categorical(probs=p, obs=career)
-    
+def model(X, Y):
+    alpha = m.dist.normal(0, 1, shape=(2,), name='alpha')
+    beta = m.dist.normal(0, 1, shape=(2,), name='beta')
+    s1 = alpha[0] + beta[0] * X
+    s2 = alpha[1] + beta[1] * X
+    s3 = jnp.zeros_like(s1)
+    phi = jnp.stack([s1, s2, s3], axis=1)
+    theta = jax.nn.softmax(phi, axis=1)
+    m.dist.multinomial(total_count=20, probs=theta, obs=Y)
+
 # Run sampler ------------------------------------------------ 
 m.fit(model, progress_bar=False)  
 
@@ -62,33 +77,45 @@ jnp <- reticulate::import('jax.numpy')
 # Setup platform------------------------------------------------
 m=importBF(platform='cpu')
 
-# import data ------------------------------------------------
-m$data(m$load$sim_multinomial(only_path=T), sep=',')
-keys <- c("income", "career")
-income = unique(m$df$income)
-income = income[order(income)]
-values <- list(jnp$array(as.integer(income)),jnp$array( as.integer(m$df$career)))
-m$data_on_model = reticulate::py_dict(keys, values, convert = TRUE)
+# Simulated data ------------------------------------------------
+set.seed(42)
+N = 200L
+n_trials = 20L
+X = rnorm(N, 0, 1)
 
-# Define model ------------------------------------------------
-model <- function(income, career){
-  # Parameter prior distributions
-  alpha = m$dist$normal(0, 1, name='a', shape = reticulate::tuple(2L))
-  beta = m$dist$half_normal(0.5, name='b', shape = reticulate::tuple(1L))
-  
-  s_1 = alpha[0L] + beta * income[0L]
-  s_2 = alpha[1L] + beta * income[1L]
-  s_3 = 0 # reference category
-  
-  p = jax$nn$softmax(jnp$stack(list(s_1[0L], s_2[0L], s_3)))
-  
-  # Likelihood
-  m$dist$categorical(probs=p, obs=career, name="career")
+true_alpha = c(0.5, -0.5)
+true_beta = c(1.0, 0.5)
+
+phi = cbind(true_alpha[1] + true_beta[1] * X,
+            true_alpha[2] + true_beta[2] * X,
+            rep(0.0, N))
+exp_phi = exp(phi)
+theta = exp_phi / rowSums(exp_phi)
+
+Y = matrix(0L, nrow=N, ncol=3L)
+for (i in 1:N) {
+  Y[i, ] = as.integer(rmultinom(1, size = n_trials, prob = theta[i, ]))
 }
 
+m$data_on_model = list(X = jnp$array(as.numeric(X)), Y = jnp$array(Y))
+
+# Define model ------------------------------------------------
+model <- function(X, Y){
+  alpha = m$dist$normal(0, 1, name='alpha', shape = reticulate::tuple(2L))
+  beta = m$dist$normal(0, 1, name='beta', shape = reticulate::tuple(2L))
+  
+  s1 = alpha[0L] + beta[0L] * X
+  s2 = alpha[1L] + beta[1L] * X
+  s3 = jnp$zeros_like(s1)
+  
+  phi = jnp$stack(list(s1, s2, s3), axis = 1L)
+  theta = jax$nn$softmax(phi, axis = 1L)
+  
+  m$dist$multinomial(total_count = 20L, probs = theta, obs = Y, name = "Y")
+}
 
 # Run sampler ------------------------------------------------ 
-m$fit(model)  
+m$fit(model, progress_bar=FALSE)  
 
 # Summary ------------------------------------------------
 m$summary()
@@ -97,34 +124,49 @@ m$summary()
 ## Julia
 ```julia
 using PyBayesForge
+using Random
+using Distributions
 
 # Setup device------------------------------------------------
 m = importBF(platform="cpu")
 
-# Import Data & Data Manipulation ------------------------------------------------
-# Import
-data_path = m.load.sim_multinomial(only_path = true)
-m.data(data_path, sep=',')
+# Simulated data ------------------------------------------------
+Random.seed!(42)
+N = 200
+n_trials = 20
+X = rand(Normal(0, 1), N)
+
+true_alpha = [0.5, -0.5]
+true_beta = [1.0, 0.5]
+
+Y = zeros(Int, N, 3)
+for i in 1:N
+    phi1 = true_alpha[1] + true_beta[1] * X[i]
+    phi2 = true_alpha[2] + true_beta[2] * X[i]
+    e = exp.([phi1, phi2, 0.0])
+    θ = e / sum(e)
+    Y[i, :] = rand(Multinomial(n_trials, θ))
+end
+
+m.data_on_model = pydict("X" => jnp.array(X), "Y" => jnp.array(Y))
 
 # Define model ------------------------------------------------
-@BF function model(income, career)
-    # Parameter prior distributions
-    alpha = m.dist.normal(0, 1, shape=(2,), name='a')
-    beta = m.dist.half_normal(0.5, shape=(1,), name='b')
-    s_1 = alpha[0] + beta * income[0]
-    s_2 = alpha[1] + beta * income[1]
-    # ⚠️  Use jnp.array to create a Python object, so [0] indexing works
-    s_3 = jnp.array([0.0]) 
-    p = jax.nn.softmax(jnp.stack([s_1[0], s_2[0], s_3[0]]))
-    # Likelihood
-    m.dist.categorical(probs=p, obs=career)
+@BF function model(X, Y)
+    alpha = m.dist.normal(0, 1, shape=(2,), name="alpha")
+    beta = m.dist.normal(0, 1, shape=(2,), name="beta")
+    s1 = alpha[0] + beta[0] * X
+    s2 = alpha[1] + beta[1] * X
+    s3 = jnp.zeros_like(s1)
+    phi = jnp.stack(pylist([s1, s2, s3]), axis=1)
+    theta = jax.nn.softmax(phi, axis=1)
+    m.dist.multinomial(total_count=20, probs=theta, obs=Y)
 end
 
 # Run mcmc ------------------------------------------------
-m.fit(model)  # Optimize model parameters through MCMC sampling
+m.fit(model, progress_bar=false)
 
 # Summary ------------------------------------------------
-m.summary() # Get posterior distributions
+m.summary()
 ```
 :::
 
@@ -155,7 +197,7 @@ Where:
 
 ## Model validation tests
 
-- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `8.Multinomial.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `8b.Multinomial fixed income.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence) and parameter recovery.
 - [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)

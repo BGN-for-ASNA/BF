@@ -70,10 +70,10 @@ m$data_to_model(list('weight', 'height', 'age')) # Send to model (convert to jax
 # Define model ------------------------------------------------
 model <- function(height, weight, age){
   # Parameter prior distributions
-  alpha = bf.dist.normal(178, 20, name = 'a')
-  beta1 = bf.dist.normal(0, 0.5, name = 'b1')
-  beta2 = bf.dist.normal(0, 0.5, name = 'b2')   
-  sigma = bf.dist.uniform(0, 50, name = 's')
+  alpha = bf.dist.normal(178, 20, name = 'alpha')
+  beta1 = bf.dist.normal(0, 0.5, name = 'beta1')
+  beta2 = bf.dist.normal(0, 0.5, name = 'beta2')   
+  sigma = bf.dist.uniform(0, 50, name = 'sigma')
   # Likelihood
   bf.dist.normal(alpha + beta1 * weight + beta2 * age, sigma, obs=height)
 }
@@ -133,6 +133,7 @@ m$dist$normal(alpha + betas[0] * weight + betas[1] * age, sigma, obs = height)
 ``` 
 :::
 
+<!--
 ### Posterior predictive checks
 
 Are the prediction errors free of structure once weight and age are in the model?
@@ -140,17 +141,17 @@ Are the prediction errors free of structure once weight and age are in the model
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_error_scatter()
+# m.diag.ppc_error_scatter()
 ```
 
 #### R
 ```r
-m$diag$ppc_error_scatter()
+# m$diag$ppc_error_scatter()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_error_scatter()
+# m.diag.ppc_error_scatter()
 ```
 :::
 
@@ -162,22 +163,23 @@ Each point is one person: x is the average error (observed height minus mean pre
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals(x="weight")
+# m.diag.ppc_intervals(x="weight")
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals(x = "weight")
+# m$diag$ppc_intervals(x = "weight")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals(x="weight")
+# m.diag.ppc_intervals(x="weight")
 ```
 :::
 
 Observed heights (points) against weight, with 50 % and 90 % predictive intervals; most points should fall inside the 90 % bars.
 :::
+-->
 
 ## Mathematical Details
 ### *Frequentist formulation*
@@ -233,7 +235,7 @@ Where:
 
 ## Model validation tests
 
-- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `1.Continuous variable.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend): `1b.Multiple continuous variables.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence) and parameter recovery.
 - [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
 
 ## Reference(s)

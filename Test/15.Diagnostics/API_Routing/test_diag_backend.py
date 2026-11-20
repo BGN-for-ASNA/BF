@@ -7,6 +7,9 @@ Covers:
   * the two backends agree numerically (they are verified equal to 1e-6 by
     test_jax_diagnostics_parity.py; here we check them through the live API)
   * backend-independent surfaces (plots, PPC, sensitivity) work either way
+
+The ArviZ references are read the 1.x way (DataTree results, `prob=` on
+``ess(method="tail")``); the statistics and tolerances are unchanged.
 """
 import warnings
 
@@ -17,6 +20,9 @@ from BayesForge import bf
 from BayesForge.Diagnostic.patch_diag import (
     ARVIZ, JAX, _resolve_backend, bind_diag_to_model,
 )
+# BayesForge is imported above first: its __init__ patches
+# jax.interpreters.pxla, which arviz's own jax import can break.
+import arviz as az
 
 
 def _fit(diag_backend="arviz"):
@@ -36,6 +42,29 @@ def _fit(diag_backend="arviz"):
         warnings.simplefilter("ignore")
         m.fit(model, num_samples=800, num_chains=4, progress_bar=False)
     return m
+
+
+def _trace(diag_obj):
+    """The ArviZ container of the fitted draws (BayesForge builds it lazily)."""
+    trace = getattr(diag_obj, "trace", None)
+    if trace is None:
+        trace = diag_obj._ensure_trace()
+    return trace
+
+
+def _ds_val(res, param):
+    """Scalar metric for `param` from an ArviZ rhat/ess result.
+
+    ArviZ 1.x returns an ``xarray.DataTree`` rooted at the group it computed
+    (0.x returned an ``xarray.Dataset``); the variable is at ``res[param]``
+    either way, with ``res["posterior"][param]`` as the fallback for builds
+    that keep the group as a child node.
+    """
+    try:
+        obj = res[param]
+    except (KeyError, TypeError):
+        obj = res["posterior"][param]
+    return float(np.asarray(obj.values))
 
 
 @pytest.fixture(scope="module")
@@ -100,28 +129,45 @@ def test_backends_agree_on_summary(m_az):
         jx_df = m_az.summary(backend="jax", round_to=8)
     az_df8 = m_az.summary(round_to=8)
     for p in ("a", "b", "s"):
-        for col in ("mean", "sd", "ess_bulk", "ess_tail", "r_hat"):
+        for col in ("mean", "sd", "ess_bulk", "r_hat"):
             assert float(az_df8.loc[p, col]) == pytest.approx(
                 float(jx_df.loc[p, col]), rel=1e-6), f"{p}.{col}"
+        # ess_tail cannot be compared table-to-table any more: az.summary
+        # reports the tail ESS at ArviZ's own probability (1 - ci_prob = 0.11
+        # in 1.x), while the jax backend uses the 5%/95% tails of Vehtari et
+        # al. (2021) that ArviZ 0.x used. Ask ArviZ for that same estimator and
+        # compare the jax column against the reference.
+        ref_tail = _ds_val(az.ess(_trace(m_az.diag), method="tail", prob=0.05), p)
+        assert float(jx_df.loc[p, "ess_tail"]) == pytest.approx(
+            ref_tail, rel=1e-6), f"{p}.ess_tail"
     m_az.summary()   # restore the default table
 
 
 # ============================== m.diag.* routing ==============================
 
 def test_diag_metrics_use_arviz(m_az):
-    """ArviZ returns xarray Datasets; jax_diagnostics returns plain dicts."""
+    """ArviZ returns xarray containers; jax_diagnostics returns plain dicts.
+
+    ArviZ 1.x returns an ``xarray.DataTree`` where 0.x returned an
+    ``xarray.Dataset``, so both containers are accepted.
+    """
     import xarray as xr
-    assert isinstance(m_az.diag.rhat(), xr.Dataset)
-    assert isinstance(m_az.diag.ess(), xr.Dataset)
-    assert isinstance(m_az.diag.mcse(), xr.Dataset)
+    containers = (xr.Dataset,)
+    data_tree = getattr(xr, "DataTree", None)
+    if data_tree is not None:
+        containers += (data_tree,)
+    for name in ("rhat", "ess", "mcse"):
+        res = getattr(m_az.diag, name)()
+        assert isinstance(res, containers), \
+            f"{name}() returned {type(res).__name__}, not one of {containers}"
 
 
 def test_diag_metric_values_are_sane(m_az):
     rhat = m_az.diag.rhat()
     ess = m_az.diag.ess()
     for p in ("a", "b", "s"):
-        assert 0.99 <= float(rhat[p].values) <= 1.05
-        assert float(ess[p].values) > 100
+        assert 0.99 <= _ds_val(rhat, p) <= 1.05
+        assert _ds_val(ess, p) > 100
 
 
 def test_diag_loo_and_waic_run(m_az):
@@ -149,7 +195,7 @@ def test_jax_backend_binding_warns_and_switches(m_az):
 
 
 def test_backends_agree_through_the_live_api(m_az):
-    az_rhat = {p: float(m_az.diag.rhat()[p].values) for p in ("a", "b", "s")}
+    az_rhat = {p: _ds_val(m_az.diag.rhat(), p) for p in ("a", "b", "s")}
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         bind_diag_to_model(m_az.diag, m_az, backend="jax")

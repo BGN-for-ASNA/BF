@@ -50,7 +50,7 @@ m = bf(platform='cpu')
 from importlib.resources import files
 data_path = m.load.ucbadmit(only_path = True)
 m.data(data_path, sep=';') 
-m.df["gid"] = (m.df["applicant.gender"] != "male").astype(int)
+m.df["gid"] = (m.df["applicant_gender"] != "male").astype(int)
 
 # Define model ------------------------------------------------
 def model(gid, applications, admit):
@@ -96,7 +96,7 @@ m=importBF(platform='cpu')
 jnp = reticulate::import("jax.numpy")
 # import data ------------------------------------------------
 m$data(m$load$ucbadmit(only_path = T), sep=';')
-m$data_on_model$gid = jnp$array(as.integer(ifelse(m$df["applicant.gender"] == "male", 0, 1)))
+m$data_on_model$gid = jnp$array(as.integer(ifelse(m$df["applicant_gender"] == "male", 0, 1)))
 m$data_on_model$applications = jnp$array(as.integer(unlist(m$df["applications"])))
 m$data_on_model$admit = jnp$array(as.integer(unlist(m$df["admit"])))
 # Define model ------------------------------------------------
@@ -136,7 +136,7 @@ m = importBF(platform="cpu")
 data_path = m.load.ucbadmit(only_path = true)
 m.data(data_path, sep=';')
 
-m.df["gid"] = m.df["applicant.gender"].ne("male").astype("int")
+m.df["gid"] = m.df["applicant_gender"].ne("male").astype("int")
 
 # Define model ------------------------------------------------
 @BF function model(gid, applications, admit)
@@ -175,6 +175,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model cover the variation in admissions between departments?
@@ -182,17 +183,17 @@ Does the model cover the variation in admissions between departments?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals()
+# m$diag$ppc_intervals()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 :::
 
@@ -204,22 +205,23 @@ Each point is one row of the data (one department and gender), with the 50 % and
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "sd")
+# m$diag$ppc_stat(stat = "sd")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 :::
 
 The observed standard deviation of the admitted counts (vertical line) should fall inside the simulated ones; a plain binomial model would put it far in the right tail.
 :::
+-->
 
 ## Mathematical Details
 ### *Bayesian Model*

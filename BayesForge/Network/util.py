@@ -1,25 +1,15 @@
-import inspect
-from numpyro import sample as lk
-from numpyro import deterministic
-from BayesForge.Distributions.np_dists import UnifiedDist as dist
+import warnings
 from BayesForge.Utils.Gaussian import gaussian
 from BayesForge.Utils.Effects import effects
 import jax
 from jax import jit
 import jax.numpy as jnp
+import numpy as np
 
 gaussian = gaussian()
 effects = effects()
 
-from jax import vmap
-
-#' Test
-# region
-# from Darray import *
 from functools import partial
-import jax as jax
-import jax.numpy as jnp
-from jax import jit
 
 
 # vector related functions -----------------------------------
@@ -135,7 +125,7 @@ class array_manip:
 
         Returns:
             If argument type is 'upper', 'lower', it return a 1D JAX array containing the requested triangle elements.
-            If argument type is 'both', it return a 2D JAX array containing the the first column the lower triangle and in the second ecolumn the upper triangle
+            If argument type is 'both', it returns a 2D JAX array whose first column holds the upper triangle and whose second column holds the lower triangle (RELEASE_AUDIT m16: the docstring used to state the reverse of the code).
         """
         if diag != 0 and diag != 1:
             raise ValueError("diag must be 0 or 1")
@@ -159,17 +149,40 @@ class array_manip:
         return triangle_elements
 
     @staticmethod
-    @jit
     def mat_to_edgl(mat):
         """Convert a matrix to an edge list.
 
         Args:
-            mat (2D array): A JAX 2D array.
+            mat (2D array): A JAX 2D array; must be square (N, N).
 
         Returns:
             (2D array): return and edgelist of all dyads combination (excluding diagonal).
             First column represent the value fo individual i  in the first column of argument sr, the second column the value of j in the second column of argument sr
+
+        Raises:
+            ValueError: If ``mat`` is not a square (N, N) matrix. A non-square
+                input would otherwise be silently truncated to ``shape[0]`` rows.
         """
+        if not isinstance(mat, jax.core.Tracer):
+            mat = jnp.asarray(mat)
+            if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
+                raise ValueError(
+                    f"mat_to_edgl expects a square (N, N) matrix, got shape {mat.shape}."
+                )
+            # numpy, not jnp: a jnp op run while a model is traced returns a
+            # tracer even on a concrete input, and bool() of it raises.
+            if bool(np.any(np.diagonal(np.asarray(mat)) != 0)):
+                warnings.warn(
+                    "mat_to_edgl: the diagonal (self-ties) is not part of the "
+                    "dyad list and is ignored.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+        return array_manip._mat_to_edgl_jit(mat)
+
+    @staticmethod
+    @jit
+    def _mat_to_edgl_jit(mat):
         N = mat.shape[0]
         # From to
         urows, ucols = jnp.triu_indices(N, k=1)
@@ -207,27 +220,8 @@ class array_manip:
         m = m.at[(urows, ucols)].set(edgl[:, 0])
         return m
 
-    # @staticmethod
-    # def remove_diagonal(arr):
-    #    """Remove the diagonal of a matrix.
-
-    #    Args:
-    #        arr (2D array): A JAX 2D array.
-
-    #    Returns:
-    #        (2D array): return a matrix without the diagonal.
-    #    """
-    #    n = arr.shape[0]
-    #    if arr.shape[0] != arr.shape[1]:
-    #        raise ValueError("Array must be square to remove the diagonal.")
-
-    #    # Create a mask for non-diagonal elements
-    #    mask = ~jnp.eye(n, dtype=bool)
-
-    #    # Apply the mask to the array to get non-diagonal elements
-    #    non_diag_elements = arr[mask]  # Reshape as needed, here to an example shape
-    #
-    #    return non_diag_elements
+    # RELEASE_AUDIT m16: a commented-out diagonal-removal helper used to sit
+    # here; dead code, dropped (jnp.diagonal masking covers that use case).
 
     @staticmethod
     @jit
@@ -277,47 +271,15 @@ class array_manip:
         """
         return jnp.where(m > 0, 1, 0)
 
-    @staticmethod
-    @partial(jit, static_argnums=(1, 2))
-    def dyad_vec_to_mat(vec, include_diagonal=False, symmetric=False):
-        """Convert dyad vector to N×N matrix. N deduced from vec length.
-
-        Vector length conventions:
-            diag=False, sym=True  : N*(N-1)/2  — unique undirected dyads
-            diag=False, sym=False : N*(N-1)    — both directions; first half→upper, second half→lower
-            diag=True,  sym=True  : N*(N+1)/2  — unique undirected dyads + diagonal
-            diag=True,  sym=False : N²         — full matrix, row-major
-
-        Args:
-            vec: 1D JAX array
-            include_diagonal: vec includes diagonal elements (default False)
-            symmetric: produce symmetric matrix (default False)
-
-        Returns:
-            (N, N) JAX array
-        """
-        n = vec.shape[0]
-        if not include_diagonal and symmetric:
-            N = int(round((1 + (1 + 8 * n) ** 0.5) / 2))
-            rows, cols = jnp.triu_indices(N, k=1)
-            mat = jnp.zeros((N, N)).at[rows, cols].set(vec)
-            return mat + mat.T
-        elif not include_diagonal and not symmetric:
-            n_dyads = n // 2
-            N = int(round((1 + (1 + 4 * n) ** 0.5) / 2))
-            rows, cols = jnp.triu_indices(N, k=1)
-            mat = jnp.zeros((N, N)).at[rows, cols].set(vec[:n_dyads])
-            return mat.at[cols, rows].set(vec[n_dyads:])
-        elif include_diagonal and symmetric:
-            N = int(round((-1 + (1 + 8 * n) ** 0.5) / 2))
-            rows, cols = jnp.triu_indices(N, k=0)
-            mat = jnp.zeros((N, N)).at[rows, cols].set(vec)
-            return mat + mat.T - jnp.diag(jnp.diag(mat))
-        else:  # include_diagonal=True, symmetric=False — full matrix row-major
-            N = int(round(n**0.5))
-            return vec.reshape(N, N)
+    # RELEASE_AUDIT m10: dyad_vec_to_mat used to be duplicated here as a
+    # staticmethod identical to the module-level function below; the method
+    # was removed (no caller in BayesForge or Test used it through the class)
+    # and the single remaining definition gained exact length validation.
 
 
+# RELEASE_AUDIT m10: single definition of dyad_vec_to_mat (module level, the
+# one every caller resolves today). Length validation raises ValueError with
+# the expected convention instead of a JAX broadcast error.
 @partial(jit, static_argnums=(1, 2))
 def dyad_vec_to_mat(vec, include_diagonal=False, symmetric=False):
     """Convert dyad vector to N×N matrix. N deduced from vec length.
@@ -335,24 +297,53 @@ def dyad_vec_to_mat(vec, include_diagonal=False, symmetric=False):
 
     Returns:
         (N, N) JAX array
+
+    Raises:
+        ValueError: If the vector length does not match the convention chosen
+            by the flags for any integer N (previously an opaque JAX
+            broadcast error, RELEASE_AUDIT m10).
     """
     n = vec.shape[0]
     if not include_diagonal and symmetric:
         N = int(round((1 + (1 + 8 * n) ** 0.5) / 2))
+        if N * (N - 1) // 2 != n:
+            raise ValueError(
+                f"dyad_vec_to_mat: vector length {n} is not N*(N-1)/2 for any "
+                "integer N (include_diagonal=False, symmetric=True); expected "
+                "1, 3, 6, 10, 15, ... dyads.")
         rows, cols = jnp.triu_indices(N, k=1)
         mat = jnp.zeros((N, N)).at[rows, cols].set(vec)
         return mat + mat.T
     elif not include_diagonal and not symmetric:
-        n_dyads = n // 2
         N = int(round((1 + (1 + 4 * n) ** 0.5) / 2))
+        if N * (N - 1) != n:
+            raise ValueError(
+                f"dyad_vec_to_mat: vector length {n} is not N*(N-1) for any "
+                "integer N (include_diagonal=False, symmetric=False); expected "
+                "2, 6, 12, 20, ... entries (both directions of every dyad).")
+        n_dyads = n // 2
         rows, cols = jnp.triu_indices(N, k=1)
         mat = jnp.zeros((N, N)).at[rows, cols].set(vec[:n_dyads])
         return mat.at[cols, rows].set(vec[n_dyads:])
     elif include_diagonal and symmetric:
         N = int(round((-1 + (1 + 8 * n) ** 0.5) / 2))
+        if N * (N + 1) // 2 != n:
+            raise ValueError(
+                f"dyad_vec_to_mat: vector length {n} is not N*(N+1)/2 for any "
+                "integer N (include_diagonal=True, symmetric=True); expected "
+                "1, 3, 6, 10, 15, ... entries (dyads + diagonal).")
         rows, cols = jnp.triu_indices(N, k=0)
         mat = jnp.zeros((N, N)).at[rows, cols].set(vec)
         return mat + mat.T - jnp.diag(jnp.diag(mat))
     else:  # include_diagonal=True, symmetric=False — full matrix row-major
-        N = int(round(n**0.5))
+        N = int(round(n ** 0.5))
+        if N * N != n:
+            raise ValueError(
+                f"dyad_vec_to_mat: vector length {n} is not a perfect square "
+                "N*N (include_diagonal=True, symmetric=False).")
         return vec.reshape(N, N)
+
+
+# One implementation (RELEASE_AUDIT m10), still reachable as a method:
+# m.net.dyad_vec_to_mat(...) / m.net2.dyad_vec_to_mat(...) inherit it.
+array_manip.dyad_vec_to_mat = staticmethod(dyad_vec_to_mat)

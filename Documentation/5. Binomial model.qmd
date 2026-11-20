@@ -104,6 +104,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 The model gives every chimpanzee the same probability of pulling the left lever. Is that true?
@@ -111,17 +112,17 @@ The model gives every chimpanzee the same probability of pulling the left lever.
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="mean", group="actor")
+# m.diag.ppc_stat(stat="mean", group="actor")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "mean", group = "actor")
+# m$diag$ppc_stat(stat = "mean", group = "actor")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="mean", group="actor")
+# m.diag.ppc_stat(stat="mean", group="actor")
 ```
 :::
 
@@ -133,22 +134,23 @@ One panel per chimpanzee: the vertical line is the observed proportion of left p
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_bars()
+# m.diag.ppc_bars()
 ```
 
 #### R
 ```r
-m$diag$ppc_bars()
+# m$diag$ppc_bars()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_bars()
+# m.diag.ppc_bars()
 ```
 :::
 
 `ppc_bars`: observed counts of 0 and 1 (bars) against the predicted counts (points with 90 % intervals); pooled over all actors, the intercept-only model matches them.
 :::
+-->
 
 ## Mathematical Details
 ### *Bayesian formulation*

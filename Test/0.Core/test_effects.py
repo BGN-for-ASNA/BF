@@ -12,7 +12,10 @@ def test_phylo_effect_covariance_and_tree_stack():
     draws = np.stack([np.asarray(m.effects.phylo_effect(L, 2.0, sample=True, name="z"))
                       for _ in range(4000)])
     assert draws.shape == (4000, 3)
-    np.testing.assert_allclose(np.cov(draws.T), 4.0 * np.asarray(cov), atol=0.35)
+    # MC-SE of a diagonal variance estimate: sigma^2 * sqrt(2/N), sigma^2 = 4
+    mcse = 4.0 * np.sqrt(2.0 / draws.shape[0])
+    # ~0.36: detects a systematic error of >= 10% on the diagonal, may miss 5%
+    np.testing.assert_allclose(np.cov(draws.T), 4.0 * np.asarray(cov), atol=4 * mcse)
 
     # a stack of T trees with one sd per tree -> one effect vector per tree
     Ls = jnp.stack([L, jnp.eye(3)])

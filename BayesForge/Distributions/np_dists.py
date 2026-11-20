@@ -1,14 +1,14 @@
-import numpyro.distributions as dist
-import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from jax import random
 import numpyro
 import jax
+import collections
 import time
 import sys
 import dis
 import inspect
 import functools
+import warnings
 from BayesForge.Utils.SampledData import SampledData as SampledData
 
 # ---------------------------------------------------------------------------
@@ -60,11 +60,25 @@ def _infer_caller_name():
         return None
     except Exception:
         return None
-    return None
 
+
+class _BoundedCache(collections.OrderedDict):
+    """Small LRU dict: keeps at most ``maxsize`` call sites."""
+    def __init__(self, maxsize=4096):
+        super().__init__()
+        self.maxsize = maxsize
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self.move_to_end(key)
+        while len(self) > self.maxsize:
+            self.popitem(last=False)
 
 # Fallback name cache for observed call sites if called outside an instance.
-_OBS_NAMES = {}
+_OBS_NAMES = _BoundedCache()
 
 
 def _infer_obs_name(obs, obs_names=None):
@@ -119,6 +133,49 @@ def _has_name_kwarg(func):
         return False
 
 
+_INFERENCE_HANDLERS = ("trace", "substitute", "condition", "replay", "block")
+
+
+def _warn_if_inside_inference():
+    """Warn when a sample=True draw happens while numpyro traces a model.
+
+    MCMC, SVI and Predictive run the model under trace/substitute handlers; a
+    raw draw there is not a random variable of the model (it is redrawn at
+    every log-density evaluation), so the posterior would be silently wrong.
+    A bare numpyro.handlers.seed (a DGP) is not flagged.
+    """
+    try:
+        from numpyro.primitives import _PYRO_STACK
+    except Exception:
+        return
+    names = {type(h).__name__ for h in _PYRO_STACK}
+    if names & set(_INFERENCE_HANDLERS):
+        warnings.warn(
+            "m.dist.*(sample=True) was called inside a model that numpyro is tracing "
+            "(fit/svi/Predictive). The draw is not a model parameter: it changes at every "
+            "density evaluation and is not in the posterior. Use sample=False (the default) "
+            "with a name= inside models; keep sample=True for simulating data outside them.",
+            UserWarning, stacklevel=4)
+
+
+def _mask_draws(samples, mask):
+    """Blank out masked direct draws (sample=True) with NaN.
+
+    NaN needs a float array: draws of discrete distributions (integer dtype)
+    are promoted to float32 so the masked entries can be NaN, and a warning
+    says so (NaN is outside the support of a count distribution; filter the
+    draws with the mask instead if integers are needed).
+    """
+    samples = jnp.asarray(samples)
+    if jnp.issubdtype(samples.dtype, jnp.integer) or samples.dtype == jnp.bool_:
+        warnings.warn(
+            "mask= with sample=True on a discrete distribution: the draws are "
+            "promoted to float so masked entries can be NaN. Use draws[mask] to keep "
+            "integer counts.", UserWarning, stacklevel=3)
+        samples = samples.astype(jnp.float32)
+    return jnp.where(mask, samples, jnp.nan)
+
+
 class DistProxy:
     """Transparent proxy around UnifiedDist that auto-infers the *name* kwarg.
 
@@ -137,7 +194,7 @@ class DistProxy:
         object.__setattr__(self, '_dist', dist_obj)
         obs_names = getattr(dist_obj, '_obs_names', None)
         if obs_names is None:
-            obs_names = {}
+            obs_names = _BoundedCache()
             try:
                 dist_obj._obs_names = obs_names
             except Exception:
@@ -172,13 +229,24 @@ class DistProxy:
     def __setattr__(self, attr, value):
         setattr(object.__getattribute__(self, '_dist'), attr, value)
 
+    def __dir__(self):
+        # expose the wrapped distributions (tab completion, dir(m.dist))
+        dist_obj = object.__getattribute__(self, '_dist')
+        return sorted(set(dir(type(self))) | set(dir(dist_obj)))
+
 class UnifiedDist:
     """A class to unify various distribution methods and provide a consistent interface for sampling and inference."""
 
     def __init__(self, rand_seed = True, rng = None):
         self.seed = rand_seed
+        if rng is None:
+            # No session manager: own a stream seeded by rand_seed, so direct
+            # draws are reproducible for a fixed seed and independent across
+            # calls (never one fixed PRNGKey reused on every draw).
+            from BayesForge.Utils.rng import RNG
+            rng = RNG(rand_seed)
         self._rng = rng
-        self._obs_names = {}
+        self._obs_names = _BoundedCache()
 
     def track(self,name, x):
         """Record a derived quantity so it is saved with the posterior draws.
@@ -204,9 +272,30 @@ class UnifiedDist:
         while the whole sequence is reproducible from a fixed base seed.
         An explicit ``seed`` is always honoured verbatim.
         """
+        _warn_if_inside_inference()
+        # A bool per-draw seed means "no explicit seed" (False must not
+        # collapse to the fixed PRNGKey(0) on every call).
+        if isinstance(seed, bool):
+            seed = None
         if seed is None and self._rng is not None:
             return self._rng.stream()
-        return random.PRNGKey(self.normalize_seed(seed))
+        seed = self.normalize_seed(seed)
+        if seed < 0 or seed >= 2**32:
+            # random.PRNGKey silently reduces its argument modulo 2**32, so
+            # seeds that do not fit in 32 bits (hashes, nanosecond
+            # timestamps) would collide.  Fold the extra 32-bit chunks into
+            # the key so distinct seeds give distinct keys; the sign is
+            # folded in as an extra 0xFFFFFFFF chunk.
+            magnitude = abs(seed)
+            key = random.PRNGKey(magnitude & 0xFFFFFFFF)
+            if seed < 0:
+                key = random.fold_in(key, 0xFFFFFFFF)
+            remaining = magnitude >> 32
+            while remaining:
+                key = random.fold_in(key, remaining & 0xFFFFFFFF)
+                remaining >>= 32
+            return key
+        return random.PRNGKey(seed)
 
     def normalize_seed(self,seed):
         if seed is None:
@@ -237,7 +326,7 @@ class UnifiedDist:
             if infer:
                 merged.update(dict(infer))
             return merged
-        return dict(infer) if infer else None
+        return dict(infer) if infer is not None else None
 
     @staticmethod
     def mask( mask):
@@ -246,6 +335,12 @@ class UnifiedDist:
         Inside ``with m.dist.mask(keep):``, the log-probability of every sample
         site is multiplied by the boolean array ``keep``, so entries where it is
         False (e.g. missing data) do not contribute.
+
+        Note: on a latent site (no obs) the mask also removes the site's prior
+        term from the density. The mask= argument of the distribution methods
+        has two meanings: in a model (sample=False) it excludes entries from the
+        log density as above; with sample=True it replaces the masked draws by
+        NaN (discrete draws become float).
 
         Args:
             mask (jax.Array of bool): True for the observations to keep.
@@ -324,14 +419,13 @@ class UnifiedDist:
         a location parameter (loc), a scale parameter (scale), and an asymmetry parameter (asymmetry).
         
         $$
-        f(x, \kappa) &= \frac{1}{\kappa+\kappa^{-1}}\exp(-x\kappa),\quad x\ge0\\
-                    &= \frac{1}{\kappa+\kappa^{-1}}\exp(x/\kappa),\quad x<0\\
+        f(x, \kappa) = \begin{cases} \frac{1}{\kappa+\kappa^{-1}}\exp(-x\kappa),\quad x\ge0, \\ \frac{1}{\kappa+\kappa^{-1}}\exp(x/\kappa),\quad x<0 \end{cases}
+        $$
 
-        for $-\infty < x < \infty, \kappa > 0`$.
+        for $-\infty < x < \infty$, $\kappa > 0$.
 
         laplace_asymmetric takes 'kappa' as a shape parameter for
-        $\kappa$. For :$\kappa = 1$, it is identical to a Laplace distribution.
-        $$
+        $\kappa$. For $\kappa = 1$, it is identical to a Laplace distribution.
         
         #### Args:
 
@@ -394,7 +488,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -409,7 +503,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -437,7 +531,7 @@ class UnifiedDist:
 
         - *loc* (float): The location parameter of the distribution.
         
-        - *sample* (float): The scale parameter of the distribution.
+        - *scale* (float): The scale parameter of the distribution.
         
         - *quantile* (float): The quantile parameter, representing the proportion of probability density to the left of the median. Must be between 0 and 1.
         
@@ -481,7 +575,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -495,7 +589,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -517,9 +611,9 @@ class UnifiedDist:
         parameterized by the log-odds ratio of success.  The probability of success
         is given by the sigmoid function applied to the logit.
         
-        $
+        $$
         p = \sigma(\eta) = \frac{1}{1 + e^{-\eta}}
-        $
+        $$
         where (\eta) is the log-odds (the *logit*).
 
         #### Args:
@@ -581,7 +675,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -653,7 +747,7 @@ class UnifiedDist:
         
         - When `sample=False`: A BF BernoulliProbs distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the BernoulliProbs distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF BernoulliProbs object (for advanced use cases).
 
@@ -675,7 +769,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -720,7 +814,7 @@ class UnifiedDist:
         B(\alpha, \beta) = \int_0^1 x^{\alpha - 1} (1 - x)^{\beta - 1} , dx = \frac{\Gamma(\alpha),\Gamma (\beta)}{\Gamma(\alpha + \beta)}.
         $$
 
-        where :num$\alpha` and $\beta$ are the concentration parameters,
+        where :num$\alpha$ and $\beta$ are the concentration parameters,
         and $B(x, y)$ is the Beta function.
 
         
@@ -749,7 +843,7 @@ class UnifiedDist:
 
         - When `sample=False`: A BF Beta distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the Beta distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF Beta object (for advanced use cases).
 
@@ -777,7 +871,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -791,7 +885,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -875,7 +969,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -973,7 +1067,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -987,7 +1081,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1039,7 +1133,7 @@ class UnifiedDist:
 
         - When `sample=False`: A BF BinomialLogits distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the BinomialLogits distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF BinomialLogits object (for advanced use cases).
 
@@ -1062,7 +1156,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1132,7 +1226,7 @@ class UnifiedDist:
         
         - When `sample=False`: A BF BinomialProbs distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the BinomialProbs distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF BinomialLogits object (for advanced use cases).
         
@@ -1153,7 +1247,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1223,7 +1317,7 @@ class UnifiedDist:
         
         - When `sample=False`: A BF CAR distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the CAR distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF CAR object (for advanced use cases).
         #### Example Usage:
@@ -1249,7 +1343,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1263,7 +1357,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1280,7 +1374,7 @@ class UnifiedDist:
         r"""### Categorical Logits 
         Samples from a Categorical distribution with logits. This distribution represents a discrete probability distribution over a finite set of outcomes, where the probabilities are determined by the logits. The probability of each outcome is given by the softmax function applied to the logits.
         
-        Given logits $ \gamma = (\gamma_1, \dots, \gamma_K) $, the probability of each category $ i $ is:
+        Given logits $\gamma = (\gamma_1, \dots, \gamma_K)$, the probability of each category $ i $ is:
 
         $$
         p_i = \frac{e^{\gamma_i}}{\sum_{j=1}^{K} e^{\gamma_j}}
@@ -1314,7 +1408,7 @@ class UnifiedDist:
 
         - When `sample=False`: A BF CategoricalLogits distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the CategoricalLogits distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF CategoricalLogits object (for advanced use cases).
         
@@ -1337,7 +1431,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1405,7 +1499,7 @@ class UnifiedDist:
         #### Returns:
         - When `sample=False`: A BF CategoricalProbs distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the CategoricalProbs distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF CategoricalProbs object (for advanced use cases).
         
@@ -1427,7 +1521,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1519,7 +1613,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1533,7 +1627,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1556,7 +1650,7 @@ class UnifiedDist:
         
         $$   
         f(x; k) = \begin{cases}
-        \frac{x^{\frac{k}{2} - 1} e^{-x/2}}{2^{\frac{k}{2}} \Gamma\left(\frac{k}{2}\right)}, & x > 0 \
+        \frac{x^{\frac{k}{2} - 1} e^{-x/2}}{2^{\frac{k}{2}} \Gamma\left(\frac{k}{2}\right)}, & x > 0 \\
         0, & \text{otherwise}
         \end{cases}
         $$
@@ -1588,7 +1682,7 @@ class UnifiedDist:
 
         - When `sample=False`: A BF Chi2 distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the Chi2 distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF Chi2 object (for advanced use cases).
         
@@ -1609,7 +1703,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1623,7 +1717,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1639,9 +1733,9 @@ class UnifiedDist:
 
         r"""### Circulant Normal Multivariate normal 
 
-        Circulant Normal Multivariate normal distribution with covariance matrix $\mathbf{C}` that is
+        Circulant Normal Multivariate normal distribution with covariance matrix $\mathbf{C}$ that is
         positive-definite and circulant [1], i.e., has periodic boundary conditions. The
-        density of a sample $\mathbf{x}\in\mathbb{R}^n` is the standard multivariate
+        density of a sample $\mathbf{x}\in\mathbb{R}^n$ is the standard multivariate
         normal density
         
         $$
@@ -1651,10 +1745,10 @@ class UnifiedDist:
             \mathbf{C}^{-1}\left(\mathbf{x}-\mu\right)\right),
         $$
 
-        where $\mathrm{det}` denotes the determinant and $^\intercal$ the
+        where $\mathrm{det}$ denotes the determinant and $^\intercal$ the
         transpose. Circulant matrices can be diagnolized efficiently using the discrete
         Fourier transform [1], allowing the log likelihood to be evaluated in
-        $n \log n` time for $n` observations [2].
+        $n \log n$ time for $n$ observations [2].
         
         - *loc:* Mean of the distribution $\mu$.
 
@@ -1679,7 +1773,7 @@ class UnifiedDist:
            https://en.wikipedia.org/wiki/Circulant_matrix
 
         2. Wood, A. T. A., & Chan, G. (1994). Simulation of Stationary Gaussian Processes in
-           $\left[0, 1\right]^d`. *Journal of Computational and Graphical Statistics*,
+           $\left[0, 1\right]^d$. *Journal of Computational and Graphical Statistics*,
            3(4), 409--432. https://doi.org/10.1080/10618600.1994.10474655
         
         #### Args:
@@ -1694,7 +1788,7 @@ class UnifiedDist:
 
         - When `sample=False`: A BF Circulant Normal Distribution distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the CirculantNormal distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF Circulant Normal Distribution object (for advanced use cases).
         
@@ -1714,7 +1808,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1728,7 +1822,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1749,7 +1843,7 @@ class UnifiedDist:
         $$   
         F(x) =
         \begin{cases}
-        0, & x < a, \
+        0, & x < a, \\
         1, & x \ge a.
         \end{cases}
         $$
@@ -1779,7 +1873,7 @@ class UnifiedDist:
         
         - When `sample=False`: A BF Circulant Delta Distribution distribution object (for  model building).
 
-        - When `sample=True`: A JAX array of samples drawn from the BernoulliLogits distribution (for direct sampling).
+        - When `sample=True`: A JAX array of samples drawn from the Delta distribution (for direct sampling).
 
         - When `create_obj=True`: The raw BF Circulant Delta Distribution object (for advanced use cases).
         
@@ -1800,7 +1894,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1814,7 +1908,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -1896,7 +1990,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -1910,7 +2004,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2018,7 +2112,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2056,7 +2150,7 @@ class UnifiedDist:
         P(X = k) = \frac{1}{high - low + 1}, \quad k \in \{low, low+1, ..., high\}
         $$
 
-        Otherwise (if $k$ is outside the range), $ P(X = k) = 0 $.
+        Otherwise (if $k$ is outside the range), $P(X = k) = 0$.
 
         
         #### Args:
@@ -2112,7 +2206,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2154,8 +2248,8 @@ class UnifiedDist:
 
         $$
         f(x) = \begin{cases}
-        \displaystyle \frac{(1-\alpha), x^{-\alpha}}{x_{\max}^{1-\alpha} - x_{\min}^{1-\alpha}}, & \alpha \neq 1, ; x_{\min} \le x         \le x_{\max},\
-        \displaystyle \frac{1}{x, \ln\left(x_{\max}/x_{\min}\right)}, & \alpha = 1, ; x_{\min} \le x \le x_{\max},\
+        \displaystyle \frac{(1-\alpha), x^{-\alpha}}{x_{\max}^{1-\alpha} - x_{\min}^{1-\alpha}}, & \alpha \neq 1, ; x_{\min} \le x         \le x_{\max},\\
+        \displaystyle \frac{1}{x, \ln\left(x_{\max}/x_{\min}\right)}, & \alpha = 1, ; x_{\min} \le x \le x_{\max},\\
         0, & \text{otherwise}.
         \end{cases}
         $$
@@ -2216,7 +2310,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2230,7 +2324,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2256,10 +2350,10 @@ class UnifiedDist:
         $$
         
         where:
-        - $X_t` is the state of the system at time $t`.
-        - $f(X_t, t)` is the drift coefficient.
-        - $g(X_t, t)` is the diffusion coefficient.
-        - $dW_t` is a Wiener process (Brownian motion).
+        - $X_t$ is the state of the system at time $t$.
+        - $f(X_t, t)$ is the drift coefficient.
+        - $g(X_t, t)$ is the diffusion coefficient.
+        - $dW_t$ is a Wiener process (Brownian motion).
 
         
         #### Args:
@@ -2299,7 +2393,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2313,7 +2407,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2339,7 +2433,7 @@ class UnifiedDist:
         Zhere ( \lambda > 0 ) is the rate parameter (the mean is ( 1/\lambda )).
         
         #### Args:
-        - *rate* (jnp.ndarray): The rate parameter, $\lambda`. Must be positive.
+        - *rate* (jnp.ndarray): The rate parameter, $\lambda$. Must be positive.
         
         - *shape* (tuple): A multi-purpose argument for shaping. When `sample=False` (model building), this is used with `shape` to set the distribution's batch shape. When `sample=True` (direct sampling), this is used as `sample_shape` to draw a raw JAX array of the given shape.
         
@@ -2381,7 +2475,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2395,7 +2489,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2459,7 +2553,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2473,7 +2567,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2554,7 +2648,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2568,7 +2662,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2643,7 +2737,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2657,7 +2751,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2727,7 +2821,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2741,7 +2835,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2752,7 +2846,7 @@ class UnifiedDist:
                         return numpyro.sample(name, d, obs=obs, infer=infer_dict)
                 return numpyro.sample(name, d, obs=obs, infer=infer_dict)
 
-    def gaussian_copula_beta(self,concentration1, concentration0, correlation_matrix=None, correlation_cholesky=None, validate_args=False, name='x', obs=None, mask=None, infer=None, sample=False, seed=None, shape=(), event=0,create_obj=False, to_jax = True):
+    def gaussian_copula_beta(self,concentration1, concentration0, correlation_matrix=None, correlation_cholesky=None, validate_args=None, name='x', obs=None, mask=None, infer=None, sample=False, seed=None, shape=(), event=0,create_obj=False, to_jax = True):
         
 
         r"""### Gaussian Copula Beta 
@@ -2814,7 +2908,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2828,7 +2922,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2849,7 +2943,7 @@ class UnifiedDist:
 
     
         #### Args:
-        - *scale* (float, jnp.ndarray, optional): The standard deviation ($\sigma`) of the Gaussian increments. Must be positive. Defaults to 1.0.
+        - *scale* (float, jnp.ndarray, optional): The standard deviation ($\sigma$) of the Gaussian increments. Must be positive. Defaults to 1.0.
 
         - *num_steps (int, optional): The number of steps in the random walk, which determines the event shape of the distribution. Must be positive. Defaults to 1.
 
@@ -2912,7 +3006,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -2926,7 +3020,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -2993,7 +3087,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3007,7 +3101,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3079,7 +3173,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3093,7 +3187,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3156,7 +3250,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3170,7 +3264,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3242,7 +3336,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3256,7 +3350,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3326,7 +3420,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3340,7 +3434,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3401,7 +3495,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3415,7 +3509,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3437,7 +3531,7 @@ class UnifiedDist:
         It is defined by a location parameter (implicitly 0) and a scale parameter.
 
         $$
-        f(x; \sigma) = \frac{2}{\pi,\sigma} ; \frac{1}{1 + \bigl(x/\sigma\bigr)^2}, \qquad x \ge 0.
+        f(x; \sigma) = \frac{\sqrt{2}}{\sigma\sqrt{\pi}} \exp\left(-\frac{x^2}{2\sigma^2}\right), \qquad x \ge 0.
         $$
 
         #### Args:
@@ -3482,7 +3576,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3496,7 +3590,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3532,13 +3626,15 @@ class UnifiedDist:
 
         - *sample* (bool, optional): A control-flow argument. If `True`, the function will directly sample a raw JAX array from the distribution, bypassing the BF model context. If `False`, it will create a `BF.sample` site within a model. Defaults to `False`.
 
+        - *seed* (int, optional): An integer seed for this draw when `sample=True`. ImproperUniform has no normalisable density and cannot be sampled (`sample=True` raises), so this argument has no effect.
+
         - *obs* (jnp.ndarray, optional): The observed value for this random variable. If provided, the sample site is conditioned on this value, and the function returns the observed value. If `None`, the site is treated as a latent (unobserved) random variable. Defaults to `None`.
     
         - *name* (str, optional): The name of the sample site in a BF model. This is used to uniquely identify the random variable. Defaults to 'x'.
             
         #### Returns:
       - When `sample=False`: A BF ImproperUniform distribution object (for model building).
-      - When `sample=True`: A JAX array of samples drawn from the ImproperUniform distribution (for direct sampling).
+      - sample=True is not supported (improper distribution).
       - When `create_obj=True`: The raw BF distribution object (for advanced use cases).
         
         #### Example Usage:
@@ -3558,17 +3654,9 @@ class UnifiedDist:
            
         d = numpyro.distributions.distribution.ImproperUniform(support=support, batch_shape=batch_shape, event_shape=event_shape, validate_args=validate_args)
         if sample:
-            seed_key = self._draw_key(seed)
-            samples = d.sample(seed_key, sample_shape=shape)
-        
-            # Apply mask if provided
-            if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
-        
-            if to_jax:
-                return samples
-            else:
-                return SampledData(samples)
+            raise NotImplementedError(
+                "improper_uniform cannot be sampled (it is an improper prior with no "
+                "normalisable density); use it only inside a model with sample=False.")
         else:
             if shape:
                 d = d.expand(shape)
@@ -3577,7 +3665,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3643,7 +3731,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3657,7 +3745,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3729,7 +3817,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3743,7 +3831,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3760,7 +3848,7 @@ class UnifiedDist:
         r"""### Lewandowski Kurowicka Joe (LKJ)  
         
         The LKJ distribution is controlled by the concentration parameter $\eta$ to make the probability
-        of the correlation matrix $M` proportional to $\det(M)^{\eta - 1}$. When $\eta = 1$,
+        of the correlation matrix $M$ proportional to $\det(M)^{\eta - 1}$. When $\eta = 1$,
         the distribution is uniform over correlation matrices.  When $\eta > 1$, the distribution favors
         samples with large determinants. When $\eta < 1$, the distribution favors samples with small
         determinants.
@@ -3816,7 +3904,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3830,7 +3918,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3846,7 +3934,7 @@ class UnifiedDist:
 
         r"""### LKJ Cholesky 
 
-        The LKJ (Leonard-Kjærgaard-Jørgensen) Cholesky distribution is a family of distributions
+        The LKJ (Lewandowski-Kurowicka-Joe) Cholesky distribution is a family of distributions
         on symmetric matrices, often used as a prior for the Cholesky decomposition of a
         symmetric matrix. It is particularly useful in BayesForge for models with
         covariance structure. Given a lower triangular matrix (L) with unit diagonal entries, the PDF is:
@@ -3903,7 +3991,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -3917,7 +4005,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -3987,7 +4075,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4001,7 +4089,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4088,7 +4176,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4102,7 +4190,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4183,7 +4271,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4197,7 +4285,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4290,7 +4378,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4304,7 +4392,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4393,7 +4481,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4407,7 +4495,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4487,7 +4575,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4501,7 +4589,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4579,7 +4667,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4593,7 +4681,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4617,11 +4705,11 @@ class UnifiedDist:
         f(x \mid \alpha, x_{\min}) = \frac{\alpha - 1}{x_{\min}} \left( \frac{x_{\min}}{x} \right)^{\alpha}
         $$
 
-        where $ \alpha > 1 $ is the shape (scaling) parameter.
+        where $\alpha > 1$ is the shape (scaling) parameter.
 
         
         #### Args:
-        - `alpha` (jnp.ndarray): index of the power law distribution. Must be less than -1.
+        - `alpha` (jnp.ndarray): index of the power law distribution. Must be greater than 1.
 
         - `low` (jnp.ndarray): lower bound of the distribution. Must be greater than 0.
         
@@ -4672,7 +4760,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4686,7 +4774,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4786,7 +4874,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4800,7 +4888,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4877,7 +4965,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4891,7 +4979,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -4969,7 +5057,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -4983,7 +5071,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5072,7 +5160,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5155,7 +5243,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5262,7 +5350,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5276,7 +5364,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5303,11 +5391,11 @@ class UnifiedDist:
 
         where:
 
-        * $ \Gamma(\cdot) $ is the Gamma function.
-        * $ \mu $ is the mean vector.
-        * $ \Sigma $ is the scale (covariance) matrix.
-        * $ \nu $ is the degrees of freedom.
-        * $ d $ is the dimensionality of $ \mathbf{x} $.
+        * $\Gamma(\cdot)$ is the Gamma function.
+        * $\mu$ is the mean vector.
+        * $\Sigma$ is the scale (covariance) matrix.
+        * $\nu$ is the degrees of freedom.
+        * $ d $is the dimensionality of$ \mathbf{x} $.
         
         #### Args:
 
@@ -5368,7 +5456,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5382,7 +5470,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5470,7 +5558,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5484,7 +5572,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5550,7 +5638,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5564,7 +5652,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5627,7 +5715,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5641,7 +5729,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5715,7 +5803,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5729,7 +5817,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5745,11 +5833,11 @@ class UnifiedDist:
 
         r"""### Ordered Logistic
         
-        The ordered logistic distribution is used for modeling **ordinal** outcome variables $ Y \in {1,2,\dots,K} $ (i.e., categories with a natural order) via a latent continuous predictor $ \eta $ and a set of increasing *cut-points* $ c_1 < c_2 < \cdots < c_{K-1} $. When $ \eta $ crosses thresholds, the observed  $Y$  
+        The ordered logistic distribution is used for modeling **ordinal** outcome variables $Y \in {1,2,\dots,K}$ (i.e., categories with a natural order) via a latent continuous predictor $\eta$ and a set of increasing *cut-points* $c_1 < c_2 < \cdots < c_{K-1}$. When $\eta$ crosses thresholds, the observed  $Y$  
         
         ### PMF (Probability Mass Function)
 
-        Let $ \eta \in \mathbb R $ be the linear predictor (for example $ \eta = x^\top \beta $), let cutpoints $ c = (c_1, \dots,c_{K-1}) $ satisfy $ c_1 < c_2 < \cdots < c_{K-1} $. Define also $ c_0 = -\infty $, $ c_K = +\infty $.
+        Let $\eta \in \mathbb R$ be the linear predictor (for example $\eta = x^\top \beta$), let cutpoints $c = (c_1, \dots,c_{K-1})$ satisfy $c_1 < c_2 < \cdots < c_{K-1}$. Define also $c_0 = -\infty$, $c_K = +\infty$.
         Then for (k \in {1,\dots,K}),
         $$
         \Pr(Y = k \mid \eta, c) =
@@ -5759,7 +5847,7 @@ class UnifiedDist:
         \mathrm{logit}^{-1}(\eta - c_{K-1}), & k = K.
         \end{cases}
         $$
-        Here $ \mathrm{logit}^{-1}(z) = \frac{1}{1 + e^{-z}} $. ([Stan][2])
+        Here $\mathrm{logit}^{-1}(z) = \frac{1}{1 + e^{-z}}$. ([Stan][2])
         In other words:
         $$
         \Pr(Y \le k \mid \eta, c) = \mathrm{logit}^{-1}(\eta - c_k),
@@ -5825,7 +5913,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5859,15 +5947,15 @@ class UnifiedDist:
         The **Pareto distribution**, named after economist Vilfredo Pareto, is a **power-law** probability distribution used to describe phenomena with “rich-get-richer” or “heavy-tail” properties — for example, income distribution, city sizes, or wealth concentration.
         It is characterized by:
 
-        * a **scale parameter** $ x_m > 0 $ (the minimum possible value), and
-        * a **shape parameter** $ \alpha > 0 $ (which controls the tail heaviness).
+        * a **scale parameter** $x_m > 0$ (the minimum possible value), and
+        * a **shape parameter** $\alpha > 0$ (which controls the tail heaviness).
 
-        A random variable $ X \sim \text{Pareto}(\alpha, x_m) $ takes values $ x \ge x_m $.
+        A random variable $X \sim \text{Pareto}(\alpha, x_m)$ takes values $x \ge x_m$.
         
         $$
         f(x \mid \alpha, x_m) =
         \begin{cases}
-        \dfrac{\alpha x_m^\alpha}{x^{\alpha + 1}}, & x \ge x_m, \
+        \dfrac{\alpha x_m^\alpha}{x^{\alpha + 1}}, & x \ge x_m, \\
         0, & x < x_m.
         \end{cases}
         $$
@@ -5926,7 +6014,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -5940,7 +6028,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -5956,14 +6044,14 @@ class UnifiedDist:
 
         r"""### Poisson
 
-        The **Poisson distribution** models the probability of observing a given number of events $k$ occurring in a fixed interval of time or space when these events happen independently and at a constant average rate $ \lambda > 0 $.
+        The **Poisson distribution** models the probability of observing a given number of events $k$ occurring in a fixed interval of time or space when these events happen independently and at a constant average rate $\lambda > 0$.
         It is widely used for modeling **count data**, such as the number of emails received per hour or mutations in a DNA strand per unit length.
 
         Formally,
         $$
         K \sim \text{Poisson}(\lambda)
         $$
-        where $ \lambda $ is both the **mean** and **variance** of the distribution.
+        where $\lambda$ is both the **mean** and **variance** of the distribution.
 
         The probability mass function (PMF) of the Poisson distribution is given by:
         $$
@@ -6018,7 +6106,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6032,7 +6120,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6048,7 +6136,7 @@ class UnifiedDist:
 
         r"""### Projected Normal 
         
-        The projected normal distribution arises by taking a multivariate normal vector $ \mathbf X \sim \mathcal N_n (\mu, \Sigma) $ in $\mathbb R^n$ and projecting it to the unit sphere. This distribution is commonly used in directional statistics (data on circles or spheres) and supports asymmetric and even multimodal behaviours depending on parameters.
+        The projected normal distribution arises by taking a multivariate normal vector $\mathbf X \sim \mathcal N_n (\mu, \Sigma)$ in $\mathbb R^n$ and projecting it to the unit sphere. This distribution is commonly used in directional statistics (data on circles or spheres) and supports asymmetric and even multimodal behaviours depending on parameters.
 
         
         #### Args:
@@ -6101,7 +6189,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6115,7 +6203,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6143,7 +6231,7 @@ class UnifiedDist:
             g = -\log(-\log(u)),\quad
             x = \sigma\big((\ell + g)/\tau\big)
             $$
-            where $ \sigma(\cdot) $ is the logistic (sigmoid) function. Then $x \in (0,1)$ has the RelaxedBernoulli distribution. 
+            where $\sigma(\cdot)$ is the logistic (sigmoid) function. Then $x \in (0,1)$ has the RelaxedBernoulli distribution. 
 
             The exact density formula can be derived via change of variables from logistic/Gumbel, but is somewhat involved (including Jacobian of sigmoid transform). 
       
@@ -6194,7 +6282,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6208,7 +6296,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6234,7 +6322,7 @@ class UnifiedDist:
         $$
         f_{\rm trunc}(x \mid X \le b) =
         \begin{cases}
-        \displaystyle \frac{,f(x),}{,F(b),}, & x \le b, \
+        \displaystyle \frac{,f(x),}{,F(b),}, & x \le b, \\
         0, & x > b.
         \end{cases}
         $$
@@ -6293,7 +6381,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6307,7 +6395,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6318,7 +6406,7 @@ class UnifiedDist:
                         return numpyro.sample(name, d, obs=obs, infer=infer_dict)
                 return numpyro.sample(name, d, obs=obs, infer=infer_dict)
 
-    def sine_bivariate_vonmises(self,phi_loc, psi_loc, phi_concentration, psi_concentration, correlation=None, weighted_correlation=None,    validate_args=None, name='x', obs=None, mask=None, infer=None, sample=False, seed=None, shape=(), event=0, create_obj=False):
+    def sine_bivariate_vonmises(self,phi_loc, psi_loc, phi_concentration, psi_concentration, correlation=None, weighted_correlation=None,    validate_args=None, name='x', obs=None, mask=None, infer=None, sample=False, seed=None, shape=(), event=0, create_obj=False, to_jax = True):
 
         r"""### Sine Bivariate Von Mises
 
@@ -6355,6 +6443,8 @@ class UnifiedDist:
         - *event* (int, optional): The number of batch dimensions to reinterpret as event dimensions (used in model building).
 
         - *create_obj* (bool, optional): If True, returns the raw BF distribution object instead of creating a sample site. This is essential for  building complex distributions like `MixtureSameFamily`. Defaults to `False`.
+
+        - *to_jax* (bool, optional): If True (default) and `sample=True`, returns the drawn samples as a raw JAX array. If False, the samples are wrapped in a `SampledData` object. Defaults to `True`.
 
         #### Returns:
             BF.primitives.Messenger: A BF sample site object when used in a model context (`sample=False`).
@@ -6404,7 +6494,13 @@ class UnifiedDist:
         )
         if sample:
             seed_key = self._draw_key(seed)
-            return d.sample(seed_key, sample_shape=shape)
+            samples = d.sample(seed_key, sample_shape=shape)
+            if mask is not None:
+                if mask.ndim + 1 == samples.ndim:
+                    # one boolean per draw against (..., 2) angle pairs
+                    mask = mask[..., None]
+                samples = _mask_draws(samples, mask)
+            return samples if to_jax else SampledData(samples)
         else:
             if shape:
                 d = d.expand(shape)
@@ -6413,7 +6509,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6468,7 +6564,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6482,7 +6578,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6557,7 +6653,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6571,7 +6667,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6587,15 +6683,15 @@ class UnifiedDist:
 
         r"""### Student's t
         
-        The Student's t-distribution is a probability distribution that arises in hypothesis testing involving the mean of a normally distributed population when the population standard deviation is unknown. It is similar to the normal distribution, but has heavier tails, making it more robust to outliers. For large $ \nu $, it converges to the Normal distribution.
+        The Student's t-distribution is a probability distribution that arises in hypothesis testing involving the mean of a normally distributed population when the population standard deviation is unknown. It is similar to the normal distribution, but has heavier tails, making it more robust to outliers. For large $\nu$, it converges to the Normal distribution.
         $$
         X \sim t_\nu(\mu, \sigma)
         $$
         where:
 
-        * $ \mu $ is the **location (mean)** parameter
-        * $ \sigma > 0 $ is the **scale** parameter
-        * $ \nu > 0 $ is the **degrees of freedom** controlling the tail heaviness
+        * $\mu$ is the **location (mean)** parameter
+        * $\sigma > 0$ is the **scale** parameter
+        * $\nu > 0$ is the **degrees of freedom** controlling the tail heaviness
         
         The probability density function (pdf) of the Student's t distribution is:
         $$
@@ -6607,7 +6703,7 @@ class UnifiedDist:
         $$
 
         * The heavier tails (for small $ν$) allow for larger outliers.
-        * For $ \nu \to \infty $, this approaches $ \mathcal{N}(\mu, \sigma^2) $.
+        * For $\nu \to \infty$, this approaches $\mathcal{N}(\mu, \sigma^2)$.
         
         #### Args:
         - *df* (jnp.ndarray): Degrees of freedom, must be positive.
@@ -6658,7 +6754,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6672,7 +6768,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6733,7 +6829,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6747,7 +6843,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6809,7 +6905,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6823,7 +6919,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6898,7 +6994,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6912,7 +7008,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -6980,7 +7076,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -6994,7 +7090,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7076,7 +7172,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7090,7 +7186,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7184,7 +7280,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7198,7 +7294,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7285,7 +7381,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7299,7 +7395,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7387,7 +7483,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7401,7 +7497,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7424,7 +7520,7 @@ class UnifiedDist:
         n = \text{number of zero-sum axes}
         $$
 
-        where $J$is the all-ones matrix and $n$ is the number of constrained elements. So the covariance is $ \sigma^2 (I - \tfrac{1}{n} J) $, which ensures that the sum of the components is 0 (since $ J \mathbf{x} = \mathbf{1} \sum_i x_i $).
+        where $J$is the all-ones matrix and $n$ is the number of constrained elements. So the covariance is $\sigma^2 (I - \tfrac{1}{n} J)$, which ensures that the sum of the components is 0 (since $J \mathbf{x} = \mathbf{1} \sum_i x_i$).
         
         #### Args:
         - *scale* (array_like): Standard deviation of the underlying normal distribution before the zerosum constraint is enforced.
@@ -7474,7 +7570,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7488,7 +7584,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7524,8 +7620,8 @@ class UnifiedDist:
         $$
         P(X = x) =
         \begin{cases}
-        p, & \text{if } x = 1, \
-        1 - p, & \text{if } x = 0, \
+        p, & \text{if } x = 1, \\
+        1 - p, & \text{if } x = 0, \\
         0, & \text{otherwise.}
         \end{cases}
         $$
@@ -7587,7 +7683,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7695,7 +7791,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7805,7 +7901,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7890,7 +7986,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -7904,7 +8000,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -7934,7 +8030,7 @@ class UnifiedDist:
 
         $$
         p(X = x) = \sum_{j=1}^K \pi_j ; f_j(x \mid \theta_j).
-        $
+        $$
 
         This is exactly the mixture density/PMF you get when you marginalise the latent component‑assignment variable $Z \in {1,\dots,K}$ out of the joint distribution:
 
@@ -8003,7 +8099,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8017,7 +8113,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8049,7 +8145,7 @@ class UnifiedDist:
         \Pr(X_1 = x_1, \dots, X_k = x_k)
         = \frac{n!}{x_1!,x_2!\cdots x_k!}
         ; p_1^{,x_1}; p_2^{,x_2} \cdots p_k^{,x_k}.
-        $
+        $$
         If $\sum_i x_i \neq n$, the probability is 0. 
 
         #### Args:
@@ -8109,7 +8205,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8205,7 +8301,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8219,7 +8315,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8294,7 +8390,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8308,7 +8404,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8388,7 +8484,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8402,7 +8498,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8431,14 +8527,14 @@ class UnifiedDist:
 
         * $\varphi(z)$ is the standard normal PDF, $\varphi(z) = \frac1{\sqrt{2\pi}} e^{-z^2/2}$. 
         * $\Phi(z)$ is the standard normal CDF.
-        * The denominator $ \Phi\bigl(\tfrac{b - \mu}{\sigma}\bigr) - \Phi\bigl(\tfrac{a - \mu}{\sigma}\bigr) $ normalises the density so the total probability over ([a,b]) is 1.
+        * The denominator $\Phi\bigl(\tfrac{b - \mu}{\sigma}\bigr) - \Phi\bigl(\tfrac{a - \mu}{\sigma}\bigr)$ normalises the density so the total probability over ([a,b]) is 1.
 
         For values (y < a) or (y > b), (f_Y(y) = 0).
         
         #### Args:
         - *loc* (float): The location parameter of the normal distribution.
 
-        - *sample* (float): The scale parameter of the normal distribution.
+        - *scale* (float): The scale parameter of the normal distribution.
         
         - *shape* (tuple): A multi-purpose argument for shaping. When `sample=False` (model building), this is used with `shape` to set the distribution's batch shape. When `sample=True` (direct sampling), this is used as `sample_shape` to draw a raw JAX array of the given shape.
         
@@ -8485,7 +8581,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8499,7 +8595,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8579,7 +8675,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8593,7 +8689,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8611,14 +8707,14 @@ class UnifiedDist:
         A Zero-Inflated Negative Binomial distribution is used for count data that exhibit **both** (a) over-dispersion relative to a Poisson (i.e., variance > mean) *and* (b) an excess of zero counts beyond what a standard Negative Binomial would predict. 
         It assumes two latent processes:
 
-        1. With probability $ \pi $ (sometimes denoted $\psi$ or “zero-inflation probability”) you are in a “structural zero” state → you observe a zero.
-        2. With probability $1 - \pi$, you come from a regular Negative Binomial distribution (with parameters e.g. mean $ \mu $ and dispersion parameter $ \alpha $ or size/r parameter) and then you might observe zero or a positive count. 
+        1. With probability $\pi$ (sometimes denoted $\psi$ or “zero-inflation probability”) you are in a “structural zero” state → you observe a zero.
+        2. With probability $1 - \pi$, you come from a regular Negative Binomial distribution (with parameters e.g. mean $\mu$ and dispersion parameter $\alpha$ or size/r parameter) and then you might observe zero or a positive count. 
 
         Thus the model is a mixture of a point‐mass at zero + a Negative Binomial for counts.
         
         This distribution combines a Negative Binomial distribution with a binary gate variable. Observations are either drawn from the Negative Binomial distribution with probability (1 - gate) or are treated as zero with probability 'gate'. This models data with excess zeros compared to what a standard Negative Binomial distribution would predict.
         
-        Let $X$ denote the count random variable, support $ {0,1,2,\dots} $. Denote:
+        Let $X$ denote the count random variable, support ${0,1,2,\dots}$. Denote:
 
         * $\pi$ = probability of being in the “always zero” (structural zero) process, with $ 0 \le \pi \le 1$.
         * The count process is NB with parameters: mean $\mu>0$ and dispersion/shape parameter $\alpha>0$ (or equivalently size parameter (r)).
@@ -8680,7 +8776,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8694,7 +8790,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the
@@ -8766,7 +8862,7 @@ class UnifiedDist:
         
             # Apply mask if provided
             if mask is not None:
-                samples = jnp.where(mask, samples, jnp.nan)  
+                samples = _mask_draws(samples, mask)  
         
             if to_jax:
                 return samples
@@ -8780,7 +8876,7 @@ class UnifiedDist:
             if create_obj:
                 return d
             else:
-                infer_dict = dict(infer) if infer else None
+                infer_dict = dict(infer) if infer is not None else None
                 if mask is not None:
                     # numpyro.sample takes obs_mask as its own keyword; routing
                     # a mask through infer= makes it an inert annotation and the

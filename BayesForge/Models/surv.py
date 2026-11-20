@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp
@@ -5,6 +7,7 @@ from matplotlib import pyplot as plt
 import arviz as az
 import numpyro
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Utils.dev_warning import warn_dev
 dist = dist()
 
 import jax
@@ -66,8 +69,11 @@ class survival_old:
         self.met_hazard = None  
         self.data_on_model = {}
         self.cov = None
-        self.df = None
-        self.dist = dist()
+        # U4: no `self.df = None` here — df is a property bound to the parent,
+        # assigning it at construction would erase the parent's data.
+        # RELEASE_AUDIT W2: share the bound module singleton instead of a
+        # fresh UnifiedDist per instance (bf._bind_library_rng rebinds it).
+        self.dist = dist
     
     @property
     def df(self):
@@ -172,12 +178,12 @@ class survival_old:
 
         # Plot censored subjects (event = 0) as red horizontal lines
         ax.hlines(
-            self.patients[ self.event == 0], 0,  self.df[ self.event == 0].loc[:, 'time'], color="C3", label="Censored"
+            self.patients[ self.event == 0], 0,  self.df[ self.event == 0].loc[:, time], color="C3", label="Censored"
         )
 
         # Plot uncensored subjects (event = 1) as gray horizontal lines
         ax.hlines(
-             self.patients[ self.event == 1], 0,  self.df[ self.event == 1].loc[:, 'time'], color="C7", label="Uncensored"
+             self.patients[ self.event == 1], 0,  self.df[ self.event == 1].loc[:, time], color="C7", label="Uncensored"
         )
 
         # Add scatter points for subjects with the specified covariate (e.g., metastasized = 1)
@@ -244,8 +250,11 @@ class survival_old:
         intervals = np.arange(n_intervals)
         self.n_intervals = n_intervals
 
-        # Determine the last interval each patient belongs to
-        last_period = np.floor((self.time - 0.01) / self.interval_length).astype(int)
+        # Determine the last interval each patient belongs to: the interval
+        # (a, a + interval_length] that contains the observation, clipped to
+        # the grid built above (same convention as survival.import_time_even).
+        last_period = (np.ceil(self.time / self.interval_length) - 1).astype(int)
+        last_period = np.clip(last_period, 0, n_intervals - 1)
         self.last_period = last_period
 
         # Create a binary death matrix (n_patients x n_intervals)
@@ -351,9 +360,9 @@ class survival_old:
         - `np.expand_dims` is used to ensure the correct dimensions when computing the product.
 
         """
-        base_hazard = m.posteriors["lambda0"]
-        array_expanded = jnp.expand_dims(np.exp(m.posteriors["beta"]), axis=-1)
-        met_hazard =m.posteriors["lambda0"] * array_expanded
+        base_hazard = m.posteriors[lambda0]
+        array_expanded = jnp.expand_dims(np.exp(m.posteriors[beta]), axis=-1)
+        met_hazard =m.posteriors[lambda0] * array_expanded
 
         self.base_hazard = base_hazard
         self.met_hazard = met_hazard
@@ -363,7 +372,7 @@ class survival_old:
                   xlab='Time', ylab='Survival', covlab = 'treated', title = "Bayesian survival model"):
 
         base_hazard = self.parent.posteriors[lambda0]        
-        met_hazard =self.parent.posteriors[lambda0] * self.parent.posteriors[beta]
+        met_hazard =self.parent.posteriors[lambda0] * jnp.exp(self.parent.posteriors[beta])
 
         fig, (hazard_ax, surv_ax) = plt.subplots(ncols=2, sharex=True, sharey=False, figsize=(16, 6))   
 
@@ -455,8 +464,13 @@ class survival():
         self.cov_v = None  # Time-varying covariates 
         self.df = None
         self.oberved = None
+        # Number of fixed and time-varying covariates, kept in sync by
+        # import_covF / import_covV.
+        self.n_cov = 0
+        self.n_cov_v = 0
+        # Print the import summaries of import_* and build_surv_covariates.
+        self.verbose = False
         self.parent = parent
-        self.parent.model_name = 'survival'
         # Prior hyperparameters, overridable before fitting.
         # Baseline_rate ~ Gamma(concentration, rate) per interval. Sampled in
         # log space on the numpyro backend, see _LogGamma. The posterior is
@@ -509,10 +523,16 @@ class survival():
         - Exposure is capped by the interval bounds, and the last interval reflects the remaining time to the event or censoring.
 
         """
-        self.time = time
-        self.event = event
+        self.time = np.asarray(time)
+        self.event = np.asarray(event)
+        if not np.all(np.isfinite(self.time)) or np.any(self.time <= 0):
+            raise ValueError("time must be finite and > 0 for every individual.")
+        if not np.all(np.isin(self.event, (0, 1))):
+            raise ValueError("event must be 0 (censored) or 1 (event).")
+        if self.time.shape != self.event.shape:
+            raise ValueError(f"time and event must have the same shape, got {self.time.shape} and {self.event.shape}.")
         self.n_patients = self.time.shape[0]
-        self.patients = jnp.arange(self.n_patients)  # Array of patient indices
+        self.patients = np.arange(self.n_patients)  # Array of patient indices
         self.interval_length = interval_length
         
         # Define interval bounds and calculate the number of intervals
@@ -521,8 +541,11 @@ class survival():
         intervals = np.arange(n_intervals)
         self.n_intervals = n_intervals
 
-        # Determine the last interval each patient belongs to
-        last_period = np.floor((self.time - 1e-7) / self.interval_length).astype(int)
+        # Determine the last interval each patient belongs to: the interval
+        # (a, a + interval_length] that contains the observation. np.floor of
+        # (time - eps) misassigns exact multiples of interval_length to the
+        # previous interval.
+        last_period = (np.ceil(self.time / self.interval_length) - 1).astype(int)
         last_period = np.clip(last_period, 0, n_intervals - 1)
         self.last_period = last_period
 
@@ -541,11 +564,15 @@ class survival():
         self.death = death # Binary matrix (n_patients x n_intervals) indicating whether each subject experienced the event in each interval (1 if the event occurred, 0 otherwise).
         self.exposure = exposure # Matrix (n_patients x n_intervals) indicating the time each subject was exposed in each interval.
         
-        print("------------------------------------------------------------------------------")
-        print(f'Survival concern {self.n_patients} individuals in {self.n_intervals} intervals.')
-        print(f'{self.death.sum()} individuals experienced the event.')
+        if self.verbose:
+            print("------------------------------------------------------------------------------")
+            print(f'Survival concern {self.n_patients} individuals in {self.n_intervals} intervals.')
+            print(f'{self.death.sum()} individuals experienced the event.')
 
-        self.observed = jnp.ones((self.n_patients, self.n_intervals))
+        # At-risk mask (n_patients x n_intervals), 1 = observed in the interval.
+        # Named observed_mask so it no longer shadows the observed() method
+        # (RELEASE_AUDIT V1).
+        self.observed_mask = jnp.ones((self.n_patients, self.n_intervals))
         self.build_data()
         self.parent.data_on_model = self.data_on_model
 
@@ -553,6 +580,8 @@ class survival():
         """
         Import fixed covariates (patient-level).
         """
+        if isinstance(names, str):
+            names = [names]
         cov = np.asarray(cov)  # make sure it's array
     
         # validate
@@ -575,9 +604,10 @@ class survival():
             self.cov = cov.reshape(-1, 1) if cov.ndim == 1 else cov
         else:
             self.cov = np.column_stack([self.cov, cov])
-        print("------------------------------------------------------------------------------")
-        print(f'Covariates imported: {names}')
-        print(f'Surv object now has {self.cov.shape[1]} covariates: {self.cov_names}')
+        if self.verbose:
+            print("------------------------------------------------------------------------------")
+            print(f'Covariates imported: {names}')
+            print(f'Surv object now has {self.cov.shape[1]} covariates: {self.cov_names}')
         self.build_data()
         self.n_cov = len(self.cov_names)
         self.parent.data_on_model = self.data_on_model
@@ -594,6 +624,8 @@ class survival():
         names : list of str
             Names of the covariates.
         """
+        if isinstance(names, str):
+            names = [names]
         cov = np.asarray(cov)
     
         # Handle single covariate case (N,T) → (N,T,1)
@@ -620,7 +652,6 @@ class survival():
             raise ValueError("cov must be 2D (N,T) or 3D (N,T,V).")
     
         # Initialize or stack
-        print(self.cov_v)
         if self.cov_v is None:
             self.cov_v = cov
         else:
@@ -630,11 +661,13 @@ class survival():
         if not hasattr(self, "cov_v_names"):
             self.cov_v_names = []
         self.cov_v_names.extend(names)
+        self.n_cov_v = len(self.cov_v_names)
         self.build_data()
         self.parent.data_on_model = self.data_on_model
-        print("------------------------------------------------------------------------------")
-        print(f"Imported covariates {names}.")
-        print(f"Surv object now has {self.cov_v.shape[2]} time-varying covariates: {self.cov_v_names}")
+        if self.verbose:
+            print("------------------------------------------------------------------------------")
+            print(f"Imported covariates {names}.")
+            print(f"Surv object now has {self.cov_v.shape[2]} time-varying covariates: {self.cov_v_names}")
 
     def build_surv_covariates(self):
         """
@@ -683,9 +716,10 @@ class survival():
         v_names = getattr(self, "cov_v_names", []) if cov_v is not None else []
         self.cov_all_names = fixed_names + v_names
     
-        print("------------------------------------------------------------------------------")
-        print(f"Built all covariates array with shape {self.cov_all.shape}")
-        print(f"Covariate names order: {self.cov_all_names}")
+        if self.verbose:
+            print("------------------------------------------------------------------------------")
+            print(f"Built all covariates array with shape {self.cov_all.shape}")
+            print(f"Covariate names order: {self.cov_all_names}")
 
         self.cov_all = jnp.array(self.cov_all)
 
@@ -693,7 +727,7 @@ class survival():
         """
         Add observed data to the survival object.
         Args:
-            observed (np.ndarray): Array of observed data with shape (N, T). This array represent if individuals have been observed at each time point and thus should be 1 if observed and 0 if censored.
+            observed (np.ndarray): Array of observed data with shape (N, T). This array represent if individuals have been observed at each time point and thus should be 1 if observed and 0 if censored. A 0 means the individual was not observed (not at risk) in that interval: the cell is excluded from the likelihood (it adds 0 to the log density).
         Raises:
             ValueError: If observed data shape does not match the survival object. 
         """
@@ -701,7 +735,7 @@ class survival():
             raise ValueError(f"Expected observed data shape ({self.n_patients}), got {observed.shape}")
         if observed.shape[1] != self.n_intervals:
             raise ValueError(f"Expected observed data shape ({self.n_intervals}), got {observed.shape}")
-        self.observed = observed
+        self.observed_mask = observed
     
     def cum_hazard(self, hazard):
         """
@@ -773,6 +807,23 @@ class survival():
         #self.data_on_model['N_cov'] = self.cov_all.shape[1]
 
     def priors(self, sample = False):
+        """
+        Define prior distributions for the survival model.
+
+        Parameters:
+        - sample: If True, draws direct prior samples rather than defining model nodes.
+
+        Returns:
+        - Tuple of (lambda0, beta) priors for baseline hazard and covariate effects.
+          beta is None when no covariate was imported (no Hazard_rate_* nodes).
+
+        Note: the baseline-rate prior geometry is backend dependent (RELEASE_AUDIT
+        V4). On the numpyro backend, log(Baseline_rate) ~ _LogGamma(conc, rate) is
+        sampled (see _LogGamma); on the other backends, Baseline_rate ~
+        Gamma(conc, rate) is sampled on the natural scale, which with a small
+        concentration such as (0.01, 0.01) is exactly the pathology _LogGamma was
+        written to avoid: expect divergences there.
+        """
         conc, rate = self.baseline_rate_prior
         scale = self.hazard_rate_prior_scale
 
@@ -784,8 +835,15 @@ class survival():
             )
             lambda0 = numpyro.deterministic('Baseline_rate', jnp.exp(log_lambda0))
         else:
+            if not sample:
+                warnings.warn(
+                    "survival: on this backend the Gamma(%g, %g) baseline-rate prior is sampled on the natural scale (numpyro samples its log); expect divergences with a small concentration." % (conc, rate),
+                    UserWarning,
+                    stacklevel=2,
+                )
             lambda0 = self.parent.dist.gamma(conc, rate, shape= (self.n_intervals,), name = 'Baseline_rate', sample = sample)
 
+        beta = None  # no covariate imported: no Hazard_rate_* node to define (RELEASE_AUDIT V2)
         if self.cov_all.ndim == 2:
             ## Covariate effect distribution
             if self.cov_all.shape[1] == 1:
@@ -805,6 +863,15 @@ class survival():
         return lambda0, beta
 
     def model_univariate(self, death, cov,exposure, censoring = None):
+        """
+        Univariate discrete-time survival model with a single fixed covariate.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: Single covariate array.
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -816,9 +883,19 @@ class survival():
         mu =  exposure * lambda_
 
         # Likelihood calculation
-        self.parent.dist.poisson(rate = mu + jnp.finfo(mu.dtype).tiny, obs = death)
+        self.parent.dist.poisson(rate = mu + jnp.finfo(mu.dtype).tiny, obs = death,
+                                 mask=jnp.asarray(self.observed_mask) > 0)
 
     def model_multivariate(self, death, cov,exposure, censoring = None):
+        """
+        Multivariate discrete-time survival model with multiple fixed covariates.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: 2D covariates array (observations, covariates).
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -830,9 +907,19 @@ class survival():
         mu =  exposure * lambda_
 
         # Likelihood calculation
-        self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
+        self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death,
+                                 mask=jnp.asarray(self.observed_mask) > 0)
 
     def model_time_varying(self, death, cov,exposure, censoring = None):
+        """
+        Time-varying discrete-time survival model with longitudinal covariates.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: 3D time-varying covariates array (observations, intervals, covariates).
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
         # Parameters priors distributions-------------------------
         lambda0, beta = self.priors()
 
@@ -843,11 +930,31 @@ class survival():
         mu =  exposure * lambda_
 
         # Likelihood calculation
-        self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
+        self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death,
+                                 mask=jnp.asarray(self.observed_mask) > 0)
     
-    def model(self, death, cov,exposure, censoring = None):
-        print("⚠️This function is still in development. Use it with caution. ⚠️")
+    def model_baseline(self, death, cov, exposure, censoring=None):
+        """Discrete-time survival model with no covariate: hazard = baseline rate per interval."""
+        lambda0, _ = self.priors()
+        mu = exposure * lambda0[None, :]
+        self.parent.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs=death,
+                                 mask=jnp.asarray(self.observed_mask) > 0)
 
+    def model(self, death, cov,exposure, censoring = None):
+        """
+        Bayesian Survival Analysis model dispatching to the no-covariate baseline,
+        univariate, multivariate, or time-varying models.
+
+        Parameters:
+        - death: Event occurrence indicator array.
+        - cov: Covariates array (fixed or time-varying); empty selects the baseline model.
+        - exposure: Exposure times array across intervals.
+        - censoring: Optional censoring indicators.
+        """
+        warn_dev("survival")
+
+        if self.cov_all.ndim < 2 or self.cov_all.size == 0:
+            return self.model_baseline(death, cov, exposure, censoring)
         if self.cov_all.ndim == 2:
             if self.cov_all.shape[1] == 1: 
                 return self.model_univariate(death, cov, exposure, censoring)
@@ -946,7 +1053,10 @@ class survival():
                         for name in self.cov_names]
                 B = np.column_stack(cols)
             else:
-                B = np.asarray(posteriors[beta], dtype=float).reshape(-1, cov.shape[1])
+                raise KeyError(
+                    f"survival: the posteriors contain neither {beta!r} nor "
+                    f"'Hazard_rate_<name>' for every covariate in {self.cov_names}; "
+                    f"available keys: {sorted(posteriors)}")
             lp = (cov @ B.T).T  # (S, n)
 
         if n_draws is not None:
@@ -970,6 +1080,8 @@ class survival():
         bound is extrapolated with the last interval's rate, and a zero rate
         gives ``np.inf``. For one panel per covariate see ``ppc_km_by_cov``.
         """
+        warn_dev("ppc")
+
         K = int(self.n_intervals)
         bounds = np.asarray(self.interval_bounds, dtype=float)
         widths = np.diff(bounds)  # (K,)
@@ -1057,6 +1169,7 @@ class survival():
             dict {label: plotly Figure} keyed by covariate name, plus
             "risk" when ``risk=True``.
         """
+        warn_dev("ppc")
         if covs is None:
             covs = list(self.cov_names)
         elif isinstance(covs, str):
@@ -1086,12 +1199,33 @@ class survival():
                 group_name="risk", name="time", facet=facet)
         return figs
 
-    def plot_surv(self, lambda0 = 'Baseline_rate', beta = 'beta',
+    def plot_surv(self, lambda0 = 'Baseline_rate', beta = None,
                   xlab='Time', ylab='Survival', covlab = 'treated', title = "Bayesian survival model",
                   hdi_prob = 0.94):
+        """
+        Plot posterior cumulative hazard Lambda(t) and survival function S(t).
 
+        Draws two subplots: the cumulative hazard on the left and the survival
+        curves on the right, with equal-tailed credible bands.
+
+        Parameters:
+        - lambda0: Posterior variable name for baseline rate draws.
+        - beta: Posterior variable name for covariate effect draws. Defaults to
+          the model site of the first covariate, ``Hazard_rate_<name>``.
+        - xlab: Label for the x-axis.
+        - ylab: Label for the y-axis.
+        - covlab: Label for covariate groups.
+        - title: Super-title for the figure.
+        - hdi_prob: Credible interval probability mass (defaults to 0.94).
+
+        Returns:
+        - Tuple of (fig, (hazard_ax, surv_ax)).
+        """
+        if beta is None:
+            beta = f'Hazard_rate_{self.cov_all_names[0]}'
         base_hazard = self.parent.posteriors[lambda0]
-        met_hazard = self.parent.posteriors[lambda0] * self.parent.posteriors[beta]
+        # The model's hazard is lambda0 * exp(cov * beta) (calculate_hazard_rate_*).
+        met_hazard = self.parent.posteriors[lambda0] * jnp.exp(self.parent.posteriors[beta])
 
         # Drop trailing intervals that carry no data (zero total exposure).
         # Their Baseline_rate stays at the Gamma(0.01, 0.01) prior, whose heavy

@@ -53,11 +53,22 @@ def iter_blocks(page):
     """Yield (lang, info, code, line) for every fenced code block of a page.
 
     ``lang`` is None for blocks that are not Python, R or Julia (shell
-    commands, program output, diagrams).
+    commands, program output, diagrams). Blocks inside ``<!-- ... -->``
+    HTML comments are skipped.
     """
     lines = pathlib.Path(page).read_text().splitlines()
     i = 0
+    in_comment = False
     while i < len(lines):
+        if in_comment:
+            if "-->" in lines[i]:
+                in_comment = False
+            i += 1
+            continue
+        if re.match(r"^\s*<!--", lines[i]) and "-->" not in lines[i]:
+            in_comment = True
+            i += 1
+            continue
         match = _FENCE_OPEN.match(lines[i])
         if match:
             info = (match.group(1) or "").strip()

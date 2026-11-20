@@ -31,13 +31,8 @@ def main():
     print(f"{'Metric':<15} | {'Stan (p[1])':<15} | {'BF (p[0])':<15} | {'Diff':<15}")
     print("-" * 65)
     
-    s_p = stan_samples['p[2]'].values # Stan p[2] is the second element? Wait. 
-    # Stan model has vector[M] p. Headers are p[1...50].
-    # So f'p[{i+1}]' for i=1 is 'p[2]'.
-    # In BF, p[1] is the second element.
-    # User mentioned p[1]. I'll check both p[1] and p[2].
-    
-    for idx_BF in [0, 1]:  # Check both first and second elements
+    # BF index i (0-based) maps to Stan column p[i+1] (1-based).
+    for idx_BF in [0, 1]:
         idx_stan = idx_BF + 1
         s_vals = stan_samples[f'p[{idx_stan}]'].values
         b_vals = BF_post['p'][:, idx_BF]
@@ -56,6 +51,12 @@ def main():
             s_m = func(s_vals)
             b_m = func(b_vals)
             print(f"{name:<15} | {s_m:15.4f} | {b_m:15.4f} | {s_m - b_m:15.4f}")
+
+        # z-score of the mean difference in sampling-error units
+        z = abs(np.mean(b_vals) - np.mean(s_vals)) / np.sqrt(
+            np.std(b_vals) ** 2 / len(b_vals) + np.std(s_vals) ** 2 / len(s_vals))
+        print(f"z-score of mean difference: {z:.2f}")
+        assert z < 4, f"BF:p[{idx_BF}] vs Stan:p[{idx_stan}]: z = {z:.2f} >= 4"
 
 if __name__ == "__main__":
     main()

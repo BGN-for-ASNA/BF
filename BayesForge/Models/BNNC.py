@@ -7,6 +7,13 @@ from scipy.cluster.hierarchy import fcluster, linkage
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import warnings
+from BayesForge.Utils.dev_warning import warn_dev
+from BayesForge.BNN.bnn import _prior_scale
+
+# Floor added inside log() terms (weights, gating probabilities) so a 0 in
+# float32 gives log(tiny) instead of -inf/NaN. Used by model, predict, plot.
+_LOG_EPS = 1e-10
 
 class bnnc:
     def __init__(self, parent):
@@ -19,20 +26,65 @@ class bnnc:
         self.__name__ = 'bnnc' 
         self.parent = parent
 
-    def __call__(self, data, K=11, D_H1=10, empirical_bayes=False):
+    def __call__(self, data, K=11, D_H1=10, empirical_bayes=False, store_theta=False,
+                 prior_scale=None):
         """
         Makes the class instance callable. 
         Redirects the call to self.model().
         """
-        return self.model(data, K=K, D_H1=D_H1, empirical_bayes=empirical_bayes)
+        return self.model(data, K=K, D_H1=D_H1, empirical_bayes=empirical_bayes,
+                          store_theta=store_theta, prior_scale=prior_scale)
 
-    def model(self, data, K=11, D_H1=10, empirical_bayes=False):
+    def model(self, data, K=11, D_H1=10, empirical_bayes=False, store_theta=False,
+              prior_scale=None):
         """
         BNNC marginal mixture model definition.
+
+        Two prior sets, selected by ``empirical_bayes``. With
+        ``empirical_bayes=True`` the priors are data-driven: mu ~ N(mean, 2 *
+        std) and sigma ~ HalfNormal(2 * std) per feature, with a Dirichlet(1/K)
+        global weight — they follow the data scale. With
+        ``empirical_bayes=False`` (the default) the priors are fixed:
+        mu ~ N(0, 5), sigma ~ Exponential(1), Dirichlet(0.05) — these assume
+        standardised features, so the model warns when the data do not look
+        standardised (mean far from 0 or spread far from 1).
+
+        ``store_theta`` adds a ``numpyro.deterministic('theta', theta)`` site
+        holding the per-point gating weights (N, K). It is off by default:
+        the site is stored for every draw and costs gigabytes for N ~ 1e4;
+        ``_theta_draws`` recomputes theta from the weight draws on demand.
+
+        ``prior_scale`` (MAJ-5, opt-in) sets the std of the w1 weight prior:
+        None (default) keeps the historical N(0, 1); "fan_in" uses
+        N(0, 1/sqrt(fan_in)) with fan_in = D_X (first dimension of w1); a
+        float is used as the scale directly.
         """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
+        if jnp.ndim(data) != 2:
+            raise ValueError("bnnc: data must be 2-D (N, D)")
+        if data.shape[0] < 1:
+            raise ValueError("bnnc: data must contain at least one sample (N >= 1)")
+        if isinstance(K, bool) or not isinstance(K, (int, np.integer)) or K < 1:
+            raise ValueError("bnnc: K must be an integer >= 1")
+        warn_dev("bnnc")
         m = self.parent
         N, D_X = data.shape
+        self._model_kwargs = dict(K=K, D_H1=D_H1, empirical_bayes=empirical_bayes,
+                                  prior_scale=prior_scale)
+
+        if not empirical_bayes:
+            # The fixed priors assume standardised features; warn on raw-scale
+            # data. Under a JAX tracer the concrete conversion fails -> skip.
+            try:
+                m_ = np.asarray(jnp.mean(data, 0))
+                s_ = np.asarray(jnp.std(data, 0))
+                if np.any(np.abs(m_) > 3) or np.any(s_ > 5) or np.any(s_ < 0.2):
+                    warnings.warn(
+                        "bnnc: the default priors (mu ~ N(0, 5), sigma ~ Exponential(1)) "
+                        "assume standardised features; standardise the data or pass "
+                        "empirical_bayes=True.",
+                        UserWarning, stacklevel=2)
+            except Exception:
+                pass
         
         if empirical_bayes:
             # Data-driven priors
@@ -50,7 +102,7 @@ class bnnc:
         # --- BNN Gating Network ---
         w1 = m.bnn.layer_linear(
             data, 
-            dist=m.dist.normal(0, 1, name='w1_weight', shape=(D_X, D_H1)),
+            dist=m.dist.normal(0, _prior_scale(D_X, prior_scale), name='w1_weight', shape=(D_X, D_H1)),
             activation='tanh'
         )
         
@@ -63,10 +115,11 @@ class bnnc:
         # Alpha < 1 acts as a sparse prior to suppress inactive clusters
         pi = numpyro.sample('global_pi', numpyro.distributions.Dirichlet(jnp.ones(K) * alpha_bnnc))
         
-        logits = w2 + jnp.log(pi + 1e-10)
+        logits = w2 + jnp.log(pi + _LOG_EPS)
         log_p = jax.nn.log_softmax(logits, axis=-1)
         theta = jnp.exp(log_p)
-        numpyro.deterministic('theta', theta)
+        if store_theta:
+            numpyro.deterministic('theta', theta)
         
         # --- Mixture Components ---
         mu = m.dist.normal(data_mean, data_std, name='mu', shape=(K, D_X))
@@ -87,37 +140,71 @@ class bnnc:
         total_log_likelihood = jax.scipy.special.logsumexp(weighted_log_pdf, axis=-1)
         numpyro.factor('mixture_likelihood', jnp.sum(total_log_likelihood))
 
+    def _theta_draws(self, data, posterior_samples, key=None):
+        """Per-point gating weights theta (S, N, K) recomputed from the posterior
+        draws of the network weights and global_pi (theta is not stored by the fit)."""
+        from numpyro.infer import Predictive
+        if 'theta' in posterior_samples:
+            return posterior_samples['theta']
+        kw = dict(getattr(self, '_model_kwargs', {}))
+        kw['store_theta'] = True
+        pred = Predictive(self.model, posterior_samples=posterior_samples, return_sites=['theta'])
+        key = jax.random.PRNGKey(0) if key is None else key
+        with warnings.catch_warnings():
+            # Re-running the model on a plot grid must not repeat the B3
+            # "standardise the data" warning meant for the fitted data.
+            warnings.simplefilter("ignore", UserWarning)
+            return pred(key, jnp.asarray(data), **kw)['theta']
+
     def get_cluster_probs(self, data_pts, theta_prob, mu_p, sigma_p):
+        """
+        Compute normalized posterior cluster membership probabilities for data points.
+
+        Parameters:
+        - data_pts: Data array (shape: [N, D]).
+        - theta_prob: Cluster mixture weights (shape: [K] or [N_draws, K]).
+        - mu_p: Cluster component means (shape: [K, D]).
+        - sigma_p: Cluster component standard deviations (shape: [K, D]).
+
+        Returns:
+        - Array of normalized posterior cluster assignment probabilities (shape: [N, K]).
+        """
         X_e = jnp.expand_dims(data_pts, axis=1) # (N, 1, D_X)
         mu_e = jnp.expand_dims(mu_p, axis=0) # (1, K, D_X)
         sig_e = jnp.expand_dims(sigma_p, axis=0) # (1, K, D_X)
         
         log_liks = jnp.sum(stats.norm.logpdf(X_e, loc=mu_e, scale=sig_e), axis=-1)
-        log_probs = jnp.log(theta_prob + 1e-8) + log_liks
+        log_probs = jnp.log(theta_prob + _LOG_EPS) + log_liks
         norm_probs = jnp.exp(log_probs - jax.scipy.special.logsumexp(log_probs, axis=-1, keepdims=True))
         return norm_probs
 
-    def predict(self, data, sampler):
+    def predict(self, data, sampler, verbose=False):
         """
         Performs Consensus Clustering.
-        """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
-        posterior_samples = sampler.get_samples(group_by_chain=False)
 
-        theta_samps = posterior_samples['theta']
-        mu_samps = posterior_samples['mu']
-        sigma_samps = posterior_samples['sigma']
+        Args:
+            data: Input data array of shape ``(N, D)``.
+            sampler: Fitted BayesForge sampler instance.
+            verbose (bool, optional): If True, print the number of clusters
+                found by the consensus cut. Defaults to False (silent).
+        """
+        warn_dev("bnnc")
+        posterior_samples = sampler.get_samples(group_by_chain=False)
 
         # Cap draws for the O(S * N^2) consensus step below: the full chain
         # length OOMs and kills the kernel. An evenly-spaced subsample of a few
-        # hundred draws gives the same consensus clustering.
+        # hundred draws gives the same consensus clustering. The subsample is
+        # applied to every stored array FIRST; theta is not stored by the fit
+        # (B1) and is recomputed only for the draws that are actually used.
         MAX_DRAWS = 300
-        S = theta_samps.shape[0]
+        S = posterior_samples['mu'].shape[0]
         if S > MAX_DRAWS:
             idx = np.linspace(0, S - 1, MAX_DRAWS).astype(int)
-            theta_samps = theta_samps[idx]
-            mu_samps = mu_samps[idx]
-            sigma_samps = sigma_samps[idx]
+            posterior_samples = {k: v[idx] for k, v in posterior_samples.items()}
+
+        theta_samps = self._theta_draws(data, posterior_samples)
+        mu_samps = posterior_samples['mu']
+        sigma_samps = posterior_samples['sigma']
 
         cluster_probs = jax.vmap(self.get_cluster_probs, in_axes=(None, 0, 0, 0))(
             data, theta_samps, mu_samps, sigma_samps
@@ -134,7 +221,8 @@ class bnnc:
         Z = linkage(condensed_dist, 'average')
         
         final_labels = fcluster(Z, t=0.5, criterion='distance')
-        print(f"Model found {len(np.unique(final_labels))} clusters.")
+        if verbose:
+            print(f"Model found {len(np.unique(final_labels))} clusters.")
 
         return theta_samps, mu_samps, sigma_samps, final_labels
 
@@ -144,34 +232,44 @@ class bnnc:
         index over the feature plane, with the data coloured by their
         argmax cluster.
 
-        The predictive at a point x is  p(k | x) ∝ pi_k * N(x | mu_k, sigma_k),
-        averaged over posterior draws of (global_pi, mu, sigma). The contour
-        shows sum_k k * p(k | x); the colour bar is that expected index.
+        The predictive at a point x is  p(k | x) ∝ theta_k(x) * N(x | mu_k, sigma_k),
+        averaged over posterior draws of the gating network (w1_weight,
+        w2_weight), global_pi, mu and sigma. theta_k(x) = softmax(w2(x) +
+        log pi) is the network's per-point gating (not the global pi_k);
+        it is recomputed for the grid and for the data points with
+        ``_theta_draws`` on the subsampled draws, exactly like ``predict``.
+        The contour shows sum_k k * p(k | x); the colour bar is that expected index.
         """
-        print("⚠️This function is still in development. Use it with caution.⚠️")
+        data = np.asarray(data)
+        if data.ndim != 2 or data.shape[1] != 2:
+            raise ValueError("bnnc.plot: plot requires 2-D data with D=2 "
+                             f"features (got shape {data.shape}).")
+        if data.shape[0] < 2:
+            raise ValueError("bnnc.plot: plot requires at least 2 data points "
+                             f"(got {data.shape[0]}).")
+        warn_dev("bnnc")
 
         ps = sampler.get_samples(group_by_chain=False)
-        pi_s = np.asarray(ps['global_pi'])   # (S, K)
-        mu_s = np.asarray(ps['mu'])          # (S, K, D)
-        sig_s = np.asarray(ps['sigma'])      # (S, K, D)
 
         # Cap draws (grid PDF is O(S * n_grid * K)).
         MAX_DRAWS = 200
-        S = pi_s.shape[0]
+        S = np.asarray(ps['mu']).shape[0]
         if S > MAX_DRAWS:
             idx = np.linspace(0, S - 1, MAX_DRAWS).astype(int)
-            pi_s, mu_s, sig_s = pi_s[idx], mu_s[idx], sig_s[idx]
+            ps = {k: v[idx] for k, v in ps.items()}
 
-        K = pi_s.shape[1]
+        mu_s = np.asarray(ps['mu'], dtype=np.float32)      # (S, K, D)
+        sig_s = np.asarray(ps['sigma'], dtype=np.float32)  # (S, K, D)
+        K = mu_s.shape[1]
         data = np.asarray(data)
 
-        def post_pred(pts):
-            """Posterior-mean p(k | pts): (n_pts, K)."""
+        def post_pred(pts, theta):
+            """Posterior-mean p(k | pts): (n_pts, K). theta: (S, n_pts, K)."""
             X = pts[:, None, None, :]                       # (n,1,1,D)
             mu = mu_s[None, :, :, :]                        # (1,S,K,D)
             sg = sig_s[None, :, :, :]
             logn = -0.5 * (((X - mu) / sg) ** 2) - np.log(sg) - 0.5 * np.log(2 * np.pi)
-            logp = logn.sum(-1) + np.log(pi_s[None] + 1e-10)   # (n,S,K)
+            logp = logn.sum(-1) + np.log(theta.transpose(1, 0, 2) + _LOG_EPS)   # (n,S,K)
             logp -= logp.max(-1, keepdims=True)
             p = np.exp(logp)
             p /= p.sum(-1, keepdims=True)
@@ -183,10 +281,20 @@ class bnnc:
                              np.linspace(y_min, y_max, 200))
         grid = np.column_stack([xx.ravel(), yy.ravel()])
 
-        grid_p = post_pred(grid)
+        # Chunk the grid predictive (B4): peak memory stays
+        # chunk * S * K * D * 4 bytes instead of n_grid * S * K * D * 4.
+        CHUNK = 2000
+        grid_p = np.concatenate([
+            post_pred(np.asarray(grid[i:i + CHUNK], dtype=np.float32),
+                      np.asarray(self._theta_draws(grid[i:i + CHUNK], ps),
+                                 dtype=np.float32))
+            for i in range(0, grid.shape[0], CHUNK)
+        ])
         idx_grid = np.arange(K)
         Z = (grid_p * idx_grid).sum(-1).reshape(xx.shape)   # expected cluster index
-        data_lbl = post_pred(data).argmax(-1)
+        data_lbl = post_pred(
+            np.asarray(data, dtype=np.float32),
+            np.asarray(self._theta_draws(data, ps), dtype=np.float32)).argmax(-1)
 
         plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=figsize)

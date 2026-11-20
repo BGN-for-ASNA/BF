@@ -1,28 +1,28 @@
 Comparison Table for 6.Poisson
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-     a[0]  3.3021    3.3021 -0.0001 0.0474
-     a[1]  3.5918    3.5921 -0.0003 0.0691
-     b[1]  0.4087    0.4112 -0.0025 0.0293
-     b[0]  0.4003    0.4010 -0.0007 0.0522
+     b[1]  0.4049    0.4104 -0.0055 0.0521
+     a[1]  3.5948    3.5933  0.0015 0.0784
+     b[0]  0.4019    0.4014  0.0006 0.0590
+     a[0]  3.3008    3.3004  0.0004 0.0430
 ============================================================
 
 ================================================================
 WAIC cross-check  -  6.Poisson
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -41.700428    p_waic = 6.645690
+      elpd_waic = -41.340357    p_waic = 6.274698
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -41.700456    p_waic = 6.645680
-|delta elpd_waic| = 2.777e-05      |delta p_waic| = 9.849e-06
+      elpd_waic = -41.340357    p_waic = 6.274697
+|delta elpd_waic| = 1.565e-07      |delta p_waic| = 4.768e-07
 RESULT: PASS   (S=4000, N=10)
 ----------------------------------------------------------------
 LOO cross-check  -  6.Poisson
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -42.986432    p_loo  = 7.931694
+      elpd_loo  = -42.247707    p_loo  = 7.182048
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -43.000674    p_loo  = 7.945936
-|delta elpd_loo| = 1.424e-02      |delta p_loo| = 1.424e-02
+      elpd_loo  = -42.290893    p_loo  = 7.225235
+|delta elpd_loo| = 4.319e-02      |delta p_loo| = 4.319e-02
 RESULT: PASS
 ================================================================

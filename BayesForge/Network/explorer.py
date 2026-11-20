@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import base64
 import html as _html
+import json
 import mimetypes
 import os
 import platform
@@ -66,6 +67,63 @@ def _categorical_hex(n: int) -> list[str]:
         return [cycle[i % len(cycle)] for i in range(n)]
 
 _ASSETS = Path(__file__).with_name("assets") / "netexplorer"
+
+
+def _minmax_norm(v, floor: float | None = None, neutral: float = 0.5) -> np.ndarray:
+    """Min-max scale to [0, 1] (m11). A constant (or all-non-finite) column
+    has no range: instead of dividing by zero and poisoning the whole vector
+    with NaN, every value maps to ``neutral`` (0.5). When ``floor`` is given,
+    the minimum is lifted to it so the smallest item stays visible (the
+    historical behaviour). Mirrors the ``hi == lo`` guard the ``col_size``
+    path already had."""
+    out = np.array(v, dtype=float, copy=True)
+    if out.size:
+        fin = out[np.isfinite(out)]
+        lo, hi = (float(fin.min()), float(fin.max())) if fin.size else (0.0, 0.0)
+        if hi > lo:
+            out = (out - lo) / (hi - lo)
+            if floor is not None:
+                out[np.nanargmin(out)] = floor
+        else:
+            out = np.full(out.shape, neutral)
+    return out
+
+
+def _check_node_table(n_rows: int, N: int) -> None:
+    """Validate the node table against the matrix size (m12).
+
+    ``vis_net`` indexes tooltip values and metrics positionally (``v[i]``)
+    and ``mat_to_edgl`` indexes ``ids[i]``, so a ``df`` whose length differs
+    from the ``N x N`` matrix either crashes deep inside those helpers or,
+    worse, silently misaligns nodes and metrics. Raise at the boundary.
+    """
+    if n_rows != N:
+        raise ValueError(
+            f"df has {n_rows} rows but the adjacency matrix is {N}x{N}: "
+            "one row per node is required"
+        )
+
+
+def _js_json(v) -> str:
+    """``json.dumps`` for values injected into the page's ``<script>`` blocks
+    (m17). On top of the JSON escapes, ``<`` becomes ``\\u003c`` so a user label containing ``</script>`` cannot terminate the
+    script block; ``ensure_ascii`` (default) already neutralises the JS-only
+    line separators U+2028 / U+2029."""
+    return json.dumps(v).replace("<", "\\u003c")
+
+
+def _js_str(v) -> str:
+    """Single-quoted JS string literal, the format the page has always used.
+
+    Backslash, quote and line breaks are escaped, and ``<`` becomes
+    ``\\u003c`` (m17) so ``</script>`` inside user data cannot close the
+    script block; the browser still shows ``<``.
+    """
+    t = (str(v).replace("\\", "\\\\").replace("'", "\\'")
+         .replace("\n", "\\n").replace("\r", "\\r")
+         .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+         .replace("<", "\\u003c"))
+    return "'" + t + "'"
 
 
 # --------------------------------------------------------------------- #
@@ -115,12 +173,16 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
 _FEATURES_LINKS_HTML = """
         <li class="darkerli"><span class="nav-text">Min edge weight</span>
           <form><div><span>0</span>
-            <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
-            <span id="edgeThreshV">0</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
+            </div>
+            <span id="edgeThreshV" style="min-width: 32px; text-align: right;">0</span></div></form></li>
         <li class="darkerlishadowdown" id="liArrow"><span class="nav-text">Arrow size</span>
           <form><div><span>0</span>
-            <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
-            <span id="arrowSizeV">9</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
+            </div>
+            <span id="arrowSizeV" style="min-width: 32px; text-align: right;">9</span></div></form></li>
 """
 
 _FEATURES_HTML = """
@@ -360,10 +422,12 @@ _FEATURES_JS = r"""
   /* fit to view --------------------------------------- */
   var bf = document.getElementById('btnFit');
   if (bf) bf.onclick = function () {
-    var xs = G.nodes.map(function (d) { return d.x; }), ys = G.nodes.map(function (d) { return d.y; });
+    var xs = G.nodes.map(function (d) { return d.x; }).filter(isFinite),
+        ys = G.nodes.map(function (d) { return d.y; }).filter(isFinite);
+    if (!xs.length) return;
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs),
         y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 45;
+    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 65;
     var k = Math.min((width - 2 * pad) / w, (height - 2 * pad) / hh, 4);
     var tx = width / 2 - k * (x0 + x1) / 2, ty = height / 2 - k * (y0 + y1) / 2;
     gSel.transition().duration(400).attr('transform', 'translate(' + tx + ',' + ty + ') scale(' + k + ')');
@@ -515,6 +579,128 @@ _FEATURES_JS = r"""
     svgEl.addEventListener('pointermove', function (e) { if (e.buttons) schedule(); });
     svgEl.addEventListener('pointerup', schedule);
     drawCanvas();
+  }
+
+  /* resizable left panel (splitter drag) -------------------------- */
+  var resizer = document.getElementById('menuResizer');
+  var menu = document.querySelector('.main-menu');
+  if (resizer && menu) {
+    var isDragging = false;
+    var startX = 0;
+    var startW = 0;
+
+    resizer.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      isDragging = true;
+      startX = e.clientX;
+      startW = menu.getBoundingClientRect().width;
+      resizer.classList.add('is-resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      var newW = Math.max(200, Math.min(startW + (e.clientX - startX), window.innerWidth * 0.85));
+      document.documentElement.style.setProperty('--panel-w', newW + 'px');
+      menu.style.flex = '0 0 ' + newW + 'px';
+      menu.style.width = newW + 'px';
+      if (typeof autoFit === 'function') autoFit();
+    });
+
+    window.addEventListener('mouseup', function () {
+      if (isDragging) {
+        isDragging = false;
+        resizer.classList.remove('is-resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  }
+
+  /* slider value tooltips (floating bubbles) --------------------- */
+  function formatBubbleVal(v) {
+    var num = parseFloat(v);
+    if (isNaN(num)) return v;
+    if (Math.abs(num) >= 1000) {
+      if (num % 1000 === 0) return (num / 1000) + 'k';
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    if (Number.isInteger(num)) return '' + num;
+    var s = num.toFixed(3);
+    return s.replace(/\.?0+$/, '');
+  }
+
+  var rangeSliders = document.querySelectorAll('input[type="range"]');
+  rangeSliders.forEach(function (slider) {
+    var bubble = document.createElement('div');
+    bubble.className = 'slider-bubble';
+    var parent = slider.parentElement;
+    if (parent) {
+      if (parent.style.position !== 'relative' && parent.style.position !== 'absolute') {
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(bubble);
+    }
+
+    function updateBubble() {
+      bubble.textContent = formatBubbleVal(slider.value);
+      var min = parseFloat(slider.min) || 0;
+      var max = parseFloat(slider.max) || 100;
+      var val = parseFloat(slider.value) || 0;
+      var pct = max > min ? (val - min) / (max - min) : 0;
+      // Compenser la largeur du pouce (15px thumb)
+      var thumbW = 15;
+      var sliderW = slider.offsetWidth || 100;
+      var px = pct * (sliderW - thumbW) + (thumbW / 2);
+      bubble.style.left = px + 'px';
+    }
+
+    function showBubble() {
+      updateBubble();
+      bubble.classList.add('visible');
+    }
+
+    function hideBubble() {
+      bubble.classList.remove('visible');
+    }
+
+    slider.addEventListener('input', updateBubble);
+    slider.addEventListener('focus', showBubble);
+    slider.addEventListener('blur', hideBubble);
+    slider.addEventListener('mouseenter', showBubble);
+    slider.addEventListener('mouseleave', hideBubble);
+    slider.addEventListener('mousedown', showBubble);
+  });
+
+  /* loading spinner dismissal ------------------------------------ */
+  var loader = document.getElementById('netLoader');
+  if (loader) {
+    function hideLoader() {
+      if (loader && !loader.classList.contains('is-hidden')) {
+        loader.classList.add('is-hidden');
+        setTimeout(function () {
+          if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 500);
+      }
+    }
+
+    if (typeof simulation !== 'undefined') {
+      // D3 force simulation: hide spinner when simulation ends, or on tick when alpha is low enough
+      var tickCount = 0;
+      simulation.on('tick.loader', function () {
+        tickCount++;
+        // Once the network has stabilized a few frames or reached low energy
+        if (tickCount > 15 || simulation.alpha() < 0.1) {
+          simulation.on('tick.loader', null);
+          hideLoader();
+        }
+      });
+      simulation.on('end.loader', hideLoader);
+    }
+    // Safety fallback: ensure spinner never stays visible indefinitely
+    setTimeout(hideLoader, 1200);
   }
 })();
 """
@@ -825,12 +1011,8 @@ class NetExplorer:
             if not pd.api.types.is_numeric_dtype(d[c]):
                 raise TypeError("node_opacity column must be numeric")
             ori_opacity = c
-            v = jnp.asarray(d[c].to_numpy(dtype=float))
-            v = (v - v.min()) / (v.max() - v.min())
-            v = np.array(v)  # writable copy off the JAX buffer
-            if len(v):
-                v[np.argmin(v)] = 1e-3
-            d["opacity"] = v
+            # m11: constant column -> neutral 0.5 instead of 0/0 NaN
+            d["opacity"] = _minmax_norm(d[c].to_numpy(dtype=float), floor=1e-3)
         else:
             ori_opacity = None
             d["opacity"] = 1.0
@@ -841,7 +1023,12 @@ class NetExplorer:
             if not pd.api.types.is_numeric_dtype(d[c]):
                 raise TypeError("col_size column must be numeric")
             ori_size = c
-            d["size"] = d[c].astype(float)
+            s = d[c].to_numpy(dtype=float)
+            fin = np.isfinite(s)
+            if fin.any() and s[fin].min() <= 0:
+                lo, hi = float(s[fin].min()), float(s[fin].max())
+                s = np.where(fin, 1.0 + 4.0 * (s - lo) / (hi - lo if hi > lo else 1.0), 1.0)
+            d["size"] = s
         else:
             ori_size = None
             d["size"] = 1.0
@@ -1072,6 +1259,8 @@ class NetExplorer:
             df = pd.DataFrame(np.ones((N, 1)))
             if col_id is None:
                 col_id = 0
+        else:
+            _check_node_table(len(df), N)  # m12: fail here, not deep in mat_to_edgl
 
         d, ori = self.format_att(
             df,
@@ -1120,13 +1309,12 @@ class NetExplorer:
         edgl = self.mat_to_edgl(m, ids=node_ids)
         edgl = edgl[edgl["weight"] != 0].reset_index(drop=True)
 
-        # link opacity via min-max on the JAX weight vector
+        # link opacity via min-max on the weight vector
         if link_opacity and len(edgl):
-            w = jnp.asarray(edgl["weight"].to_numpy())
-            lo = (w - w.min()) / (w.max() - w.min())
-            lo = np.array(lo)  # writable copy off the JAX buffer
-            lo[np.argmin(lo)] = 1e-4
-            edgl["lOpacity"] = lo
+            # m11: constant weights -> neutral 0.5 instead of 0/0 NaN
+            edgl["lOpacity"] = _minmax_norm(
+                edgl["weight"].to_numpy(dtype=float), floor=1e-4
+            )
         else:
             edgl["lOpacity"] = 1.0
 
@@ -1215,6 +1403,9 @@ class NetExplorer:
                 + (" (needs layout_x / layout_y)" if layout == "geo" else "")
             )
 
+        # m14: chord_matrix is now vectorised (one matrix product), so it is
+        # still built whenever layout_col is given: the layout menu keeps its
+        # "Chord" entry even when the initial layout is another one.
         chord_payload = None
         if grp_vals is not None:
             mat, labels = _lay.chord_matrix(grp_vals, adj_np)
@@ -1306,7 +1497,8 @@ class NetExplorer:
 
     @staticmethod
     def _js_val(v) -> str:
-        """Python scalar -> JS literal (numbers bare, NaN -> NaN, else quoted)."""
+        """Python scalar -> JS literal (numbers bare, NaN -> NaN, else a JSON
+        string literal escaped for ``<script>`` embedding, m17)."""
         if isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(v, bool):
             f = float(v)
             if not np.isfinite(f):        # NaN / inf / -inf -> JS has no literal
@@ -1314,22 +1506,29 @@ class NetExplorer:
             return repr(int(f)) if f.is_integer() else repr(f)
         if v is None or (isinstance(v, float) and not np.isfinite(v)):
             return "NaN"
-        return "'" + str(v).replace("'", "\\'") + "'"
+        return _js_str(v)
 
     def _tooltip_js(self, ori) -> str:
-        """The ``tooltip.html(...)`` argument list appended after patron1."""
+        """The ``tooltip.html(...)`` argument list appended after patron1.
+        Column names are interpolated as escaped JS string literals (m17):
+        a quote, newline or ``</script>`` inside a column name can no longer
+        break out of the script block."""
         names = dict(zip(("id", "size", "color", "strokeCol", "stroke", "shape", "opacity"), ori))
+
+        def _lbl(col, kind):
+            return _js_str(f"<p/>{col} ({kind}) : ")
+
         s = "\n'id : '+ d.id "
         if names["size"] is not None:
-            s += f"+ '<p/>{names['size']} (size) : '+ d.sizeValue "
+            s += f"+ {_lbl(names['size'], 'size')}+ d.sizeValue "
         if names["color"] is not None:
-            s += f"+ '<p/>{names['color']} (color) : '+ d.colorValue "
+            s += f"+ {_lbl(names['color'], 'color')}+ d.colorValue "
         if names["strokeCol"] is not None:
-            s += f"+ '<p/>{names['strokeCol']} (stroke color) : '+ d.strokeColValue "
+            s += f"+ {_lbl(names['strokeCol'], 'stroke color')}+ d.strokeColValue "
         if names["stroke"] is not None:
-            s += f"+ '<p/>{names['stroke']} (stroke width) : '+ d.strokeWValue "
+            s += f"+ {_lbl(names['stroke'], 'stroke width')}+ d.strokeWValue "
         if names["shape"] is not None:
-            s += f"+ '<p/>{names['shape']} (shape) : '+ d.shapeValue \n"
+            s += f"+ {_lbl(names['shape'], 'shape')}+ d.shapeValue \n"
         s += (
             ").style( 'left' ,(d3.event.pageX) + 'px')\n"
             ".style( 'top' ,(d3.event.pageY) + 'px');\n})\n"
@@ -1370,8 +1569,6 @@ class NetExplorer:
     def _nodes_json(self, d: pd.DataFrame, ori, all_pos: dict | None = None,
                     node_metrics: dict | None = None,
                     axis_vals: dict | None = None) -> str:
-        import json as _json
-
         has = dict(zip(("id", "size", "color", "strokeCol", "stroke", "shape", "opacity"), ori))
         all_pos = all_pos or {}
         node_metrics = node_metrics or {}
@@ -1414,7 +1611,7 @@ class NetExplorer:
                 parts.append("'cent':{" + cent + "}")
             if axis_vals:
                 av = ",".join(
-                    f"{_json.dumps(name)}:{self._js_val(vals[i])}"
+                    f"{_js_json(name)}:{self._js_val(vals[i])}"
                     for name, vals in axis_vals.items()
                 )
                 parts.append("'av':{" + av + "}")
@@ -1466,8 +1663,6 @@ class NetExplorer:
         axis_x: str = "(none)",
         axis_y: str = "(none)",
     ) -> str:
-        import json as _json
-
         p1 = (self.assets_dir / "patron1.txt").read_text(encoding="utf-8")
         p2 = (self.assets_dir / "patron2.txt").read_text(encoding="utf-8")
         p2 = self._inject_layouts(
@@ -1492,7 +1687,7 @@ class NetExplorer:
         if chord is not None:
             extra["chord"] = chord
         extra_js = "".join(
-            f"json[{_json.dumps(k)}] = {_json.dumps(v)};\n" for k, v in extra.items()
+            f"json[{_js_json(k)}] = {_js_json(v)};\n" for k, v in extra.items()
         )
         return (
             p1
@@ -1622,12 +1817,16 @@ class NetExplorer:
         # pin nodes to whichever precomputed layout is selected + arc link paths
         pin_js = """
     {
-      // map pos[layout] in [0,1] onto a centred square so aspect is preserved
+      // map pos[layout] in [0,1] onto a centred square so aspect is preserved, scaled by Spread slider (dist)
       var _pk = Layout.toLowerCase(),
           _navW = 250, _pad = 40,
-          _S = Math.min(width - _navW, height) - 2 * _pad,
-          _ox = _navW + (width - _navW - _S) / 2,
-          _oy = (height - _S) / 2;
+          _spread = (typeof dist !== 'undefined' && dist > 0) ? (dist / 500) : 1,
+          _baseS = Math.min(width - _navW, height) - 2 * _pad,
+          _S = _baseS * _spread,
+          _cx = _navW + (width - _navW) / 2,
+          _cy = height / 2,
+          _ox = _cx - _S / 2,
+          _oy = _cy - _S / 2;
       if (!window.ScatterMode) graph.nodes.forEach(function(d) {
         var p = d.pos && d.pos[_pk];
         if (p) { d.x = _ox + p[0] * _S; d.y = _oy + p[1] * _S; d.fx = d.x; d.fy = d.y; }

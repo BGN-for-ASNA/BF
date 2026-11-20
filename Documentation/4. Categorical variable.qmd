@@ -36,19 +36,17 @@ from BayesForge import bf
 m = bf(platform='cpu')
 
 # Import Data & Data Manipulation ------------------------------------------------
-# Import
-from importlib.resources import files
 data_path = m.load.milk(only_path = True)
 m.data(data_path, sep=';') 
 m.index(["clade"]) # Convert clade names into index
-m.scale(['kcal_per_g']) # Scale
+m.scale(['kcal_per_g', 'mass']) # Scale
 
 # Define model ------------------------------------------------
 def model(kcal_per_g, index_clade, mass):
     a = m.dist.normal(0, 0.5, shape=(4,), name = 'a') # shape based on the number of clades
     b = m.dist.normal(0, 0.5, shape=(4,), name = 'b')
-    s = m.dist.exponential( 1, name = 's')    
-    mu = a[index_clade]+b[index_clade]*mass
+    s = m.dist.exponential(1, name = 's')    
+    mu = a[index_clade] + b[index_clade] * mass
     m.dist.normal(mu, s, obs=kcal_per_g)
 
 
@@ -66,17 +64,19 @@ m=importBF(platform='cpu')
 
 # Load csv file
 m$data(m$load$milk(only_path = T), sep=';')
-m$scale(list('kcal.per.g')) # Manipulate
-m$index(list('clade')) # Scale
-m$data_to_model(list('kcal_per_g', 'index_clade')) # Send to model (convert to jax array)
+m$index(list('clade')) # Convert clade names into index
+m$scale(list('kcal_per_g', 'mass')) # Scale
+m$data_to_model(list('kcal_per_g', 'index_clade', 'mass')) # Send to model (convert to jax array)
 
 # Define model ------------------------------------------------
-model <- function(kcal_per_g, index_clade){
+model <- function(kcal_per_g, index_clade, mass){
   # Parameter prior distributions
-  beta = bf.dist.normal( 0, 0.5, name = 'beta', shape = c(4))  # shape based on the number of clades
-  sigma = bf.dist.exponential(1, name = 's')
+  a = bf.dist.normal(0, 0.5, name = 'a', shape = c(4L))  # shape based on the number of clades
+  b = bf.dist.normal(0, 0.5, name = 'b', shape = c(4L))
+  s = bf.dist.exponential(1, name = 's')
+  mu = a[index_clade] + b[index_clade] * mass
   # Likelihood
-  bf.dist.normal(beta[index_clade], sigma, obs=kcal_per_g)
+  bf.dist.normal(mu, s, obs=kcal_per_g)
 }
 
 # Run mcmc ------------------------------------------------
@@ -94,18 +94,17 @@ using PyBayesForge
 m = importBF(platform="cpu")
 
 # Import Data & Data Manipulation ------------------------------------------------
-# Import
 data_path = m.load.milk(only_path = true)
 m.data(data_path, sep=';')
 m.index("clade") # Convert clade names into index
-m.scale(["kcal_per_g"]) # Scale
+m.scale(["kcal_per_g", "mass"]) # Scale
 
 # Define model ------------------------------------------------
 @BF function model(kcal_per_g, index_clade, mass)
     a = m.dist.normal(0, 0.5, shape=(4,), name = "a") # shape based on the number of clades
     b = m.dist.normal(0, 0.5, shape=(4,), name = "b")
-    s = m.dist.exponential( 1, name = 's')    
-    mu = a[index_clade]+b[index_clade]*mass
+    s = m.dist.exponential(1, name = 's')    
+    mu = a[index_clade] + b[index_clade] * mass
     m.dist.normal(mu, s, obs=kcal_per_g)
 end
 
@@ -121,6 +120,7 @@ m.summary() # Get posterior distributions
 For R users, when working with indices you have to ensure 1) that indices are intergers (i.e. ```as.integer(index_clade)```) and, 2) that indices start at 0 (i.e. ```as.integer(index_clade)-1```).
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the mean energy content of milk in every clade?
@@ -128,17 +128,17 @@ Does the model reproduce the mean energy content of milk in every clade?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="mean", group="index_clade")
+# m.diag.ppc_stat(stat="mean", group="index_clade")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "mean", group = "index_clade")
+# m$diag$ppc_stat(stat = "mean", group = "index_clade")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="mean", group="index_clade")
+# m.diag.ppc_stat(stat="mean", group="index_clade")
 ```
 :::
 
@@ -150,22 +150,23 @@ One panel per clade: the vertical line is the observed mean, the curve the means
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 
 #### R
 ```r
-m$diag$ppc_density()
+# m$diag$ppc_density()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_density()
+# m.diag.ppc_density()
 ```
 :::
 
 `ppc_density`: density overlay of all observations (as on the linear regression page).
 :::
+-->
 
 ## Mathematical Details
 ### *Frequentist formulation*

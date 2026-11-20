@@ -109,11 +109,19 @@ website:
             - 34. BNN for classification.qmd
             - 35. BNN for multiclass classification.qmd
 
+        - section: "Simulation-Based Inference"
+          contents:
+            - 38. Approximate Bayesian Computation.qmd
+            - 39. ABC random forests.qmd
+            - 40. Neural Posterior Estimation.qmd
+            - 41. Bayesian Neural Posterior Estimation.qmd
+
     - id: api
       title: "API Reference"
       contents:
         - reference/index.qmd
         - reference/session.qmd
+        - reference/models.qmd
         - reference/data.qmd
         - reference/dist.qmd
         - reference/diag.qmd
@@ -160,9 +168,10 @@ format:
     highlight-style: monokai
     toc: true
     toc-location: right
+    toc-expand: true
     html-math-method: katex
     grid:
-      body-width: 1000px
+      body-width: 1350px
     code-fold: show
     code-overflow: wrap
     code-tools: false
@@ -174,6 +183,8 @@ format:
 
   pdf:
     pdf-engine: xelatex
+    include-in-header: pdf-unicode.tex
+    monofont: "DejaVu Sans Mono"
     #keep-tex: true
     header-includes:
       - \usepackage{amsmath} # amsmath is better than unicode-math for cases

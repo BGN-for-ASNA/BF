@@ -42,7 +42,7 @@ def model(log_days, monastery, y):
     b = m.dist.normal(0, 1, name = 'b', shape=(1,))
     phi = m.dist.exponential(1, name = 'phi', shape=(1,))
     mu = jnp.exp(log_days + a + b * monastery)
-    Lambda =  m.dist.gamma(rate = mu*phi, concentration = phi, name = 'Lambda')
+    Lambda = m.dist.gamma(concentration = mu*phi, rate = phi, name = 'Lambda')
     m.dist.poisson(rate = Lambda, obs=y)
 # Run MCMC ------------------------------------------------
 m.fit(model, progress_bar=False) # Optimize model parameters through MCMC sampling
@@ -69,7 +69,7 @@ model <- function(log_days, monastery, y){
   b = m$dist$normal(0, 1, name='b', shape=reticulate::tuple(1L))
   phi = m$dist$exponential(1, name='phi', shape=reticulate::tuple(1L))
   mu = jnp$exp(log_days + a + b * monastery)
-  Lambda =  m$dist$gamma(rate = mu*phi, concentration = phi, name = 'Lambda')
+  Lambda = m$dist$gamma(concentration = mu*phi, rate = phi, name = 'Lambda')
   # Likelihood
   m$dist$poisson(rate=Lambda, obs=y, name = "y")
 }
@@ -99,7 +99,7 @@ m.data(data_path, sep=',')
     b = m.dist.normal(0, 1, name = "b", shape=(1,))
     phi = m.dist.exponential(1, name = "phi", shape=(1,))
     mu = jnp.exp(log_days + a + b * monastery)
-    Lambda =  m.dist.gamma(rate = mu*phi, concentration = phi, name = "Lambda")
+    Lambda = m.dist.gamma(concentration = mu*phi, rate = phi, name = "Lambda")
     m.dist.poisson(rate = Lambda, obs=y)
 end
 
@@ -111,6 +111,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the spread of the counts, which a plain Poisson model underestimates?
@@ -118,17 +119,17 @@ Does the model reproduce the spread of the counts, which a plain Poisson model u
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 
 #### R
 ```r
-m$diag$ppc_rootogram()
+# m$diag$ppc_rootogram()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 :::
 
@@ -140,34 +141,35 @@ Bars are the square roots of the observed frequencies of each count, the line th
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 ```{python}
-m.diag.ppc_stat(stat="n_zero")
+# m.diag.ppc_stat(stat="n_zero")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "sd")
+# m$diag$ppc_stat(stat = "sd")
 ```
 
 ```r
-m$diag$ppc_stat(stat = "n_zero")
+# m$diag$ppc_stat(stat = "n_zero")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="sd")
+# m.diag.ppc_stat(stat="sd")
 ```
 
 ```julia
-m.diag.ppc_stat(stat="n_zero")
+# m.diag.ppc_stat(stat="n_zero")
 ```
 :::
 
 The observed standard deviation and the observed number of zeros (vertical lines) should fall inside their simulated distributions.
 :::
+-->
 
 ## Mathematical Details
 ### *Bayesian model*

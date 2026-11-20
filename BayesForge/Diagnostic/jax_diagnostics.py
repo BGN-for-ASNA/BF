@@ -5,6 +5,10 @@ These operate directly on posterior samples shaped as (num_chains, num_samples, 
 All functions are JIT-compilable for maximum performance.
 """
 
+import warnings
+
+import numpy as np
+
 import jax
 import jax.numpy as jnp
 from functools import partial
@@ -95,10 +99,23 @@ def _rhat_1d(chains) -> float:
         chains: Array of shape (num_chains, num_samples).
 
     Returns:
-        Scalar R-hat value.
+        Scalar R-hat value, or NaN with fewer than 2 chains (ArviZ behaviour;
+        RELEASE_AUDIT bug 3, owner decision 2026-11-13), with a UserWarning
+        whose text matches ``Diag2._rhat_manual``.
     """
     import numpy as _np
-    split = _split_chains_np(_np.asarray(chains, dtype=float))
+    chains = _np.asarray(chains, dtype=float)
+    if chains.shape[0] < 2:
+        # RELEASE_AUDIT bug 3 (owner decision 2026-11-13): a single chain only
+        # compares its own two halves; that is not a between-chain convergence
+        # check, so return NaN like ArviZ and say why.
+        warnings.warn(
+            "R-hat with a single chain only compares its two halves "
+            "(within-chain stationarity); run >= 2 chains to check "
+            "convergence between chains.",
+            UserWarning, stacklevel=2)
+        return float("nan")
+    split = _split_chains_np(chains)
 
     rhat_bulk = _rhat_core(_z_scale_np(split))
     folded = _np.abs(split - _np.median(split))
@@ -224,6 +241,14 @@ def _ess_raw(ary):
     import numpy as _np
     ary = _np.asarray(ary, dtype=float)
     n_chain, n_draw = ary.shape
+    # RELEASE_AUDIT bug 5: same guards as Diag2._ess_raw_manual (Diag2.py
+    # L1341-1346) -- too few draws to estimate an autocorrelation, and the
+    # constant-array special case.
+    if n_draw < 4:
+        return _np.nan
+    # A constant array has ess == its size (matches ArviZ and Diag2).
+    if (_np.max(ary) - _np.min(ary)) < _np.finfo(float).resolution:
+        return float(ary.size)
 
     acov = _autocov_np(ary)
     chain_mean = ary.mean(axis=1)
@@ -275,18 +300,89 @@ def _ess_1d(chains) -> float:
     return float(_ess_raw(z))
 
 
-def _ess_tail_1d(chains) -> float:
-    """Tail ESS: min(ESS(I(x<=q05)), ESS(I(x<=q95))) (matches ArviZ _ess_tail).
+def _acf(x: np.ndarray, max_lag: int = 40) -> list:
+    """Autocorrelation function of a 1D chain, lags 0..max_lag-1.
+
+    Canonical implementation, shared by ``Diag2`` (autocorr plot) and
+    ``patch_diag`` (kernel density bandwidth) so the three copies cannot
+    drift apart (RELEASE_AUDIT bug 15).
+
+    Centres on the GLOBAL mean and divides by the global variance. Computing
+    ``np.corrcoef(x[:-t], x[t:])`` instead re-centres and re-scales each window
+    separately, which is not the ACF: it diverges at large lag and the
+    resulting sequence is not positive-definite.
+
+    Parameters
+    ----------
+    x : array-like
+        1D chain.
+    max_lag : int
+        Number of lags to return (lags 0 through max_lag-1).
+
+    Returns
+    -------
+    list of float
+        Autocorrelation values for lags 0 through ``max_lag - 1``.
+    """
+    x = np.asarray(x, dtype=float)
+    n = x.size
+    max_lag = int(min(max_lag, n))
+    xc = x - x.mean()
+    denom = np.dot(xc, xc)
+    if denom <= 0:
+        return [1.0] + [0.0] * (max_lag - 1)
+    return [float(np.dot(xc[: n - t], xc[t:]) / denom) for t in range(max_lag)]
+
+
+def _ebfmi_per_chain(energy) -> np.ndarray:
+    """Energy Bayesian Fraction of Missing Information per chain.
+
+    Computes ``mean(diff(E)^2) / var(E, ddof=1)`` per chain — the quantity
+    Stan and ``az.bfmi`` report. Shared by ``Diag2._ebfmi_manual`` and
+    ``sensitivity.divergence_energy_plot`` so the two implementations cannot
+    drift apart (RELEASE_AUDIT bug 16). ``sum(diff^2)/sum((E-mean)^2)`` is
+    algebraically the same ratio; a constant-energy chain yields ``nan``
+    (zero variance), not a fabricated value.
+
+    Parameters
+    ----------
+    energy : array-like
+        Energy draws, 1D (single chain) or 2D chain-major ``(C, S)``.
+
+    Returns
+    -------
+    np.ndarray
+        One E-BFMI value per chain (``nan`` where the energy is constant).
+    """
+    e = np.atleast_2d(np.asarray(energy, dtype=float))
+    result = []
+    for chain in e:
+        denom = np.var(chain, ddof=1)
+        num = np.mean(np.diff(chain) ** 2)
+        result.append(float(num / denom) if denom > 0 else np.nan)
+    return np.asarray(result)
+
+
+def _ess_tail_1d(chains, prob: tuple[float, float] = (0.05, 0.95)) -> float:
+    """Tail ESS: min(ESS(I(x<=q_lo)), ESS(I(x<=q_hi))) (matches ArviZ _ess_tail).
 
     ArviZ splits the chains *before* taking the quantiles, which matters when
     ``n_draw`` is odd (splitting drops the middle draw).
+
+    Parameters
+    ----------
+    chains : array-like
+        Draws with shape (n_chains, n_draws).
+    prob : tuple[float, float]
+        Lower and upper tail probabilities, as in ArviZ's ``ess(prob=...)``.
+        Default ``(0.05, 0.95)``.
     """
     import numpy as _np
     chains = _np.asarray(chains, dtype=float)
     split = _split_chains_np(chains)
-    q05, q95 = _np.percentile(split, [5, 95])
-    ess_low = _ess_raw((split <= q05).astype(float))
-    ess_high = _ess_raw((split <= q95).astype(float))
+    q_lo, q_hi = _np.percentile(split, [prob[0] * 100, prob[1] * 100])
+    ess_low = _ess_raw((split <= q_lo).astype(float))
+    ess_high = _ess_raw((split <= q_hi).astype(float))
     return float(min(ess_low, ess_high))
 
 
@@ -329,7 +425,8 @@ def _mcse_sd_1d(chains) -> float:
 
 
 def ess(posterior_samples: dict, var_names=None, kind="bulk",
-        include=None, exclude=None, group_by_chain: bool = True) -> dict:
+        include=None, exclude=None, group_by_chain: bool = True,
+        prob: tuple[float, float] = (0.05, 0.95)) -> dict:
     """Compute effective sample size for all parameters.
 
     Args:
@@ -341,6 +438,8 @@ def ess(posterior_samples: dict, var_names=None, kind="bulk",
         var_names: legacy alias for include.
         kind: "bulk", "tail", "mean" or "sd".
         group_by_chain: whether the leading axis is the chain axis.
+        prob: Tail probabilities for ``kind="tail"``, as in ArviZ's
+            ``ess(prob=...)``. Ignored for other kinds.
 
     Returns:
         Dict of {name: ESS value(s)}.
@@ -356,6 +455,8 @@ def ess(posterior_samples: dict, var_names=None, kind="bulk",
     except KeyError:
         raise ValueError(
             f"kind must be one of 'bulk', 'tail', 'mean', 'sd'; got {kind!r}")
+    if kind == "tail" and tuple(prob) != (0.05, 0.95):
+        ess_fn = partial(ess_fn, prob=tuple(prob))
 
     results = {}
     for name, samples in posterior_samples.items():
@@ -649,7 +750,15 @@ def _psis_weights(log_likelihood_i: jnp.ndarray, reff: float = 1.0) -> tuple:
     x -= max_x
 
     reff = float(reff) if reff and np.isfinite(reff) and reff > 0 else 1.0
-    cutoff_ind = -int(np.ceil(min(S / 5.0, 3 * (S / reff) ** 0.5))) - 1
+    # Tail length as in arviz-stats >= 1.3 (``_get_ps_tails``, right tail):
+    # floor(3 * sqrt(S / reff)) when S * reff > 225, else floor(S / 5).
+    # The older ceil(min(S/5, 3 sqrt(S/reff))) rule (ArviZ 0.x) kept one more
+    # draw and shifted every Pareto k-hat by up to ~1e-2.
+    if S * reff > 225:
+        n_tail = int(np.floor(3 * (S / reff) ** 0.5))
+    else:
+        n_tail = int(np.floor(S / 5.0))
+    cutoff_ind = -n_tail - 1
     cutoffmin = np.log(np.finfo(float).tiny)
 
     x_sort_ind = np.argsort(x)
@@ -1120,7 +1229,7 @@ def _pseudo_bma_weights(elpd_matrix: "np.ndarray") -> "np.ndarray":
 # =============================================================================
 
 def compute_log_likelihood(model, posterior_samples, *model_args,
-                           obs_name=None, **model_kwargs):
+                           obs_name=None, has_chains=None, **model_kwargs):
     """Compute pointwise log-likelihood by replaying a fitted model.
 
     This works with ANY NumPyro model — no need to modify the model
@@ -1137,6 +1246,10 @@ def compute_log_likelihood(model, posterior_samples, *model_args,
         obs_name: Name(s) of the observed sample site(s). If None,
             auto-detects all sites that have obs= set.
             Can be a string or list of strings.
+        has_chains: Whether the leading axis of posterior_samples is the
+            chain axis (RELEASE_AUDIT bug 6). True = (chains, samples, ...),
+            False = flat (samples, ...). If None (default), a heuristic
+            guesses and warns when it decides the leading axis is chains.
         **model_kwargs: Keyword arguments passed to the model
             (same as during fitting).
 
@@ -1166,22 +1279,31 @@ def compute_log_likelihood(model, posterior_samples, *model_args,
     # --- Flatten chains if present ---
     first_key = list(posterior_samples.keys())[0]
     first_val = posterior_samples[first_key]
-    has_chains = False
     num_chains, num_samples = 1, first_val.shape[0]
 
-    # Heuristic: if first dim is small (1-20) and second dim is large,
-    # it's likely (chains, samples, ...). But we also check if all params
-    # share the same first two dims.
-    if first_val.ndim >= 2 and first_val.shape[0] <= 20:
-        # Check consistency across all parameters
-        shapes_consistent = all(
-            v.ndim >= 2 and v.shape[0] == first_val.shape[0]
-            for v in posterior_samples.values()
-        )
-        if shapes_consistent:
-            has_chains = True
-            num_chains = first_val.shape[0]
-            num_samples = first_val.shape[1]
+    if has_chains is None:
+        # Heuristic: if first dim is small (1-20) and second dim is large,
+        # it's likely (chains, samples, ...). But we also check if all params
+        # share the same first two dims.
+        has_chains = False
+        if first_val.ndim >= 2 and first_val.shape[0] <= 20:
+            # Check consistency across all parameters
+            shapes_consistent = all(
+                v.ndim >= 2 and v.shape[0] == first_val.shape[0]
+                for v in posterior_samples.values()
+            )
+            if shapes_consistent:
+                has_chains = True
+                # RELEASE_AUDIT bug 6: a flat posterior with <= 20 draws is
+                # silently misread as chain-major; make the guess explicit.
+                warnings.warn(
+                    "compute_log_likelihood: guessed that the leading axis "
+                    "of the posterior samples is the chain axis (size %d "
+                    "<= 20); pass has_chains=True/False to make it explicit."
+                    % first_val.shape[0], UserWarning, stacklevel=2)
+    if has_chains:
+        num_chains = first_val.shape[0]
+        num_samples = first_val.shape[1]
 
     # Flatten to (total_samples, ...) for tracing
     flat_samples = {}
@@ -1310,7 +1432,7 @@ def iter_expanded(posterior_samples: dict, var_names=None, exclude_vars=None,
 
 def compute_log_likelihood_manual(model, posterior_samples, *model_args,
                                   obs_name=None, batch_size=100,
-                                  **model_kwargs):
+                                  has_chains=None, **model_kwargs):
     """Compute pointwise log-likelihood sample by sample.
 
     Slower fallback for models where numpyro.infer.log_likelihood
@@ -1324,6 +1446,10 @@ def compute_log_likelihood_manual(model, posterior_samples, *model_args,
         *model_args: Args passed to model.
         obs_name: Observed site name(s). Auto-detected if None.
         batch_size: Process this many samples at a time (memory control).
+        has_chains: Whether the leading axis of posterior_samples is the
+            chain axis (RELEASE_AUDIT bug 6). True = (chains, samples, ...),
+            False = flat (samples, ...). If None (default), a heuristic
+            guesses and warns when it decides the leading axis is chains.
         **model_kwargs: Kwargs passed to model.
 
     Returns:
@@ -1334,17 +1460,27 @@ def compute_log_likelihood_manual(model, posterior_samples, *model_args,
     # Flatten chains
     first_key = list(posterior_samples.keys())[0]
     first_val = posterior_samples[first_key]
-    has_chains = False
     num_chains = 1
 
-    if first_val.ndim >= 2 and first_val.shape[0] <= 20:
-        shapes_consistent = all(
-            v.ndim >= 2 and v.shape[0] == first_val.shape[0]
-            for v in posterior_samples.values()
-        )
-        if shapes_consistent:
-            has_chains = True
-            num_chains = first_val.shape[0]
+    if has_chains is None:
+        has_chains = False
+        if first_val.ndim >= 2 and first_val.shape[0] <= 20:
+            shapes_consistent = all(
+                v.ndim >= 2 and v.shape[0] == first_val.shape[0]
+                for v in posterior_samples.values()
+            )
+            if shapes_consistent:
+                has_chains = True
+                # RELEASE_AUDIT bug 6: a flat posterior with <= 20 draws is
+                # silently misread as chain-major; make the guess explicit.
+                warnings.warn(
+                    "compute_log_likelihood_manual: guessed that the leading "
+                    "axis of the posterior samples is the chain axis (size "
+                    "%d <= 20); pass has_chains=True/False to make it "
+                    "explicit." % first_val.shape[0],
+                    UserWarning, stacklevel=2)
+    if has_chains:
+        num_chains = first_val.shape[0]
 
     flat_samples = {}
     if has_chains:

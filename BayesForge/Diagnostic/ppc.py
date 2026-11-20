@@ -23,12 +23,14 @@ Discrete       : ppc_rootogram, ppc_bars
 LOO            : ppc_loo_pit (ppc_loo_intervals: deprecated alias of ppc_intervals_sorted)
 """
 import re
+import warnings
 
 import numpy as np
 import jax.numpy as jnp
 import plotly.graph_objects as go
 import plotly.colors as pcolors
 from plotly.subplots import make_subplots
+from BayesForge.Utils.dev_warning import warn_dev
 
 _COLORS = pcolors.qualitative.Plotly
 _REP_COLOR = "rgba(100,149,237,0.25)"
@@ -62,7 +64,9 @@ def get_yrep(m, site=None, seed=None):
 
     The observed sites are simulated from every posterior draw (their data
     entries are set to None), so yrep holds genuine replicated data -- never the
-    observed values themselves.
+    observed values themselves. For sites with more than two dimensions (draws,
+    observations, event dimensions) the event dimensions are flattened into the
+    columns of the returned array and a UserWarning is emitted.
 
     Args:
         m (bf): Fitted BayesForge model.
@@ -75,6 +79,7 @@ def get_yrep(m, site=None, seed=None):
         np.ndarray or dict[str, np.ndarray]: Matrix of shape (S, n_obs) or
         dict mapping each observed site name to its replicated data matrix.
     """
+    warn_dev("ppc")
     sites = m._observed_sites(m.data_on_model)
     if not sites:
         raise ValueError("No observed sites found in the model.")
@@ -101,6 +106,17 @@ def get_yrep(m, site=None, seed=None):
     for s_name in target_sites:
         arr = np.asarray(pred[s_name])
         if arr.ndim > 2:
+            # Event dimensions are pooled into one flat column set, so PPC
+            # statistics mix them; warn so per-dimension checks are not
+            # mistaken for whole-array ones.
+            warnings.warn(
+                f"PPC: site {s_name!r} has event dimensions {arr.shape[2:]}; "
+                f"they are flattened to (draws, {int(np.prod(arr.shape[1:]))}), "
+                "so PPC statistics pool the dimensions. "
+                "Select one dimension for a per-dimension check.",
+                UserWarning,
+                stacklevel=2,
+            )
             arr = arr.reshape(arr.shape[0], -1)
         yreps[s_name] = arr
 
@@ -390,6 +406,7 @@ def ppc_density(y, yrep, n=50, bw_adjust=1.0, title=None, name="y", x_label=None
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
 
@@ -463,6 +480,7 @@ def ppc_hist(y, yrep, n=8, bins=30, title=None, name="y", x_label=None, y_label=
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     rng = np.random.default_rng(0)
@@ -514,6 +532,7 @@ def ppc_boxplot(y, yrep, n=20, title=None, name="y", x_label=None, y_label=None)
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     rng = np.random.default_rng(0)
@@ -595,6 +614,7 @@ def ppc_stat(y, yrep, stat="mean", title=None, name="y", x_label=None, y_label=N
     Returns:
         plotly Figure with Bayesian p-value annotation.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     fn = _stat_fn(stat)
@@ -675,6 +695,7 @@ def ppc_stat_2d(y, yrep, stat1="mean", stat2="sd", title=None, name="y", x_label
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     fn1, fn2 = _stat_fn(stat1), _stat_fn(stat2)
@@ -776,6 +797,7 @@ def ppc_intervals(y, yrep, x=None, prob=0.5, prob_outer=0.9, title=None,
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     x_was_none = x is None
     levels, masks = _group_levels(group, len(np.asarray(y).flatten()))
     if levels is None:
@@ -853,6 +875,7 @@ def ppc_ribbon(y, yrep, x=None, prob=0.5, prob_outer=0.9, title=None,
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     x_was_none = x is None
     x, y, ll, l, m, h, hh = _interval_bounds(y, yrep, x, prob, prob_outer)
     prob, prob_outer = sorted((prob, prob_outer))
@@ -908,6 +931,7 @@ def ppc_error_scatter(y, yrep, title=None, name="y", x_label=None, y_label=None)
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     mu_rep = yrep.mean(axis=0)
@@ -944,6 +968,7 @@ def ppc_error_hist(y, yrep, bins=40, title=None, name="y", x_label=None, y_label
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     residuals = y - yrep.mean(axis=0)
@@ -1043,6 +1068,7 @@ def ppc_error_binned(y, yrep, x=None, bins=None, n=3, title=None, name="y",
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)[:n]
     if bins is None:
@@ -1172,6 +1198,7 @@ def ppc_km_overlay(y, yrep, status_y, n=50, extrapolation_factor=1.2,
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     status_y, = _as_np(status_y)
     if len(status_y) != len(y) or not np.all((status_y == 0) | (status_y == 1)):
@@ -1259,6 +1286,7 @@ def ppc_scatter(y, yrep, n_reps=9, title=None, name="y", x_label=None, y_label=N
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
     rng = np.random.default_rng(0)
@@ -1312,6 +1340,7 @@ def ppc_rootogram(y, yrep, title=None, name="y", x_label=None, y_label=None):
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y = np.rint(np.asarray(y, dtype=float).flatten()).astype(int)
     yrep = np.rint(np.asarray(yrep, dtype=float)).astype(int)
     if y.min() < 0 or yrep.min() < 0:
@@ -1372,6 +1401,7 @@ def ppc_bars(y, yrep, title=None, name="y", x_label=None, y_label=None):
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     y = np.asarray(y).flatten()
     yrep = np.asarray(yrep)
     # bayesplot's ppc_bars puts no cap on the number of categories; it only
@@ -1468,6 +1498,7 @@ def ppc_loo_pit(y, yrep, log_likelihood=None, reff=None, n_unif=100,
         plotly Figure. Both densities are boundary-corrected (reflected at 0
         and 1), as in bayesplot.
     """
+    warn_dev("ppc")
     import warnings
     y, = _as_np(y)
     yrep = np.asarray(yrep, dtype=float)
@@ -1558,6 +1589,7 @@ def ppc_intervals_sorted(y, yrep, x=None, prob=0.5, prob_outer=0.9,
     Returns:
         plotly Figure.
     """
+    warn_dev("ppc")
     sort_by_y = x is None
     if sort_by_y:
         # The rank of each observation; argsort(y) alone is the inverse
@@ -1578,6 +1610,7 @@ def ppc_loo_intervals(y, yrep, x=None, prob=0.9, title=None, name="y",
 
     ``prob`` is the outer interval, as before; the inner one is 50%.
     """
+    warn_dev("ppc")
     import warnings
     warnings.warn(
         "ppc_loo_intervals performs no leave-one-out computation; it is "

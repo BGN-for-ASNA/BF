@@ -45,28 +45,60 @@ Below are four typical missing data patterns translated into the **BayesForge (B
 
 ### 1. Simple Missing Imputation
 
-This example demonstrates the core concept of **Imputation** vs. **Marginalization** (from *Considerations*). Missing observations are modeled as latent variables. Because we treat unobserved data as parameters (as per *Parameters vs. Data*), the likelihood of the observed points serves as the prior for the missing points. This can be viewed as an MCAR or MAR strategy where we explicitly estimate the missing values.
+This example demonstrates the core concept of **Imputation** vs. **Marginalization** (from *Considerations*). We generate a linear regression dataset (**DGP**), **mask** 5 outcome values, **infer** both the model parameters and the 5 missing outcomes simultaneously as latent variables, **compare** the posterior estimates against the true values, and **plot** imputed vs true masked outcomes.
 
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
 from BayesForge import bf
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 
 m = bf(platform="cpu")
 
-def missing_data_model(y_obs, N_mis):
-    mu = m.dist.normal(0, 10, name="mu")
-    sigma = m.dist.half_normal(10, name="sigma")
-    
-    # Treat missing data block as latent parameters
+# 1. DGP: Simulate linear regression data with known parameters
+np.random.seed(42)
+N = 60
+true_alpha, true_beta, true_sigma = 2.0, 1.5, 0.4
+x = jnp.array(np.random.normal(0.0, 1.0, size=N))
+y_true = true_alpha + true_beta * x + jnp.array(np.random.normal(0.0, true_sigma, size=N))
+
+# 2. Masking: Mask the first 5 observations
+N_mis = 5
+x_mis, y_mis_true = x[:N_mis], y_true[:N_mis]
+x_obs, y_obs = x[N_mis:], y_true[N_mis:]
+
+m.data_on_model = dict(x_obs=x_obs, y_obs=y_obs, x_mis=x_mis, N_mis=N_mis)
+
+# 3. Inference: Jointly estimate parameters and impute missing outcomes
+def missing_data_model(x_obs, y_obs, x_mis, N_mis):
+    alpha = m.dist.normal(0, 10, name="alpha")
+    beta = m.dist.normal(0, 10, name="beta")
+    sigma = m.dist.half_normal(5, name="sigma")
+
+    # Impute missing outcomes from their covariates x_mis
     with m.dist.plate("missing_obs", N_mis):
-        y_mis = m.dist.normal(mu, sigma, name="y_mis")
-        
-    # Likelihood for OBSERVED data
-    m.dist.normal(mu, sigma, obs=y_obs)
+        y_mis = m.dist.normal(alpha + beta * x_mis, sigma, name="y_mis")
+
+    # Likelihood for observed data
+    m.dist.normal(alpha + beta * x_obs, sigma, obs=y_obs)
+
+m.fit(missing_data_model, progress_bar=False)
+summ = m.summary()
+
+# 4. Plot: imputed vs true masked outcomes (points should sit on y = x)
+import matplotlib.pyplot as plt
+draws = np.asarray(m.posteriors["y_mis"])            # (draws, N_mis)
+est = draws.mean(0)
+lo, hi = np.percentile(draws, [3, 97], axis=0)       # 94% credible interval
+truth = np.asarray(y_mis_true)
+fig, ax = plt.subplots(figsize=(4.5, 4.5))
+ax.errorbar(truth, est, yerr=[est - lo, hi - est], fmt="o", capsize=3, label="Imputed (mean, 94% CI)")
+lim = [min(truth.min(), lo.min()), max(truth.max(), hi.max())]
+ax.plot(lim, lim, "r--", label="y = x")
+ax.set_xlabel("True masked y"); ax.set_ylabel("Imputed y"); ax.legend()
+plt.show()
 ```
 
 ## R
@@ -75,17 +107,205 @@ library(BayesForge)
 m <- importBF(platform = "cpu")
 jnp <- reticulate::import("jax.numpy")
 
-missing_data_model <- function(y_obs, N_mis) {
-    mu <- m$dist$normal(0, 10, name="mu")
-    sigma <- m$dist$half_normal(10, name="sigma")
-    
-    # Treat missing data block as latent parameters
-    tmp <- m$dist$plate("missing_obs", N_mis)
-    y_mis <- m$dist$normal(mu, sigma, name="y_mis")
-        
-    # Likelihood for OBSERVED data
-    m$dist$normal(mu, sigma, obs=y_obs)
+# 1. DGP: Simulate linear regression data with known parameters
+set.seed(42)
+N <- 60L
+true_alpha <- 2.0
+true_beta <- 1.5
+true_sigma <- 0.4
+x_r <- rnorm(N, 0.0, 1.0)
+y_true_r <- true_alpha + true_beta * x_r + rnorm(N, 0.0, true_sigma)
+
+# 2. Masking: Mask the first 5 observations
+N_mis <- 5L
+x_mis <- jnp$array(x_r[1:N_mis])
+y_mis_true <- y_true_r[1:N_mis]
+x_obs <- jnp$array(x_r[(N_mis + 1):N])
+y_obs <- jnp$array(y_true_r[(N_mis + 1):N])
+
+m$data_on_model <- list(x_obs = x_obs, y_obs = y_obs, x_mis = x_mis, N_mis = N_mis)
+
+# 3. Inference: Jointly estimate parameters and impute missing outcomes
+missing_data_model <- function(x_obs, y_obs, x_mis, N_mis) {
+    alpha <- m$dist$normal(0, 10, name = "alpha")
+    beta <- m$dist$normal(0, 10, name = "beta")
+    sigma <- m$dist$half_normal(5, name = "sigma")
+
+    y_mis <- m$dist$normal(alpha + beta * x_mis, sigma, shape = reticulate::tuple(N_mis), name = "y_mis")
+    m$dist$normal(alpha + beta * x_obs, sigma, obs = y_obs)
 }
+
+m$fit(missing_data_model, progress_bar = FALSE)
+summ <- m$summary()
+
+# 4. Comparison: Estimated vs True values
+print(summ)
+print(y_mis_true)
+
+# 5. Plot: imputed vs true masked outcomes (points should sit on y = x)
+np <- reticulate::import("numpy")
+draws <- np$asarray(m$posteriors[["y_mis"]])         # (draws, N_mis)
+est <- colMeans(draws)
+lo <- apply(draws, 2, quantile, 0.03); hi <- apply(draws, 2, quantile, 0.97)
+rng <- range(y_mis_true, lo, hi)
+plot(y_mis_true, est, xlim = rng, ylim = rng, pch = 19,
+     xlab = "True masked y", ylab = "Imputed y (mean, 94% CI)")
+arrows(y_mis_true, lo, y_mis_true, hi, angle = 90, code = 3, length = 0.05)
+abline(0, 1, col = "red", lty = 2)
+```
+
+## Julia
+```julia
+using PyBayesForge
+using PythonCall
+using Random
+
+m = importBF(platform="cpu")
+jnp = pyimport("jax.numpy")
+
+# 1. DGP: Simulate linear regression data with known parameters
+Random.seed!(42)
+N = 60
+true_alpha, true_beta, true_sigma = 2.0, 1.5, 0.4
+x_jl = randn(N)
+y_true_jl = true_alpha .+ true_beta .* x_jl .+ true_sigma .* randn(N)
+
+# 2. Masking: Mask the first 5 observations
+N_mis = 5
+x_mis = jnp.array(x_jl[1:N_mis])
+y_mis_true = y_true_jl[1:N_mis]
+x_obs = jnp.array(x_jl[(N_mis + 1):N])
+y_obs = jnp.array(y_true_jl[(N_mis + 1):N])
+
+m.data_on_model = pydict(Dict("x_obs" => x_obs, "y_obs" => y_obs, "x_mis" => x_mis, "N_mis" => N_mis))
+
+# 3. Inference: Jointly estimate parameters and impute missing outcomes
+@BF function missing_data_model(x_obs, y_obs, x_mis, N_mis)
+    alpha = m.dist.normal(0, 10, name="alpha")
+    beta = m.dist.normal(0, 10, name="beta")
+    sigma = m.dist.half_normal(5, name="sigma")
+
+    m.dist.normal(alpha + beta * x_mis, sigma, shape=(N_mis,), name="y_mis")
+    m.dist.normal(alpha + beta * x_obs, sigma, obs=y_obs)
+end
+
+m.fit(missing_data_model, progress_bar=false)
+summ = m.summary()
+
+
+# 4. Plot: imputed vs true masked outcomes (points should sit on y = x)
+using Statistics
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+draws = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["y_mis"]))   # (draws, N_mis)
+est = vec(mean(draws, dims=1))
+lo = [quantile(c, 0.03) for c in eachcol(draws)]; hi = [quantile(c, 0.97) for c in eachcol(draws)]
+plt.figure(figsize=(4.5, 4.5))
+plt.errorbar(y_mis_true, est, yerr=pylist([est .- lo, hi .- est]), fmt="o", capsize=3)
+lim = [minimum([y_mis_true; lo]), maximum([y_mis_true; hi])]
+plt.plot(lim, lim, "r--")
+plt.xlabel("True masked y"); plt.ylabel("Imputed y (mean, 94% CI)")
+plt.show()
+```
+:::
+
+### 2. Partially Known Parameters (Covariance)
+
+This example illustrates how to handle **Partial Knowledge** (from *Considerations*). We generate 2D Gaussian observations (**DGP**), **mask** the off-diagonal covariance while keeping the diagonal variances known, **infer** the unknown covariance within positive-definite bounds, and **compare** posterior estimates against the true mean and covariance.
+
+::: {.panel-tabset group="language"}
+
+## Python
+```{python}
+from BayesForge import bf
+import jax.numpy as jnp
+
+m = bf(platform="cpu")
+
+# 1. DGP: Simulate 2D observations with known variances (2.0, 1.5) and true cov = 0.8
+true_mu = jnp.array([1.0, -1.0])
+var1, var2, true_cov = jnp.float64(2.0), jnp.float64(1.5), 0.8
+true_Sigma = jnp.array([[2.0, true_cov], [true_cov, 1.5]])
+y = m.dist.multivariate_normal(loc=true_mu, covariance_matrix=true_Sigma, shape=(100,), sample=True, seed=42)
+
+# 2. Masking: Provide only var1 and var2 as known; cov is unobserved
+m.data_on_model = dict(y=y, var1=var1, var2=var2)
+
+# 3. Inference: Sample unknown cov within positive-definite bounds
+def partially_known_model(y, var1, var2):
+    max_cov = jnp.sqrt(var1 * var2)
+    min_cov = -max_cov
+
+    mu = m.dist.normal(0, 5, shape=(2,), name="mu")
+    cov = m.dist.uniform(min_cov, max_cov, name="cov")
+
+    row1 = jnp.stack([var1, cov])
+    row2 = jnp.stack([cov, var2])
+    Sigma = jnp.stack([row1, row2])
+
+    m.dist.multivariate_normal(loc=mu, covariance_matrix=Sigma, obs=y)
+
+m.fit(partially_known_model, progress_bar=False)
+summ = m.summary()
+
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+import numpy as np
+import matplotlib.pyplot as plt
+mu_d = np.asarray(m.posteriors["mu"]); cov_d = np.asarray(m.posteriors["cov"])
+panels = [("mu[0]", mu_d[:, 0], 1.0), ("mu[1]", mu_d[:, 1], -1.0), ("cov", cov_d, true_cov)]
+fig, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=True)
+for ax, (name, d, truth) in zip(axes, panels):
+    ax.hist(d, bins=40, density=True, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--", label="True")
+    ax.set_title(name); ax.legend()
+plt.show()
+```
+
+## R
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# 1. DGP: Simulate 2D observations with known variances (2.0, 1.5) and true cov = 0.8
+true_mu <- jnp$array(c(1.0, -1.0))
+true_cov <- 0.8
+true_Sigma <- jnp$array(list(c(2.0, true_cov), c(true_cov, 1.5)))
+y <- m$dist$multivariate_normal(loc = true_mu, covariance_matrix = true_Sigma, shape = reticulate::tuple(100L), sample = TRUE, seed = 42L)
+var1 <- jnp$float64(2.0)
+var2 <- jnp$float64(1.5)
+
+# 2. Masking: Provide only var1 and var2 as known; cov is unobserved
+m$data_on_model <- list(y = y, var1 = var1, var2 = var2)
+
+# 3. Inference: Sample unknown cov within positive-definite bounds
+partially_known_model <- function(y, var1, var2) {
+    max_cov <- jnp$sqrt(var1 * var2)
+    min_cov <- -max_cov
+
+    mu <- m$dist$normal(0, 5, shape = reticulate::tuple(2L), name = "mu")
+    cov <- m$dist$uniform(min_cov, max_cov, name = "cov")
+
+    row1 <- jnp$stack(list(var1, cov))
+    row2 <- jnp$stack(list(cov, var2))
+    Sigma <- jnp$stack(list(row1, row2))
+
+    m$dist$multivariate_normal(loc = mu, covariance_matrix = Sigma, obs = y)
+}
+
+m$fit(partially_known_model, progress_bar = FALSE)
+summ <- m$summary()
+
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+np <- reticulate::import("numpy")
+mu_d <- np$asarray(m$posteriors[["mu"]]); cov_d <- as.numeric(np$asarray(m$posteriors[["cov"]]))
+par(mfrow = c(1, 3))
+for (p in list(list("mu[0]", mu_d[, 1], 1.0), list("mu[1]", mu_d[, 2], -1.0), list("cov", cov_d, true_cov))) {
+    hist(p[[2]], breaks = 40, freq = FALSE, main = p[[1]], xlab = "")
+    abline(v = p[[3]], col = "red", lty = 2, lwd = 2)
+}
+par(mfrow = c(1, 1))
 ```
 
 ## Julia
@@ -96,261 +316,371 @@ using PythonCall
 m = importBF(platform="cpu")
 jnp = pyimport("jax.numpy")
 
-@BF function missing_data_model(y_obs, N_mis)
-    mu = m.dist.normal(0, 10, name="mu")
-    sigma = m.dist.half_normal(10, name="sigma")
-    
-    # Treat missing data block as latent parameters
-    tmp = m.dist.plate("missing_obs", N_mis)
-    m.dist.normal(mu, sigma, name="y_mis")
-    # Note: In Python, `with plate:` is used. For Julia, follow the macro constraints or vectorized shape arguments as supported.
-        
-    # Likelihood for OBSERVED data
-    m.dist.normal(mu, sigma, obs=y_obs)
-end
-```
-:::
+# 1. DGP: Simulate 2D observations with known variances (2.0, 1.5) and true cov = 0.8
+true_cov = 0.8
+true_Sigma = jnp.array(pylist([pylist([2.0, true_cov]), pylist([true_cov, 1.5])]))
+y = m.dist.multivariate_normal(loc=jnp.array([1.0, -1.0]), covariance_matrix=true_Sigma, shape=(100,), sample=true, seed=42)
+var1 = jnp.float64(2.0)
+var2 = jnp.float64(1.5)
 
-### 2. Partially Known Parameters (Covariance)
+# 2. Masking: Provide only var1 and var2 as known; cov is unobserved
+m.data_on_model = pydict(Dict("y" => y, "var1" => var1, "var2" => var2))
 
-This example illustrates how to handle **Partial Knowledge** (from *Considerations*). We have observed variances but an unobserved covariance. Rather than discarding the known variances, we deterministically assemble the covariance matrix by sampling the unknown covariance within mathematically valid positive-definite bounds.
-
-::: {.panel-tabset group="language"}
-
-## Python
-```python
-def partially_known_model(y, var1, var2):
-    # Determine bounds based on positive-definite requirements
-    max_cov = jnp.sqrt(var1 * var2)
-    min_cov = -max_cov
-    
-    mu = m.dist.normal(0, 5, shape=(2,), name="mu")
-    # Sample the unknown covariance within valid bounds
-    cov = m.dist.uniform(min_cov, max_cov, name="cov")
-    
-    # Deterministically assemble the partially known matrix
-    Sigma = jnp.array([
-        [var1, cov],
-        [cov,  var2]
-    ])
-    
-    # Fit the Likelihood
-    m.dist.multivariatenormal(loc=mu, covariance_matrix=Sigma, obs=y)
-```
-
-## R
-```r
-partially_known_model <- function(y, var1, var2) {
-    # Determine bounds based on positive-definite requirements
-    max_cov <- jnp$sqrt(var1 * var2)
-    min_cov <- -max_cov
-    
-    mu <- m$dist$normal(0, 5, shape=c(2L), name="mu")
-    # Sample the unknown covariance within valid bounds
-    cov <- m$dist$uniform(min_cov, max_cov, name="cov")
-    
-    # Deterministically assemble the partially known matrix
-    Sigma <- jnp$array(list(
-        list(var1, cov),
-        list(cov,  var2)
-    ))
-    
-    # Fit the Likelihood
-    m$dist$multivariatenormal(loc=mu, covariance_matrix=Sigma, obs=y)
-}
-```
-
-## Julia
-```julia
+# 3. Inference: Sample unknown cov within positive-definite bounds
 @BF function partially_known_model(y, var1, var2)
     max_cov = jnp.sqrt(var1 * var2)
     min_cov = -max_cov
-    
+
     mu = m.dist.normal(0, 5, shape=(2,), name="mu")
     cov = m.dist.uniform(min_cov, max_cov, name="cov")
-    
-    # Assemble the matrix row-by-row
+
     row1 = jnp.stack([var1, cov])
     row2 = jnp.stack([cov, var2])
     Sigma = jnp.stack([row1, row2])
-    
-    # Fit the Likelihood
-    m.dist.multivariatenormal(loc=mu, covariance_matrix=Sigma, obs=y)
+
+    m.dist.multivariate_normal(loc=mu, covariance_matrix=Sigma, obs=y)
 end
+
+m.fit(partially_known_model, progress_bar=false)
+summ = m.summary()
+
+
+# 4. Plot: posterior of each partially-known parameter vs its true value (red line)
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+mu_d = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["mu"]))
+cov_d = pyconvert(Vector{Float64}, np.asarray(m.posteriors["cov"]))
+fig, axes = plt.subplots(1, 3, figsize=(12, 3), constrained_layout=true)
+for (ax, (name, d, truth)) in zip(axes, [("mu[0]", mu_d[:, 1], 1.0), ("mu[1]", mu_d[:, 2], -1.0), ("cov", cov_d, true_cov)])
+    ax.hist(d, bins=40, density=true, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--")
+    ax.set_title(name)
+end
+plt.show()
 ```
 :::
 
 ### 3. Sliced Missing Data (Time Series)
 
-This example highlights the technical implementation detail of **JAX Arrays are Immutable** (from *Considerations*). When missing data points are sprinkled within a time series, we cannot mutate arrays in-place. We must use `.at[...].set(...)` to cleanly insert the imputed latent variables into the full array before evaluating the state-space likelihood.
+This example highlights the technical implementation detail of **JAX Arrays are Immutable** (from *Considerations*). We generate a random-walk time series (**DGP**), **mask** 3 interior time steps, use `.at[...].set(...)` to splice the imputed latent variables into the full series during **inference**, and **compare** the imputed states against the true masked trajectory values.
 
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
+```{python}
+from BayesForge import bf
+import jax.numpy as jnp
+
+m = bf(platform="cpu")
+
+# 1. DGP: Simulate a random-walk time series of length 25 with known step noise
+N_total = 25
+true_sigma = 0.5
+steps = m.dist.normal(0.0, true_sigma, shape=(N_total,), sample=True, seed=42)
+y_true = jnp.cumsum(steps)
+
+# 2. Masking: Mask 3 interior time steps (indices 4, 10, 15)
+ii_mis = jnp.array([4, 10, 15], dtype=jnp.int32)
+ii_obs = jnp.array([i for i in range(N_total) if i not in (4, 10, 15)], dtype=jnp.int32)
+y_obs_ts = y_true[ii_obs]
+y_mis_true = y_true[ii_mis]
+N_mis = int(ii_mis.shape[0])
+
+m.data_on_model = dict(y_obs=y_obs_ts, ii_obs=ii_obs, N_mis=N_mis, ii_mis=ii_mis, N_total=N_total)
+
+# 3. Inference: Splice observed and latent missing points via JAX .at[].set()
 def sliced_missing_model(y_obs, ii_obs, N_mis, ii_mis, N_total):
     sigma = m.dist.gamma(1, 1, name="sigma")
-    
-    # Missing points are parameters
     y_mis = m.dist.normal(0, 10, shape=(N_mis,), name="y_mis")
-    
-    # Assemble full array without in-place mutation using JAX .at
+
     y_full = jnp.zeros(N_total)
     y_full = y_full.at[ii_obs].set(y_obs)
     y_full = y_full.at[ii_mis].set(y_mis)
-    
-    # State-Space Time Series Likelihood: y[t] ~ normal(y[t-1], sigma)
-    m.dist.normal(0, 100, obs=y_full[0])
-    m.dist.normal(y_full[:-1], sigma, obs=y_full[1:])
+
+    m.dist.normal(0, 10, obs=y_full[0], name="y0")
+    m.dist.normal(y_full[:-1], sigma, obs=y_full[1:], name="y_step")
+
+m.fit(sliced_missing_model, progress_bar=False)
+summ = m.summary()
+
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+import numpy as np
+import matplotlib.pyplot as plt
+draws = np.asarray(m.posteriors["y_mis"])            # (draws, 3)
+est = draws.mean(0)
+lo, hi = np.percentile(draws, [3, 97], axis=0)
+t_mis = np.asarray(ii_mis)
+fig, ax = plt.subplots(figsize=(7, 3.5))
+ax.plot(np.asarray(y_true), "k-", alpha=0.3, label="True series")
+ax.plot(np.asarray(ii_obs), np.asarray(y_obs_ts), "ko", ms=4, label="Observed")
+ax.errorbar(t_mis, est, yerr=[est - lo, hi - est], fmt="rs", capsize=3, label="Imputed (mean, 94% CI)")
+ax.plot(t_mis, np.asarray(y_mis_true), "b*", ms=12, label="True masked")
+ax.set_xlabel("t"); ax.set_ylabel("y"); ax.legend()
+plt.show()
 ```
 
 ## R
 ```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# 1. DGP: Simulate a random-walk time series of length 25 with known step noise
+N_total <- 25L
+true_sigma <- 0.5
+steps <- m$dist$normal(0.0, true_sigma, shape = reticulate::tuple(N_total), sample = TRUE, seed = 42L)
+y_true <- jnp$cumsum(steps)
+
+# 2. Masking: Mask 3 interior time steps (indices 4, 10, 15)
+ii_mis <- jnp$array(c(4L, 10L, 15L), dtype = jnp$int32)
+ii_obs <- jnp$array(setdiff(0L:(N_total - 1L), c(4L, 10L, 15L)), dtype = jnp$int32)
+y_obs_ts <- y_true[ii_obs]
+y_mis_true <- y_true[ii_mis]
+N_mis <- 3L
+
+m$data_on_model <- list(y_obs = y_obs_ts, ii_obs = ii_obs, N_mis = N_mis, ii_mis = ii_mis, N_total = N_total)
+
+# 3. Inference: Splice observed and latent missing points via JAX .at[].set()
 sliced_missing_model <- function(y_obs, ii_obs, N_mis, ii_mis, N_total) {
-    sigma <- m$dist$gamma(1, 1, name="sigma")
-    
-    # Missing points are parameters
-    y_mis <- m$dist$normal(0, 10, shape=c(N_mis), name="y_mis")
-    
-    # Assemble full array without in-place mutation using JAX .at
+    sigma <- m$dist$gamma(1, 1, name = "sigma")
+    y_mis <- m$dist$normal(0, 10, shape = reticulate::tuple(N_mis), name = "y_mis")
+
     y_full <- jnp$zeros(N_total)
     y_full <- y_full$at[ii_obs]$set(y_obs)
     y_full <- y_full$at[ii_mis]$set(y_mis)
-    
-    # State-Space Time Series Likelihood
-    m$dist$normal(0, 100, obs=y_full[0L])
-    m$dist$normal(y_full[0L:(N_total-2L)], sigma, obs=y_full[1L:(N_total-1L)])
+
+    m$dist$normal(0, 10, obs = y_full[0L], name = "y0")
+    m$dist$normal(y_full[0L:(N_total - 2L)], sigma, obs = y_full[1L:(N_total - 1L)], name = "y_step")
 }
+
+m$fit(sliced_missing_model, progress_bar = FALSE)
+summ <- m$summary()
+
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+np <- reticulate::import("numpy")
+draws <- np$asarray(m$posteriors[["y_mis"]])         # (draws, 3)
+est <- colMeans(draws)
+lo <- apply(draws, 2, quantile, 0.03); hi <- apply(draws, 2, quantile, 0.97)
+yt <- as.numeric(np$asarray(y_true)); t_mis <- c(4, 10, 15)
+plot(0:(N_total - 1), yt, type = "l", col = "grey60", xlab = "t", ylab = "y",
+     ylim = range(yt, lo, hi))
+points(as.numeric(np$asarray(ii_obs)), as.numeric(np$asarray(y_obs_ts)), pch = 19, cex = 0.7)
+points(t_mis, est, col = "red", pch = 15)
+arrows(t_mis, lo, t_mis, hi, angle = 90, code = 3, length = 0.05, col = "red")
+points(t_mis, as.numeric(np$asarray(y_mis_true)), col = "blue", pch = 8, cex = 1.5)
+legend("topleft", c("True series", "Observed", "Imputed (94% CI)", "True masked"),
+       col = c("grey60", "black", "red", "blue"), pch = c(NA, 19, 15, 8), lty = c(1, NA, NA, NA), bty = "n")
 ```
 
 ## Julia
 ```julia
+using PyBayesForge
+using PythonCall
+
+m = importBF(platform="cpu")
+jnp = pyimport("jax.numpy")
+
+# 1. DGP: Simulate a random-walk time series of length 25 with known step noise
+N_total = 25
+true_sigma = 0.5
+steps = m.dist.normal(0.0, true_sigma, shape=(N_total,), sample=true, seed=42)
+y_true = jnp.cumsum(steps)
+
+# 2. Masking: Mask 3 interior time steps (indices 4, 10, 15)
+ii_mis = jnp.array([4, 10, 15], dtype=jnp.int32)
+ii_obs = jnp.array([i for i in 0:(N_total-1) if !(i in (4, 10, 15))], dtype=jnp.int32)
+y_obs_ts = y_true[ii_obs]
+y_mis_true = y_true[ii_mis]
+N_mis = 3
+
+m.data_on_model = pydict(Dict("y_obs" => y_obs_ts, "ii_obs" => ii_obs, "N_mis" => N_mis, "ii_mis" => ii_mis, "N_total" => N_total))
+
+# 3. Inference: Splice observed and latent missing points via JAX .at[].set()
 @BF function sliced_missing_model(y_obs, ii_obs, N_mis, ii_mis, N_total)
     sigma = m.dist.gamma(1, 1, name="sigma")
     y_mis = m.dist.normal(0, 10, shape=(N_mis,), name="y_mis")
-    
-    # Assemble full array using JAX immutable setters
+
     y_full = jnp.zeros(N_total)
     y_full = y_full.at[ii_obs].set(y_obs)
     y_full = y_full.at[ii_mis].set(y_mis)
-    
-    m.dist.normal(0, 100, obs=y_full[0])
-    m.dist.normal(y_full[0:end-1], sigma, obs=y_full[1:end])
+
+    m.dist.normal(0, 10, obs=y_full[0], name="y0")
+    m.dist.normal(y_full[pyslice(0, -1)], sigma, obs=y_full[pyslice(1, nothing)], name="y_step")
 end
+
+m.fit(sliced_missing_model, progress_bar=false)
+summ = m.summary()
+
+
+
+# 4. Plot: full series with imputed points (red) against the true masked values (blue)
+using Statistics
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+draws = pyconvert(Matrix{Float64}, np.asarray(m.posteriors["y_mis"]))   # (draws, 3)
+est = vec(mean(draws, dims=1))
+lo = [quantile(c, 0.03) for c in eachcol(draws)]; hi = [quantile(c, 0.97) for c in eachcol(draws)]
+yt = pyconvert(Vector{Float64}, np.asarray(y_true))
+t_mis = pyconvert(Vector{Int}, np.asarray(ii_mis)); t_obs = pyconvert(Vector{Int}, np.asarray(ii_obs))
+plt.figure(figsize=(7, 3.5))
+plt.plot(0:(N_total-1), yt, "k-", alpha=0.3, label="True series")
+plt.plot(t_obs, yt[t_obs .+ 1], "ko", ms=4, label="Observed")
+plt.errorbar(t_mis, est, yerr=pylist([est .- lo, hi .- est]), fmt="rs", capsize=3, label="Imputed (mean, 94% CI)")
+plt.plot(t_mis, yt[t_mis .+ 1], "b*", ms=12, label="True masked")
+plt.xlabel("t"); plt.ylabel("y"); plt.legend()
+plt.show()
 ```
 :::
 
 ### 4. Censored Data via Survival Analysis (NMAR)
 
-This example corresponds closely to the **Not Missing At Random (NMAR)** mechanism (from *Missingness Mechanisms* in *General Principles*). The waiting times are right-censored—the probability of missingness is caused by the outcome itself outlasting the observation window. Instead of explicitly imputing values for each missing observation, survival analysis intrinsically leverages **Marginalization** (from *Considerations*), utilizing a survival object to correctly evaluate the probability of the censored event without dropping the partial knowledge.
+This example corresponds to the **Not Missing At Random (NMAR)** mechanism (from *Missingness Mechanisms* in *General Principles*). We generate waiting times from an exponential proportional-hazards **DGP**, **mask (right-censor)** any waiting time that exceeds the study cutoff $C = 3.0$ (so missingness is directly caused by the outcome itself), **infer** the log-hazard parameters by marginalizing over the censored tail, and **compare** the estimated parameters against the ground truth.
 
 ::: {.panel-tabset group="language"}
 
 ## Python
-```python
-# Explicitly modeling the probability of an event being censored
-def mastectomy_survival_model():
-    from importlib.resources import files
-    
-    # Load survival dataset with censored values
-    data_path = m.load.mastectomy(only_path=True)
-    m.data(data_path, sep=',') 
+```{python}
+from BayesForge import bf
+import jax.numpy as jnp
+import numpy as np
 
-    # Clean data flags
-    m.df.metastasized = (m.df.metastasized == "yes").astype(np.int64)
-    m.df.event = jnp.array(m.df.event.values, dtype=jnp.int32)
+m = bf(platform="cpu")
 
-    # Automatically construct the censored survival objects
-    m.models.survival.surv_object(time='time', event='event', cov='metastasized', interval_length=3)
+# 1. DGP: Simulate true exponential waiting times with covariate x
+np.random.seed(42)
+N = 200
+true_alpha, true_beta = -0.5, 0.8
+x = np.random.normal(0.0, 1.0, size=N)
+true_rate = np.exp(true_alpha + true_beta * x)
+t_true = np.random.exponential(scale=1.0 / true_rate)
 
-    # Plot censoring (the missingness mechanism)
-    m.models.survival.plot_censoring(cov='metastasized')
+# 2. Masking (NMAR Right-Censoring): Study ends at cutoff C = 3.0
+cutoff = 3.0
+event = (t_true <= cutoff).astype(np.int32)   # 1 = observed event, 0 = right-censored (missing)
+t_obs = np.minimum(t_true, cutoff)            # observed exposure time
 
-    def model(intervals, death, metastasized, exposure):
-        lambda0 = m.dist.gamma(0.01, 0.01, shape=intervals.shape, name='lambda0')
-        beta = m.dist.normal(0, 1000, shape=(1,), name='beta')
-        
-        # Hazard rate based on covariates
-        lambda_ = m.models.survival.hazard_rate(cov=metastasized, beta=beta, lambda0=lambda0)
-        mu = exposure * lambda_
+m.data_on_model = dict(
+    x=jnp.array(x),
+    t_obs=jnp.array(t_obs),
+    event=jnp.array(event),
+)
 
-        # Poisson likelihood accounts for observed events over the exposure timeframe
-        y = m.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs=death)
+# 3. Inference: Marginalize right-censored observations via survival likelihood
+def censored_survival_model(x, t_obs, event):
+    alpha = m.dist.normal(0, 5, name="alpha")
+    beta = m.dist.normal(0, 5, name="beta")
+    hazard = jnp.exp(alpha + beta * x)
+    # Exact log-likelihood for exponential survival with right-censoring at t_obs
+    m.dist.poisson(rate=t_obs * hazard, obs=event)
 
-    m.fit(model, progress_bar=False) 
-    m.models.survival.plot_surv()
+m.fit(censored_survival_model, progress_bar=False)
+summ = m.summary()
+
+
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+import matplotlib.pyplot as plt
+fig, axes = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=True)
+for ax, (name, truth) in zip(axes, [("alpha", true_alpha), ("beta", true_beta)]):
+    ax.hist(np.asarray(m.posteriors[name]), bins=40, density=True, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--", label="True")
+    ax.set_title(name); ax.legend()
+plt.show()
 ```
 
 ## R
 ```r
-mastectomy_survival_model <- function() {
-    # Load survival dataset with censored values
-    data_path <- m$load$mastectomy(only_path=TRUE)
-    m$data(data_path, sep=',') 
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
 
-    # Clean data flags
-    m$df$metastasized <- as.integer(m$df$metastasized == "yes")
-    m$df$event <- jnp$array(as.integer(m$df$event))
+# 1. DGP: Simulate true exponential waiting times with covariate x
+set.seed(42)
+N <- 200L
+true_alpha <- -0.5
+true_beta <- 0.8
+x_r <- rnorm(N, 0.0, 1.0)
+true_rate <- exp(true_alpha + true_beta * x_r)
+t_true <- rexp(N, rate = true_rate)
 
-    # Automatically construct the censored survival objects
-    m$models$survival$surv_object(time='time', event='event', cov='metastasized', interval_length=3L)
+# 2. Masking (NMAR Right-Censoring): Study ends at cutoff C = 3.0
+cutoff <- 3.0
+event_r <- as.integer(t_true <= cutoff)
+t_obs_r <- pmin(t_true, cutoff)
 
-    # Plot censoring (the missingness mechanism)
-    m$models$survival$plot_censoring(cov='metastasized')
+m$data_on_model <- list(
+    x = jnp$array(x_r),
+    t_obs = jnp$array(t_obs_r),
+    event = jnp$array(event_r, dtype = jnp$int32)
+)
 
-    model <- function(intervals, death, metastasized, exposure) {
-        lambda0 <- m$dist$gamma(0.01, 0.01, shape=intervals$shape, name='lambda0')
-        beta <- m$dist$normal(0, 1000, shape=c(1L), name='beta')
-        
-        # Hazard rate based on covariates
-        lambda_ <- m$models$survival$hazard_rate(cov=metastasized, beta=beta, lambda0=lambda0)
-        mu <- exposure * lambda_
-
-        # Poisson likelihood accounts for observed events over the exposure timeframe
-        tiny <- jnp$finfo(mu$dtype)$tiny
-        y <- m$dist$poisson(mu + tiny, obs=death)
-    }
-
-    m$fit(model, progress_bar=FALSE) 
-    m$models.survival$plot_surv()
+# 3. Inference: Marginalize right-censored observations via survival likelihood
+censored_survival_model <- function(x, t_obs, event) {
+    alpha <- m$dist$normal(0, 5, name = "alpha")
+    beta <- m$dist$normal(0, 5, name = "beta")
+    hazard <- jnp$exp(alpha + beta * x)
+    m$dist$poisson(rate = t_obs * hazard, obs = event)
 }
+
+m$fit(censored_survival_model, progress_bar = FALSE)
+summ <- m$summary()
+
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+np <- reticulate::import("numpy")
+par(mfrow = c(1, 2))
+for (p in list(list("alpha", true_alpha), list("beta", true_beta))) {
+    hist(as.numeric(np$asarray(m$posteriors[[p[[1]]]])), breaks = 40, freq = FALSE, main = p[[1]], xlab = "")
+    abline(v = p[[2]], col = "red", lty = 2, lwd = 2)
+}
+par(mfrow = c(1, 1))
 ```
 
 ## Julia
 ```julia
-@BF function mastectomy_survival_model()
-    # Load survival dataset with censored values
-    data_path = m.load.mastectomy(only_path=true)
-    m.data(data_path, sep=",") 
+using PyBayesForge
+using PythonCall
+using Random
 
-    # Clean data flags
-    # Note: Using Python pandas interop for column modification
-    df = m.df
-    df.metastasized = (df.metastasized .== "yes")
-    df.event = jnp.array(df.event.values, dtype=jnp.int32)
+m = importBF(platform="cpu")
+jnp = pyimport("jax.numpy")
 
-    # Automatically construct the censored survival objects
-    m.models.survival.surv_object(time="time", event="event", cov="metastasized", interval_length=3)
+# 1. DGP: Simulate true exponential waiting times with covariate x
+Random.seed!(42)
+N = 200
+true_alpha, true_beta = -0.5, 0.8
+x_jl = randn(N)
+true_rate = exp.(true_alpha .+ true_beta .* x_jl)
+t_true = randexp(N) ./ true_rate
 
-    # Plot censoring (the missingness mechanism)
-    m.models.survival.plot_censoring(cov="metastasized")
+# 2. Masking (NMAR Right-Censoring): Study ends at cutoff C = 3.0
+cutoff = 3.0
+event_jl = Int32.(t_true .<= cutoff)
+t_obs_jl = min.(t_true, cutoff)
 
-    @BF function model(intervals, death, metastasized, exposure)
-        lambda0 = m.dist.gamma(0.01, 0.01, shape=intervals.shape, name="lambda0")
-        beta = m.dist.normal(0, 1000, shape=(1,), name="beta")
-        
-        # Hazard rate based on covariates
-        lambda_ = m.models.survival.hazard_rate(cov=metastasized, beta=beta, lambda0=lambda0)
-        mu = exposure * lambda_
+m.data_on_model = pydict(Dict(
+    "x" => jnp.array(x_jl),
+    "t_obs" => jnp.array(t_obs_jl),
+    "event" => jnp.array(event_jl, dtype=jnp.int32)
+))
 
-        # Poisson likelihood accounts for observed events over the exposure timeframe
-        tiny = jnp.finfo(mu.dtype).tiny
-        y = m.dist.poisson(mu + tiny, obs=death)
-    end
-
-    m.fit(model, progress_bar=false) 
-    m.models.survival.plot_surv()
+# 3. Inference: Marginalize right-censored observations via survival likelihood
+@BF function censored_survival_model(x, t_obs, event)
+    alpha = m.dist.normal(0, 5, name="alpha")
+    beta = m.dist.normal(0, 5, name="beta")
+    hazard = jnp.exp(alpha + beta * x)
+    m.dist.poisson(rate=t_obs * hazard, obs=event)
 end
+
+m.fit(censored_survival_model, progress_bar=false)
+summ = m.summary()
+
+
+# 4. Plot: posterior of the hazard parameters vs their true values (red line)
+np = pyimport("numpy"); plt = pyimport("matplotlib.pyplot")
+fig, axes = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=true)
+for (ax, (name, truth)) in zip(axes, [("alpha", true_alpha), ("beta", true_beta)])
+    ax.hist(pyconvert(Vector{Float64}, np.asarray(m.posteriors[name])), bins=40, density=true, alpha=0.6)
+    ax.axvline(truth, color="r", ls="--")
+    ax.set_title(name)
+end
+plt.show()
 ```
 :::
 

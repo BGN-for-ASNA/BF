@@ -22,8 +22,10 @@ level -- worker processes must be able to set their XLA environment before the
 backend is initialised.
 """
 
+import atexit
 import hashlib
 import itertools
+import numbers
 import os
 import shutil
 import sys
@@ -32,7 +34,7 @@ import traceback
 import warnings
 from contextlib import contextmanager
 
-__all__ = ["grid", "run_simulations"]
+__all__ = ["grid", "run_simulations", "worker_stdout"]
 
 
 _GUARD_MSG = (
@@ -45,17 +47,83 @@ _GUARD_MSG = (
     "backend='serial' to run without worker processes."
 )
 
+# Failure text for a worker killed outright (M4): recorded in the row, so the
+# DataFrame says why a simulation has no result.
+_DEAD_WORKER_MSG = "worker process died (BrokenProcessPool: OOM or killed)"
+
+_DEAD_POOL_MSG = (
+    "run_simulations: a worker process died.\n\n" + _GUARD_MSG + "\n\n"
+    "If the script already has that guard, the worker was most likely "
+    "killed by the OS (out of memory) -- lower `workers`."
+)
+
+_DEAD_POOL_HINT = (
+    "run_simulations: a worker process died (BrokenProcessPool). Rows already "
+    "collected are kept; the simulations that had not finished are recorded "
+    "as failed. If the script has no `if __name__ == '__main__':` guard, "
+    "that is the cause; otherwise the worker was most likely killed by the OS "
+    "(out of memory) -- lower `workers`."
+)
+
+
+def _manager_failure_msg(exc):
+    """Friendly text for a progress manager that never came up (M6).
+
+    Without a __main__ guard the manager's spawned server re-imports the
+    calling script, re-runs the call and dies on the recursion guard before
+    it can report an address -- the parent only ever sees an opaque pipe or
+    timeout error. Name the guard instead.
+    """
+    return (
+        "run_simulations: the progress manager process failed to start. The "
+        "most common cause is a .py script without an "
+        "`if __name__ == '__main__':` guard: the spawned helper processes "
+        "re-import the script, which re-runs the call.\n\n"
+        + _GUARD_MSG +
+        f"\n\nUnderlying error: {exc!r}\n"
+        "If the script does have the guard, rerun with progress=False to "
+        "skip the manager."
+    )
+
+
+def _interrupt_message(n_done, total):
+    """Line printed when Ctrl+C stops a run (M5)."""
+    return (f"run_simulations: interrupted -- {n_done}/{total} simulation(s) "
+            "finished; the rows collected so far are attached to the "
+            "KeyboardInterrupt as .rows")
+
 
 # --------------------------------------------------------------------------
 # Scenario construction
 # --------------------------------------------------------------------------
+
+def _grid_values(v):
+    """Expand one ``grid`` parameter into its list of values (m5).
+
+    Anything iterable except strings expands: lists, tuples, ``range``,
+    ``set`` (sorted, for a deterministic order), numpy arrays, generators.
+    Strings and bytes stay scalars -- iterating them would explode a label
+    into its characters. A 0-d numpy array is a scalar too.
+    """
+    if isinstance(v, (str, bytes)):
+        return [v]
+    if getattr(v, "ndim", None) == 0:          # 0-d numpy array
+        return [v.item()]
+    if isinstance(v, (set, frozenset)):
+        return sorted(v)                       # sets have no order; sort
+    if hasattr(v, "__iter__"):
+        return list(v)
+    return [v]
+
 
 def grid(reps=1, **params):
     """Build a list of scenario dicts from the cartesian product of ``params``.
 
     Args:
         reps: Number of replicates of each parameter combination.
-        **params: Named parameter lists to cross. Scalars are treated as
+        **params: Named parameters to cross. Any iterable except a string
+            (list, tuple, range, set, numpy array, generator) is expanded;
+            a set is expanded in sorted order. Scalars are treated as
             single-element lists.
 
     Returns:
@@ -68,11 +136,10 @@ def grid(reps=1, **params):
         [{'sim': 0, 'rep': 0, 'N': 50, 'rho': 0.0},
          {'sim': 1, 'rep': 1, 'N': 50, 'rho': 0.0}, ...]   # 8 dicts
     """
-    if reps < 1:
-        raise ValueError(f"reps must be >= 1, got {reps}")
+    reps = _check_int("reps", reps)
 
     names = list(params)
-    values = [v if isinstance(v, (list, tuple)) else [v] for v in params.values()]
+    values = [_grid_values(v) for v in params.values()]
 
     scenarios = []
     for combo in itertools.product(*values) if names else [()]:
@@ -91,13 +158,45 @@ def _normalise_scenarios(scenarios):
             raise ValueError(f"scenarios must be >= 1, got {scenarios}")
         scenarios = [{} for _ in range(scenarios)]
     else:
+        scenarios = list(scenarios)
+        # Validate before copying (m4): dict(s) on a non-mapping raises its
+        # own confusing error before this check is ever reached. Name the
+        # type and the offending index -- "cannot convert dictionary update
+        # sequence element N to a sequence" names neither.
+        bad = [i for i, s in enumerate(scenarios) if not isinstance(s, dict)]
+        if bad:
+            i = bad[0]
+            raise TypeError(
+                "scenarios must be an int or an iterable of dicts: element "
+                f"{i} is {type(scenarios[i]).__name__}: {scenarios[i]!r}"
+                + (f" -- {len(bad)} elements in total are not dicts"
+                   if len(bad) > 1 else "")
+            )
         scenarios = [dict(s) for s in scenarios]
-        if not all(isinstance(s, dict) for s in scenarios):
-            raise TypeError("scenarios must be an int or an iterable of dicts")
 
     for i, s in enumerate(scenarios):
         s.setdefault("sim", i)
         s.setdefault("rep", 0)
+
+    # Seeds derive from (base, sim), so a duplicated sim silently draws the
+    # same data twice (M3). Composed grids are the usual culprit: every
+    # grid() numbers its cells from 0.
+    seen = set()
+    dups = []
+    for s in scenarios:
+        sim = s["sim"]
+        if sim in seen and sim not in dups:
+            dups.append(sim)
+        seen.add(sim)
+    if dups:
+        raise ValueError(
+            "scenarios contain duplicate 'sim' ids: "
+            f"{', '.join(str(d) for d in dups)} -- every simulation needs a "
+            "unique sim, because its seed is derived from it and duplicates "
+            "draw identical data. Build one grid(...) instead of adding "
+            "several, or renumber: for i, s in enumerate(scenarios): "
+            "s['sim'] = i"
+        )
     return scenarios
 
 
@@ -109,6 +208,24 @@ def _derive_seed(base, sim):
     """
     digest = hashlib.sha256(f"{int(base)}:{int(sim)}".encode()).hexdigest()
     return int(digest, 16) & 0x7FFFFFFF
+
+
+def _n_cpus():
+    """CPU budget: sched_getaffinity (respects taskset/cgroups), else cpu_count.
+
+    Every core budget in this module goes through here (M1): the worker cap,
+    the oversubscription check and the pinning blocks must agree on one
+    number, or ``taskset -c 0-7`` lets 24 workers pile onto 8 CPUs while the
+    cap, computed on the physical count, sees nothing wrong.
+    """
+    if hasattr(os, "sched_getaffinity"):
+        try:
+            n = len(os.sched_getaffinity(0))
+        except OSError:
+            n = 0
+        if n >= 1:
+            return n
+    return os.cpu_count() or 1
 
 
 # --------------------------------------------------------------------------
@@ -142,6 +259,28 @@ def _normalise_result(ret):
     if mod.startswith("pandas"):
         import pandas as pd
         if isinstance(ret, pd.DataFrame):
+            # m12: to_dict("records") would silently merge duplicated column
+            # names (last wins) and mangle a MultiIndex -- refuse instead.
+            if isinstance(ret.columns, pd.MultiIndex):
+                raise ValueError(
+                    "run_simulations: fn returned a DataFrame with MultiIndex "
+                    "columns; they cannot become row keys. Flatten them "
+                    "first, e.g. df.columns = ['_'.join(map(str, c)) "
+                    "for c in df.columns]"
+                )
+            seen_cols, dups = set(), []
+            for c in ret.columns:
+                key = str(c)
+                if key in seen_cols and key not in dups:
+                    dups.append(key)
+                seen_cols.add(key)
+            if dups:
+                raise ValueError(
+                    "run_simulations: fn returned a DataFrame with duplicated "
+                    f"column names: {', '.join(dups)} -- to_dict would keep "
+                    "only one column per name and silently drop the rest. "
+                    "Rename the duplicates before returning."
+                )
             return ret.to_dict("records")
         if isinstance(ret, pd.Series):
             return [{str(k): v for k, v in ret.items()}]
@@ -180,16 +319,78 @@ def _worker_env(cores_per_worker, quiet=True):
     ``BF_QUIET`` must be in the environment *inherited at spawn*, not merely set
     by the pool initializer: BayesForge prints its banner while the child
     imports this module to find the initializer, which is strictly earlier.
+
+    ``XLA_PYTHON_CLIENT_PREALLOCATE`` defaults to ``false`` (an explicit user
+    value wins) so N workers on one GPU do not each grab ~90 % of the VRAM at
+    the first call and OOM the second worker; it is inert on CPU.
     """
     return {
         "BF_QUIET": "1" if quiet else "0",
         "XLA_FLAGS": f"--xla_force_host_platform_device_count={cores_per_worker}",
+        "XLA_PYTHON_CLIENT_PREALLOCATE": os.environ.get(
+            "XLA_PYTHON_CLIENT_PREALLOCATE", "false"),
         "BF_MAX_CORES": str(cores_per_worker),
         "OMP_NUM_THREADS": str(cores_per_worker),
         "MKL_NUM_THREADS": str(cores_per_worker),
         "OPENBLAS_NUM_THREADS": str(cores_per_worker),
         "NUMEXPR_NUM_THREADS": str(cores_per_worker),
+        # RELEASE_AUDIT X7: workers start with the parent's x64 setting; a
+        # bf() created in the worker still applies its own float_precision.
+        "JAX_ENABLE_X64": "1" if _parent_x64() else "0",
     }
+
+
+def _parent_x64():
+    """True when the parent process runs JAX with jax_enable_x64 on."""
+    import jax
+    return bool(jax.config.jax_enable_x64)
+
+
+def _visible_gpus():
+    """Visible CUDA device ids, [] when no GPU is visible.
+
+    Reads the environment and /proc only -- this module must not import jax
+    (see the module docstring), so the GPU count is detected without bringing
+    up a backend. An explicit ``CUDA_VISIBLE_DEVICES`` wins; ``"none"`` or
+    ``""`` means the user hid every GPU and that is honoured.
+    """
+    cvd = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if cvd is not None:
+        cvd = cvd.strip()
+        if not cvd or cvd.lower() == "none":
+            return []
+        return [t.strip() for t in cvd.split(",") if t.strip()]
+    try:
+        n = len(os.listdir("/proc/driver/nvidia/gpus"))
+    except OSError:
+        return []
+    return [str(i) for i in range(n)]
+
+
+def _gpu_env_for_worker(i, visible):
+    """CUDA_VISIBLE_DEVICES for worker i: one device, round-robin (M7).
+
+    Empty dict when no GPU is visible, so the worker inherits the parent's
+    environment untouched.
+    """
+    if not visible:
+        return {}
+    return {"CUDA_VISIBLE_DEVICES": str(visible[i % len(visible)])}
+
+
+_XLA_DEVICE_FLAG = "--xla_force_host_platform_device_count"
+
+
+def _merge_xla_flags(inherited, override):
+    """Merge an inherited XLA_FLAGS with our override (m2).
+
+    The user's inherited flags are kept; only an inherited device-count
+    token is replaced by ours (the override always carries one).
+    """
+    kept = [t for t in inherited.split()
+            if not t.startswith(_XLA_DEVICE_FLAG + "=")]
+    kept += [t for t in override.split() if t not in kept]
+    return " ".join(kept)
 
 
 @contextmanager
@@ -199,7 +400,20 @@ def _env_override(overrides):
     Applied in the *parent* around the pool's lifetime: ``spawn`` children copy
     ``os.environ`` at creation, and ProcessPoolExecutor creates them lazily as
     tasks are submitted, so the override has to outlive the submissions.
+
+    ``XLA_FLAGS`` is *merged* with the inherited value rather than replacing
+    it, so a user-set flag such as ``--xla_cpu_multi_thread_eigen=false``
+    survives; only the device-count token is ours.
+
+    Not thread-safe: ``os.environ`` is process-wide, so two concurrent
+    :func:`run_simulations` calls in two threads of one process would
+    interleave their save/restore. Run them in separate processes.
     """
+    overrides = dict(overrides)
+    inherited = os.environ.get("XLA_FLAGS")
+    if inherited and "XLA_FLAGS" in overrides:
+        overrides["XLA_FLAGS"] = _merge_xla_flags(inherited,
+                                                  overrides["XLA_FLAGS"])
     saved = {k: os.environ.get(k) for k in overrides}
     os.environ.update(overrides)
     try:
@@ -225,8 +439,17 @@ def _pin_worker(block, block_size):
     counter: XLA sizes its thread pool once, when the backend comes up, so only
     the first pin can affect it -- and avoiding the shared counter avoids
     handing every worker a semaphore to unpickle, which races with pool
-    teardown. Workers pick up their first tasks in submission order, so the
-    blocks they claim are distinct.
+    teardown.
+
+    Known limitation (m1): ProcessPoolExecutor does *not* guarantee that each
+    worker picks up its first task in submission order. A worker that finishes
+    its first task before a slow-starting sibling has pulled one can take a
+    later task whose ``i % workers`` class matches a block another worker has
+    already claimed -- two workers then share a block and one goes unused.
+    This is a performance-only effect (cores are still bounded, nothing is
+    incorrect), and the submission order -- one task per class before any
+    second task -- makes it rare; a deterministic per-worker block
+    would need a shared counter, which the teardown race above rules out.
 
     ``block_size`` is the machine divided by the worker count, NOT
     ``cores_per_worker`` -- the latter is a JAX *device* count. Pinning to
@@ -261,16 +484,30 @@ def _pin_worker(block, block_size):
     return _STATE["cpus"]
 
 
-def _worker_init(env, fn_bytes, fn_kwargs_bytes, quiet, block_size, queue):
+def _worker_init(env, fn_bytes, fn_kwargs_bytes, quiet, block_size, queue,
+                 gpus=()):
     """Pool initializer: set the environment, then unpack the payloads."""
+    env = dict(env)
+    inherited = os.environ.get("XLA_FLAGS")
+    if inherited and "XLA_FLAGS" in env:
+        # m2: the child inherited the parent's merged XLA_FLAGS; merge again
+        # (idempotent) so user flags survive this update() too.
+        env["XLA_FLAGS"] = _merge_xla_flags(inherited, env["XLA_FLAGS"])
     os.environ.update(env)
     _STATE["block_size"] = block_size
     _STATE["queue"] = queue
+    _STATE["gpus"] = list(gpus)
 
     if quiet:
         # bf.__init__ prints its device count and BayesForge prints a banner on
-        # import; times a hundred simulations that is pure noise.
-        sys.stdout = open(os.devnull, "w")
+        # import; times a hundred simulations that is pure noise. The handle is
+        # kept so it is closed when the worker exits (m3), and the real stdout
+        # stays reachable through worker_stdout() for fn that wants to log.
+        devnull = open(os.devnull, "w")
+        atexit.register(devnull.close)
+        _STATE["real_stdout"] = sys.stdout
+        _STATE["devnull"] = devnull
+        sys.stdout = devnull
 
     # Deliberately NOT deserialised here: fn_kwargs may hold jax arrays, and
     # rebuilding those brings the XLA backend up -- which must happen after the
@@ -280,16 +517,54 @@ def _worker_init(env, fn_bytes, fn_kwargs_bytes, quiet, block_size, queue):
     _STATE["worker"] = os.getpid()
 
 
+@contextmanager
+def worker_stdout():
+    """Temporarily restore the real stdout inside ``fn`` (m3).
+
+    With ``quiet=True`` (the default) a worker's stdout is sent to
+    ``os.devnull``. Wrap the few lines that must be seen in this context
+    manager to write them to the terminal instead::
+
+        def one_sim(N, seed, **_):
+            ...
+            with worker_stdout():
+                print(f"sim {seed}: divergent chains")
+
+    Outside a quiet worker this is a no-op: stdout is already the real one.
+    """
+    real = _STATE.get("real_stdout")
+    if real is None:
+        yield sys.stdout
+        return
+    sys.stdout = real
+    try:
+        yield real
+    finally:
+        sys.stdout = _STATE.get("devnull", sys.stdout)
+
+
 def _worker_entry(payload_bytes, block):
     """Run one scenario. Returns cloudpickled ``(rows, error)``."""
     import cloudpickle
 
     _pin_worker(block, _STATE.get("block_size", 1))
 
+    gpus = _STATE.get("gpus")
+    if gpus and "gpu" not in _STATE:
+        # One device per worker, round-robin (M7) -- set before the fn unpack
+        # below brings the XLA/CUDA backend up, the same window _pin_worker
+        # uses to size the thread pool. Set once: later tasks of this worker
+        # must not migrate between GPUs.
+        _STATE["gpu"] = _gpu_env_for_worker(block, gpus)
+        os.environ.update(_STATE["gpu"])
+
     if "fn" not in _STATE:                    # first task: unpack, now pinned
-        _STATE["fn"] = cloudpickle.loads(_STATE["fn_bytes"])
+        fn = cloudpickle.loads(_STATE["fn_bytes"])
         blob = _STATE["fn_kwargs_bytes"]
+        # Set both only once both loaded, so a failed unpack is retried (and
+        # reported) by the next task instead of leaving half a state behind.
         _STATE["fn_kwargs"] = cloudpickle.loads(blob) if blob else {}
+        _STATE["fn"] = fn
 
     scenario = cloudpickle.loads(payload_bytes)
     pid = _STATE.get("worker", os.getpid())
@@ -303,7 +578,17 @@ def _worker_entry(payload_bytes, block):
     rows, error = _run_one(_STATE["fn"], scenario, _STATE["fn_kwargs"], pid)
     _notify(("done", pid, sim, time.time() - started, error is not None))
 
-    return cloudpickle.dumps((rows, error))
+    # X2: the return value itself must survive the trip back. An unpicklable
+    # result (sampler, figure, lock) is recorded like any other error instead
+    # of raising here and taking the whole run -- and every row already
+    # computed -- down with it.
+    try:
+        return cloudpickle.dumps((rows, error))
+    except Exception as exc:
+        error = (f"result of fn is not picklable ({type(exc).__name__}: {exc}); "
+                 "return plain data (numbers, arrays, DataFrames), "
+                 "not samplers or figures")
+        return cloudpickle.dumps(([dict(scenario, error=error)], error))
 
 
 def _notify(msg):
@@ -331,6 +616,18 @@ def _run_one(fn, scenario, fn_kwargs, worker):
     try:
         ret = fn(**call)
         rows = _normalise_result(ret)
+        # m6: fn must not overwrite the runner's own columns. A returned
+        # "error" key would fake an error row in the DataFrame while the
+        # progress counter (which follows real exceptions) stayed clean; a
+        # returned "sim" breaks the sort and the seed<->row association.
+        clash = sorted({k for r in rows for k in r
+                        if k in ("sim", "seed", "error", "worker")})
+        if clash:
+            raise ValueError(
+                "run_simulations: fn returned rows with reserved column "
+                f"names: {', '.join(clash)} -- sim, seed, error and worker "
+                "are set by the runner. Rename them in the returned data."
+            )
         error = None
     except Exception:
         rows = [{}]
@@ -354,6 +651,35 @@ def _run_one(fn, scenario, fn_kwargs, worker):
 # Driver
 # --------------------------------------------------------------------------
 
+def _check_int(name, value, minimum=1, allow_none=False):
+    """Return ``int(value)``, or raise for a value that is not an integer.
+
+    TypeError for the wrong type (``workers='4'``, ``workers=2.5``, a bool --
+    int() would silently truncate the float and ``True`` would mean one
+    worker), ValueError for a well-formed integer below ``minimum``. Same
+    split as ``BayesForge.Main.main`` uses for its own argument checks.
+    Integral floats are accepted: the R and Julia bridges hand over JSON
+    numbers, which arrive as 4.0.
+    """
+    if value is None:
+        if allow_none:
+            return None
+        raise TypeError(f"{name} must be an integer, got None")
+    if isinstance(value, bool) or not isinstance(value, numbers.Integral):
+        # numbers.Real covers float and numpy integer/float scalars without
+        # importing numpy here.
+        if (isinstance(value, numbers.Real) and not isinstance(value, bool)
+                and float(value).is_integer()):
+            value = int(value)
+        else:
+            raise TypeError(f"{name} must be an integer, got {value!r}")
+    else:
+        value = int(value)
+    if value < minimum:
+        raise ValueError(f"{name} must be >= {minimum}, got {value}")
+    return value
+
+
 def _plan(scenarios, workers=None, num_chains=None, cores_per_worker=None,
           seed=0, quiet=True):
     """Everything run_simulations decides before running anything.
@@ -374,6 +700,11 @@ def _plan(scenarios, workers=None, num_chains=None, cores_per_worker=None,
     scenarios = _normalise_scenarios(scenarios)
     n = len(scenarios)
 
+    workers = _check_int("workers", workers, allow_none=True)
+    cores_per_worker = _check_int("cores_per_worker", cores_per_worker,
+                                  allow_none=True)
+    num_chains = _check_int("num_chains", num_chains, allow_none=True)
+
     for s in scenarios:
         s.setdefault("seed", _derive_seed(seed, s["sim"]))
 
@@ -382,9 +713,6 @@ def _plan(scenarios, workers=None, num_chains=None, cores_per_worker=None,
     # number. Asking for 4 chains on a 24-core host therefore gives each worker
     # 4 cores and runs 6 simulations at a time.
     if num_chains is not None:
-        num_chains = int(num_chains)
-        if num_chains < 1:
-            raise ValueError(f"num_chains must be >= 1, got {num_chains}")
         if cores_per_worker is None:
             cores_per_worker = num_chains
         elif cores_per_worker < num_chains:
@@ -398,11 +726,14 @@ def _plan(scenarios, workers=None, num_chains=None, cores_per_worker=None,
         for s in scenarios:
             s.setdefault("num_chains", num_chains)
 
-    cores_per_worker = max(1, int(cores_per_worker or 1))
-    n_cpu = os.cpu_count() or 1
+    cores_per_worker = 1 if cores_per_worker is None else cores_per_worker
+    # sched_getaffinity, not cpu_count (M1): the cap and the oversubscription
+    # check must see the same budget _pin_worker pins to, or a taskset/cgroup
+    # limit lets N workers pile onto M < N CPUs with no warning at all.
+    n_cpu = _n_cpus()
     if workers is None:
         workers = min(n, max(1, n_cpu // cores_per_worker))
-    workers = max(1, min(int(workers), n))
+    workers = max(1, min(workers, n))
 
     if workers * cores_per_worker > n_cpu:
         capped = max(1, n_cpu // cores_per_worker)
@@ -414,8 +745,8 @@ def _plan(scenarios, workers=None, num_chains=None, cores_per_worker=None,
         )
         workers = capped
 
-    n_cpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") \
-        else (os.cpu_count() or 1)
+    # n_cpu is already the affinity-aware budget (M1); the pinning blocks are
+    # cut from the same set _pin_worker uses (sched_getaffinity there too).
     block_size = max(cores_per_worker, n_cpu // workers)
 
     env = _worker_env(cores_per_worker, quiet)
@@ -483,8 +814,12 @@ def run_simulations(
             deterministically, so a rerun reproduces regardless of how many
             workers ran or in what order they finished.
         on_error: ``'record'`` (default) keeps going and puts the traceback in
-            the row's ``error`` column; ``'raise'`` aborts the run.
-        quiet: Suppress worker stdout.
+            the row's ``error`` column; ``'raise'`` aborts the run -- the rows
+            collected so far are attached to the raised exception as
+            ``.rows``, so nothing already computed is lost.
+        quiet: Suppress worker stdout; when ``workers=1`` runs in-process it
+            also silences ``fn``'s stdout (``backend='serial'`` keeps stdout
+            open for debugging).
         progress: Live progress. ``True`` (default) draws a panel showing every
             worker -- which simulation it is on, for how long, how many it has
             finished and its average -- above an overall bar with elapsed time
@@ -505,6 +840,13 @@ def run_simulations(
         pandas.DataFrame: One row per dict returned by ``fn``, carrying the
         scenario columns plus ``sim``, ``rep``, ``seed``, ``worker``,
         ``elapsed_s`` and ``error``. Sorted by ``sim``.
+
+    Precision:
+        Workers inherit the parent's ``jax_enable_x64`` through the
+        ``JAX_ENABLE_X64`` environment variable, but a ``bf()`` created inside
+        ``fn`` applies its own ``float_precision`` (default 64 for numpyro,
+        32 for tfp). Pass ``float_precision`` explicitly in ``fn`` to control
+        the precision of the simulations (RELEASE_AUDIT X7).
 
     Chains, workers and cores:
         Chains and simulations compete for the same cores, so ``num_chains``,
@@ -589,6 +931,12 @@ def run_simulations(
         Workers are spawned, so they re-import the calling script and would
         otherwise re-run its module level. Notebooks and the REPL need no guard.
 
+        Ctrl+C cancels the queued simulations and re-raises the
+        ``KeyboardInterrupt`` with the rows collected so far attached to it as
+        ``.rows``; a worker killed outright (out of memory) breaks the pool,
+        so its unfinished simulations are recorded with an ``error`` while
+        the completed rows are kept.
+
         Each worker JIT-compiles the model on its first fit. If the model
         function is built fresh inside ``fn`` (a closure), *every* simulation
         pays full compilation because the JIT cache key changes each time.
@@ -625,14 +973,39 @@ def run_simulations(
     fn_kwargs = dict(fn_kwargs or {})
 
     if backend == "serial" or workers == 1:
-        rows = _serial(fn, scenarios, fn_kwargs, on_error, progress)
+        if backend == "process":
+            # workers == 1: the requested process backend is silently
+            # replaced by an in-process run (M2) -- say so once. With
+            # backend='serial' the user chose in-process on purpose.
+            warnings.warn(
+                "simulate(workers=1) runs in-process: no environment "
+                "isolation; pass workers>=2 for isolated worker processes.",
+                UserWarning, stacklevel=2,
+            )
+        # quiet is honoured in-process too on the fallback path (M2);
+        # backend='serial' stays un-silenced so pdb prompts and prints reach
+        # the terminal while debugging.
+        rows = _serial(fn, scenarios, fn_kwargs, on_error, progress,
+                       quiet=(quiet and backend == "process"))
     else:
         rows = _parallel(
             fn, scenarios, fn_kwargs, workers, cores_per_worker,
-            on_error, quiet, progress,
+            on_error, quiet, progress, plan["env"], plan["block_size"],
         )
 
-    df = pd.DataFrame(rows)
+    # m11: deterministic column order -- the metadata columns (sim, seed,
+    # error, worker) come first in a fixed order, then the function's own
+    # keys in first-seen order; rows are sorted by sim id.
+    seen = []
+    for row in rows:
+        for k in row:
+            if k not in seen:
+                seen.append(k)
+    _meta = ("sim", "seed", "error", "worker")
+    columns = [c for c in _meta if c in seen]
+    columns += [k for k in seen if k not in _meta]
+    df = pd.DataFrame(({col: row.get(col) for col in columns} for row in rows),
+                      columns=columns)
     if "sim" in df.columns:
         df = df.sort_values("sim", kind="stable").reset_index(drop=True)
 
@@ -685,6 +1058,7 @@ class _WorkerDisplay:
         self.stats = {}                   # pid -> [count, total_seconds]
         self._lines = 0                   # lines painted, for cursor rewind
         self._last_paint = 0.0
+        self._closed = False
 
         if rich is None:
             try:
@@ -777,8 +1151,9 @@ class _WorkerDisplay:
                 print(self._header(), flush=True)
 
     def close(self):
-        if not self.enabled:
+        if not self.enabled or getattr(self, "_closed", False):
             return
+        self._closed = True
         self.running.clear()
         self.paint(force=True)          # emits the final header either way
         if not self.rich:
@@ -812,22 +1187,50 @@ def _report(progress, done, total):
         print(f"run_simulations: {done}/{total} complete", flush=True)
 
 
-def _serial(fn, scenarios, fn_kwargs, on_error, progress):
+def _serial(fn, scenarios, fn_kwargs, on_error, progress, quiet=False):
+    import cloudpickle
+
     rows = []
     worker = os.getpid()
-    for i, scenario in enumerate(scenarios, 1):
-        out, error = _run_one(fn, scenario, fn_kwargs, worker)
-        if error is not None and on_error == "raise":
-            raise RuntimeError(
-                f"run_simulations: simulation {scenario.get('sim')} failed:\n{error}"
-            )
-        rows.extend(out)
-        _report(progress, i, len(scenarios))
+    devnull = open(os.devnull, "w") if quiet else None
+    saved_stdout = sys.stdout
+    try:
+        for i, scenario in enumerate(scenarios, 1):
+            if devnull is not None:
+                sys.stdout = devnull      # honour quiet in-process (M2)
+            try:
+                out, error = _run_one(fn, scenario, fn_kwargs, worker)
+            finally:
+                sys.stdout = saved_stdout
+            if error is None:
+                # X2: the worker path pickles its (rows, error) before sending,
+                # so an unpicklable return is recorded as an error there. Do
+                # the same here: serial must not silently accept what the
+                # process backend rejects.
+                try:
+                    cloudpickle.dumps(out)
+                except Exception as exc:
+                    error = (f"result of fn is not picklable "
+                             f"({type(exc).__name__}: {exc}); return plain "
+                             "data (numbers, arrays, DataFrames), not "
+                             "samplers or figures")
+                    out = [dict(scenario, error=error)]
+            if error is not None and on_error == "raise":
+                err = RuntimeError(
+                    f"run_simulations: simulation {scenario.get('sim')} failed:\n{error}"
+                )
+                err.rows = rows       # keep what finished (never lose results)
+                raise err
+            rows.extend(out)
+            _report(progress, i, len(scenarios))
+    finally:
+        if devnull is not None:
+            devnull.close()
     return rows
 
 
 def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
-              on_error, quiet, progress):
+              on_error, quiet, progress, env, block_size):
     import multiprocessing
     import queue as _queue
     from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
@@ -847,17 +1250,31 @@ def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
     fn_kwargs_bytes = cloudpickle.dumps(fn_kwargs) if fn_kwargs else b""
     payloads = [cloudpickle.dumps(s) for s in scenarios]
 
-    env = _worker_env(cores_per_worker, quiet=quiet)
+    # env and block_size come from _plan, so the R and Julia paths and this one
+    # cannot drift apart: a second _worker_env call here would re-read the
+    # environment and a second core split could disagree with the one the
+    # caller was warned about.
     # spawn, not fork: setup_device must configure XLA before the backend comes
     # up, and forking a process that has already initialised JAX is unsafe.
     ctx = multiprocessing.get_context("spawn")
 
-    # Spread every available CPU across the workers, so none sit idle. At
-    # least cores_per_worker, since that many JAX devices need somewhere to
-    # run.
-    n_cpu = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") \
-        else (os.cpu_count() or 1)
-    block_size = max(cores_per_worker, n_cpu // workers)
+    # GPU budget (M7): with several devices visible, each worker gets its own
+    # CUDA_VISIBLE_DEVICES (round-robin over the visible ids), applied in the
+    # worker before its backend comes up. One GPU cannot be split across
+    # workers -- warn instead of letting the per-process preallocations
+    # collide and kill the pool.
+    gpus = _visible_gpus()
+    if len(gpus) == 1 and workers > 1:
+        warnings.warn(
+            f"run_simulations: {workers} workers share the single visible "
+            "GPU -- JAX preallocates most of its memory per process, so a "
+            "second worker may fail to initialise. Use workers=1 on this "
+            "machine, or expose more devices via CUDA_VISIBLE_DEVICES.",
+            stacklevel=3,
+        )
+        gpus = []
+    elif len(gpus) < 2:
+        gpus = []
 
     display = _WorkerDisplay(len(scenarios), enabled=bool(progress),
                              rich=(None if progress is True else False))
@@ -877,6 +1294,8 @@ def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
                 break
 
     rows = []
+    done_ids = set()          # id() of scenarios already turned into rows
+    warned_dead = False
     try:
         with _env_override(env):
             # Created inside the env override so the manager process inherits
@@ -885,16 +1304,36 @@ def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
             # for the live display; manager proxies pickle cleanly into spawned
             # children, unlike a raw shared Value.
             if progress:
-                state["manager"] = ctx.Manager()
-                state["q"] = state["manager"].Queue()
+                try:
+                    manager = ctx.Manager()
+                    try:
+                        state["q"] = manager.Queue()
+                    except Exception:
+                        manager.shutdown()
+                        raise
+                    state["manager"] = manager
+                except Exception as exc:
+                    # M6: without a __main__ guard the manager's spawned
+                    # server re-runs the call and dies during startup. The
+                    # queue only feeds the live display, so say so and run
+                    # without it rather than failing simulations that would
+                    # otherwise have completed.
+                    warnings.warn(_manager_failure_msg(exc), stacklevel=3)
+                    progress = False
+                    display.enabled = False
             q = state["q"]
 
-            with ProcessPoolExecutor(
+            # No `with` on the pool: its __exit__ calls shutdown(wait=True),
+            # which joins in-flight fits and turns Ctrl+C into an apparent
+            # hang (M5). Shutdown is driven explicitly below instead.
+            pool = ProcessPoolExecutor(
                 max_workers=workers,
                 mp_context=ctx,
                 initializer=_worker_init,
-                initargs=(env, fn_bytes, fn_kwargs_bytes, quiet, block_size, q),
-            ) as pool:
+                initargs=(env, fn_bytes, fn_kwargs_bytes, quiet, block_size,
+                          q, gpus),
+            )
+            try:
                 futures = {pool.submit(_worker_entry, p, i % workers): s
                            for i, (p, s) in enumerate(zip(payloads, scenarios))}
                 pending = set(futures)
@@ -909,29 +1348,83 @@ def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
                     drain()
                     for future in finished:
                         scenario = futures[future]
-                        out, error = cloudpickle.loads(future.result())
+                        dead = False
+                        try:
+                            out, error = cloudpickle.loads(future.result())
+                        except BrokenProcessPool:
+                            # M4: one killed worker breaks the whole pool --
+                            # every unfinished future fails this way. Record
+                            # the death like any other error instead of
+                            # losing the rows already collected.
+                            dead = True
+                            error = _DEAD_WORKER_MSG
+                            out = [dict(scenario, error=error)]
+                        except Exception:
+                            # Failure outside fn's body (unpicklable result,
+                            # fn_kwargs that cannot be rebuilt): record it
+                            # like any other error instead of losing every
+                            # row already collected.
+                            error = traceback.format_exc()
+                            out = [dict(scenario, error=error)]
                         if error is not None and on_error == "raise":
                             # cancel_futures drops the queued work so the pool's
                             # exit only waits on what is already running.
                             pool.shutdown(wait=False, cancel_futures=True)
                             display.close()
-                            raise RuntimeError(
-                                f"run_simulations: simulation "
-                                f"{scenario.get('sim')} failed:\n{error}"
-                            )
+                            if dead:
+                                err = RuntimeError(_DEAD_POOL_MSG)
+                            else:
+                                err = RuntimeError(
+                                    f"run_simulations: simulation "
+                                    f"{scenario.get('sim')} failed:\n{error}"
+                                )
+                            err.rows = rows   # partial results survive (M4)
+                            raise err
+                        if dead and not warned_dead:
+                            warned_dead = True
+                            warnings.warn(_DEAD_POOL_HINT, stacklevel=3)
                         rows.extend(out)
+                        done_ids.add(id(scenario))
                         completed += 1
                     display.completed(completed)
                     display.paint()
                 drain()
                 display.completed(completed)
                 display.close()
+            except KeyboardInterrupt as exc:
+                # M5: drop the queued work without joining the fits already
+                # running -- the workers exit once their current task ends.
+                pool.shutdown(wait=False, cancel_futures=True)
+                drain()
+                display.close()
+                print(_interrupt_message(len(done_ids), len(scenarios)),
+                      flush=True)
+                exc.rows = rows       # keep what finished (M5)
+                raise
+            except BaseException:
+                # Any other exit (on_error='raise', a pool broken at submit
+                # time, an unexpected error): never block on the workers, and
+                # close the display so a half-painted frame is not left on the
+                # terminal above the traceback.
+                pool.shutdown(wait=False, cancel_futures=True)
+                display.close()
+                raise
+            else:
+                pool.shutdown(wait=True)
     except BrokenProcessPool as exc:
-        raise RuntimeError(
-            f"run_simulations: a worker process died.\n\n{_GUARD_MSG}\n\n"
-            "If the script already has that guard, the worker was most likely "
-            "killed by the OS (out of memory) -- lower `workers`."
-        ) from exc
+        # M4: the pool died before or during submission (a worker killed at
+        # startup). Keep every row already collected, record the rest with
+        # the same shape on_error='record' failures take.
+        for s in scenarios:
+            if id(s) not in done_ids:
+                rows.append(dict(s, error=_DEAD_WORKER_MSG))
+        display.close()
+        if on_error == "raise":
+            err = RuntimeError(_DEAD_POOL_MSG)
+            err.rows = rows
+            raise err from exc
+        warnings.warn(_DEAD_POOL_HINT, stacklevel=3)
+        return rows
     finally:
         if state["manager"] is not None:
             state["manager"].shutdown()

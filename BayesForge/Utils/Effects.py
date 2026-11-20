@@ -1,11 +1,52 @@
-import jax as jax
+import math
+import warnings
+import jax
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
 import numpyro
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Utils.dev_warning import warn_dev
 
 dist = dist()
+
+
+def _check_cholesky_factor(L, arg_name, atol=1e-4):
+    """Raise if a concrete ``L`` is not the Cholesky factor of a correlation matrix.
+
+    A correlation matrix R passed by mistake is accepted silently by the
+    algebra (R R^T is still a covariance) and gives wrong group effects. A
+    valid factor is lower triangular, has a positive diagonal and rows of unit
+    norm (the diagonal of L L^T is 1). Traced values (inside jit/MCMC) cannot be
+    inspected and are not checked.
+    """
+    if isinstance(L, jax.core.Tracer):
+        return
+    import numpy as np
+
+    arr = np.asarray(L, dtype=float)
+    if arr.ndim < 2 or not np.all(np.isfinite(arr)):
+        return
+    upper = np.triu(arr, k=1)
+    diag = np.diagonal(arr, axis1=-2, axis2=-1)
+    row_norm = np.linalg.norm(arr, axis=-1)
+    head = (f"{arg_name} must be the Cholesky factor L of a correlation matrix "
+            "(lower triangular, positive diagonal, rows of unit norm)")
+    if np.any(np.abs(upper) > atol):
+        # The strict upper triangle is what tells a full matrix from L (the
+        # rows of a correlation matrix also have unit norm).
+        unit_diag = np.allclose(np.diagonal(arr, axis1=-2, axis2=-1), 1.0, atol=atol)
+        kind = ("a correlation matrix R" if unit_diag
+                else "a full (e.g. covariance) matrix")
+        raise ValueError(
+            f"{head}; it is not lower triangular and looks like {kind}. "
+            "Pass jnp.linalg.cholesky(R) of the correlation matrix instead.")
+    if np.any(diag <= 0):
+        raise ValueError(f"{head}; its diagonal has non-positive entries.")
+    if np.any(np.abs(row_norm - 1.0) > atol):
+        raise ValueError(
+            f"{head}; its rows do not have unit norm, so L L^T is not a "
+            "correlation matrix (a Cholesky factor of a covariance matrix?).")
 
 
 # Random factors related functions --------------------------------------------
@@ -25,9 +66,28 @@ def _parent_ids(child_obs_ids, parent_obs_ids, n_child):
     the same parent, so scattering parent_obs_ids keyed by child_obs_ids
     gives the correct parent for each child unit regardless of write order.
 
+    When the inputs are concrete (not JAX tracers) the design is validated
+    first: a child unit observed under two different parents is a crossed
+    design (ValueError), and a child unit with no observation has an unknown
+    parent (ValueError) instead of silently inheriting parent 0. Inside jit
+    (traced inputs) the check is skipped and the plain scatter is returned.
+
     Fully JAX-traceable — no Python-level loops over traced values.
     """
-    return jnp.zeros(n_child, dtype=jnp.int32).at[child_obs_ids].set(parent_obs_ids)
+    if not any(isinstance(a, jax.core.Tracer) for a in (child_obs_ids, parent_obs_ids)):
+        import numpy as np
+        c = np.asarray(child_obs_ids); p = np.asarray(parent_obs_ids)
+        seen = np.full(n_child, -1, dtype=np.int64); conflict = set()
+        for ci, pi in zip(c.tolist(), p.tolist()):
+            if seen[ci] != -1 and seen[ci] != pi: conflict.add(ci)
+            seen[ci] = pi
+        if conflict:
+            raise ValueError(f"nested effects: child unit(s) {sorted(conflict)[:10]} appear under more than one parent; the design is crossed, not nested.")
+        missing = np.flatnonzero(seen == -1)
+        if missing.size:
+            raise ValueError(f"nested effects: child unit(s) {missing[:10].tolist()} have no observation, so their parent is unknown; drop unused levels or re-index the groups.")
+    parent_obs_ids = jnp.asarray(parent_obs_ids)
+    return jnp.zeros(n_child, dtype=parent_obs_ids.dtype).at[child_obs_ids].set(parent_obs_ids)
 
 
 class effects:
@@ -47,8 +107,19 @@ class effects:
 
         Returns:
             2D jax array: Dot product of a diagonal matrix with a matrix.
+
+        Notes:
+            Computed as ``v[:, None] * m`` (row scaling), which is exact for a
+            1D ``v`` and a 2D ``m`` and avoids materialising ``jnp.diag(v)``
+            (O(N^2) memory and FLOPs), the way Stan implements it.
         """
-        return jnp.matmul(jnp.diag(v), m)
+        v = jnp.asarray(v)
+        # Shapes are static under jit, so this check also runs when traced.
+        if v.ndim != 1 or jnp.ndim(m) != 2 or jnp.shape(m)[0] != v.shape[0]:
+            raise ValueError(
+                f"diag_pre_multiply expects a 1-D v of length N and a 2-D m with "
+                f"N rows; got v.shape={v.shape}, m.shape={jnp.shape(m)}.")
+        return v[:, None] * m
 
     @staticmethod
     @jit
@@ -106,8 +177,12 @@ class effects:
         """
         Models a varying intercept and varying slope for a continuous predictor.
 
-        This uses a "centered" parameterization to sample a correlated
-        [intercept, slope] pair for each group from a Multivariate Normal distribution.
+        This uses a "non-centered" parameterization by default (``centered=False``):
+        standard normals are drawn and transformed by the Cholesky factor of the
+        group-level covariance, the geometry recommended for NUTS. With
+        ``centered=True`` the correlated [intercept, slope] pair for each group is
+        sampled directly from a Multivariate Normal distribution (centered
+        parameterization).
 
         Args:
             N_vars (int): The total number of covariates for the model.
@@ -122,7 +197,11 @@ class effects:
                 global_beta ~ N(0,1)).
             sd_intercept (distribution, optional): The hyperprior for the standard deviation of the intercepts.
             sd_beta (distribution, optional): The hyperprior for the standard deviation of the slopes.
-            corr (distribution, optional): The prior for the correlation matrix.
+            corr (jax.Array or distribution, optional): Caller-supplied correlation
+                structure. With ``centered=False`` it is used as the Cholesky factor
+                ``L_corr`` (lower-triangular, shape (N_vars+1, N_vars+1)); with
+                ``centered=True`` it is used as a full correlation matrix.
+                Defaults to None (an LKJ prior is sampled).
             centered (bool, optional): Whether to use a centered parameterization. Defaults to False.
             sample (bool, optional): Whether to sample from the posterior. Defaults to False.
 
@@ -227,31 +306,47 @@ class effects:
                 intercept and slope. Must have shape (2,). Defaults to Exponential(1).
             L_corr (distribution, optional): Prior for the Cholesky factor of the 2x2
                 correlation matrix between the intercept and slope. Defaults to LKJ(2, 2).
+                It must be the lower-triangular factor L (R = L L^T), not R itself:
+                a concrete array that is not a valid factor raises a ValueError;
+                use ``jnp.linalg.cholesky(R)`` to convert a correlation matrix.
 
         Returns:
             tuple: A tuple containing two arrays:
                 - varying_intercepts (array): The intercept for each observation.
                 - varying_slopes (array): The slope for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors.
         if group_std is None:
             group_std = dist.exponential(
                 1, shape=(2,), name=f"{group_name}_std", sample=sample
             )
+        # A shape check, so it also runs on traced values (inside m.fit).
+        if jnp.shape(group_std)[-1:] != (2,):
+            raise ValueError(
+                f"varying_intercept_slope: group_std must have shape (2,) "
+                f"(intercept and slope SDs), got {jnp.shape(group_std)}.")
 
         if L_corr is None:
+            # lkj_cholesky returns a valid factor by construction: no check
+            # (and no device-to-host copy on every draw in simulations).
             L_corr = dist.lkj_cholesky(
                 2, 2, name=f"L_corr_{group_name}", sample=sample
             )  # N_vars*N_vars
+        else:
+            _check_cholesky_factor(L_corr, "L_corr")
 
-        cov = jnp.outer(group_std, group_std) * L_corr
+        # Sigma = D R D with D = diag(sd) and R = L L^T, so D L is the Cholesky
+        # factor of Sigma: (D L)(D L)^T = D L L^T D. Passing it as scale_tril
+        # spares numpyro the product and a Cholesky decomposition per density
+        # evaluation.
+        scale_tril = jnp.asarray(group_std)[..., :, None] * L_corr
         mu = jnp.stack([global_intercept, global_slope])
 
         group_params = dist.multivariate_normal(
-            mu, cov, shape=(N_group,), name=f"{group_name}_params", sample=sample
+            mu, scale_tril=scale_tril, shape=(N_group,),
+            name=f"{group_name}_params", sample=sample
         )
-        varying_intercept, varying_slope = group_params[:, 0], group_params[:, 1]
         varying_intercept = group_params[:, 0][group]
         varying_slope = group_params[:, 1][group]
         return varying_intercept, varying_slope
@@ -346,7 +441,9 @@ class effects:
         N_groups, group_id, a_bar=None, sigma=None, group_name="group", sample=False
     ):
         """
-        Varying intercepts model using a non-centered parameterization.
+        Varying intercepts model using a centered parameterization: the group-level
+        intercepts are sampled directly as ``alpha_g ~ Normal(a_bar, sigma)``,
+        without reparameterization.
 
         Args:
             N_groups (int): The total number of unique groups.
@@ -408,7 +505,7 @@ class effects:
                 - varying_intercepts (array): The intercept for each observation.
                 - varying_slopes (array): The slope for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors for scale (sigma) and correlation (L_Rho).
         if sigma is None:
             sigma = dist.exponential(
@@ -450,19 +547,19 @@ class effects:
     ):
         """Generates hierarchical varying effects for CATEGORIES using a non-centered parameterization."""
 
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Define default hyperpriors if not provided by the user.
         if L_Rho is None:
-            L_Rho = m.dist.lkj_cholesky(
+            L_Rho = dist.lkj_cholesky(
                 num_categories, 2, name=f"L_Rho_{group_name}", sample=sample
             )
         if sigma is None:
-            sigma = m.dist.exponential(
+            sigma = dist.exponential(
                 1, name=f"sigma_{group_name}", shape=(num_categories,), sample=sample
             )
 
         # 2. Sample uncorrelated standard normal values ("offsets").
-        z = m.dist.normal(
+        z = dist.normal(
             0,
             1,
             name=f"z_{group_name}",
@@ -492,7 +589,7 @@ class effects:
         Returns:
             array: An array of the appropriate group-level intercepts for each observation.
         """
-        print("⚠️ This function is still in development. Use it with caution. ⚠️")
+        warn_dev("effects")
         # 1. Handle default hyperpriors for the mean (a_bar) and scale (sigma).
         if a_bar is None:
             a_bar = dist.normal(
@@ -559,7 +656,12 @@ class effects:
             sample (bool): Sample from posterior wrapper. Defaults to False.
 
         Returns:
-            tuple: (varying_intercepts, varying_slopes) arrays, one value per observation.
+            array or tuple: one value per observation. With ``N_vars == 1`` a single
+            array of intercepts is returned; otherwise a tuple
+            ``(varying_intercepts, varying_slopes)``, where ``varying_slopes`` is
+            1D when ``N_vars == 2`` (single slope) and 2D of shape
+            (n_obs, N_vars - 1) when ``N_vars > 2``. The return arity depends on
+            ``N_vars``; unpack accordingly.
 
         Examples:
             # 2 levels, 2 variables (intercept + 1 slope) — most common case
@@ -579,7 +681,7 @@ class effects:
             )
 
             # 2 levels, 4 variables (intercept + 3 slopes) — N_vars > n_levels is valid
-            a, b1, b2, b3 = m.effects.nested_varying_effects(
+            a, B = m.effects.nested_varying_effects(  # B has shape (n_obs, 3)
                 N_vars=4,
                 names=["region", "group"],
                 N_groups=[5, 20],
@@ -612,6 +714,19 @@ class effects:
         # Top-level global mean
         if mu is not None:
             current_parent_effects = mu[0] if isinstance(mu, list) else mu
+            # Only the shape is read, and a traced (sampled) mu has a static
+            # shape too, so the check also covers mu drawn inside a model.
+            mu_shape = jnp.shape(current_parent_effects)
+            if not (
+                len(mu_shape) == 0
+                or mu_shape[-1] == N_vars
+                or (N_vars == 1 and math.prod(mu_shape) == 1)
+            ):
+                warnings.warn(
+                    f"nested_varying_effects: mu should be a scalar or have shape "
+                    f"({N_vars},) to match N_vars={N_vars}; got {mu_shape}, "
+                    "which broadcasts the same offset onto the intercept and "
+                    "every slope.", UserWarning, stacklevel=2)
         else:
             alpha_bar = dist.normal(0, 2, name="global_intercept", sample=sample, shape=(1,))
             if N_vars > 1:

@@ -1,10 +1,30 @@
 Comparison Table for 12.Varying effects
 ============================================================
    Parameter BF Mean Stan Mean    Diff KL Div
-           b -1.3028   -1.3035  0.0008 0.1068
-           a  3.7769    3.7700  0.0069 0.0918
-       sigma  0.5404    0.5400  0.0004 0.0523
-sigma_cafe_1  0.3527    0.3594 -0.0067 0.0805
-sigma_cafe_0  1.1778    1.1824 -0.0046 0.0709
-   Rho[0][1] -0.5600   -0.5645  0.0045 0.0729
+           a  3.8713    3.8596  0.0117 0.0962
+sigma_cafe_1  0.3539    0.3525  0.0014 0.0651
+           b -1.3241   -1.3236 -0.0005 0.0719
+sigma_cafe_0  1.1704    1.1756 -0.0052 0.0801
+   Rho[0][1] -0.5501   -0.5610  0.0109 0.0449
+       sigma  0.5408    0.5402  0.0006 0.0467
 ============================================================
+
+================================================================
+WAIC cross-check  -  12.Varying effects
+================================================================
+[A] NumPyro direct (numpyro.infer.log_likelihood)
+      elpd_waic = -176.462354    p_waic = 28.439621
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -176.462354    p_waic = 28.439621
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=200)
+----------------------------------------------------------------
+LOO cross-check  -  12.Varying effects
+----------------------------------------------------------------
+[A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
+      elpd_loo  = -177.150553    p_loo  = 29.127820
+[B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
+      elpd_loo  = -177.153994    p_loo  = 29.131262
+|delta elpd_loo| = 3.442e-03      |delta p_loo| = 3.442e-03
+RESULT: PASS
+================================================================

@@ -37,22 +37,23 @@ from BayesForge import bf
 m = bf(platform='cpu')
 
 # Import Data & Data Manipulation ------------------------------------------------
-# Import
-from importlib.resources import files
 data_path = m.load.tulips(only_path = True)
 m.data(data_path, sep=';')
-m.scale(['blooms', 'water', 'shade']) # Normalize
+m.df['blooms_scaled'] = m.df.blooms / m.df.blooms.max()
+m.df['water_scaled'] = m.df.water - m.df.water.mean()
+m.df['shade_scaled'] = m.df.shade - m.df.shade.mean()
+m.data_to_model(['blooms_scaled', 'water_scaled', 'shade_scaled'])
 
 
 # Define model ------------------------------------------------
-def model(blooms,shade, water):
-    sigma = m.dist.exponential(1, name = 'sigma', shape = (1,))
-    bws = m.dist.normal(0, 0.25, name = 'bws', shape = (1,))
-    bs = m.dist.normal(0, 0.25, name = 'bs', shape = (1,))
-    bw = m.dist.normal(0, 0.25, name = 'bw', shape = (1,))
-    a = m.dist.normal(0.5, 0.25, name = 'a', shape = (1,))
-    mu = a + bw*water + bs*shade + bws*water*shade
-    m.dist.normal(mu, sigma, obs=blooms)
+def model(blooms_scaled, shade_scaled, water_scaled):
+    sigma = m.dist.exponential(1, name = 'sigma')
+    bws = m.dist.normal(0, 0.25, name = 'bws')
+    bs = m.dist.normal(0, 0.25, name = 'bs')
+    bw = m.dist.normal(0, 0.25, name = 'bw')
+    a = m.dist.normal(0.5, 0.25, name = 'a')
+    mu = a + bw*water_scaled + bs*shade_scaled + bws*water_scaled*shade_scaled
+    m.dist.normal(mu, sigma, obs=blooms_scaled)
 
 # Run mcmc ------------------------------------------------
 m.fit(model, progress_bar=False) # Optimize model parameters through MCMC sampling
@@ -68,20 +69,22 @@ m <- importBF(platform = "cpu")
 
 # Load csv file
 m$data(m$load$tulips(only_path = TRUE), sep = ';')
-m$scale(list('blooms', 'water', 'shade')) # Normalize
-m$data_to_model(list('blooms', 'water', 'shade')) # Send to model (convert to jax array)
+m$df$blooms_scaled <- m$df$blooms / max(m$df$blooms)
+m$df$water_scaled <- m$df$water - mean(m$df$water)
+m$df$shade_scaled <- m$df$shade - mean(m$df$shade)
+m$data_to_model(list('blooms_scaled', 'water_scaled', 'shade_scaled'))
 
 # Define model ------------------------------------------------
-model <- function(blooms, water, shade){
+model <- function(blooms_scaled, water_scaled, shade_scaled){
   # Parameter prior distributions
-  sigma = m$dist$exponential(1, name = 'sigma', shape = reticulate::tuple(1L))
-  bws = m$dist$normal(0, 0.25, name = 'bws', shape = reticulate::tuple(1L))
-  bs = m$dist$normal(0, 0.25, name = 'bs', shape = reticulate::tuple(1L))
-  bw = m$dist$normal(0, 0.25, name = 'bw', shape = reticulate::tuple(1L))
-  a = m$dist$normal(0.5, 0.25, name = 'a', shape = reticulate::tuple(1L))
-  mu = a + bw*water + bs*shade + bws*water*shade
+  sigma = m$dist$exponential(1, name = 'sigma')
+  bws = m$dist$normal(0, 0.25, name = 'bws')
+  bs = m$dist$normal(0, 0.25, name = 'bs')
+  bw = m$dist$normal(0, 0.25, name = 'bw')
+  a = m$dist$normal(0.5, 0.25, name = 'a')
+  mu = a + bw*water_scaled + bs*shade_scaled + bws*water_scaled*shade_scaled
   # Likelihood
-  m$dist$normal(mu, sigma, obs = blooms, name = 'blooms')
+  m$dist$normal(mu, sigma, obs = blooms_scaled, name = 'blooms_scaled')
 }
 
 # Run mcmc ------------------------------------------------
@@ -99,19 +102,23 @@ using PyBayesForge
 m = importBF(platform="cpu")
 
 # Import Data & Data Manipulation ------------------------------------------------
-# Import
 data_path = m.load.tulips(only_path = true)
 m.data(data_path, sep=';')
-m.scale(["blooms", "water", "shade"]) # Normalize
+df = m.df
+df["blooms_scaled"] = df["blooms"] / df["blooms"].max()
+df["water_scaled"] = df["water"] - df["water"].mean()
+df["shade_scaled"] = df["shade"] - df["shade"].mean()
+m.data_to_model(["blooms_scaled", "water_scaled", "shade_scaled"])
+
 # Define model ------------------------------------------------
-@BF function model(blooms,shade, water)
-    sigma = m.dist.exponential(1, name = "sigma", shape = (1,))
-    bws = m.dist.normal(0, 0.25, name = "bws", shape = (1,))
-    bs = m.dist.normal(0, 0.25, name = "bs", shape = (1,))
-    bw = m.dist.normal(0, 0.25, name = "bw", shape = (1,))
-    a = m.dist.normal(0.5, 0.25, name = "a", shape = (1,))
-    mu = a + bw*water + bs*shade + bws*water*shade
-    m.dist.normal(mu, sigma, obs=blooms)
+@BF function model(blooms_scaled, shade_scaled, water_scaled)
+    sigma = m.dist.exponential(1, name = "sigma")
+    bws = m.dist.normal(0, 0.25, name = "bws")
+    bs = m.dist.normal(0, 0.25, name = "bs")
+    bw = m.dist.normal(0, 0.25, name = "bw")
+    a = m.dist.normal(0.5, 0.25, name = "a")
+    mu = a + bw*water_scaled + bs*shade_scaled + bws*water_scaled*shade_scaled
+    m.dist.normal(mu, sigma, obs=blooms_scaled)
 end
 
 # Run mcmc ------------------------------------------------
@@ -122,6 +129,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model capture how the effect of water changes with shade (the interaction)?
@@ -130,17 +138,17 @@ Does the model capture how the effect of water changes with shade (the interacti
 #### Python
 ```{python}
 #| output: false
-m.diag.ppc_intervals(x="water", group="shade")
+# m.diag.ppc_intervals(x="water", group="shade")
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals(x = "water", group = "shade")
+# m$diag$ppc_intervals(x = "water", group = "shade")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals(x="water", group="shade")
+# m.diag.ppc_intervals(x="water", group="shade")
 ```
 :::
 
@@ -156,22 +164,23 @@ The model passes: in every panel the observed points sit inside the bars, and th
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 
 #### R
 ```r
-m$diag$ppc_loo_pit()
+# m$diag$ppc_loo_pit()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 :::
 
 `ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
 :::
+-->
 
 ## Mathematical Details
 ## *Frequentist formulation*

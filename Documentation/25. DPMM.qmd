@@ -33,7 +33,7 @@ To discover group structures or clusters in data without pre-specifying the numb
 
 ## Example
 
-Below is an example of a DPMM implemented in BF. The goal is to cluster a synthetic dataset into its underlying groups. The code first generates data with 4 distinct centers and then applies the DPMM to recover these clusters.
+Below is an example of a DPMM implemented in BF. The goal is to cluster a synthetic dataset into its underlying groups. The code first generates data with 8 distinct centers and then applies the DPMM to recover these clusters.
 
 ::: {.panel-tabset group="language"}
 ## Python
@@ -95,10 +95,60 @@ m.plot(X=data,sampler=m.sampler) # Prebuild plot function for GMM
 
 ## R
 
-``` r
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+numpyro <- reticulate::import("numpyro")
+sk_datasets <- reticulate::import("sklearn.datasets")
 
+# Generate synthetic data
+output <- sk_datasets$make_blobs(n_samples = 500L, centers = 8L, cluster_std = 0.8,
+                                 center_box = reticulate::tuple(-10, 10), random_state = 101L)
+data <- jnp$array(output[[1]])
+data_mean <- jnp$mean(data, axis = 0L)
+data_std <- jnp$std(data, axis = 0L) * 2
+K <- 10L
+
+m$data_on_model <- list(data = data, K = K, data_mean = data_mean, data_std = data_std)
+
+# The model
+dpmm <- function(data, K, data_mean, data_std) {
+  D <- data$shape[[2]]  # Number of features
+
+  # 1) stick-breaking weights
+  alpha <- m$dist$gamma(1.0, 10.0, name = "alpha")
+
+  with(m$dist$plate("beta_plate", K - 1L), {
+    beta <- m$dist$beta(1, alpha, name = "beta")
+  })
+
+  w <- numpyro$deterministic("w", m$models$dpmm$mix_weights(beta))
+
+  # 2) component parameters
+  with(m$dist$plate("components", K), {
+    mu <- m$dist$multivariate_normal(loc = data_mean, covariance_matrix = data_std * jnp$eye(D), name = "mu")
+    sigma <- m$dist$log_normal(0.0, 1.0, shape = reticulate::tuple(D), event = 1L, name = "sigma")
+    Lcorr <- m$dist$lkj_cholesky(dimension = D, concentration = 1.0, name = "Lcorr")
+    scale_tril <- jnp$expand_dims(sigma, -1L) * Lcorr
+  })
+
+  # 3) Latent cluster assignments for each data point
+  m$dist$mixture_same_family(
+    mixing_distribution = m$dist$categorical(probs = w, create_obj = TRUE),
+    component_distribution = m$dist$multivariate_normal(
+      loc = mu,
+      scale_tril = scale_tril,
+      create_obj = TRUE
+    ),
+    name = "obs",
+    obs = data
+  )
+}
+
+m$fit(dpmm, progress_bar = FALSE)
+m$models$dpmm$plot(data, m$sampler)
 ```
-![](travaux-routiers.png){fig-align="center"}
 
 ## Julia
 ```julia
@@ -199,9 +249,9 @@ A_{D}
 \\
 \Sigma_k &= \text{Diag}(\sigma_k) \Omega_k  \text{Diag}(\sigma_k) \\
 \\
-\sigma_{[k,d]} &\sim \text{HalfCauchy}(1) \\
+\sigma_{[k,d]} &\sim \text{LogNormal}(0, 1) \\
 \\
-\Omega_k &\sim \text{LKJ}(2) \\
+\Omega_k &\sim \text{LKJ}(1) \\
 \\
 z_{i} &\sim \text{Categorical}(\pi) \\
 \\
@@ -236,7 +286,7 @@ Where :
   \end{pmatrix}.
   $$
 
-*   $\sigma_{k}$ is a $D$-vector of standard deviations for the $k$-th cluster where each element, $d$, has a half-cauchy prior.
+*   $\sigma_{k}$ is a $D$-vector of standard deviations for the $k$-th cluster where each element, $d$, has a log-normal prior.
 
 *   $\Omega_k$ is a correlation matrix for the $k$-th cluster.
 

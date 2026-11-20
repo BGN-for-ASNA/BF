@@ -199,10 +199,11 @@ def compare(
     problems: list[str] = []
     if params:
         for name in params:
-            if not any(p.split("[")[0] == name for p in ref.index):
+            base = name.split("[")[0]
+            if not any(p == name or p.split("[")[0] == base for p in ref.index):
                 problems.append(f"{name}: not in python summary")
     for p in ref.index:
-        if params and p.split("[")[0] not in params:
+        if params and p not in params and p.split("[")[0] not in [name.split("[")[0] for name in params]:
             continue
         if p not in other.index:
             problems.append(f"{p}: missing in other summary")

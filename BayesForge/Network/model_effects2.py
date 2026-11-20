@@ -44,14 +44,18 @@ Usage
         SR_mat   = m.net2.sender_receiver(sender_predictors, receiver_predictors)
         D_mat    = NeteffectMatrix.dyadic_effect(dyadic_predictors_mat)
         logits   = B_any + B_merica + SR_mat + D_mat
-        m.dist.bernoulli(logits=logits * (1 - jnp.eye(N)), obs=Y_mat, name='Y_mat')
+        # Mask the diagonal with -inf, never by multiplying the logits:
+        # logits * (1 - eye) sets the diagonal to logit 0 -> p = 0.5, a
+        # constant -N*log(2) contribution to the log-likelihood that also
+        # contradicts a 1 in Y_mat's diagonal without warning. The where
+        # idiom (same as metrics.py off-diagonal masking) makes the diagonal
+        # a true exclusion: zero contribution while obs is 0.
+        logits   = jnp.where(jnp.eye(N, dtype=bool), -jnp.inf, logits)
+        m.dist.bernoulli(logits=logits, obs=Y_mat, name='Y_mat')  # Y_mat diagonal must be 0
 """
 
-import jax
 import jax.numpy as jnp
-from jax import jit
 from numpyro import deterministic
-from functools import partial
 
 from BayesForge.Network.model_effects import Neteffect
 from BayesForge.Distributions.np_dists import UnifiedDist as _UnifiedDist
@@ -274,7 +278,8 @@ class NeteffectMatrix(Neteffect):
                 Shard along axis 0 for data parallelism.
                 Alternatively (N, N) for a single predictor.
             shape (int): N_dyads — use when dyadic_predictors is None
-                (random effects only, no fixed predictors).
+                (random effects only, no fixed predictors). Must be exactly
+                N*(N-1)/2 for an integer N, else ValueError.
             d_m, d_sd (float): Prior mean/SD for dyadic fixed effects.
             dr_sigma_mu, dr_sigma_sd (float): Half-normal prior for random SD.
             cholesky_dim (int): LKJ dimension (must be 2 for dyadic model).
@@ -310,6 +315,13 @@ class NeteffectMatrix(Neteffect):
         else:
             N_dyads = shape
             N = int(round((1 + (1 + 8 * shape) ** 0.5) / 2))
+            if N * (N - 1) // 2 != shape:
+                # RELEASE_AUDIT m8: a non-triangular N_dyads used to round N
+                # and die later in an opaque JAX broadcast error.
+                raise ValueError(
+                    f"dyadic_effect: shape={shape} is not N*(N-1)/2 dyads "
+                    "for any integer N; pass the number of upper-triangle "
+                    "dyads (1, 3, 6, 10, 15, ...).")
             dr_ff_mat = jnp.zeros((N, N))
 
         # ── random effects in edgelist space → scatter to matrix ───────────

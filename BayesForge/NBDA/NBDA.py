@@ -1,30 +1,52 @@
+"""
+Network-Based Diffusion Analysis (NBDA) models.
+
+Backend note (RELEASE_AUDIT m15): this module uses numpyro directly —
+``numpyro.handlers.mask`` and ``numpyro.distributions.Binomial`` in
+``NBDA.model`` — instead of the BayesForge backend proxy used by the rest
+of the library (``dist`` / ``bf.dist``). NBDA therefore runs on the numpyro
+backend only and cannot be switched to another backend.
+"""
+import warnings
+
 import pandas as pd
+import numpy as np
 import jax
 import jax.numpy as jnp
 from jax import vmap
-from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Distributions.np_dists import UnifiedDist as _UnifiedDist
+dist = _UnifiedDist()
 from BayesForge.Utils.link import link
 import numpyro
-from functools import partial 
 try:
-    from IPython.display import Markdown
+    from IPython.display import Markdown, display
 except ImportError:
     Markdown = str
+    display = print
 
 class NBDA:
     """
     The NBDA class is a comprehensive framework for conducting Network-Based Diffusion Analysis. It is designed to build, specify, and prepare complex statistical models that analyze how a behavior, trait, or piece of information spreads through a social network over time. The class systematically handles the data preparation and model specification process.
 
     The core functionality of the class is to disentangle the two primary mechanisms of     diffusion: asocial learning (spontaneous adoption) and social learning (adoption through    influence from network neighbors). It allows for these learning rates to be influenced by a    rich set of covariates.
+
+    Notes:
+        - ``self.status`` is stored internally as a 3-dimensional array of
+          shape ``(n, t, 1)`` (the last axis is the single supported process),
+          even though the constructor accepts ``(n, t)`` or ``(n, t, 1)``
+          input (RELEASE_AUDIT m5).
     """
     def __init__(self,network=None,status=None,names_network=None,names_status=None): 
         """
         Initialize an NBDA object with network and status arrays.
 
         Args:
-            network (Array): A 2-dimensional array of shape (n, n) or a 4-dimensional array of shape (n, n, t, num_networks). 
-                             If 2D, it is repeated across time. If 4D, it should be created by the user.
+            network (Array): A 2-dimensional array of shape (n, n), a 3-dimensional array of shape (n, n, t)
+                             or a 4-dimensional array of shape (n, n, t, num_networks) with num_networks == 1. 
+                             If 2D, it is repeated across time. If 3D or 4D, it should be created by the user.
             status (Array): A 2-dimensional array of shape (n, t) representing the status of nodes over time.
+                            A 3-dimensional array of shape (n, t, 1) is squeezed to (n, t); several
+                            processes (n, t, P>1) are not supported yet.
 
         Returns:
             None
@@ -37,7 +59,32 @@ class NBDA:
         self.multiprocess = False
 
         if network is None or status is None:
-            pass
+            # RELEASE_AUDIT m4: an NBDA built without network/status is a
+            # placeholder: every attribute exists (set to None) and the
+            # methods that need the data raise ValueError (see
+            # _require_data) instead of AttributeError.
+            self.nbdaModel = False
+            self.status = None
+            self.network = None
+            self.names = None
+            self.n = None
+            self.t = None
+            self.N_process = None
+            self.intercept = None
+            self.intercept_asocial = None
+            self.covNF_i = None
+            self.covNF_j = None
+            self.covNV_i = None
+            self.covNV_j = None
+            self.covDF = None
+            self.covDV = None
+            self.observed = None
+            self.T_social = None
+            self.T_asocial = None
+            self.objects = None
+            self.locations = None
+            self.covNF_get_j = None
+            self.covNV_get_j = None
         else:
             # Names of the networks and status
             self.names = dict(
@@ -65,20 +112,38 @@ class NBDA:
             self.covNV_get_j = []
 
             # Status 
-            if len(status.shape) > 2:
-                self.multiprocess = True
-                self.N_process = status.shape[2]
-            else:
-                self.N_process = 1 
+            if len(status.shape) == 3: # (n, t, P): only a single process is supported (RELEASE_AUDIT M7)
+                if status.shape[2] == 1:
+                    status = status[:, :, 0] # squeeze to (n, t) and continue as a single process
+                else:
+                    raise NotImplementedError("NBDA: status with several processes (n, t, P>1) is not supported yet; fit each process separately")
+            elif len(status.shape) > 3:
+                raise ValueError(f"NBDA: status must be a 2 (n, t) or 3 (n, t, 1) dimensional array, got shape {status.shape}")
+            self.N_process = 1
 
             self.status=status
             self.n=status.shape[0]
             self.t=status.shape[1]
+
+            # Validate the data before any conversion (RELEASE_AUDIT M13c)
+            if len(network.shape) >= 2:
+                if network.shape[0] != network.shape[1]:
+                    raise ValueError(f"NBDA: network must be square in its first two dims, got shape {network.shape}")
+                if network.shape[0] != self.n:
+                    raise ValueError(f"NBDA: network has {network.shape[0]} individuals but status has {self.n} (network shape {network.shape}, status shape {status.shape})")
+            if len(network.shape) in (3, 4) and network.shape[2] != self.t:
+                raise ValueError(f"NBDA: network has {network.shape[2]} time steps but status has {self.t} (network shape {network.shape}, status shape {status.shape})")
+            status_arr = np.asarray(status)
+            if np.isnan(status_arr).any():
+                raise ValueError("NBDA: status contains NaN, only 0 and 1 are allowed")
+            bad = np.unique(status_arr[(status_arr != 0) & (status_arr != 1)])
+            if bad.size:
+                raise ValueError(f"NBDA: status must contain only 0 and 1, got {bad.tolist()}")
+
             self.intercept_asocial = jnp.ones((self.n,self.t,self.N_process)) # Intercept for asocial learning
 
             ## Status at t-1
-            self.status_i, self.status_j = self.convert_status(status)
-            #self.give_name(self.status,'status',names_status)
+            self.convert_status(status) # stores self.status as (n, t, 1) (RELEASE_AUDIT m5/m6)
             if names_status is None:
                 self.names['status'].append('status')
             else:
@@ -89,15 +154,15 @@ class NBDA:
             if len(network.shape)==2: # 2D arrays representing a single network (n, n)
                 self.convert_network(network)
             elif (len(network.shape)==3): # 3D arrays representing networks through time (n, n, t)
-                self.network=network
+                self.network=network[..., None] # add the network axis -> (n, n, t, 1) so model()'s network[:, :, t, 0] works (RELEASE_AUDIT M9)
                 self.time_varying_network = True
             elif (len(network.shape)==4):
+                if network.shape[3] > 1: # RELEASE_AUDIT M8: model() only fits network[:, :, t, 0]
+                    raise NotImplementedError("NBDA: several networks (n, n, t, K>1) are not supported by model() yet; the extra networks would be ignored")
                 self.network=network # 4D arrays representing multiple networks through time (n, n, t, num_networks), to represent multiple networks that do not vary through time, just repeat the network   rough time axis
                 self.time_varying_network = True
-                self.multi_network = True
             else:
-                raise ValueError("Network must be a 2 (n, n) or 4 dimensional array (n, n, t,   num_networks)")
-            #self.give_name(self.network,'network',names_network)
+                raise ValueError("Network must be a 2 (n, n), 3 (n, n, t) or 4 dimensional array (n, n, t, num_networks)")
             if names_network is None:
                 self.names['network'].append('network')
             else:
@@ -129,29 +194,36 @@ class NBDA:
 
             self.objects = None
 
+    def _require_data(self, method):
+        """
+        RELEASE_AUDIT m4: raise a clear ValueError instead of an
+        AttributeError when the object was built without network/status.
+        """
+        if self.network is None or self.status is None:
+            raise ValueError(
+                "NBDA requires network and status: build the object with "
+                f"NBDA(network, status) before calling {method}"
+            )
+
     @staticmethod
     @jax.jit
     def scale_data(x):
-        return (x - x.mean()) / x.std()
+        std = x.std()
+        return (x - x.mean()) / jnp.where(std > 0, std, 1.0)
 
     @staticmethod
     def scale_along_time(covNV):
-        return vmap(NBDA.scale_data, in_axes = 1, out_axes=1)(covNV)
+        # Standardize each series along the last (time) axis only: per (variable,
+        # node) for covNV (var, n, t) and per (i, j) for covDV (n, n, t).
+        x = jnp.asarray(covNV, dtype=float)
+        m = x.mean(-1, keepdims=True)
+        s = x.std(-1, keepdims=True)
+        return (x - m) / jnp.where(s > 0, s, 1.0)
 
-    def give_name(self, object, key, names):
-        if names is  None:
-            if object.shape[-1] == 1:
-                if key in list(self.names.keys()):
-                    self.names[key].append([f'{key}'])
-                else:
-                    self.names[key] = [f'{key}']
-            else:
-                self.names[key] = [f'{key}_{i}' for i in range(object.shape[-1])] # last dim is the number of objects
-        else:
-            if len(names) != object.shape[-1]:
-                raise ValueError(f'The number of names ({len(names)}) does not match the number of objects ({object.shape[-1]})')
-            else:
-                self.names[key] = names
+    @staticmethod
+    def _check_no_nan(data, method):
+        if np.isnan(np.asarray(data, dtype=float)).any():
+            raise ValueError(f"{method}: input contains NaN")
 
     def convert_network(self, network, names = None): # To be used only if there is a single network
 
@@ -175,24 +247,22 @@ class NBDA:
 
     def convert_status(self, status):#A 2-dimension arrray of (n,t)
         """
-        Convert status array to lagged status arrays for i and j.
+        Store the status internally as a 3-dimensional array of shape (n, t, 1).
 
         Args:
             status (Array): A 2-dimensional array of shape (n, t).
 
         Returns:
-            arrays_status_i (Array): A 3-dimensional array of shape (n, n, t) for i.
-            arrays_status_j (Array): A 3-dimensional array of shape (n, n, t) for j.
-             ! Both status are the lagged status (t-1) !
-        """
-        tmp=jnp.concatenate([jnp.zeros((self.n,1)),status[:,:-1]], axis=1)
-        tmp2=jnp.array([tmp[:,i][:, None, None]* jnp.ones((self.n, self.n, 1)) for i in range(self.t)])
-        tmp3=jnp.array([status[:,i][:, None]* jnp.ones((self.n,  1)) for i in range(self.t)])
+            self.status (Array): The same values as status, shaped (n, t, 1)
+            (last axis = the single supported process, RELEASE_AUDIT m5).
 
-        self.arrays_status_i = jnp.transpose(tmp2,(1,2,0,3))
-        self.arrays_status_j = jnp.transpose(tmp2,(2,1,0,3))
-        self.status = jnp.transpose(tmp3,(1,0,2))
-        return self.arrays_status_i, self.arrays_status_j
+        RELEASE_AUDIT m6/m7: the lagged (n, n, t) status_i/status_j arrays
+        were removed — no code read them (O(n^2 t) memory for nothing). The
+        (n, t, 1) view is now built with a reshape instead of the old Python
+        loop of full copies; values are identical.
+        """
+        self.status = jnp.asarray(status)[:, :, None]
+        return self.status
 
     def covNF_dims(self,df, n, t, num_variables):
         """
@@ -209,11 +279,10 @@ class NBDA:
             result_array_j (Array): A 4-dimensional array of shape (n, n, t, num_variables) for j.
         """
         # Create arrays using broadcasting
-        arrays = jnp.array([df[:, var_idx].reshape(-1, 1) * jnp.ones((n, n, t)) for var_idx in range(num_variables)])
-
-        # Transpose arrays to get the required shape
-        result_array_j = jnp.transpose(arrays, (1, 2, 3, 0))  # (n, n, t, num_variables)
-        result_array_i = jnp.transpose(arrays, (2, 1, 3, 0))  # (n, n, t, num_variables)
+        df = jnp.asarray(df)[:, :num_variables]
+        # axis 0 = learner i, axis 1 = demonstrator j
+        result_array_i = jnp.broadcast_to(df[:, None, None, :], (n, n, t, num_variables))  # (n, n, t, num_variables)
+        result_array_j = jnp.broadcast_to(df[None, :, None, :], (n, n, t, num_variables))  # (n, n, t, num_variables)
 
         return result_array_i, result_array_j
 
@@ -255,7 +324,19 @@ class NBDA:
         Returns:
             tuple: A tuple of two 4-dimensional arrays (covNF_i, covNF_j).
         """
-        covNF_i, covNF_j = self.convert_covNF(df, self.n, self.t, df.shape[1], scale = scale)
+        self._require_data('import_covNF')
+        self._check_no_nan(df, 'import_covNF')
+        if where not in ('both', 'social', 'asocial'):
+            raise ValueError(f"where must be 'both', 'social' or 'asocial', got {where!r}")
+        if not isinstance(df, pd.DataFrame):
+            df = np.asarray(df, dtype=float)
+            if df.ndim == 1:
+                df = df.reshape(-1, 1)
+        if df.shape[0] != self.n:
+            raise ValueError(f"import_covNF: input has {df.shape[0]} rows, expected n = {self.n}")
+        n_new = df.shape[1]
+
+        covNF_i, covNF_j = self.convert_covNF(df, self.n, self.t, n_new, scale = scale)
 
         # Update self.covNF_i
         if where == 'asocial':
@@ -273,13 +354,17 @@ class NBDA:
                 self.covNF_j = jnp.concatenate((self.covNF_j, covNF_j), axis = -1)
 
         if names is None:
-            self.names['covNF'].extend(str(len(self.names['covNF'])))
+            self.names['covNF'].extend([f"covNF{len(self.names['covNF']) + i}" for i in range(n_new)])
         else:
+            if len(names) != n_new:
+                raise ValueError(f"import_covNF: names must have {n_new} entries, got {len(names)}")
             self.names['covNF'].extend(names)
 
-        self.covNF_get_j.extend([get_cov_j]*self.covNF_j.shape[3])
-        self.locations['covNF_i'] = where
-        self.locations['covNF_j'] = where
+        # One entry per new column, counted on the imported block: self.covNF_j
+        # stays None when where='asocial' (M1).
+        self.covNF_get_j.extend([get_cov_j]*n_new)
+        self.locations['covNF_i'].extend([where]*n_new)
+        self.locations['covNF_j'].extend([where]*n_new)
 
     def convert_covNV(self, covV):
         """
@@ -291,20 +376,36 @@ class NBDA:
         Returns:
             tuple: A tuple of two 4-dimensional arrays (result_array_i, result_array_j).
         """
-        arrays=jnp.array([covV[:,:, i].T[:, None, :]* jnp.ones((1, self.n, 1)) for i in range(covV.shape[2])])
-        result_array_j = jnp.transpose(arrays, (2, 3, 1, 0))  # (n, n, t, num_variables)
-        result_array_i = jnp.transpose(arrays, (3, 2, 1, 0))
+        c = jnp.transpose(jnp.asarray(covV), (1, 2, 0))  # (n, t, num_variables)
+        shape = (self.n, self.n, c.shape[1], c.shape[2])
+        # axis 0 = learner i, axis 1 = demonstrator j
+        result_array_i = jnp.broadcast_to(c[:, None, :, :], shape)
+        result_array_j = jnp.broadcast_to(c[None, :, :, :], shape)
         
         return result_array_i, result_array_j
 
     def import_covNV(self, covV, names = None, scale = True, where = 'both', get_cov_j = True): #covV need to be a 3 dimensional array of shape (num_var, n, t)i.e. A list of matrices of time-varying covariates
+        self._require_data('import_covNV')
+        self._check_no_nan(covV, 'import_covNV')
+        if where not in ('both', 'social', 'asocial'):
+            raise ValueError(f"where must be 'both', 'social' or 'asocial', got {where!r}")
         if scale:
             covV = self.scale_along_time(covV)
         else: 
-            print("Not scaling covariates along time can result in correlation between regressions coeffcients in of temporal covariates and the intercepts (i.e. social rate)")
-            print("\nAlternative solution would be to add time varying coefficients, but it does affet computational time drastically.")
+            # RELEASE_AUDIT m9: warnings.warn (filterable) instead of print;
+            # the two misspellings in the old message are fixed.
+            warnings.warn(
+                "Not scaling covariates along time can result in correlation "
+                "between regression coefficients of temporal covariates and "
+                "the intercepts (i.e. social rate). An alternative solution "
+                "would be to add time varying coefficients, but it does "
+                "affect computational time drastically.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         covNV_i, covNV_j = self.convert_covNV(covV)
+        n_new = covNV_i.shape[3]
 
         if where == 'asocial':
             get_cov_j = False
@@ -320,15 +421,18 @@ class NBDA:
             else:
                 self.covNV_j = jnp.concatenate((self.covNV_j, covNV_j), axis = -1)
 
-        #self.give_name(self.covNV_i,'covNV',names)
         if names is None:
-            self.names['covNV'].extend(str(len(self.names['covNV'])))
+            self.names['covNV'].extend([f"covNV{len(self.names['covNV']) + i}" for i in range(n_new)])
         else:
+            if len(names) != n_new:
+                raise ValueError(f"import_covNV: names must have {n_new} entries, got {len(names)}")
             self.names['covNV'].extend(names)
 
-        self.covNV_get_j.extend([get_cov_j]*self.covNV_j.shape[3])
-        self.locations['covNV_i'] = where
-        self.locations['covNV_j'] = where
+        # One entry per new column, counted on the imported block: self.covNV_j
+        # stays None when where='asocial' (M1).
+        self.covNV_get_j.extend([get_cov_j]*n_new)
+        self.locations['covNV_i'].extend([where]*n_new)
+        self.locations['covNV_j'].extend([where]*n_new)
 
     def import_covDF(self, covDF, names = None,  scale = True):
         """
@@ -340,17 +444,22 @@ class NBDA:
         Returns:
             Array: A 4-dimensional array of shape (n, n, t, num_variables) if input is 3D, otherwise shape (n, n, t, 1).
         """
+        self._require_data('import_covDF')
+        self._check_no_nan(covDF, 'import_covDF')
         if len(covDF.shape)==2:
-            tmp = self.scale_data(covDF)
+            tmp = self.scale_data(covDF) if scale else jnp.asarray(covDF)
             covDF = jnp.repeat(tmp[jnp.newaxis, :, :,jnp.newaxis], self.t, axis=0).transpose((1,2,0,3))
 
         else:
-            res = []
-            for i in range(covDF.shape[2]):
-                tmp = self.scale_data(covDF[:,:,i])
-                res.append(jnp.repeat(tmp[jnp.newaxis,:,:], self.t, axis=0).transpose((1,2,0)))
-            covDF = jnp.stack(res, axis = -1)
+            # RELEASE_AUDIT m7: scale each (n, n) matrix, then broadcast the
+            # time axis instead of materialising one full (n, n, t) copy per
+            # variable (identical values, no per-variable time copies).
+            mats = jnp.asarray(covDF)
+            if scale:
+                mats = vmap(lambda x: self.scale_data(x), in_axes=2, out_axes=2)(mats)
+            covDF = jnp.broadcast_to(mats[:, :, None, :], (self.n, self.n, self.t, mats.shape[2]))
 
+        n_new = covDF.shape[3]
         if self.covDF is None:
             self.covDF = covDF
         else:
@@ -358,8 +467,10 @@ class NBDA:
 
 
         if names is None:
-            self.names['covDF'].extend(str(len(self.names['covDF'])))
+            self.names['covDF'].extend([f"covDF{len(self.names['covDF']) + i}" for i in range(n_new)])
         else:
+            if len(names) != n_new:
+                raise ValueError(f"import_covDF: names must have {n_new} entries, got {len(names)}")
             self.names['covDF'].extend(names)
 
     def import_covDV(self, covDV, names = None, scale = True, where = 'both'):
@@ -367,27 +478,50 @@ class NBDA:
         Import time-varying dyadic covariates.
 
         Args:
-            covDV (Array): A 3-dimensional array of shape (n, n, t) or a 4-dimensional array of shape (n, n, t, num_dyadics_effects).
+            covDV (Array): A 3-dimensional array of shape (n, n, t) or a
+                4-dimensional array of shape (num_variables, n, n, t): the
+                code iterates covDV[i, :, :] over shape[0], so in 4-D the
+                first axis is the variable axis (RELEASE_AUDIT m12: the
+                docstring now matches the code's axis order; the code is
+                unchanged).
 
         Returns:
             Array: A 4-dimensional array of shape (n, n, t, num_variables).
+
+        Memory (RELEASE_AUDIT m7): the 4-D path builds one full (n, n, t)
+        copy per variable in a Python loop, i.e. an
+        O(num_variables * n^2 * t) materialisation.
         """
         
+        self._require_data('import_covDV')
+        self._check_no_nan(covDV, 'import_covDV')
+        if where not in ('both', 'social', 'asocial'):
+            raise ValueError(f"where must be 'both', 'social' or 'asocial', got {where!r}")
+        
         if len(covDV.shape)==3:# A list of matrices of a single time-varying covariate
-            covDV =  self.scale_along_time(covDV)
+            if scale:
+                covDV =  self.scale_along_time(covDV)
+            else:
+                covDV = jnp.asarray(covDV)
             covDV = covDV[:, :, :,jnp.newaxis]
 
         elif len(covDV.shape)==4:# A ist of list of matrices of a single time-varying covariate
-            covDV = jnp.array([covDV[i,:, :,None]*jnp.ones((self.n, self.n, self.t)) for i in range(covDV.shape[0])]).transpose((1,2,3,0))
+            tmp = jnp.array([covDV[i,:, :,None]*jnp.ones((self.n, self.n, self.t)) for i in range(covDV.shape[0])])  # (num, n, n, t)
+            if scale:
+                tmp = self.scale_along_time(tmp)  # same scaling on both paths: each (num, i, j) series over time
+            covDV = tmp.transpose((1,2,3,0))
 
+        n_new = covDV.shape[3]
         if self.covDV is None:
             self.covDV = covDV
         else:
             self.covDV = jnp.concatenate((self.covDV, covDV), axis = -1)
 
         if names is None:
-            self.names['covDV'].extend(str(len(self.names['covDV'])))
+            self.names['covDV'].extend([f"covDV{len(self.names['covDV']) + i}" for i in range(n_new)])
         else:
+            if len(names) != n_new:
+                raise ValueError(f"import_covDV: names must have {n_new} entries, got {len(names)}")
             self.names['covDV'].extend(names)
 
     def stack_cov(self):
@@ -397,12 +531,11 @@ class NBDA:
         Returns:
             dict: A dictionary containing all covariates.
         """
+        self._require_data('stack_cov')
         tmp=dict(
             intercept_social = self.intercept,
             intercept_asocial = self.intercept_asocial,
             status = self.status,
-            status_i = self.status_i, 
-            status_j = self.status_j,
             covNF_i = self.covNF_i,
             covNF_j = self.covNF_j,
             covNV_i = self.covNV_i,
@@ -421,7 +554,7 @@ class NBDA:
         Returns:
             tuple: A tuple of two arrays (D_social, D_asocial).
         """
-        
+        self._require_data('get_cov')
         objects = self.stack_cov()
         self.objects = objects
         D_social = [objects['intercept_social']]
@@ -430,49 +563,55 @@ class NBDA:
         D_asocial_names = ['asocial_learning']
 
         for k in objects.keys():
-            if k not in ['intercept_social', 'intercept_asocial', 'status', 'status_i', 'status_j', 'network']:
-                if k is not None:
-                    if k in ['covNF_i', 'covNV_i']:
-                        for i in range(objects[k].shape[3]):
-                            if self.locations[k] == 'both':
-                                D_social.append(jnp.expand_dims(objects[k][:,:,:,i],-1))
-                                D_asocial.append(jnp.expand_dims(objects[k][:,0,:,i],-1))
-                                if 'covNF' in k:
-                                    D_social_names.append(k + '_' + self.names['covNF'][i])
-                                    D_asocial_names.append(k + '_' + self.names['covNF'][i])
-                                else:
-                                    D_social_names.append(k + '_' + self.names['covNV'][i])
-                                    D_asocial_names.append(k + '_' + self.names['covNV'][i])                                    
-
-                            elif self.locations[k] == 'social':
-                                D_social.append(jnp.expand_dims(objects[k][:,:,:,i],-1))
-                                if 'covNF' in k:
-                                    D_social_names.append(k + '_' + self.names['covNF'][i])
-                                else:
-                                    D_social_names.append(self.names['covNV'][i])    
-
-                            elif self.locations[k] == 'asocial':
-                                D_asocial.append(jnp.expand_dims(objects[k][:,0,:,i],-1))
-                                if 'covNF' in k:
-                                    D_asocial_names.append(k + '_' + self.names['covNF'][i])
-                                else:
-                                    D_social_names.append(k + '_' + self.names['covNV'][i])                                
-                    else:
-                            D_social.append(objects[k])   
+            if k not in ['intercept_social', 'intercept_asocial', 'status', 'network']:
+                # RELEASE_AUDIT m11: the old identity test on the loop key
+                # always passed (keys are strings); None values are already
+                # filtered out by stack_cov.
+                if k in ['covNF_i', 'covNV_i']:
+                    for i in range(objects[k].shape[3]):
+                        loc = self.locations[k][i]
+                        if loc == 'both':
+                            D_social.append(jnp.expand_dims(objects[k][:,:,:,i],-1))
+                            D_asocial.append(jnp.expand_dims(objects[k][:,0,:,i],-1))
                             if 'covNF' in k:
-                                filtered = [s for b, s in zip(self.covNF_get_j, self.names['covNF']) if b]
-                                for i in range(len(filtered)):
-                                    D_social_names.append(k + '_' + filtered[i])
-                            elif 'covNV' in k:
-                                filtered = [s for b, s in zip(self.covNV_get_j, self.names['covNV']) if b]
-                                for i in range(len(filtered)):
-                                    D_social_names.append(k + '_' + filtered[i])      
-                            elif 'covDF' in k:
-                                for i  in range(objects[k].shape[3]):
-                                        D_social_names.append(k + '_' + self.names['covDF'][i])  
-                            elif 'covDV' in k:
-                                for i  in range(objects[k].shape[3]):
-                                        D_social_names.append(k + '_' + self.names['covDV'][i])  
+                                D_social_names.append(k + '_' + self.names['covNF'][i])
+                                D_asocial_names.append(k + '_' + self.names['covNF'][i])
+                            else:
+                                D_social_names.append(k + '_' + self.names['covNV'][i])
+                                D_asocial_names.append(k + '_' + self.names['covNV'][i])                                    
+
+                        elif loc == 'social':
+                            D_social.append(jnp.expand_dims(objects[k][:,:,:,i],-1))
+                            if 'covNF' in k:
+                                D_social_names.append(k + '_' + self.names['covNF'][i])
+                            else:
+                                D_social_names.append(k + '_' + self.names['covNV'][i])    
+
+                        elif loc == 'asocial':
+                            D_asocial.append(jnp.expand_dims(objects[k][:,0,:,i],-1))
+                            if 'covNF' in k:
+                                D_asocial_names.append(k + '_' + self.names['covNF'][i])
+                            else:
+                                D_asocial_names.append(k + '_' + self.names['covNV'][i])
+
+                        else:
+                            raise ValueError(f"Unknown location {loc!r} for column {i} of {k}: must be 'both', 'social' or 'asocial'")
+                else:
+                    D_social.append(objects[k])   
+                    if 'covNF' in k:
+                        filtered = [s for b, s in zip(self.covNF_get_j, self.names['covNF']) if b]
+                        for i in range(len(filtered)):
+                            D_social_names.append(k + '_' + filtered[i])
+                    elif 'covNV' in k:
+                        filtered = [s for b, s in zip(self.covNV_get_j, self.names['covNV']) if b]
+                        for i in range(len(filtered)):
+                            D_social_names.append(k + '_' + filtered[i])      
+                    elif 'covDF' in k:
+                        for i  in range(objects[k].shape[3]):
+                            D_social_names.append(k + '_' + self.names['covDF'][i])  
+                    elif 'covDV' in k:
+                        for i  in range(objects[k].shape[3]):
+                            D_social_names.append(k + '_' + self.names['covDV'][i])  
 
         self.T_social = jnp.concatenate(D_social, axis=-1)
         self.T_asocial = jnp.concatenate(D_asocial, axis=-1)
@@ -480,8 +619,23 @@ class NBDA:
         self.T_asocial_names = D_asocial_names
         #return dict(D_social=self.D_social, D_asocial=self.D_asocial, status=self.status, network=self.network)
     
-    @partial(jax.jit, static_argnums=(0,)) 
-    def ces(self, K,L, alpha):
+    @staticmethod
+    @jax.jit
+    def ces(K, L, alpha):
+        """
+        Linear mixture of the two attention-weighted network orientations:
+        Q = alpha * K + (1 - alpha) * L.
+
+        RELEASE_AUDIT m13: this is a linear mixture (perfect substitutes,
+        constant elasticity = infinity), not a CES aggregator with a
+        curvature parameter rho as in the cited supplement (aax9070). The
+        name is kept for backward compatibility.
+
+        RELEASE_AUDIT m8: jitted as a staticmethod so the compilation cache
+        is tied to the function, not to each NBDA instance (the old
+        static_argnums=(0,) made every object recompile and retained memory
+        for no benefit; the values are unchanged).
+        """
         Q = (alpha * K + (1 - alpha) * L)
         return Q
 
@@ -519,6 +673,7 @@ class NBDA:
         else:
             return soc, asoc
     
+    # Not wired: model() never routes to priors_multinetwork (RELEASE_AUDIT M8); kept for a future multi-network model.
     def priors_multinetwork(self, N_networks, CES = True):
         T_social_shape = self.T_social.shape[3]
         T_asocial_shape = self.T_asocial.shape[2]
@@ -554,6 +709,31 @@ class NBDA:
             return soc, asoc
     
     def model(self, CES = True):
+        """
+        Network-Based Diffusion Analysis (NBDA) probabilistic model.
+
+        Parameters:
+        - CES: If True, combines the social and asocial transmission rates
+          through the linear mixture Q = alpha * K + (1 - alpha) * L of the
+          two attention-weighted networks (perfect substitutes; not a CES
+          with curvature parameter rho, see NBDA.ces, RELEASE_AUDIT m13).
+
+        Returns:
+        - Probabilistic model sampling diffusion events conditional on network structure and status.
+
+        The likelihood conditions on the initial state status[:, 0] (t = 0 is not an event).
+
+        NaN sentinel (RELEASE_AUDIT m14): NaN in the likelihood matrix ``lk``
+        is the mask for "already informed" entries (t = 0 and status[:, t-1]
+        == 1). A NaN produced accidentally by theta or the social weights for
+        an individual that is still naive would therefore be masked out of
+        the likelihood silently. The check cannot raise here: this code is
+        traced by numpyro/JAX at fit time, so a concrete-input check would
+        have to touch the traced likelihood.
+        """
+        self._require_data('model')
+        if self.T_social is None: # RELEASE_AUDIT M13b: build the design matrices on demand
+            self.get_cov()
         status = self.status
         network = self.network
         D_asocial = self.T_asocial
@@ -576,23 +756,23 @@ class NBDA:
 
         mask = ~jnp.isnan(lk)
         with numpyro.handlers.mask(mask=mask): 
-            numpyro.sample("y", numpyro.distributions.Binomial(probs=lk), obs=status[:,:,0])
+            # masked (already informed) entries are NaN: give them a valid dummy
+            # probability so the distribution validates; the mask zeroes them.
+            numpyro.sample("y", numpyro.distributions.Binomial(probs=jnp.where(mask, lk, 0.5)), obs=status[:,:,0])
  
     def compute_probs(self,D_asocial, asoc,
                       D_social, soc,
                       network,status,N,T):
         lk = jnp.zeros((N,T))
-        # Asocial learning -----------------------
-        R_asocial = jnp.tensordot(D_asocial[:,0,:], asoc, axes=(-1, 0))    
-        theta = link.inv_logit(R_asocial)
-        lk = lk.at[:,0].set(theta)
+        # t = 0 conditions on the initial state: NaN masks it out of the likelihood (RELEASE_AUDIT M10)
+        lk = lk.at[:,0].set(jnp.nan)
 
         for t in range(1,T):
             ## Social learning-----------------------
             R_social = jnp.tensordot(D_social[:,:,t,:], soc, axes=(-1, 0))
             phi = link.inv_logit(R_social)
             attention_weigthed_network = phi*network[:,:,t,0]
-            social_influence_weight = link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0)))
+            social_influence_weight = jnp.clip(link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0))), 0.0, 1.0)
 
             ## Asocial learning -----------------------
             R_asocial = jnp.tensordot(D_asocial[:,t,:], asoc, axes=(-1, 0))
@@ -603,15 +783,14 @@ class NBDA:
 
         return lk
 
+    # Not wired: model() never routes to compute_probs_multinetwork (RELEASE_AUDIT M8); kept for a future multi-network model.
     def compute_probs_multinetwork(self,D_asocial, asoc,
                                    D_social, soc,
                                    network,status,N,T):
         N_networks = network.shape[3]
         lk = jnp.zeros((N,T))
-        # Asocial learning -----------------------
-        R_asocial = jnp.tensordot(D_asocial[:,0,:], asoc, axes=(-1, 0))    
-        theta = link.inv_logit(R_asocial)
-        lk = lk.at[:,0].set(theta)
+        # t = 0 conditions on the initial state: NaN masks it out of the likelihood (RELEASE_AUDIT M10)
+        lk = lk.at[:,0].set(jnp.nan)
 
         for t in range(1,T):
 
@@ -619,7 +798,7 @@ class NBDA:
             R_social = jnp.tensordot(D_social[:,:,t,:], soc, axes=(-1, 0))
             phi = link.inv_logit(R_social)
             attention_weigthed_network = phi*network[:,:,t,0]
-            social_influence_weight = link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0)))
+            social_influence_weight = jnp.clip(link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0))), 0.0, 1.0)
 
             ## Asocial learning -----------------------
             R_asocial = jnp.tensordot(D_asocial[:,t,:], asoc, axes=(-1, 0))
@@ -635,17 +814,15 @@ class NBDA:
                       ces_alpha,
                       network,status,N,T):
         lk = jnp.zeros((N,T))
-        # Asocial learning -----------------------
-        R_asocial = jnp.tensordot(D_asocial[:,0,:], asoc, axes=(-1, 0))    
-        theta = link.inv_logit(R_asocial)
-        lk = lk.at[:,0].set(theta)
+        # t = 0 conditions on the initial state: NaN masks it out of the likelihood (RELEASE_AUDIT M10)
+        lk = lk.at[:,0].set(jnp.nan)
 
         for t in range(1,T):
             ## Social learning-----------------------
             R_social = jnp.tensordot(D_social[:,:,t,:], soc, axes=(-1, 0))
             phi = link.inv_logit(R_social)
             attention_weigthed_network = self.ces(phi*network[:,:,t,0], phi*network[:,:,t,0].T, ces_alpha)
-            social_influence_weight = link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0)))
+            social_influence_weight = jnp.clip(link.inv_logit_scale(jnp.tensordot(attention_weigthed_network[:,:], status[:,t-1], axes=(-1, 0))), 0.0, 1.0)
 
             ## Asocial learning -----------------------
             R_asocial = jnp.tensordot(D_asocial[:,t,:], asoc, axes=(-1, 0))
@@ -656,17 +833,19 @@ class NBDA:
         return lk
     
     def print_model(self):
+        self._require_data('print_model')
+        # RELEASE_AUDIT m10: the priors in priors() are dist.normal(0, 2, ...)
+        # i.e. scale = 2, so the LaTeX shows Normal(0,2) (was Normal(0,4) for
+        # the alphas and Normal(0,1) for the betas).
         r="""$$
         \\text{Informed} = \\text{Binomial}(\\text{LK}) \\newline
         \\text{LK} = \\left[ \\theta + (1-\\theta)S \\right] (1- z_i) \\newline
         \\theta = \\alpha_a \\newline
         S = \\alpha_s \\left( \\sum_{j = 1}^{N} A_{ij} z_{j} \\right) \\newline 
-        \\alpha_a\\sim Normal(0,4) \\newline
-        \\alpha_s \\sim Normal(0,4) \\newline
+        \\alpha_a\\sim Normal(0,2) \\newline
+        \\alpha_s \\sim Normal(0,2) \\newline
         """
 
-        asocialCov=True
-        socialCov=True
         if len(self.names) > 2:
             fa="""""" 
             fs=""""""
@@ -674,52 +853,43 @@ class NBDA:
             for k in self.names.keys():
                 if k in ['covNF', 'covNV', 'covDF','covDV']:
                     tmp=self.names[k]
-                    if k == 'covNF':
-                        if self.covNF_location == 'both':
-                            asocialCov = socialCov = True
-                        if self.covNF_location == 'asocial':
-                            asocialCov = True
-                            socialCov = False
-                        if self.covNF_location == 'social':
-                            asocialCov = False
-                            socialCov = True
-
-                    if k == 'covNV':
-                        if self.covNV_location == 'both':
-                            asocialCov = socialCov = True
-                        if self.covNV_location == 'asocial':
-                            asocialCov = True
-                            socialCov = False
-                        if self.covNV_location == 'social':
-                            asocialCov = False
-                            socialCov = True
-
-                    if asocialCov:     
-                        if k in ['covNF', 'covNV'] :   # Dyadic variables can't be in asocial                
-                            for i in range(len(tmp)):
-                                if i < len(tmp):
-                                    fa=fa+f"\\beta_{{a{{{count}}}}} {tmp[i]} + "
-                                    count += 1
-
-                    if socialCov:
+                    if k in ['covNF', 'covNV']:
+                        # locations are stored per column (M3): check each column
+                        locs = self.locations[k + '_i']
                         for i in range(len(tmp)):
-                            if i < len(tmp):
+                            loc = locs[i] if i < len(locs) else 'both'
+                            if loc in ('both', 'asocial'):
+                                fa=fa+f"\\beta_{{a{{{count}}}}} {tmp[i]} + "
+                                count += 1
+                            if loc in ('both', 'social'):
                                 fs=fs+f"\\beta_{{s{{{count}}}}} {tmp[i]} + "
                                 count += 1
+                    else:   # Dyadic variables can't be in asocial
+                        for i in range(len(tmp)):
+                            fs=fs+f"\\beta_{{s{{{count}}}}} {tmp[i]} + "
+                            count += 1
 
                     count += 1
 
-            r = r.replace(r"\alpha_s \left( \sum A_{ij} z_{j} \right)",
-            """\\left(\\alpha_s + X\\right) \\sum A_{ij} z_{j}  \\newline  X = """ + fs.rstrip(' +') + """  \\newline""")
+            # RELEASE_AUDIT m10: the old first pattern ("\sum A_{ij}" without
+            # the "_{j = 1}^{N}" limits) never matched the model string above,
+            # so the replacement was silently a no-op. The pattern now matches
+            # and each replace only runs when it has covariates to insert.
+            if fs:
+                r = r.replace(r"\alpha_s \left( \sum_{j = 1}^{N} A_{ij} z_{j} \right)",
+                """\\left(\\alpha_s + X\\right) \\sum_{j = 1}^{N} A_{ij} z_{j}  \\newline  X = """ + fs.rstrip(' +') + """  \\newline""")
 
-            r = r.replace(r"\alpha_a ", 
-            """\\alpha_a + Z  \\newline  Z = """ + fa.rstrip(' +') + """ \\newline""")
+            if fa:
+                r = r.replace(r"\alpha_a ", 
+                """\\alpha_a + Z  \\newline  Z = """ + fa.rstrip(' +') + """ \\newline""")
 
-            r = r+"""\\beta_{(s)} \\sim Normal(0,1) \\newline"""
+            r = r+"""\\beta_{(s)} \\sim Normal(0,2) \\newline"""
         r=r+"""$$"""
         display(Markdown(r))
 
     # We can add individual observation information in the same forme as  an input time varying cov
     # We can add multiple behaviors acquisition in the form of a (n,n,t,num_behaviors)
     # Random variable to add
-    # Do we add inverse of status_i? As we need net filter by j status that are informed (net*status_j) and cov array filtered by i status that are zero (cov*(1-status_i))
+    # (RELEASE_AUDIT m6: the lagged status_i/status_j arrays this note referred
+    # to were removed; nothing read them. Re-add them only together with the
+    # net*status_j / cov*(1-status_i) filtering they were meant for.)

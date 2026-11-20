@@ -1,0 +1,4 @@
+# API reference pages are generated from docstrings (tools/build_api_reference.py).
+# Render them as HTML only: several docstrings still carry LaTeX that breaks the
+# PDF (xelatex) build. Remove this file once the docstrings are cleaned up.
+format: html

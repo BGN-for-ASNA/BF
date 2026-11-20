@@ -251,20 +251,20 @@ m.summary()
 ## Mathematical Details
 
 ### *Main Formula*
-The model's block structure can be represented by the following formula. Note that the sender-receiver and dyadic effects are not represented here, as they are already accounted for in the [Network model](26. Network model.qmd) chapter:
+The model's block structure can be represented by the following formula for binary ties (or analogously with a Poisson distribution and log link for weighted counts). Note that the sender-receiver and dyadic effects are not represented here, as they are already accounted for in the [Network model](26. Network model.qmd) chapter:
 
 $$
-G_{ij} \sim \text{Poisson}(Y_{ij})
+G_{ij} \sim \text{Bernoulli}(p_{ij})
 $$ 
 
 $$
-\log(Y_{ij}) = B_{k(i), k(j)} 
+\text{logit}(p_{ij}) = B_{k(i), k(j)} 
 $$
 
 
 where:
 
-- $B$ is a matrix of intercept parameters unique to the interaction of categories. For example, if there are three groups, then $B$ will be a 3x3 matrix where each element give the rate an individual in group $k$ interacting with an individual in group $l$.
+- $B$ is a matrix of intercept parameters unique to the interaction of categories. For example, if there are three groups, then $B$ will be a 3x3 matrix where each element gives the log-odds (or log-rate) of an individual in group $k$ interacting with an individual in group $l$.
   
 - We use the function $k$, to return the group identity (i.e., the block) of individual *i*.
 

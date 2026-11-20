@@ -14,6 +14,9 @@ m = bf(platform='cpu', backend='tfp')
 # import data ------------------------------------------------
 data_path = m.load.milk(only_path = True)
 m.data(data_path, sep=';') 
+# index() only names the column it creates (RELEASE_AUDIT Data M5): rename the
+# dotted milk column explicitly so it can be a model argument.
+m.df = m.df.rename(columns={'kcal.per.g': 'kcal_per_g'})
 m.index(["clade"])
 m.scale(['kcal_per_g'])
 

@@ -6,16 +6,65 @@ from jax import jit
 import numpyro
 import numpyro.distributions as dist
 from BayesForge.Network.Net import Neteffect
-from BayesForge.Distributions.np_dists import UnifiedDist as dist
+from BayesForge.Distributions.np_dists import UnifiedDist as _UnifiedDist
+
+# Module-level instance: the class's methods are instance methods.
+dist = _UnifiedDist()
 from BayesForge.Utils.SampledData import SampledData
 
 def logit(x):
-    return jnp.log(x / (1 - x))
+    # RELEASE_AUDIT S4: clip to (eps, 1 - eps) so the endpoints stay finite
+    # (the block prior feeds base-rate and padded entries straight in, and a
+    # 0/1 there used to poison the whole trace with -inf/+inf), and use
+    # log(x) - log1p(-x) for accuracy near 0. Values already inside
+    # (eps, 1 - eps) are unchanged up to float rounding.
+    eps = jnp.finfo(jnp.result_type(x, jnp.float32)).eps
+    x = jnp.clip(x, eps, 1 - eps)
+    return jnp.log(x) - jnp.log1p(-x)
+
+
+def _check_block_labels(block_predictors, index1):
+    """RELEASE_AUDIT S5: block labels must be integer, >= 0, 0-based contiguous.
+
+    Both block importers (SRM.import_block_predictors and
+    SRM.import_block_predictors2) derive the number of groups of a column from
+    ``max + 1``, so a column has to hold every label 0..max: a 1-based column
+    silently dropped group 0 and a gapped one silently dropped the missing
+    label. Called right after the optional index1 shift.
+    """
+    labels = np.asarray(block_predictors)
+    if labels.ndim != 2 or labels.shape[0] == 0:
+        return
+    for a in range(labels.shape[1]):
+        col = np.asarray(labels[:, a], dtype=float)
+        if not np.all(np.isfinite(col)):
+            raise ValueError(
+                f'Error: Block factor column {a} must hold 0-based contiguous '
+                f'integer labels, got non-finite values.')
+        if not np.all(col == np.floor(col)):
+            raise ValueError(
+                f'Error: Block factor column {a} must hold 0-based contiguous '
+                f'integer labels, got non-integer values.')
+        present = {int(x) for x in np.unique(col)}
+        top = int(col.max())
+        if min(present) < 0:
+            raise ValueError(
+                f'Error: Block factor column {a} must hold 0-based contiguous '
+                f'labels, got negative labels {sorted(present)}.')
+        if present != set(range(top + 1)):
+            missing = sorted(set(range(top + 1)) - present)
+            msg = (f'Error: Block factor column {a} must hold 0-based contiguous '
+                   f'labels 0..{top}; missing {missing}.')
+            if min(present) == 1:
+                msg += ' Labels start at 1: pass index1=True to shift them to 0-based.'
+            raise ValueError(msg)
+
+
 class SRM:
     def __init__(self, network, print_info = False):
         
         if network.ndim!=2:
-             print('Error: Network dimension must be 2')
+             raise ValueError('Error: Network dimension must be 2')
 
         self.N_id = network.shape[0]        
         self.N_dyad = (self.N_id * (self.N_id - 1) )/ 2
@@ -47,7 +96,7 @@ class SRM:
         # if jax array check if it is a 2D array
         if isinstance(focal_predictors, (jnp.ndarray, SampledData)):
             if focal_predictors.ndim != 2:
-                print('Error: Focal factors must be a 2D array')
+                raise ValueError('Error: Focal factors must be a 2D array')
 
 
         self.focal_predictors = focal_predictors.T
@@ -66,7 +115,7 @@ class SRM:
         # if jax array check if it is a 2D array
         if isinstance(receiver_predictors, (jnp.ndarray, SampledData)):
             if receiver_predictors.ndim != 2:
-                print('Error: Focal factors must be a 2D array')
+                raise ValueError('Error: Focal factors must be a 2D array')
  
 
         self.receiver_predictors = receiver_predictors.T
@@ -78,16 +127,16 @@ class SRM:
         if self.print_info:
             print('--------------------------------------------------------------------------------')
         if isinstance(dyadic_predictors, (jnp.ndarray, SampledData)):
-            if dyadic_predictors.ndim == 2: 
-                if dyadic_predictors.shape[0] != self.network.shape[0] and  dyadic_predictors.shape[1] != self.network.shape[1]:
-                    print('Error: Dyadic factors must be a 2D array with the same first two dimensions as the network')
-                else:
-                    self.dyadic_predictors = dyadic_predictors
-                    self.dyadic_predictors_names = names
-                    if self.print_info:
-                        print(f'Dyadic factors {self.dyadic_predictors_names}, imported')
-
-            elif dyadic_predictors.ndim == 3:
+            if dyadic_predictors.ndim == 2:
+                #! self.network is already an edge list (N_dyad, 2) (see __init__),
+                #! so a 2-D dyadic predictor must be a full (N_id, N_id) matrix.
+                if dyadic_predictors.shape != (self.N_id, self.N_id):
+                    raise ValueError(f'Dyadic predictor matrix must be (N, N) = ({self.N_id}, {self.N_id})')
+                #! Handle it exactly like a 3-D input with one predictor:
+                dyadic_predictors = dyadic_predictors[:, :, None]
+            if dyadic_predictors.ndim == 3:
+                if dyadic_predictors.shape[:2] != (self.N_id, self.N_id):
+                    raise ValueError(f'Dyadic predictor matrix must be (N, N) = ({self.N_id}, {self.N_id})')
                 tmp2 =  []
                 for a in range(dyadic_predictors.shape[2]):
                     tmp2.append(Neteffect.mat_to_edgl(dyadic_predictors[:,:,a]))               
@@ -105,24 +154,35 @@ class SRM:
                     print(f'Dyadic factors {self.dyadic_predictors_names}, imported')
 
             else:
-                print('Error: Dyadic factors must be a 2D or 3D array')
+                raise ValueError('Error: Dyadic factors must be a 2D or 3D array')
         else:
-            print('Error: Dyadic factors must be a jax array')
+            raise TypeError('Error: Dyadic factors must be a jax array')
     
     def import_exposure(self, exposure):
         print('--------------------------------------------------------------------------------')
         # if jax array check if it is a 2D array
         if isinstance(exposure, (jnp.ndarray, SampledData)):
             if exposure.ndim != 1:
-                print('Error: Exposure must be a 1D array')
+                raise ValueError('Error: Exposure must be a 1D array')
             else:
                 self.exposure = exposure
                 if self.print_info:
                     print(f'Exposure {self.exposure}, imported')
         else:
-            print('Error: Exposure must be a jax array')
+            raise TypeError('Error: Exposure must be a jax array')
 
     def import_block_predictors2(self, block_predictors, names = None, index1 = False, intercept_present = False):
+        """Import block factors for the base-rate / block_prior path.
+
+        Builds ``self.block_predictors`` (an intercept column of ones is
+        prepended unless ``intercept_present``), then the per-variable base
+        rates and mu_ij matrices (prepare_block_base_rate), the dyad-level
+        block indicators (prepare_block_to_edglelist) and the padded mu_ij
+        tensor consumed by block_prior (prepare_block_effects).
+
+        See also SRM.import_block_predictors, the other block importer: it
+        builds dat_B / Block_edgl for the Stan-like block model instead.
+        """
         print('Be sure that the block predictors are integers starting at 0')
         if self.print_info:
             print('--------------------------------------------------------------------------------')
@@ -132,15 +192,18 @@ class SRM:
         # if jax array check if it is a 2D array
         if isinstance(block_predictors, (jnp.ndarray, SampledData)):
             if block_predictors.ndim != 2:
-                print('Error: Block(s) factors must be a 2D or 3D array')
+                raise ValueError('Error: Block(s) factors must be a 2D or 3D array')
                 
 
+        if index1:
+            block_predictors = block_predictors - 1
+        # RELEASE_AUDIT S5: validate the labels before the intercept column is
+        # added, so the message points at the user's own columns.
+        _check_block_labels(block_predictors, index1)
         self.block_predictors = block_predictors
         if not intercept_present:
-            block_intercept = jnp.ones(self.focal_predictors.shape[1])
+            block_intercept = jnp.ones(block_predictors.shape[0])
             self.block_predictors = jnp.concat([block_intercept[..., None], block_predictors], axis = -1)
-        if index1:
-            self.block_predictors = block_predictors - 1
         self.block_predictors_names = names
         self.prepare_block_base_rate()
         self.prepare_block_to_edglelist()
@@ -153,7 +216,11 @@ class SRM:
         blocks_mu_ij = []
 
         for a in range(self.block_predictors.shape[1]):
-            if self.block_predictors[:,a].sum() == 0:
+            # RELEASE_AUDIT S6: "sum() == 0" is not a test for "no groups": a
+            # column of labels (-1, +1) sums to 0 but holds two groups. A
+            # column without groups is a constant column, and for a constant
+            # column the result (1 group, N_by_group = [N_id]) is unchanged.
+            if jnp.unique(self.block_predictors[:,a]).shape[0] == 1:
                 N_groups = 1
                 N_by_group = jnp.array([self.N_id])
             else:   
@@ -179,7 +246,10 @@ class SRM:
         # --- Preparation for JIT ---
         max_dim = max(b.shape[0] for b in blocks_mu_ij)
         #    We find the largest dimension and pad the smaller arrays.
-        blocks_mu_ij_padded =  [jnp.pad(b, [(0, max_dim - b.shape[0]), (0, max_dim - b.shape[1])], constant_values=jnp.nan) for b in blocks_mu_ij]
+        #! Pad with 0.5, not NaN: update_block_effect applies logit() to the whole
+        #! padded matrix, and logit(0.5) = 0 is a finite prior mean. The padded
+        #! entries are never indexed by Neteffect.block_prior_to_edglelist.
+        blocks_mu_ij_padded =  [jnp.pad(b, [(0, max_dim - b.shape[0]), (0, max_dim - b.shape[1])], constant_values=0.5) for b in blocks_mu_ij]
         blocks_mu_ij_padded = jnp.stack(blocks_mu_ij_padded)
         num_blocks = len(blocks_mu_ij)
         self.num_blocks = num_blocks
@@ -217,33 +287,62 @@ class SRM:
         return final_tmp
       
     def block_prior(self):
-        tmp = jnp.zeros_like(self.blocks_edgl[:,:,0], dtype=jnp.float64)
+        # RELEASE_AUDIT S2: use the default float dtype instead of asking for
+        # float64, which silently downcast (with a warning) when x64 is off.
+        tmp = jnp.zeros_like(self.blocks_edgl[:,:,0], dtype=jnp.result_type(float))
         Block_effect = SRM.block_prior_fn(tmp, self.blocks_mu_ij_padded, self.block_predictors, self.num_blocks, b_ij_sd = 0.1)
         return Block_effect
     
     def import_block_predictors(self, block_predictors, names = None, index1 = False):
-        #! index1 for R users
+        """Import block factors for the Stan-like block model (dat_B / Block_edgl).
+
+        Builds ``self.dat_B`` — one row per block variable v and group pair
+        (i, j), holding the indices, the base rate, the group sizes, the prior
+        mean Mu and the prior scale Sigma — and ``self.Block_edgl``, the
+        dyad-level design of every block parameter, consumed by SRM.model and
+        block_effect_srm_class.
+
+        See also SRM.import_block_predictors2, the other block importer: it
+        builds the base rates and the padded block effects used by block_prior.
+        """
+        #! index1 for R users: labels 1..g are shifted to 0..g-1 first, so the
+        #! block tensor below and self.block_predictors use the same labels.
+        if index1:
+            block_predictors = block_predictors - 1
+        # RELEASE_AUDIT S5: labels must be 0-based contiguous per column.
+        _check_block_labels(block_predictors, index1)
         N_id = block_predictors.shape[0]
         N_vars = block_predictors.shape[1]
-        N_groups_per_var = block_predictors.max(axis=0).astype(int)
+        N_groups_per_var = (block_predictors.max(axis=0) + 1).astype(int)
         max_N_groups_per_var = max(N_groups_per_var)
-        jnp.unique(block_predictors, return_counts=True)
-        N_per_group = jnp.ones((N_vars, max_N_groups_per_var))
+        # RELEASE_AUDIT S1: the (v, i, j) grid used to be filled by a triple
+        # Python loop of .at[].set (O(V*G^2) dispatches). This is setup code,
+        # not jitted, so it is built with numpy instead: dat_B is bit-identical
+        # (same row order, same values) and the padding entries keep 0, so they
+        # are still dropped by the B_In == 1 filter below.
+        float_dtype = jnp.result_type(float)
+        bp_np = np.asarray(block_predictors)
+        N_groups_np = np.asarray(N_groups_per_var, dtype = int)
+        N_per_group = np.ones((N_vars, max_N_groups_per_var), dtype = float_dtype)
         for a in range(N_vars):
-            N_per_group = N_per_group.at[a,:N_groups_per_var[a]].set(jnp.unique(block_predictors[:,a], return_counts = True)[1])
-        N_per_group
+            N_per_group[a,:N_groups_np[a]] = np.bincount(bp_np[:,a].astype(int), minlength = N_groups_np[a])
         N_pars = (N_groups_per_var * N_groups_per_var).sum()
     
-        B_V = B_I = B_J = B_In = B_Base = B_SS = jnp.zeros((N_vars, max_N_groups_per_var, max_N_groups_per_var))
+        B_V = np.zeros((N_vars, max_N_groups_per_var, max_N_groups_per_var), dtype = float_dtype)
+        B_I = np.zeros_like(B_V)
+        B_J = np.zeros_like(B_V)
+        B_In = np.zeros_like(B_V)
+        B_Base = np.zeros_like(B_V)
+        B_SS = np.zeros_like(B_V)
         for v in range(N_vars):
-            for i in range(N_groups_per_var[v]):
-                for j in range(N_groups_per_var[v]):
-                    B_V= B_V.at[v,i,j].set(v)
-                    B_I = B_I.at[v,i,j].set(i)
-                    B_J= B_J.at[v,i,j].set(j)
-                    B_In = B_In.at[v,i,j].set(1)
-                    B_Base =  B_Base.at[v,i,j].set(0.1 if i == j else 0.01)        
-                    B_SS = B_SS.at[v,i,j].set(jnp.sqrt(N_per_group[v,i]*0.5 + N_per_group[v,j]*0.5))
+            G = N_groups_np[v]
+            ii, jj = np.meshgrid(np.arange(G), np.arange(G), indexing = "ij")
+            B_V[v,ii,jj] = v
+            B_I[v,ii,jj] = ii
+            B_J[v,ii,jj] = jj
+            B_In[v,ii,jj] = 1
+            B_Base[v,ii,jj] = np.where(ii == jj, 0.1, 0.01)
+            B_SS[v,ii,jj] = np.sqrt(N_per_group[v,ii]*0.5 + N_per_group[v,jj]*0.5)
     
         B_SS = B_SS.flatten()
         B_V = B_V.flatten()
@@ -286,10 +385,7 @@ class SRM:
         self.N_vars_Block = N_vars
         self.max_N_groups_per_var = max_N_groups_per_var
         self.N_pars = N_pars
-        if index1:
-            self.block_predictors = block_predictors - 1
-        else:
-            self.block_predictors = block_predictors
+        self.block_predictors = block_predictors
 
     @staticmethod
     def block_effect_srm_class(Block_edgl, dat_B, sample = False):
@@ -318,6 +414,17 @@ class SRM:
         N_id = focal_predictors.shape[0] if focal_predictors is not None else receiver_predictors.shape[0]
         N_dyads = network.shape[0]
 
+        # RELEASE_AUDIT W4: this model consumes ordered dyads (i -> j, i != j),
+        # N*(N-1) rows. SRM.__init__ stores the N*(N-1)/2 upper-triangle dyads
+        # built by mat_to_edgl; passing them would silently misalign every
+        # dyad, so fail loudly instead.
+        if N_dyads != N_id * (N_id - 1):
+            raise ValueError(
+                f"numpyro_bsrm_model expects ordered dyads: network must have "
+                f"N*(N-1) = {N_id * (N_id - 1)} rows for N={N_id}, got "
+                f"{N_dyads}. SRM(A).network holds the N*(N-1)/2 upper-triangle "
+                f"dyads from mat_to_edgl and cannot be passed directly.")
+
         # Create edgelist indices (use the edgelist passed as network parameter)
         # The network parameter is the edgelist outcomes, so we need to create indices
         ids = jnp.arange(N_id)
@@ -340,21 +447,22 @@ class SRM:
 
         # Get block data if provided
         if block_predictors is not None:
-            # Create simple block design matrix matching NumPyro reference
-            N_blocks = block_predictors.shape[1] * 2  # 2 blocks per variable (since x_block has 2 values: 0,1)
-            N_blocks = 2  # For simplicity, assume 2 blocks total (groups 0 and 1)
-            long_block_set_np = jnp.zeros((N_dyads, N_blocks))
+            # Block design: one effect per (block variable, group); groups are
+            # 0-based labels 0..g_v-1 of each column of block_predictors.
+            bp = np.asarray(block_predictors).astype(int)
+            n_groups = bp.max(axis=0) + 1
+            offsets = np.concatenate([[0], np.cumsum(n_groups)[:-1]])
+            N_blocks = int(n_groups.sum())
+            ids_np = np.asarray(long_ids_int)
+            design = np.zeros((N_dyads, N_blocks))
+            rows = np.arange(N_dyads)
+            for v in range(bp.shape[1]):
+                # For dyad (i,j), effects for i's group and j's group
+                design[rows, offsets[v] + bp[ids_np[:, 0], v]] = 1
+                design[rows, offsets[v] + bp[ids_np[:, 1], v]] = 1
+            long_block_set_np = jnp.asarray(design)
             block_mu_np = jnp.zeros(N_blocks)
             block_sigma_np = jnp.full(N_blocks, 2.5)
-            
-            # Create block design matrix
-            for d in range(N_dyads):
-                i, j = long_ids_int[d]
-                i_group = int(block_predictors[i, 0])
-                j_group = int(block_predictors[j, 0])
-                # For dyad (i,j), we have effects for i's group and j's group
-                long_block_set_np = long_block_set_np.at[d, i_group].set(1)
-                long_block_set_np = long_block_set_np.at[d, j_group].set(1)
             
             N_var_block = N_blocks
         else:
@@ -411,6 +519,9 @@ class SRM:
         """
         Core NumPyro BSRM model implementation that matches the reference exactly.
         """
+        if outcome_mode not in (1, 2, 3, 4):
+            raise ValueError(f"outcome_mode must be 1 (bernoulli), 2 (binomial), 3 (poisson) "
+                             f"or 4 (gaussian), got {outcome_mode!r}")
         # Observation noise (for Gaussian outcome)
         error_sigma = dist.truncated_normal(prior_23_1, prior_23_2, low=0.0, name="error_sigma")
 
@@ -454,15 +565,11 @@ class SRM:
         dr_L = numpyro.sample("dr_L", numpyro.distributions.LKJCholesky(2, prior_18_1))
         dr_sigma = dist.truncated_normal(prior_16_1, prior_16_2, low=0.0, name="dr_sigma")
         dr_sigma_scaled = jnp.sqrt(dr_sigma)
-        print(f"dr_sigma: {dr_sigma}, shape: {dr_sigma.shape}")
-        print(f"dr_L: {dr_L}, shape: {dr_L.shape}")
         dr_L_scaled = dr_L * dr_sigma_scaled
-        print(f"dr_L_scaled: {dr_L_scaled}, shape: {dr_L_scaled.shape}")
 
-        if export_network == 1:
-            dr_raw = numpyro.sample("dr_raw", numpyro.distributions.Normal(jnp.zeros((2, N_dyads)), 1))
-        else:
-            dr_raw = numpyro.sample("dr_raw", numpyro.distributions.Normal(jnp.zeros((2, N_dyads)), 1))
+        # RELEASE_AUDIT S3: both branches of the old `if export_network == 1:`
+        # held the same statement, so the branch was dead code.
+        dr_raw = numpyro.sample("dr_raw", numpyro.distributions.Normal(jnp.zeros((2, N_dyads)), 1))
 
         dr = jnp.transpose(jnp.matmul(dr_L_scaled, dr_raw))
 
@@ -491,27 +598,27 @@ class SRM:
             # Bernoulli (binary)
             dist.bernoulli(logits=linear_model, obs=long_outcome_set_np)
             if export_network == 1:
-                dist.deterministic("p", jax.nn.sigmoid(linear_model))
+                numpyro.deterministic("p", jax.nn.sigmoid(linear_model))
 
         elif outcome_mode == 2:
             # Binomial
             dist.binomial(total_count=long_exposure_set_np, logits=linear_model, obs=long_outcome_set_np)
             if export_network == 1:
-                dist.deterministic("p", jax.nn.sigmoid(linear_model))
+                numpyro.deterministic("p", jax.nn.sigmoid(linear_model))
 
         elif outcome_mode == 3:
             # Poisson
             dist.poisson(rate=jnp.exp(linear_model), obs=long_outcome_set_np)
             if export_network == 1:
-                dist.deterministic("p", jnp.exp(linear_model))
+                numpyro.deterministic("p", jnp.exp(linear_model))
 
         elif outcome_mode == 4:
             # Gaussian
             dist.normal(loc=linear_model, scale=error_sigma, obs=long_outcome_set_np)
             if export_network == 1:
-                dist.deterministic("p", linear_model)
+                numpyro.deterministic("p", linear_model)
 
         # Store correlation matrices for diagnostics
-        dist.deterministic("G_corr", jnp.matmul(sr_L, sr_L.T))
-        dist.deterministic("D_corr", jnp.matmul(dr_L, dr_L.T))
+        numpyro.deterministic("G_corr", jnp.matmul(sr_L, sr_L.T))
+        numpyro.deterministic("D_corr", jnp.matmul(dr_L, dr_L.T))
 

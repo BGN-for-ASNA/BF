@@ -144,6 +144,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce how often each career is chosen?
@@ -151,21 +152,22 @@ Does the model reproduce how often each career is chosen?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_bars()
+# m.diag.ppc_bars()
 ```
 
 #### R
 ```r
-m$diag$ppc_bars()
+# m$diag$ppc_bars()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_bars()
+# m.diag.ppc_bars()
 ```
 :::
 
 Bars are the observed number of people in each career, points the median predicted number with a 90 % interval. Each bar top should lie inside its interval. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 
 ## Mathematical Details 
 We can model a *Categorical* model using a $Categorical distribution$. The multinomial distribution models the counts of outcomes falling into different categories. For an outcome variable 

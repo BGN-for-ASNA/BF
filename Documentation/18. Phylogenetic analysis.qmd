@@ -893,6 +893,7 @@ m.fit(model)
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Are the leave-one-out predictive distributions calibrated?
@@ -900,17 +901,17 @@ Are the leave-one-out predictive distributions calibrated?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 
 #### R
 ```r
-m$diag$ppc_loo_pit()
+# m$diag$ppc_loo_pit()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_loo_pit()
+# m.diag.ppc_loo_pit()
 ```
 :::
 
@@ -922,22 +923,23 @@ For each species, the LOO-PIT value is the rank of the observed value in its lea
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 
 #### R
 ```r
-m$diag$ppc_intervals()
+# m$diag$ppc_intervals()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_intervals()
+# m.diag.ppc_intervals()
 ```
 :::
 
 Observed values with their 50 % and 90 % predictive intervals.
 :::
+-->
 
 ### Mathematical Details
 

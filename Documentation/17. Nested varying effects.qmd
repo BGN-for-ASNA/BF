@@ -58,7 +58,7 @@ def model_nested(y, x, group_id, region_id, N_groups=20, N_regions=5):
     )
 
     # 2. Group level — parent mapping via JAX scatter (traceable under pmap)
-    group_to_region = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
+    group_to_region = jnp.zeros(N_groups, dtype=region_id.dtype).at[group_id].set(region_id)
     sigma_grp  = m.dist.exponential(1, shape=(2,), name='sigma_group')
     corr_grp   = m.dist.lkj(2, 2, name='corr_group')
     cov_grp    = jnp.diag(sigma_grp) @ corr_grp @ jnp.diag(sigma_grp)
@@ -90,7 +90,7 @@ def model_nested_noncentered(y, x, group_id, region_id, N_groups=20, N_regions=5
     region_effects = mu_global + ((sigma_region[..., None] * L_region) @ z_region).T
 
     # 2. Group level — parent mapping via JAX scatter (traceable under pmap)
-    pid          = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
+    pid          = jnp.zeros(N_groups, dtype=region_id.dtype).at[group_id].set(region_id)
     sigma_group  = m.dist.exponential(1, shape=(2,), name='sigma_group')
     L_group      = m.dist.lkj_cholesky(2, 2, name='L_group')
     z_group      = m.dist.normal(0, 1, name='z_group', shape=(2, N_groups))
@@ -260,6 +260,7 @@ m$summary()
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the mean outcome of every region?
@@ -267,17 +268,17 @@ Does the model reproduce the mean outcome of every region?
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="mean", group="region_id")
+# m.diag.ppc_stat(stat="mean", group="region_id")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "mean", group = "region_id")
+# m$diag$ppc_stat(stat = "mean", group = "region_id")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="mean", group="region_id")
+# m.diag.ppc_stat(stat="mean", group="region_id")
 ```
 :::
 
@@ -289,22 +290,23 @@ One panel per region: observed mean (vertical line) against the means of simulat
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_density(group="region_id")
+# m.diag.ppc_density(group="region_id")
 ```
 
 #### R
 ```r
-m$diag$ppc_density(group = "region_id")
+# m$diag$ppc_density(group = "region_id")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_density(group="region_id")
+# m.diag.ppc_density(group="region_id")
 ```
 :::
 
 The distribution of the outcome within each region (black) against simulated ones (blue), on a shared x axis.
 :::
+-->
 
 ## Mathematical Details
 

@@ -1,17 +1,16 @@
 from BayesForge.Network.util import array_manip
 import jax 
-from jax import jit, vmap
+from jax import jit
 import jax.numpy as jnp
+import numpy as np
 from numpyro import deterministic
-import os
-import sys
-import inspect
 from BayesForge.Distributions.np_dists import UnifiedDist as dist
 from functools import partial
 dist = dist()
 class Neteffect(array_manip):
-    def __init__(self) -> None:
-        self._cache = {}
+    # Former no-op __init__ only allocated a dead dict
+    # that was never read or written anywhere in BayesForge; removed. The
+    # inherited array_manip.__init__ is a pass, so construction is unchanged.
 
     @staticmethod 
     @jit
@@ -27,9 +26,10 @@ class Neteffect(array_manip):
         Returns
         -------
         float or array-like
-            The logit-transformed value(s): log(x / (1 - x)).
+            The logit-transformed value(s): log(x) - log(1 - x), computed
+            with ``log1p`` so values close to 1 do not overflow the ratio.
         """
-        return jnp.log(x / (1 - x))
+        return jnp.log(x) - jnp.log1p(-x)
 
     # Sender receiver  ----------------------
     
@@ -160,7 +160,7 @@ class Neteffect(array_manip):
 
         if receiver_predictors is not None:            
             N_var_receiver = receiver_predictors.shape[1]
-            N_id = sender_predictors.shape[0] 
+            N_id = receiver_predictors.shape[0] 
         else:
             N_var_receiver = 0
 
@@ -216,7 +216,6 @@ class Neteffect(array_manip):
         dr_raw =  dist.normal(0, 1, shape=(2,N_dyads), name = 'dr_raw', sample = sample)
         dr_sigma = dist.truncated_normal(dr_sigma_mu, dr_sigma_sd, low = 0, shape=(1,), name = 'dr_sigma', sample = sample )
         dr_L = dist.lkj_cholesky(cholesky_dim, cholesky_density, name = 'dr_L', sample = sample)
-        #dr_rf = deterministic('dr_rf', (((dr_L @ dr_raw).T * jnp.repeat(dr_sigma, 2))))
         dr_rf =  deterministic('dr_rf',jnp.transpose(jnp.matmul(dr_sigma * dr_L, dr_raw)))
         if diag :
             print("dr_raw--------------------------------------------------------------------------------")
@@ -262,8 +261,15 @@ class Neteffect(array_manip):
         """Compute dyadic effects combining both fixed and random components.
         
         Args:
-            dyadic_predictors (jax array, optional): Predictors for dyadic effects.
-            shape (int, optional): Shape parameter if predictors are not provided.
+            dyadic_predictors (jax array, optional): Edge-list predictors of shape
+                (N_dyads, 2, K) — column 0 is direction i->j, column 1 j->i, one
+                slab per predictor k. A 2-D array is read as an (N_dyads, K)
+                edge list with one coefficient shared by the K columns.
+                Warning (RELEASE_AUDIT m8): m.net2.dyadic_effect reads a 2-D
+                input as an (N, N) predictor matrix instead, so the same 2-D
+                array means different things in m.net and m.net2.
+            shape (int, optional): Number of dyads, N*(N-1)/2 — used only when
+                dyadic_predictors is None (random effects only).
             d_m (float, optional): Mean for fixed effects. Defaults to 0.
             d_sd (float, optional): SD for fixed effects. Defaults to 1.
             dr_sigma (float, optional): Sigma parameter for random effects. Defaults to 1.
@@ -275,8 +281,10 @@ class Neteffect(array_manip):
             jax array: Combined dyadic effects.
         """                     
         if dyadic_predictors is None and shape is None:
-            print('Error: Argument shape must be defined if argument dyadic_predictors is not define')
-            return 'Argument shape must be defined if argument dyadic_predictors is not define'
+            # RELEASE_AUDIT m7: this used to print and return the error string,
+            # which then propagated as a str into the downstream logit sum.
+            raise ValueError(
+                'Argument shape must be defined if argument dyadic_predictors is not define')
         if dyadic_predictors is not None :
             dr_ff, dyad_effects = Neteffect.dyadic_terms(dyadic_predictors, d_m = d_m, d_sd = d_sd, sample = sample)
             dr_rf, dr_raw, dr_sigma, dr_L =  Neteffect.dyadic_random_effects(dr_ff.shape[0], dr_sigma_mu = dr_sigma_mu, dr_sigma_sd = dr_sigma_sd,
@@ -304,8 +312,8 @@ class Neteffect(array_manip):
 
         return jnp.stack([b[v[:,0],v[:,1]], b[v[:,1],v[:,0]]], axis = 1)
 
-    @staticmethod
-
+    # RELEASE_AUDIT m6: an orphaned second @staticmethod used to sit here,
+    # double-decorating block_model (TypeError at import on Python <= 3.9).
 
     @staticmethod
     def block_model(group, N_group, N_by_group, b_ij_sd=2.5, b_ij_mu=None,
@@ -330,8 +338,13 @@ class Neteffect(array_manip):
             (N_dyads, 2) array: Logit-scale block contributions for each directed dyad.
         """
         if b_ij_mu is None:
-            # Generic formula: derive probability from group sizes, then logit-transform
-            mu_ij = Neteffect.logit(Neteffect.block_build_mu_ij(N_by_group, N_group))
+            # Generic formula: derive probability from group sizes, then logit-transform.
+            # Clip to (0, 1) first so a saturated (full or empty) block can never
+            # push the prior mean to +-inf.
+            mu_prob = jnp.clip(
+                Neteffect.block_build_mu_ij(N_by_group, N_group), 1e-6, 1 - 1e-6
+            )
+            mu_ij = Neteffect.logit(mu_prob)
         else:
             # Caller supplies the prior mean directly on the logit scale
             mu_ij = b_ij_mu
@@ -408,6 +421,17 @@ class Neteffect(array_manip):
         Returns:
             jax array: Predictor contribution of shape (num_rows,).
         """
+        # RELEASE_AUDIT W7: codes are 1-based (group_idx_0 = code - 1), so
+        # 0-based codes from m.index() would silently map group 0 to the last
+        # group. Fail loudly when the codes are concrete (not a tracer).
+        if not isinstance(random_group_index, jax.core.Tracer):
+            _codes = np.asarray(random_group_index)  # numpy: see block_build_mu_ij
+            if _codes.size and (int(_codes.min()) < 1
+                                or int(_codes.max()) > num_random_groups):
+                raise ValueError(
+                    f"nodal_random_effects: random_group_index is 1-based "
+                    f"(got min={int(_codes.min())}, max={int(_codes.max())}); "
+                    f"codes from m.index() are 0-based: pass index + 1")
         group_idx_0 = random_group_index - 1
         group_mu    = dist.normal(prior_mean_mu, prior_mean_sigma, shape=(num_random_groups,),
                                    name=f'{name}_group_mu', sample=sample)
@@ -425,7 +449,6 @@ class Neteffect(array_manip):
             return jnp.dot(design_random, beta_actual)
 
     @staticmethod
-    @partial(jax.jit, static_argnums=(1,))
     def block_build_mu_ij(N_by_group, N_group):
         """Build block-model prior means matching STRAND's internal logic.
 
@@ -436,7 +459,30 @@ class Neteffect(array_manip):
             Base = 0.1 (diagonal/ingroup) or 0.01 (off-diagonal/outgroup)
             SS   = sqrt(N_i * 0.5 + N_j * 0.5)
             Mu   = Base / SS
+
+        Raises
+        ------
+        ValueError
+            When a concrete (non-traced) ``N_by_group`` contains a 0: an
+            empty group divides the base rate by zero, which would silently
+            produce ``inf`` probabilities and ``NaN`` prior means downstream.
         """
+        if not isinstance(N_by_group, jax.core.Tracer):
+            # numpy, not jnp: a jnp op run while the model is traced returns
+            # a tracer even on a concrete input.
+            sizes = np.asarray(N_by_group)
+            empty = np.flatnonzero(sizes == 0)
+            if empty.size:
+                idx = ", ".join(str(int(i)) for i in empty.tolist())
+                raise ValueError(
+                    f"block model: group(s) {idx} have no member; drop empty "
+                    "levels before building the block prior."
+                )
+        return Neteffect._block_build_mu_ij_jit(N_by_group, N_group)
+
+    @staticmethod
+    @partial(jax.jit, static_argnums=(1,))
+    def _block_build_mu_ij_jit(N_by_group, N_group):
         # N_group is a static value known at compile time.
         base_rate = jnp.tile(0.01, (N_group, N_group))
         base_rate = base_rate.at[jnp.diag_indices_from(base_rate)].set(0.1)

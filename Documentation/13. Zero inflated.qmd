@@ -132,6 +132,7 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
 ### Posterior predictive checks
 
 Does the model reproduce the excess of zeros (days without production because the monks drink)?
@@ -139,17 +140,17 @@ Does the model reproduce the excess of zeros (days without production because th
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_stat(stat="n_zero")
+# m.diag.ppc_stat(stat="n_zero")
 ```
 
 #### R
 ```r
-m$diag$ppc_stat(stat = "n_zero")
+# m$diag$ppc_stat(stat = "n_zero")
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_stat(stat="n_zero")
+# m.diag.ppc_stat(stat="n_zero")
 ```
 :::
 
@@ -161,22 +162,23 @@ The vertical line is the observed number of zeros, the curve the number of zeros
 ::: {.panel-tabset group="language"}
 #### Python
 ```{python}
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 
 #### R
 ```r
-m$diag$ppc_rootogram()
+# m$diag$ppc_rootogram()
 ```
 
 #### Julia
 ```julia
-m.diag.ppc_rootogram()
+# m.diag.ppc_rootogram()
 ```
 :::
 
 `ppc_rootogram`: observed frequency of each count (bars, square-root scale) against the expected frequency (line); the bar at 0 should reach the line.
 :::
+-->
 
 # Mathematical Details
 
