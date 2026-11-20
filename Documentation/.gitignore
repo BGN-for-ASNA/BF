@@ -2,3 +2,4 @@
 .pkl
 **/*.quarto_ipynb
 _freeze_deps/
+scripts/__pycache__/

@@ -9,8 +9,9 @@
 # =============================================================================
 
 import datetime
+import os
+import sys
 import numpy as np
-import jax.numpy as jnp
 import matplotlib
 
 matplotlib.use("Agg")
@@ -22,6 +23,32 @@ from BayesForge import bf
 # ── 0.  device ────────────────────────────────────────────────────────────────
 m = bf(platform="cpu")
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "3.Documentation"))
+from doc_blocks import doc_model
+
+# The models as published on the documentation page: the two built-in ones
+# (m.effects.nested_varying_effects, non-centered and centered) and the two written out by
+# hand (non-centered with an LKJ Cholesky factor, centered with a correlation matrix).
+# Same priors as the local copies they replace: sigma ~ exponential(1);
+# global_intercept ~ normal(5, 2), global_beta ~ normal(-1, 1) and
+# sigma_region / sigma_group ~ exponential(1) shape (2,) with corr ~ lkj(2, 2) /
+# L ~ lkj_cholesky(2, 2) in the hand-written models; the built-in models keep the library
+# defaults for the global mean (normal(0, 2) / normal(0, 1)), as the old copies did.
+# The page's hand-written non-centered model names its Cholesky factors 'L_region' /
+# 'L_group' (the built-in uses 'L_corr_region' / 'L_corr_group') and samples the global
+# mean as scalars; the lookups below accept both.
+PAGE_MODEL_BUILTIN_NC = doc_model(
+    "17. Nested varying effects.qmd", 0, name="model_nested_builtin"
+)
+PAGE_MODEL_BUILTIN_C = doc_model(
+    "17. Nested varying effects.qmd", 0, name="model_nested_builtin_centered"
+)
+PAGE_MODEL_RAW_NC = doc_model(
+    "17. Nested varying effects.qmd", 0, name="model_nested_noncentered"
+)
+PAGE_MODEL_RAW_C = doc_model(
+    "17. Nested varying effects.qmd", 0, name="model_nested"
+)
 # =============================================================================
 # 1.  DATA GENERATING PROCESS (DGP)
 # =============================================================================
@@ -107,83 +134,18 @@ true_params = {
 }
 
 # =============================================================================
-# 2.  MODEL DEFINITIONS
+# 2.  MODEL DEFINITIONS  (the four models of the documentation page, see above)
 # =============================================================================
 
 
-def model_noncentered(group_id, region_id, x, y, N_regions, N_groups):
-    sigma = m.dist.exponential(1, name="sigma")
-    a_g_est, b_g_est = m.effects.nested_varying_effects(
-        N_vars=2,
-        names=["region", "group"],
-        N_groups=[N_regions, N_groups],
-        group_ids=[region_id, group_id],
-        centered=False,
-    )
-    mu_est = a_g_est + b_g_est * x
-    m.dist.normal(mu_est, sigma, obs=y)
+def _chol(posteriors, level):
+    """Cholesky factor of a level's correlation matrix.
 
-
-def model_centered(group_id, region_id, x, y, N_regions, N_groups):
-    sigma = m.dist.exponential(1, name="sigma")
-    a_g_est, b_g_est = m.effects.nested_varying_effects(
-        N_vars=2,
-        names=["region", "group"],
-        N_groups=[N_regions, N_groups],
-        group_ids=[region_id, group_id],
-        centered=True,
-    )
-    mu_est = a_g_est + b_g_est * x
-    m.dist.normal(mu_est, sigma, obs=y)
-
-
-def model_raw_noncentered(group_id, region_id, x, y, N_regions, N_groups):
-    sigma = m.dist.exponential(1, name="sigma")
-
-    global_intercept = m.dist.normal(5, 2, name="global_intercept", shape=(1,))
-    global_beta      = m.dist.normal(-1, 1, name="global_beta",      shape=(1,))
-    mu_global        = jnp.concat([global_intercept, global_beta])
-
-    sigma_region  = m.dist.exponential(1, shape=(2,), name="sigma_region")
-    L_corr_region = m.dist.lkj_cholesky(2, 2, name="L_corr_region")
-    z_region      = m.dist.normal(0, 1, name="z_region", shape=(2, N_regions))
-    region_eff    = mu_global + ((sigma_region[..., None] * L_corr_region) @ z_region).T
-
-    sigma_group  = m.dist.exponential(1, shape=(2,), name="sigma_group")
-    L_corr_group = m.dist.lkj_cholesky(2, 2, name="L_corr_group")
-    z_group      = m.dist.normal(0, 1, name="z_group", shape=(2, N_groups))
-    pid          = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
-    group_eff    = region_eff[pid] + ((sigma_group[..., None] * L_corr_group) @ z_group).T
-
-    mu_est = group_eff[group_id, 0] + group_eff[group_id, 1] * x
-    m.dist.normal(mu_est, sigma, obs=y)
-
-
-def model_raw_centered(group_id, region_id, x, y, N_regions, N_groups):
-    sigma = m.dist.exponential(1, name="sigma")
-
-    mu_global = jnp.stack([
-        m.dist.normal(5, 2, name="global_intercept"),
-        m.dist.normal(-1, 1, name="global_beta"),
-    ])
-
-    sigma_region = m.dist.exponential(1, shape=(2,), name="sigma_region")
-    corr_region  = m.dist.lkj(2, 2, name="corr_region")
-    cov_region   = jnp.diag(sigma_region) @ corr_region @ jnp.diag(sigma_region)
-    region_eff   = m.dist.multivariate_normal(
-        mu_global, cov_region, shape=(N_regions,), name="region_effects"
-    )
-
-    sigma_group = m.dist.exponential(1, shape=(2,), name="sigma_group")
-    corr_group  = m.dist.lkj(2, 2, name="corr_group")
-    cov_group   = jnp.diag(sigma_group) @ corr_group @ jnp.diag(sigma_group)
-    pid         = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
-    group_eff   = m.dist.multivariate_normal(
-        region_eff[pid], cov_group, name="group_effects"
-    )
-
-    mu_est = group_eff[group_id, 0] + group_eff[group_id, 1] * x
-    m.dist.normal(mu_est, sigma, obs=y)
+    Named 'L_<level>' by the page's hand-written non-centered model and
+    'L_corr_<level>' by the built-in one.
+    """
+    key = f"L_{level}" if f"L_{level}" in posteriors else f"L_corr_{level}"
+    return posteriors[key]
 
 
 # =============================================================================
@@ -197,27 +159,27 @@ def reconstruct_noncentered(posteriors):
     Decode group- and region-level effects from the non-centered parameterisation.
 
     Posterior shapes after concatenating chains:
-      global_intercept : (S, 1)
-      global_beta      : (S, 1)
+      global_intercept : (S, 1) or (S,)
+      global_beta      : (S, 1) or (S,)
       sigma_region     : (S, 2)
-      L_corr_region    : (S, 2, 2)
+      L_region / L_corr_region : (S, 2, 2)
       z_region         : (S, 2, N_regions)
       sigma_group      : (S, 2)
-      L_corr_group     : (S, 2, N_groups)
+      L_group / L_corr_group   : (S, 2, 2)
       z_group          : (S, 2, N_groups)
 
     Returns dicts mapping name → posterior-mean array.
     """
-    gi = posteriors["global_intercept"]  # (S, 1)
-    gb = posteriors["global_beta"]  # (S, 1)
-    mu_global = np.concatenate([gi, gb], axis=1)  # (S, 2)
+    gi = posteriors["global_intercept"]  # (S, 1) or (S,)
+    gb = posteriors["global_beta"]  # (S, 1) or (S,)
+    mu_global = np.stack([np.ravel(gi), np.ravel(gb)], axis=1)  # (S, 2)
 
     s_reg = posteriors["sigma_region"]  # (S, 2)
-    L_reg = posteriors["L_corr_region"]  # (S, 2, 2)
+    L_reg = _chol(posteriors, "region")  # (S, 2, 2)
     z_reg = posteriors["z_region"]  # (S, 2, N_regions)
 
     s_grp = posteriors["sigma_group"]  # (S, 2)
-    L_grp = posteriors["L_corr_group"]  # (S, 2, N_groups)
+    L_grp = _chol(posteriors, "group")  # (S, 2, 2)
     z_grp = posteriors["z_group"]  # (S, 2, N_groups)
 
     S = gi.shape[0]
@@ -360,12 +322,12 @@ def _build_log_rows(model_title, posteriors, eff):
         add("sigma_a_group", float(sg[0]))
         add("sigma_b_group", float(sg[1]))
 
-    if "L_corr_region" in posteriors:
-        L = posteriors["L_corr_region"].mean(0)
+    if "L_region" in posteriors or "L_corr_region" in posteriors:
+        L = _chol(posteriors, "region").mean(0)
         add("rho_region", float((L @ L.T)[0, 1]))
 
-    if "L_corr_group" in posteriors:
-        L = posteriors["L_corr_group"].mean(0)
+    if "L_group" in posteriors or "L_corr_group" in posteriors:
+        L = _chol(posteriors, "group").mean(0)
         add("rho_group", float((L @ L.T)[0, 1]))
 
     # grand means of random effects
@@ -427,10 +389,10 @@ def _write_log(log_rows, filepath):
 # =============================================================================
 
 configs = [
-    dict(title="Non-Centered (Built-in)", model_fn=model_noncentered,     reconstruct_fn=reconstruct_noncentered, color="#4C72B0"),
-    dict(title="Centered (Built-in)",     model_fn=model_centered,         reconstruct_fn=reconstruct_centered,    color="#DD8452"),
-    dict(title="Non-Centered (Raw)",      model_fn=model_raw_noncentered,  reconstruct_fn=reconstruct_noncentered, color="#55A868"),
-    dict(title="Centered (Raw)",          model_fn=model_raw_centered,     reconstruct_fn=reconstruct_centered,    color="#C44E52"),
+    dict(title="Non-Centered (Built-in)", model_fn=PAGE_MODEL_BUILTIN_NC, reconstruct_fn=reconstruct_noncentered, color="#4C72B0"),
+    dict(title="Centered (Built-in)",     model_fn=PAGE_MODEL_BUILTIN_C,  reconstruct_fn=reconstruct_centered,    color="#DD8452"),
+    dict(title="Non-Centered (Raw)",      model_fn=PAGE_MODEL_RAW_NC,     reconstruct_fn=reconstruct_noncentered, color="#55A868"),
+    dict(title="Centered (Raw)",          model_fn=PAGE_MODEL_RAW_C,      reconstruct_fn=reconstruct_centered,    color="#C44E52"),
 ]
 
 # True values to compare against

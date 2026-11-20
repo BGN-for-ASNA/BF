@@ -3,15 +3,15 @@ Fitting model with BF...
 Fitting model with sklearn...
 
 --- Numerical Comparison ---
-BF Variance Ratio:      [0.72962101 0.22851097 0.03668928 0.00517874]
+BF Variance Ratio:      [0.72962398 0.22850801 0.03668923 0.00517879]
 Sklearn Variance Ratio: [0.72962445 0.22850762 0.03668922 0.00517871]
 ✅ Explained variance ratios match within tolerance.
 
 BI Components (first 2 PCs):
- [[ 0.52032265  0.3786899 ]
- [-0.27182683  0.92261121]
- [ 0.58024706  0.02582151]
- [ 0.56452446  0.06867141]]
+ [[ 0.52052415  0.37794636]
+ [-0.27009021  0.92303883]
+ [ 0.58063161  0.02511251]
+ [ 0.56477678  0.0672698 ]]
 
 Sklearn Components (first 2 PCs):
  [[ 0.52106591  0.37741762]
