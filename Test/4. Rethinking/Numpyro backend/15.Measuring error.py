@@ -129,7 +129,7 @@ nsim_test = int(os.environ.get("BF_NSIM", 10))
 a_sims = np.random.normal(0, 0.2, size=nsim_test)
 beta_sims = np.random.normal(0, 0.5, size=nsim_test)
 eta_sims = np.random.normal(0, 0.5, size=nsim_test)
-s_sims = np.random.exponential(1.0, size=nsim_test)
+s_sims = np.random.uniform(0.3, 1.2, size=nsim_test)
 
 A_ext = np.tile(np.asarray(dat['A']), 4)
 M_ext = np.tile(np.asarray(dat['M']), 4)

@@ -110,7 +110,7 @@ print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
 # Simulated truths drawn from the page priors: a ~ normal(3, 0.5), b ~ normal(0, 0.2)
 a_sims = np.random.normal(3, 0.5, size=(nsim_test, 2))
-b_sims = np.random.normal(0, 0.2, size=(nsim_test, 2))
+b_sims = np.random.normal(0, 0.4, size=(nsim_test, 2))
 
 # Tile even more observations for stronger signal (100x tiling = 1000 obs)
 cid_extended = np.tile(df.cid.values, 100)

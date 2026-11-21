@@ -1,25 +1,25 @@
 Comparison Table for 4.Binomial
 ============================================================
-Parameter BF Mean Stan Mean    Diff KL Div
-    alpha  0.3179    0.3211 -0.0032 0.0578
+Parameter BF Mean Stan Mean   Diff KL Div
+    alpha  0.3216    0.3184 0.0032 0.0895
 ============================================================
 
 ================================================================
 WAIC cross-check  -  4.Binomial
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -344.011731    p_waic = 1.041177
+      elpd_waic = -343.975559    p_waic = 1.005482
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -344.011731    p_waic = 1.041177
+      elpd_waic = -343.975559    p_waic = 1.005482
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=504)
 ----------------------------------------------------------------
 LOO cross-check  -  4.Binomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -344.012950    p_loo  = 1.042397
+      elpd_loo  = -343.976983    p_loo  = 1.006907
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -344.013149    p_loo  = 1.042596
-|delta elpd_loo| = 1.990e-04      |delta p_loo| = 1.990e-04
+      elpd_loo  = -343.977194    p_loo  = 1.007118
+|delta elpd_loo| = 2.109e-04      |delta p_loo| = 2.109e-04
 RESULT: PASS
 ================================================================

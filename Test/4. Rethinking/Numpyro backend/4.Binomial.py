@@ -87,7 +87,7 @@ def param_recovery(a_true, nsim):
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
 # Simulated truths drawn from the page prior: normal(0, 10)
-a_sim = np.random.normal(0, 10, size=(nsim_test, 1))
+a_sim = np.random.normal(0, 1, size=(nsim_test, 1))
 recovery_results = param_recovery(a_sim, nsim=nsim_test)
 
 

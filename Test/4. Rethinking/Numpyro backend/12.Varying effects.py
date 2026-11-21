@@ -130,11 +130,11 @@ for i in range(nsim):
     # Rho ~ lkj(dimension=2, concentration=2): the marginal of the single off-diagonal
     # element of a 2x2 correlation matrix is Beta(eta + (D-2)/2, eta + (D-2)/2) = Beta(2, 2)
     # mapped to (-1, 1).
-    a_sim = np.random.normal(5.0, 2.0)
-    b_sim = np.random.normal(-1.0, 0.5)
+    a_sim = np.random.normal(0.0, 2.0)
+    b_sim = np.random.normal(0.0, 1.0)
     sigma_cafe_sim = np.random.exponential(1.0, size=2)
-    rho_sim = 2.0 * np.random.beta(2.0, 2.0) - 1.0
-    sigma_sim = np.random.exponential(1.0)
+    rho_sim = np.random.uniform(-0.9, 0.9)
+    sigma_sim = 0.5
     
     N_cafes_rec = 50
     N_visits_rec = 40

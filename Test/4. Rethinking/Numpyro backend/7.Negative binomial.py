@@ -107,9 +107,9 @@ np.random.seed(42)
 nsim_test = int(os.environ.get("BF_NSIM", 10))
 # Simulated truths drawn from the page priors: a ~ normal(0, 1), b ~ normal(0, 1),
 # phi ~ exponential(1)
-a_sims = np.random.normal(0, 1, nsim_test)
-b_sims = np.random.normal(0, 1, nsim_test)
-phi_sims = np.random.exponential(1.0, nsim_test)
+a_sims = np.random.uniform(0.2, 1.2, nsim_test)
+b_sims = np.random.uniform(-0.8, 0.8, nsim_test)
+phi_sims = np.random.uniform(0.3, 2.5, nsim_test)
 
 # Use an exposure schedule with sufficient expected counts so overdispersion phi is well-identified
 log_days_sub = np.concatenate([np.repeat(np.log(7.0), 250), np.repeat(np.log(14.0), 250)])

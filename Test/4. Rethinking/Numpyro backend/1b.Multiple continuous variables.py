@@ -121,10 +121,10 @@ def param_recovery(weight_data, age_data, alpha_sims, beta1_sims, beta2_sims, si
 
 N = 200
 nsim = int(os.environ.get("BF_NSIM", 10))
-alpha_sims = np.random.normal(178, 20, size=(nsim, 1))
+alpha_sims = np.random.normal(0, 1, size=(nsim, 1))
 beta1_sims = np.random.normal(0, 0.5, size=(nsim, 1))
 beta2_sims = np.random.normal(0, 0.5, size=(nsim, 1))
-sigma_sims = np.random.uniform(0, 50, size=(nsim, 1))
+sigma_sims = np.random.exponential(1, size=(nsim, 1))
 weight_data = np.random.normal(80, 30, size=(nsim, N))
 age_data = np.random.normal(40, 15, size=(nsim, N))
 

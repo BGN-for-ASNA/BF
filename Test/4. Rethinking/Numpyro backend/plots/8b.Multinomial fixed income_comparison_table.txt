@@ -1,28 +1,28 @@
 Comparison Table for 8b.Multinomial fixed income
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
- alpha[1] -0.4912   -0.4902 -0.0010 0.0546
- alpha[0]  0.5041    0.5057 -0.0016 0.0428
-  beta[0]  1.0544    1.0531  0.0013 0.0336
-  beta[1]  0.5023    0.5022  0.0001 0.0241
+  beta[1]  0.5011    0.5003  0.0008 0.0571
+ alpha[0]  0.5064    0.5046  0.0018 0.0684
+  beta[0]  1.0525    1.0527 -0.0002 0.0358
+ alpha[1] -0.4890   -0.4898  0.0008 0.0771
 ============================================================
 
 ================================================================
 WAIC cross-check  -  8b.Multinomial fixed income
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -791.600137    p_waic = 4.382038
+      elpd_waic = -791.469462    p_waic = 4.239415
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -791.600137    p_waic = 4.382038
+      elpd_waic = -791.469462    p_waic = 4.239415
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=200)
 ----------------------------------------------------------------
 LOO cross-check  -  8b.Multinomial fixed income
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -791.605686    p_loo  = 4.387588
+      elpd_loo  = -791.476793    p_loo  = 4.246746
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -791.605724    p_loo  = 4.387626
-|delta elpd_loo| = 3.799e-05      |delta p_loo| = 3.799e-05
+      elpd_loo  = -791.477317    p_loo  = 4.247271
+|delta elpd_loo| = 5.243e-04      |delta p_loo| = 5.243e-04
 RESULT: PASS
 ================================================================

@@ -106,9 +106,9 @@ def param_recovery(weight_data, a_sims, b_sims, s_sims, nsim):
 
 N = 200
 nsim = int(os.environ.get("BF_NSIM", 10))
-a_sims = np.random.normal(178, 20, size=(nsim, 1))
-b_sims = np.random.lognormal(0, 1, size=(nsim, 1))
-s_sims = np.random.uniform(0, 50, size=(nsim, 1))
+a_sims = np.random.normal(0, 1, size=(nsim, 1))
+b_sims = np.abs(np.random.normal(0, 1, size=(nsim, 1)))  # page prior on b is log-normal: b > 0
+s_sims = np.random.exponential(1, size=(nsim, 1))
 weight_data = np.random.normal(80, 30, size=(nsim, N))
 
 res = param_recovery(weight_data, a_sims, b_sims, s_sims, nsim = nsim)

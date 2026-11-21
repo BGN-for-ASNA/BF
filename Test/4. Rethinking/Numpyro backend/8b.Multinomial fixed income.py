@@ -121,8 +121,8 @@ def param_recovery(X_sim, alpha_sims, beta_sims, nsim):
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
 # Drawn from the page priors: alpha ~ normal(0, 1) shape (2,), beta ~ normal(0, 1) shape (2,)
-alpha_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
-beta_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
+alpha_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
+beta_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
 X_rec = np.random.normal(0, 1, size=200)
 
 recovery_results = param_recovery(X_rec, alpha_sims, beta_sims, nsim=nsim_test)

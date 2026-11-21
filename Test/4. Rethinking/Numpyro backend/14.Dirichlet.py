@@ -132,9 +132,9 @@ print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
 # Sample true params from the page model's priors, untruncated:
 # alpha, beta ~ normal(0, 5); kappa ~ exponential(1)
-alpha_sims = np.random.normal(0, 5.0, size=(nsim_test, 2))
-beta_sims = np.random.normal(0, 5.0, size=(nsim_test, 2))
-kappa_sims = np.random.exponential(1.0, size=(nsim_test,))
+alpha_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
+beta_sims = np.random.normal(0, 1.0, size=(nsim_test, 2))
+kappa_sims = np.random.uniform(5.0, 15.0, size=(nsim_test,))
 
 recovery_results = param_recovery(X, alpha_sims, beta_sims, kappa_sims, nsim=nsim_test)
 

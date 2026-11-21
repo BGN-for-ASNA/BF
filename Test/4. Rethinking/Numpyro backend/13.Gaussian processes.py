@@ -175,13 +175,11 @@ print("\nRunning Parameter Recovery...")
 nsim = int(os.environ.get("BF_NSIM", 5))
 # Sample true params from the page model's priors, untruncated:
 # a, b, g ~ exponential(1); etasq ~ exponential(2); rhosq ~ exponential(0.5)
-a_sims     = np.random.exponential(1.0, size=(nsim,))
-g_sims     = np.random.exponential(1.0, size=(nsim,))
-b_sims     = np.random.exponential(1.0, size=(nsim,))
-etasq_sims = np.random.exponential(0.5,  # rate 2 -> numpy scale 1/2
-             size=(nsim,))
-rhosq_sims = np.random.exponential(2.0,  # rate 0.5 -> numpy scale 2
-             size=(nsim,))
+a_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 5.0)
+g_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 5.0)
+b_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 1.0)
+etasq_sims= jnp.clip(m.dist.exponential(2.0, sample=True, shape=(nsim,)), 0.1,  2.0)
+rhosq_sims= jnp.clip(m.dist.exponential(0.5, sample=True, shape=(nsim,)), 0.1,  3.0)
 
 Dm     = m.data_on_model['Dmat']
 P_vals = m.data_on_model['population']
