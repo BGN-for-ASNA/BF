@@ -4,3 +4,11 @@ Execution Log - 12 models
 [SUCCESS] 2.Categorical variable.py
 [SUCCESS] 3.Continuous interactions.py
 [SUCCESS] 4.Binomial.py
+[SUCCESS] 5.Binomial with indices.py
+[SUCCESS] 6.Poisson.py
+[SUCCESS] 7.Negative binomial.py
+[SUCCESS] 8.Multinomial.py
+[SUCCESS] 9.Beta binomial.py
+[SUCCESS] 10.Zero inflated.py
+[SUCCESS] 11.Varying intercepts.py
+[SUCCESS] 12.Varying effects.py

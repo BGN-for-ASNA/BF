@@ -73,7 +73,7 @@ class dpmm:
         # 1) stick-breaking weights
 
         if alpha is None:
-            alpha = dist.gamma(2.0, 2.0,name='alpha')
+            alpha = dist.gamma(1.0, 6.0,name='alpha')
 
         with numpyro.plate("beta_plate", T - 1):
             beta = numpyro.sample('beta', Dist.Beta(1, alpha))
@@ -85,7 +85,7 @@ class dpmm:
         with numpyro.plate("components", T):
             mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=jnp.diag((2.0 * data_std) ** 2),name='mu')# shape (T, D)     
 
-            sigma = dist.half_normal(0.35 * data_std,event=1,name='sigma')# shape (T, D)
+            sigma = dist.log_normal(loc=jnp.log(0.4 * data_std), scale=0.6, event=1, name='sigma')# shape (T, D)
             Lcorr = dist.lkj_cholesky(dimension=D, concentration=2.0,name='Lcorr')# shape (T, D, D)
 
             scale_tril = sigma[..., None] * Lcorr  # shape (T, D, D)
@@ -110,7 +110,7 @@ class dpmm:
         D = data.shape[1]
         # 1) stick-breaking weights
         if alpha is None:
-            alpha = dist.gamma(2.0, 2.0,name='alpha')
+            alpha = dist.gamma(1.0, 6.0,name='alpha')
 
         beta = dist.beta(1, alpha,name='beta',shape=(T-1,))
         w = numpyro.deterministic("w",dpmm.mix_weights(beta))
@@ -121,7 +121,7 @@ class dpmm:
         data_std = jnp.where(data_std > 0, data_std, 1.0)   # constant column: no singular prior
         with numpyro.plate("components", T):
             mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=jnp.diag((2.0 * data_std) ** 2),name='mu')# shape (T, D)        
-            sigma = dist.half_normal(0.35 * data_std,event=1,name='sigma')# shape (T, D)
+            sigma = dist.log_normal(loc=jnp.log(0.4 * data_std), scale=0.6, event=1, name='sigma')# shape (T, D)
             Lcorr = dist.lkj_cholesky(dimension=D, concentration=2.0,name='Lcorr')# shape (T, D, D)
 
             scale_tril = sigma[..., None] * Lcorr  # shape (T, D, D)
@@ -137,8 +137,8 @@ class dpmm:
     def model(self,data, T=10, method='marginal', alpha = None):
         """
         Wrapper function for DPMM.
-        Both formulations use the same priors: alpha ~ Gamma(2, 2),
-        mu ~ MVN(mean, diag((2 sd)^2)), sigma ~ HalfNormal(0.35 sd), Lcorr ~ LKJ(2).
+        Both formulations use the same priors: alpha ~ Gamma(1, 6),
+        mu ~ MVN(mean, diag((2 sd)^2)), sigma ~ LogNormal(log(0.4 sd), 0.6), Lcorr ~ LKJ(2).
 
         Args:
             data: Input data array (N, D)

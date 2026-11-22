@@ -1,50 +1,50 @@
 DGP-Estimation Parameter Recovery Log
-Generated : 2026-11-20 13:30:00
+Generated : 2026-11-21 16:21:53
 
 -----------------------------------------------------------------------------------------------
 Model                          Parameter                    Estimated         True   Difference
 -----------------------------------------------------------------------------------------------
-Non-Centered (Built-in)        sigma_obs                       0.5139       0.5000      +0.0139
-Non-Centered (Built-in)        mu_a_region                     4.5577       5.0000      -0.4423
-Non-Centered (Built-in)        mu_b_region                    -0.6546      -1.0000      +0.3454
-Non-Centered (Built-in)        sigma_a_region                  1.0610       1.0000      +0.0610
-Non-Centered (Built-in)        sigma_b_region                  0.4463       0.5000      -0.0537
-Non-Centered (Built-in)        sigma_a_group                   0.2580       0.5000      -0.2420
-Non-Centered (Built-in)        sigma_b_group                   0.3010       0.2000      +0.1010
-Non-Centered (Built-in)        rho_region                     -0.4738      -0.5000      +0.0262
-Non-Centered (Built-in)        rho_group                       0.4836       0.3000      +0.1836
-Non-Centered (Built-in)        mean(region_intercept)          4.8749       5.0000      -0.1251
-Non-Centered (Built-in)        mean(region_slope)             -0.7430      -1.0000      +0.2570
+Non-Centered (Built-in)        sigma_obs                       0.5132       0.5000      +0.0132
+Non-Centered (Built-in)        mu_a_region                     4.5694       5.0000      -0.4306
+Non-Centered (Built-in)        mu_b_region                    -0.6777      -1.0000      +0.3223
+Non-Centered (Built-in)        sigma_a_region                  1.0254       1.0000      +0.0254
+Non-Centered (Built-in)        sigma_b_region                  0.4471       0.5000      -0.0529
+Non-Centered (Built-in)        sigma_a_group                   0.2677       0.5000      -0.2323
+Non-Centered (Built-in)        sigma_b_group                   0.3006       0.2000      +0.1006
+Non-Centered (Built-in)        rho_region                     -0.4556      -0.5000      +0.0444
+Non-Centered (Built-in)        rho_group                       0.5010       0.3000      +0.2010
+Non-Centered (Built-in)        mean(region_intercept)          4.8732       5.0000      -0.1268
+Non-Centered (Built-in)        mean(region_slope)             -0.7499      -1.0000      +0.2501
 
-Centered (Built-in)            sigma_obs                       0.5116       0.5000      +0.0116
-Centered (Built-in)            mu_a_region                     4.5569       5.0000      -0.4431
-Centered (Built-in)            mu_b_region                    -0.6555      -1.0000      +0.3445
-Centered (Built-in)            sigma_a_region                  1.0407       1.0000      +0.0407
-Centered (Built-in)            sigma_b_region                  0.4592       0.5000      -0.0408
-Centered (Built-in)            sigma_a_group                   0.2628       0.5000      -0.2372
-Centered (Built-in)            sigma_b_group                   0.3023       0.2000      +0.1023
-Centered (Built-in)            mean(region_intercept)          4.8685       5.0000      -0.1315
-Centered (Built-in)            mean(region_slope)             -0.7518      -1.0000      +0.2482
+Centered (Built-in)            sigma_obs                       0.5101       0.5000      +0.0101
+Centered (Built-in)            mu_a_region                     4.5538       5.0000      -0.4462
+Centered (Built-in)            mu_b_region                    -0.6742      -1.0000      +0.3258
+Centered (Built-in)            sigma_a_region                  1.0649       1.0000      +0.0649
+Centered (Built-in)            sigma_b_region                  0.4479       0.5000      -0.0521
+Centered (Built-in)            sigma_a_group                   0.2676       0.5000      -0.2324
+Centered (Built-in)            sigma_b_group                   0.3083       0.2000      +0.1083
+Centered (Built-in)            mean(region_intercept)          4.8702       5.0000      -0.1298
+Centered (Built-in)            mean(region_slope)             -0.7457      -1.0000      +0.2543
 
-Non-Centered (Raw)             sigma_obs                       0.5151       0.5000      +0.0151
-Non-Centered (Raw)             mu_a_region                     4.8833       5.0000      -0.1167
-Non-Centered (Raw)             mu_b_region                    -0.7487      -1.0000      +0.2513
-Non-Centered (Raw)             sigma_a_region                  0.9976       1.0000      -0.0024
-Non-Centered (Raw)             sigma_b_region                  0.4387       0.5000      -0.0613
-Non-Centered (Raw)             sigma_a_group                   0.2566       0.5000      -0.2434
-Non-Centered (Raw)             sigma_b_group                   0.2973       0.2000      +0.0973
-Non-Centered (Raw)             rho_region                     -0.4675      -0.5000      +0.0325
-Non-Centered (Raw)             rho_group                       0.4874       0.3000      +0.1874
-Non-Centered (Raw)             mean(region_intercept)          4.8770       5.0000      -0.1230
-Non-Centered (Raw)             mean(region_slope)             -0.7504      -1.0000      +0.2496
+Non-Centered (Raw)             sigma_obs                       0.5131       0.5000      +0.0131
+Non-Centered (Raw)             mu_a_region                     4.8879       5.0000      -0.1121
+Non-Centered (Raw)             mu_b_region                    -0.7671      -1.0000      +0.2329
+Non-Centered (Raw)             sigma_a_region                  0.9681       1.0000      -0.0319
+Non-Centered (Raw)             sigma_b_region                  0.4292       0.5000      -0.0708
+Non-Centered (Raw)             sigma_a_group                   0.2624       0.5000      -0.2376
+Non-Centered (Raw)             sigma_b_group                   0.3044       0.2000      +0.1044
+Non-Centered (Raw)             rho_region                     -0.4734      -0.5000      +0.0266
+Non-Centered (Raw)             rho_group                       0.4955       0.3000      +0.1955
+Non-Centered (Raw)             mean(region_intercept)          4.8772       5.0000      -0.1228
+Non-Centered (Raw)             mean(region_slope)             -0.7521      -1.0000      +0.2479
 
-Centered (Raw)                 sigma_obs                       0.5135       0.5000      +0.0135
-Centered (Raw)                 mu_a_region                     4.8956       5.0000      -0.1044
-Centered (Raw)                 mu_b_region                    -0.7672      -1.0000      +0.2328
-Centered (Raw)                 sigma_a_region                  0.9840       1.0000      -0.0160
-Centered (Raw)                 sigma_b_region                  0.4465       0.5000      -0.0535
-Centered (Raw)                 sigma_a_group                   0.2630       0.5000      -0.2370
-Centered (Raw)                 sigma_b_group                   0.2915       0.2000      +0.0915
-Centered (Raw)                 mean(region_intercept)          4.8753       5.0000      -0.1247
-Centered (Raw)                 mean(region_slope)             -0.7530      -1.0000      +0.2470
+Centered (Raw)                 sigma_obs                       0.5127       0.5000      +0.0127
+Centered (Raw)                 mu_a_region                     4.8954       5.0000      -0.1046
+Centered (Raw)                 mu_b_region                    -0.7698      -1.0000      +0.2302
+Centered (Raw)                 sigma_a_region                  0.9983       1.0000      -0.0017
+Centered (Raw)                 sigma_b_region                  0.4496       0.5000      -0.0504
+Centered (Raw)                 sigma_a_group                   0.2669       0.5000      -0.2331
+Centered (Raw)                 sigma_b_group                   0.2997       0.2000      +0.0997
+Centered (Raw)                 mean(region_intercept)          4.8758       5.0000      -0.1242
+Centered (Raw)                 mean(region_slope)             -0.7504      -1.0000      +0.2496
 -----------------------------------------------------------------------------------------------

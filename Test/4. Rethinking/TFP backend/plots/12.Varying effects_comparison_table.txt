@@ -1,30 +1,30 @@
 Comparison Table for 12.Varying effects
 ============================================================
    Parameter BF Mean Stan Mean    Diff KL Div
-         rho -0.5008   -0.4460 -0.0547 0.1200
-           b -0.9750   -0.9832  0.0082 0.0673
-           a  3.3206    3.3304 -0.0098 0.0514
-       sigma  0.5049    0.5046  0.0004 0.0566
-sigma_cafe_0  0.9715    0.9506  0.0209 0.0373
-sigma_cafe_1  0.4603    0.4606 -0.0004 0.0739
+sigma_cafe_0  1.2384    1.1926  0.0458 0.0757
+           a  3.5469    3.5571 -0.0102 0.0753
+       sigma  0.4828    0.4827  0.0001 0.0673
+         rho -0.7788   -0.7297 -0.0491 0.2832
+           b -1.2372   -1.2352 -0.0021 0.0847
+sigma_cafe_1  0.6001    0.5770  0.0231 0.0791
 ============================================================
 
 ================================================================
 WAIC cross-check  -  12.Varying effects
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -460.647689    p_waic = 37.224190
+      elpd_waic = -433.632146    p_waic = 36.854206
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -460.647713    p_waic = 37.224190
-|delta elpd_waic| = 2.392e-05      |delta p_waic| = 0.000e+00
+      elpd_waic = -433.632155    p_waic = 36.854210
+|delta elpd_waic| = 8.924e-06      |delta p_waic| = 3.815e-06
 RESULT: PASS   (S=4000, N=600)
 ----------------------------------------------------------------
 LOO cross-check  -  12.Varying effects
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -460.833292    p_loo  = 37.409790
+      elpd_loo  = -433.844231    p_loo  = 37.066281
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -460.829474    p_loo  = 37.406188
-|delta elpd_loo| = 3.819e-03      |delta p_loo| = 3.602e-03
+      elpd_loo  = -433.838470    p_loo  = 37.060741
+|delta elpd_loo| = 5.761e-03      |delta p_loo| = 5.540e-03
 RESULT: PASS
 ================================================================

@@ -1,26 +1,26 @@
 Comparison Table for 11.Varying intercepts
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
- sigma[0]  1.6208    1.6251 -0.0043 0.0550
- a_bar[0]  1.3739    1.3651  0.0089 0.0820
+ sigma[0]  1.6224    1.6270 -0.0047 0.0691
+ a_bar[0]  1.3822    1.3607  0.0215 0.0768
 ============================================================
 
 ================================================================
 WAIC cross-check  -  11.Varying intercepts
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -100.182859    p_waic = 21.002644
+      elpd_waic = -100.246794    p_waic = 21.156929
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -100.182979    p_waic = 21.002649
-|delta elpd_waic| = 1.204e-04      |delta p_waic| = 5.665e-06
+      elpd_waic = -100.246797    p_waic = 21.156927
+|delta elpd_waic| = 2.565e-06      |delta p_waic| = 2.268e-06
 RESULT: PASS   (S=4000, N=48)
 ----------------------------------------------------------------
 LOO cross-check  -  11.Varying intercepts
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -110.356894    p_loo  = 31.176678
+      elpd_loo  = -111.570470    p_loo  = 32.480605
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -110.399815    p_loo  = 31.219608
-|delta elpd_loo| = 4.292e-02      |delta p_loo| = 4.293e-02
+      elpd_loo  = -111.561221    p_loo  = 32.471360
+|delta elpd_loo| = 9.249e-03      |delta p_loo| = 9.245e-03
 RESULT: PASS
 ================================================================

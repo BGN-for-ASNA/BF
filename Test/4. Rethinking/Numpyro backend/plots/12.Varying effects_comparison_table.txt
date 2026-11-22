@@ -1,30 +1,30 @@
 Comparison Table for 12.Varying effects
 ============================================================
    Parameter BF Mean Stan Mean    Diff KL Div
-           a  3.8500    3.8627 -0.0126 0.0667
-sigma_cafe_1  0.3572    0.3570  0.0002 0.0893
-sigma_cafe_0  1.1789    1.1773  0.0016 0.0676
-           b -1.3175   -1.3233  0.0058 0.0383
-   Rho[0][1] -0.5603   -0.5540 -0.0063 0.0698
-       sigma  0.5399    0.5405 -0.0006 0.0626
+           b -1.3221   -1.3200 -0.0020 0.0698
+sigma_cafe_1  0.3551    0.3490  0.0061 0.0500
+           a  3.8651    3.8577  0.0074 0.0779
+sigma_cafe_0  1.1791    1.1733  0.0058 0.0573
+       sigma  0.5406    0.5418 -0.0012 0.0506
+   Rho[0][1] -0.5479   -0.5665  0.0186 0.0445
 ============================================================
 
 ================================================================
 WAIC cross-check  -  12.Varying effects
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -176.185813    p_waic = 28.390803
+      elpd_waic = -176.692761    p_waic = 28.737088
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -176.185813    p_waic = 28.390803
+      elpd_waic = -176.692761    p_waic = 28.737088
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=200)
 ----------------------------------------------------------------
 LOO cross-check  -  12.Varying effects
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -176.875970    p_loo  = 29.080960
+      elpd_loo  = -177.431990    p_loo  = 29.476318
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -176.868394    p_loo  = 29.073384
-|delta elpd_loo| = 7.576e-03      |delta p_loo| = 7.576e-03
+      elpd_loo  = -177.430062    p_loo  = 29.474390
+|delta elpd_loo| = 1.928e-03      |delta p_loo| = 1.928e-03
 RESULT: PASS
 ================================================================

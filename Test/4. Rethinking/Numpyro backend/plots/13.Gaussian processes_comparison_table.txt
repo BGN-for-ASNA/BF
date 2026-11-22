@@ -1,29 +1,29 @@
 Comparison Table for 13.Gaussian processes
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-        a  1.3842    1.3689  0.0153 0.1047
-        g  0.5997    0.6234 -0.0237 0.0871
-    etasq  0.1880    0.1955 -0.0075 0.1422
-    rhosq  1.3875    1.3888 -0.0013 0.0473
-        b  0.2777    0.2819 -0.0043 0.2576
+        b  0.2818    0.2771  0.0047 0.1217
+        g  0.6035    0.6035 -0.0000 0.0685
+    etasq  0.1832    0.1927 -0.0095 0.1312
+        a  1.3688    1.4222 -0.0534 0.0681
+    rhosq  1.3232    1.2988  0.0244 0.0711
 ============================================================
 
 ================================================================
 WAIC cross-check  -  13.Gaussian processes
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -14464038645.876060    p_waic = 14464038572.004877
+      elpd_waic = -62.598148    p_waic = 5.031811
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = -14464038645.876060    p_waic = 14464038572.004877
+      elpd_waic = -62.598148    p_waic = 5.031811
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=10)
 ----------------------------------------------------------------
 LOO cross-check  -  13.Gaussian processes
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -786014.493898    p_loo  = 785940.622714
+      elpd_loo  = -65.792521    p_loo  = 8.226184
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -788090.079211    p_loo  = 788016.208027
-|delta elpd_loo| = 2.076e+03      |delta p_loo| = 2.076e+03
-RESULT: FAIL
+      elpd_loo  = -65.791096    p_loo  = 8.224758
+|delta elpd_loo| = 1.425e-03      |delta p_loo| = 1.425e-03
+RESULT: PASS
 ================================================================

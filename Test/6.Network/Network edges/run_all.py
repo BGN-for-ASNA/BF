@@ -16,11 +16,7 @@ scripts = [
     "run_count_directed_no_zi.R",
     "run_count_directed_zi.R",
     "run_count_undirected_no_zi.R",
-    "run_count_undirected_zi.R",
-    "run_duration_directed_no_zi.R",
-    "run_duration_directed_zi.R",
-    "run_duration_undirected_no_zi.R",
-    "run_duration_undirected_zi.R"
+    "run_count_undirected_zi.R"
 ]
 
 script_dir = os.path.dirname(os.path.abspath(__file__))

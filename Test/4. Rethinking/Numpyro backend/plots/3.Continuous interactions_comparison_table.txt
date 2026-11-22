@@ -1,29 +1,29 @@
 Comparison Table for 3.Continuous interactions
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-      bws -0.1424   -0.1421 -0.0003 0.0338
-    sigma  0.1426    0.1430 -0.0004 0.0427
-       bs -0.1128   -0.1135  0.0007 0.0327
-       bw  0.2051    0.2049  0.0002 0.0700
-        a  0.3584    0.3584  0.0000 0.1189
+    sigma  0.1426    0.1427 -0.0000 0.0642
+        a  0.3583    0.3585 -0.0003 0.0880
+      bws -0.1423   -0.1427  0.0003 0.0625
+       bw  0.2054    0.2061 -0.0007 0.0437
+       bs -0.1130   -0.1125 -0.0005 0.0483
 ============================================================
 
 ================================================================
 WAIC cross-check  -  3.Continuous interactions
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = +12.339774    p_waic = 4.497881
+      elpd_waic = +12.524254    p_waic = 4.324276
 [B] ArviZ round-trip (az.from_numpyro log_likelihood group)
-      elpd_waic = +12.339774    p_waic = 4.497881
+      elpd_waic = +12.524254    p_waic = 4.324276
 |delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=27)
 ----------------------------------------------------------------
 LOO cross-check  -  3.Continuous interactions
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = +12.124202    p_loo  = 4.713453
+      elpd_loo  = +12.294998    p_loo  = 4.553533
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = +12.123843    p_loo  = 4.713812
-|delta elpd_loo| = 3.584e-04      |delta p_loo| = 3.584e-04
+      elpd_loo  = +12.288301    p_loo  = 4.560229
+|delta elpd_loo| = 6.697e-03      |delta p_loo| = 6.697e-03
 RESULT: PASS
 ================================================================

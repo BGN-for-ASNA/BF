@@ -1,25 +1,25 @@
 Comparison Table for 4.Binomial
 ============================================================
-Parameter BF Mean Stan Mean   Diff KL Div
-        a  0.3185    0.3172 0.0013 0.0358
+Parameter BF Mean Stan Mean    Diff KL Div
+        a  0.3179    0.3200 -0.0022 0.0427
 ============================================================
 
 ================================================================
 WAIC cross-check  -  4.Binomial
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -343.991940    p_waic = 1.021439
+      elpd_waic = -343.945524    p_waic = 0.974900
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -343.991917    p_waic = 1.021439
-|delta elpd_waic| = 2.253e-05      |delta p_waic| = 2.204e-07
+      elpd_waic = -343.945466    p_waic = 0.974898
+|delta elpd_waic| = 5.785e-05      |delta p_waic| = 1.478e-06
 RESULT: PASS   (S=4000, N=504)
 ----------------------------------------------------------------
 LOO cross-check  -  4.Binomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -343.993933    p_loo  = 1.023436
+      elpd_loo  = -343.947051    p_loo  = 0.976482
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -343.993714    p_loo  = 1.023344
-|delta elpd_loo| = 2.185e-04      |delta p_loo| = 9.185e-05
+      elpd_loo  = -343.947011    p_loo  = 0.976596
+|delta elpd_loo| = 4.012e-05      |delta p_loo| = 1.140e-04
 RESULT: PASS
 ================================================================

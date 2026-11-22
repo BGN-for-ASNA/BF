@@ -14,7 +14,7 @@ from BayesForge.NBDA.NBDA import NBDA
 def _nbda(n=4, t=3):
     rng = np.random.default_rng(0)
     net = jnp.asarray(rng.integers(0, 2, size=(n, n)).astype(float))
-    status = jnp.asarray(np.array([[0, 0, 1], [0, 1, 1], [0, 0, 0], [1, 1, 1]], dtype=float)[:n, :t])af
+    status = jnp.asarray(np.array([[0, 0, 1], [0, 1, 1], [0, 0, 0], [1, 1, 1]], dtype=float)[:n, :t])
     return NBDA(net, status)
 
 

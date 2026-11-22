@@ -28,7 +28,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import lax, random
-from jax.experimental import enable_x64, disable_x64
+from jax import enable_x64 as _jax_x64
+def enable_x64(): return _jax_x64(True)
+def disable_x64(): return _jax_x64(False)
 import numpyro.distributions as npd
 
 try:
@@ -996,19 +998,20 @@ def test_at_update_is_invisible_to_a_cached_jit():
     np.testing.assert_array_equal(before, np.array([0, 2, 4]))
     np.testing.assert_array_equal(after, np.array([200, 2, 4]))
 
-def test_numpy_array_on_the_left_falls_back_to_numpy():
-    """Characterization: `np_array + sd` returns a numpy array, not a jax one.
+def test_numpy_array_on_the_left_keeps_the_wrapper():
+    """`np_array + sd` returns a SampledData backed by a jax array.
 
-    A raw jax array wins the numpy binop and yields a jax Array (staying on
-    device). The wrapper loses it, so the result is host numpy and the wrapper
-    is dropped. Values still match; device placement and the wrapper do not.
+    A raw jax array wins the numpy binop and yields a jax Array. SampledData
+    does the same through `__array_priority__` and `__array_ufunc__`, so the
+    wrapper is kept and the data stays a jax array.
     """
     raw = jnp.arange(3.)
     assert isinstance(np.ones(3) + raw, jnp.ndarray)
 
     out = np.ones(3) + SampledData(raw)
-    assert isinstance(out, np.ndarray) and not isinstance(out, SampledData)
-    np.testing.assert_allclose(out, np.ones(3) + np.arange(3.))
+    assert isinstance(out, SampledData)
+    assert isinstance(jnp.asarray(out), jnp.ndarray)
+    np.testing.assert_allclose(np.asarray(out), np.ones(3) + np.arange(3.))
 
 def test_divmod_matches_jax():
     """divmod() works on a jax array and on a SampledData (via __divmod__)."""

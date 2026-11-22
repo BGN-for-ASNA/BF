@@ -1,6 +1,6 @@
 # Network Edges Analysis
 
-This directory rigorously tests edge-level network models across a 12-configuration grid (combining binary, count, and duration responses, with directed vs. undirected interactions, and zero-inflated vs. standard likelihoods). It compares **BayesForge (BF)** built models against the R package `bisonR` (which uses Stan as a backend).
+This directory rigorously tests edge-level network models across an 8-configuration grid (combining binary and count responses, with directed vs. undirected interactions, and zero-inflated vs. standard likelihoods). It compares **BayesForge (BF)** built models against the R package `bisonR` (which uses Stan as a backend).
 
 ## Requirements
 
@@ -14,14 +14,14 @@ pip install -r requirements.txt
 
 ## How to Run the Models
 
-A `run_all.py` script is provided to automate the execution of all 12 model configurations.
+A `run_all.py` script is provided to automate the execution of all 8 model configurations.
 
 To run the full suite sequentially:
 ```bash
 python3 run_all.py
 ```
 
-This Python script triggers the 12 individual `run_*.R` scripts, which build the models in BayesForge (via Rreticulate), sample the posteriors, and compare them directly with `bisonR`.
+This Python script triggers the 8 individual `run_*.R` scripts, which build the models in BayesForge (via Rreticulate), sample the posteriors, and compare them directly with `bisonR`.
 
 ## Outputs
 
