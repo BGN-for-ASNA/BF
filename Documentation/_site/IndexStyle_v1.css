@@ -1,0 +1,331 @@
+/* ==========================================
+   1. HIDE TITLE & FOLDING LOGIC
+   ========================================== */
+
+/* Permanently hide the "Categories" title */
+.quarto-listing-category-title {
+    display: none !important;
+}
+
+/* Fold and hide the category list by default (when not in gallery) */
+body:not(.gallery-in-view) .quarto-listing-category {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    max-height: 0 !important;
+    margin-top: -2.5rem !important;
+    margin-bottom: 0 !important;
+    margin-left: 0.4rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-left: 1px solid transparent !important;
+    overflow: hidden !important;
+    transform: translateY(-30px) !important;
+
+    /* DELAY THE COLLAPSE AND PADDING SHIFTS SO THE CASCADING EXIT FINISHES CLEANLY */
+    transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1) 0.25s,
+                opacity 0.3s ease-out 0.25s,
+                transform 0s linear 0.65s,
+                padding-top 0s linear 0.65s,
+                border-left 0.3s ease-out 0.25s,
+                visibility 0s linear 0.65s !important;
+}
+
+/* Unfold and show the category list when gallery is in view */
+body.gallery-in-view .quarto-listing-category {
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-height: 2000px !important; 
+    transform: translateY(0) !important;
+    
+    /* Your custom border color - dynamically matches theme primary */
+    border-left: 1px solid var(--bs-primary) !important; 
+    
+    /* 1. FIX VERTICAL GAP */
+    margin-top: -2.5rem !important;  /* Pulls it up further to touch the TOC line */
+    padding-top: 2rem !important;    /* Pushes the text back down safely */
+    
+    /* 2. FIX HORIZONTAL ALIGNMENT */
+    margin-left: 0.4rem !important; /* Nudges the line to the right to match Quarto's default TOC inset */
+    
+    /* ENTRY ANIMATION: Smoothly unroll height and fade in, snap transform back */
+    transition: max-height 0.5s ease-out, 
+                padding-top 0.3s ease-out, 
+                opacity 0.4s ease-out, 
+                transform 0.3s ease-out, 
+                visibility 0s linear 0s !important;
+}
+
+
+
+/* ==========================================
+   2. LEVEL 3 INDENTATION & STYLING
+   ========================================== */
+
+/* Indent the individual categories to look like Level 3 */
+.quarto-listing-category .category {
+    padding-left: 1.5rem !important; /* Pushes text to the right of the line */
+    font-size: 0.875rem !important; /* Matches standard Quarto TOC size */
+    margin-bottom: 0.4rem;
+    cursor: pointer;
+    display: block; 
+    
+    /* Smooth transition for fade */
+    transition: opacity 0.18s ease-out, color 0.2s ease;
+}
+
+/* Add hover and active effect to match standard TOC links */
+.quarto-listing-category .category:hover,
+.quarto-listing-category .category.active {
+    opacity: 1 !important;
+    color: var(--bs-primary) !important; 
+}
+
+/* Individual categories default (hidden) */
+body:not(.gallery-in-view) .quarto-listing-category .category {
+    opacity: 0;
+    pointer-events: none;
+    
+    /* Fade out sequentially in place */
+    transition: opacity 0.18s ease-out;
+}
+
+/* Individual categories when gallery is in view */
+body.gallery-in-view .quarto-listing-category .category {
+    opacity: 0.75;
+    pointer-events: auto;
+}
+
+/* Staggered entry (appearing) delays */
+body.gallery-in-view .quarto-listing-category .category:nth-child(1) { transition-delay: 0ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(2) { transition-delay: 15ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(3) { transition-delay: 30ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(4) { transition-delay: 45ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(5) { transition-delay: 60ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(6) { transition-delay: 75ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(7) { transition-delay: 90ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(8) { transition-delay: 105ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(9) { transition-delay: 120ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(10) { transition-delay: 135ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(11) { transition-delay: 150ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(12) { transition-delay: 165ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(13) { transition-delay: 180ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(14) { transition-delay: 195ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(15) { transition-delay: 210ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(16) { transition-delay: 225ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(17) { transition-delay: 240ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(18) { transition-delay: 255ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(19) { transition-delay: 270ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(20) { transition-delay: 285ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(21) { transition-delay: 300ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(22) { transition-delay: 315ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(23) { transition-delay: 330ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(24) { transition-delay: 345ms; }
+body.gallery-in-view .quarto-listing-category .category:nth-child(25) { transition-delay: 360ms; }
+
+/* Staggered exit (disappearing) delays - reverse order */
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(1) { transition-delay: 360ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(2) { transition-delay: 345ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(3) { transition-delay: 330ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(4) { transition-delay: 315ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(5) { transition-delay: 300ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(6) { transition-delay: 285ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(7) { transition-delay: 270ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(8) { transition-delay: 255ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(9) { transition-delay: 240ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(10) { transition-delay: 225ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(11) { transition-delay: 210ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(12) { transition-delay: 195ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(13) { transition-delay: 180ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(14) { transition-delay: 165ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(15) { transition-delay: 150ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(16) { transition-delay: 135ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(17) { transition-delay: 120ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(18) { transition-delay: 105ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(19) { transition-delay: 90ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(20) { transition-delay: 75ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(21) { transition-delay: 60ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(22) { transition-delay: 45ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(23) { transition-delay: 30ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(24) { transition-delay: 15ms; }
+body:not(.gallery-in-view) .quarto-listing-category .category:nth-child(25) { transition-delay: 0ms; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+
+[data-bs-theme="light"] .welcome-panel {
+    background-color: #495057; /* A dark gray background for contrast */
+    color: #f8f9fa;            /* Light text color */
+}
+
+.panel {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+    /* Ensures padding is included in height calculation */
+}
+
+/* --- Welcome (Hero) Section Styling --- */
+
+.welcome-panel {
+    text-align: center;
+}
+
+
+
+.welcome-panel h1,
+h1#gallery {
+    color: var(--bs-primary) !important;
+}
+
+.welcome-panel h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.rem;
+}
+
+.welcome-panel h1 sup {
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.welcome-panel h2 {
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+}
+.welcome-panel h3 {
+    font-size: 1.75rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+}
+
+.btn-get-started {
+    display: inline-block;
+    /* Good practice for <a> tags styled as buttons */
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0.8rem 2.5rem;
+    margin-top: 2rem;
+    border-radius: 50px;
+    /* Fully rounded corners */
+    text-decoration: none;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* --- 2. Light Theme Specific Styles --- */
+[data-bs-theme="light"] .btn-get-started {
+    background-color: #ee6331;
+    /* Your original orange color */
+    color: #ffffff;
+    /* White text */
+}
+
+/* --- 3. Dark Theme Specific Styles --- */
+[data-bs-theme="dark"] .btn-get-started {
+    background-color: #fca311;
+    /* A brighter, more vibrant orange for dark backgrounds */
+    color: #14213d;
+    /* Dark blue text for contrast */
+}
+
+/* --- 4. (Optional) Add a hover effect for interactivity --- */
+.btn-get-started:hover {
+    transform: translateY(-2px);
+    /* Lifts the button slightly */
+    opacity: 0.9;
+}
+
+/* --- Alternating Background for other panels --- */
+.showcase-panel {
+    background-color: #ffffff;
+}
+
+.features-panel {
+    background-color: #f8f9fa;
+    /* Light gray */
+}
+
+
+/* Dark mode adjustments */
+body.quarto-dark .showcase-panel {
+    background-color: #1e1e1e;
+}
+
+body.quarto-dark .features-panel {
+    background-color: #2a2a2a;
+}
+
+
+/* --- General Content Styling for Panels --- */
+.panel .container {
+    max-width: 1140px;
+}
+
+.panel h2 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-item {
+    text-align: left;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.quarto-dark .feature-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feature-item h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* ==========================================
+   5. SIDEBAR TOC ACTIVE COLOR CUSTOMIZATION
+   ========================================== */
+
+/* Style active level 1 TOC links and their left border to match brand yellow */
+#TOC > ul > li > a.active,
+#TOC > ul > li > a.active:hover {
+    color: var(--bs-primary) !important;
+    border-left: 1px solid var(--bs-primary) !important;
+}
+
+/* Hover state level 1 TOC link text and its left highlight border */
+#TOC > ul > li > a:hover {
+    color: var(--bs-primary) !important;
+    border-left: 1px solid var(--bs-primary) !important;
+}
+
+/* Force active level 2 TOC links and their left border to match blue/teal */
+#TOC ul ul a.active,
+#TOC ul ul a.active:hover {
+    color: rgb(42, 161, 152) !important;
+    border-left: 1px solid rgb(42, 161, 152) !important;
+}
+
+/* Hover state level 2 TOC link text and its left highlight border */
+#TOC ul ul a:hover {
+    color: rgb(42, 161, 152) !important;
+    border-left: 1px solid rgb(42, 161, 152) !important;
+}

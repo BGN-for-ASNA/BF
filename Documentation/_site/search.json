@@ -1,0 +1,206 @@
+[
+  {
+    "objectID": "start/Diagnostics.html",
+    "href": "start/Diagnostics.html",
+    "title": "Model Diagnostic",
+    "section": "",
+    "text": "The BF class can compute model diagnostics for a given model.\nLets consider the following model for a linear regression:\nY_i \\sim \\text{Normal}(\\alpha + \\beta   X_i, \\sigma)\n\\alpha \\sim \\text{Normal}(0, 1)\n\\beta \\sim \\text{Normal}(0, 1)\n\\sigma \\sim \\text{Uniform}(0, 50)\nFor additional documentation check the diagnostics API reference\nEvery plot takes x_label= and y_label= to replace the axis titles (title= for the plot title). A string sets the title of every panel; a list sets one per panel, in order (None keeps a panel’s own title), for example m.diag.posterior(x_label=[\"intercept\", \"slope\", \"sigma\"]).",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#predictions-from-model-based-on-specific-data-value",
+    "href": "start/Diagnostics.html#predictions-from-model-based-on-specific-data-value",
+    "title": "Model Diagnostic",
+    "section": "Predictions from model based on specific data value",
+    "text": "Predictions from model based on specific data value\nBy default (posterior=True, samples=None), m.sample(...) evaluates the predictive distribution across all posterior MCMC draws (here 500 \\times 4 = 2000 draws). To obtain a single predicted value instead of the full posterior predictive vector, you can draw a single sample (samples=1), take the posterior predictive mean, or evaluate at fixed parameter values (posterior=...):\n\nPythonRJulia\n\n\n\n\nCode\nm.sample()  # Predictions from model based on data in data_on_model\npred = m.sample(data=dict(weight=jnp.array([0.4])), remove_obs=False)  # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm.sample(data=dict(weight=jnp.array([0.4])), remove_obs=False, samples=1)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp.mean(pred[\"height\"])\n\n# 3. Single draw at fixed parameter values\nm.sample(\n    data=dict(weight=jnp.array([0.4])),\n    posterior=dict(a=154.6, b=5.8, s=5.1),\n    remove_obs=False,\n)\n\n\n{'height': Array([[157.33148885]], dtype=float64)}\n\n\n\n\nm$sample() # Predictions from model based on data in data_on_model\npred &lt;- m$sample(data = list(weight = jnp$array(c(0.4))), remove_obs = FALSE) # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm$sample(data = list(weight = jnp$array(c(0.4))), remove_obs = FALSE, samples = 1L)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp$mean(pred$height)\n\n# 3. Single draw at fixed parameter values\nm$sample(\n    data = list(weight = jnp$array(c(0.4))),\n    posterior = list(a = 154.6, b = 5.8, s = 5.1),\n    remove_obs = FALSE\n)\n\n\nm.sample() # Predictions from model based on data in data_on_model\npred = m.sample(data = pydict(weight = jnp.array([0.4])), remove_obs = false) # Full posterior predictive (2000 draws)\n\n# 1. Single random predictive draw from the posterior\nm.sample(data = pydict(weight = jnp.array([0.4])), remove_obs = false, samples = 1)\n\n# 2. Posterior predictive mean across all 2000 draws\njnp.mean(pred[\"height\"])\n\n# 3. Single draw at fixed parameter values\nm.sample(\n    data = pydict(weight = jnp.array([0.4])),\n    posterior = pydict(a = 154.6, b = 5.8, s = 5.1),\n    remove_obs = false\n)",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#forest-plot-of-estimated-values",
+    "href": "start/Diagnostics.html#forest-plot-of-estimated-values",
+    "title": "Model Diagnostic",
+    "section": "Forest plot of estimated values",
+    "text": "Forest plot of estimated values\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.forest()\n\n\n        \n        \n        \n\n\n                            \n                                            \n\n\n\n\nm$diag$forest()\n\n\n@pyplot m.diag.forest()\n\n\n\nSee m.diag.forest for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#density-plots-of-the-posterior-distribution",
+    "href": "start/Diagnostics.html#density-plots-of-the-posterior-distribution",
+    "title": "Model Diagnostic",
+    "section": "Density plots of the posterior distribution",
+    "text": "Density plots of the posterior distribution\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.density()\n\n\n                            \n                                            \n\n\n\n\nm$diag$density()\n\n\n@pyplot m.diag.density()\n\n\n\nSee m.diag.density for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#posterior-distribution-plots",
+    "href": "start/Diagnostics.html#posterior-distribution-plots",
+    "title": "Model Diagnostic",
+    "section": "Posterior distribution plots",
+    "text": "Posterior distribution plots\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.posterior()\n\n\n                            \n                                            \n\n\n\n\nm$diag$posterior()\n\n\n@pyplot m.diag.posterior()\n\n\n\nSee m.diag.posterior for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#trace-plots-for-mcmc-chains",
+    "href": "start/Diagnostics.html#trace-plots-for-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Trace plots for MCMC chains",
+    "text": "Trace plots for MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_trace()\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_trace()\n\n\n@pyplot m.diag.plot_trace()\n\n\n\nSee m.diag.plot_trace for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#pairwise-plots-of-the-posterior-distribution",
+    "href": "start/Diagnostics.html#pairwise-plots-of-the-posterior-distribution",
+    "title": "Model Diagnostic",
+    "section": "Pairwise plots of the posterior distribution",
+    "text": "Pairwise plots of the posterior distribution\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.pair()\n\n\n                            \n                                            \n\n\n\n\nm$diag$pair()\n\n\n@pyplot m.diag.pair()\n\n\n\nSee m.diag.pair for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#plot-autocorrelation-of-mcmc-chains",
+    "href": "start/Diagnostics.html#plot-autocorrelation-of-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Plot autocorrelation of MCMC chains",
+    "text": "Plot autocorrelation of MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.autocor()\n\n\n                            \n                                            \n\n\n\n\nm$diag$autocor()\n\n\n@pyplot m.diag.autocor()\n\n\n\nSee m.diag.autocor for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#create-rank-plots-for-mcmc-chains",
+    "href": "start/Diagnostics.html#create-rank-plots-for-mcmc-chains",
+    "title": "Model Diagnostic",
+    "section": "Create rank plots for MCMC chains",
+    "text": "Create rank plots for MCMC chains\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.rank()\n\n\n                            \n                                            \n\n\n\n\nm$diag$rank()\n\n\n@pyplot m.diag.rank()\n\n\n\nSee m.diag.rank for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#evolution-of-effective-sample-size-across-iterations",
+    "href": "start/Diagnostics.html#evolution-of-effective-sample-size-across-iterations",
+    "title": "Model Diagnostic",
+    "section": "Evolution of effective sample size across iterations",
+    "text": "Evolution of effective sample size across iterations\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_ess()\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_ess()\n\n\n@pyplot m.diag.plot_ess()\n\n\n\nSee m.diag.plot_ess for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#hmc-diagnostics-divergences-and-energy",
+    "href": "start/Diagnostics.html#hmc-diagnostics-divergences-and-energy",
+    "title": "Model Diagnostic",
+    "section": "HMC diagnostics: divergences and energy",
+    "text": "HMC diagnostics: divergences and energy\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nCheck this plot first: if the sampler failed, the other diagnostics are not meaningful.\n\nTop row, one panel per chain: the distribution of the energy E around its mean (blue, marginal energy) and of its change between two successive iterations, ΔE (orange, energy transition). When the two histograms have about the same width, the sampler can cross the whole posterior from one iteration to the next. When ΔE is much narrower than E, it explores the tails badly (typical of a hierarchical “funnel”). The panel title gives E-BFMI = Σ ΔE² / Σ (E − Ē)²; values below 0.3 are flagged with ⚠.\nBottom row: the number of divergent transitions per chain (ideal: 0). A divergence means that the integrator failed in a region of strong curvature, which is then under-explored. With a few divergences, raise target_accept (0.95–0.99); with many, reparametrise (for example a non-centred random effect).\n\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.divergence_energy()\n\n\n                            \n                                            \n\n\n\n\nm$diag$divergence_energy()\n\n\n@pyplot m.diag.divergence_energy()\n\n\n\nSee m.diag.divergence_energy for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#posterior-predictive-checks",
+    "href": "start/Diagnostics.html#posterior-predictive-checks",
+    "title": "Model Diagnostic",
+    "section": "Posterior predictive checks",
+    "text": "Posterior predictive checks\nAll posterior predictive checks compare the observed outcome with predictions: datasets of the outcome simulated by the fitted model, one per posterior draw (m.diag.get_yrep()). Both are taken from the fitted model automatically, and the plots are labelled with the name of the observed site (here height, from obs=height). With several observed sites, each function returns one figure per site; pass site= to choose one. The idea is always the same: if the model is good, the data it simulates should look like the real data. For count or categorical outcomes, m.diag.ppc_bars() and m.diag.ppc_rootogram() instead compare observed counts with predicted counts per category.\nWhich check for which model. The model pages show the checks that matter for each kind of model:\n\nVarying effects, one panel per group (group=): Varying slopes, Nested varying effects, Categorical variable.\nA group effect the model leaves out: Binomial model (one intercept for all chimpanzees).\nPredictions along a covariate (x=, optionally with group=): Interaction between continuous variables, Poisson model with offset, Gaussian processes.\nCounts and over-dispersion (ppc_rootogram, ppc_stat(stat=\"sd\")): Gamma-Poisson, Beta binomial model.\nExcess of zeros (ppc_stat(stat=\"n_zero\")): Zero inflated.\nCategorical outcomes (ppc_bars): Categorical model.\nSurvival times with censoring (ppc_km_overlay): Survival analysis.\nCalibration of the predictive distributions (ppc_loo_pit): Phylogenetic analysis, Feature extraction - R2D2.\nMeasurement error and shrinkage (ppc_error_scatter): Measuring error.\n\n\nDensity overlay\nOverlays the density of the observed data (black) with the densities of n predicted datasets (blue). The black curve should look like one more blue curve; a different shape (two modes, skewness, mass below 0 for a positive outcome) points to a missing group or a wrong likelihood.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_density()\n\n\n/home/sosa/work/BF/BayesForge/Diagnostic/ppc.py:82: RuntimeWarning: ⚠️This function is still in development. Use it with caution. ⚠️\n  warn_dev(\"ppc\")\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_density()\n\n\n@pyplot m.diag.ppc_density()\n\n\n\nSee m.diag.ppc_density for further information regarding the list of arguments.\n\n\nHistogram small multiples\nThe histogram of the observed data (first panel, black) next to the histograms of n predicted datasets (“Prediction 1”, “Prediction 2”, …). The observed histogram should not stand out among the predictions; look at the number of modes, the skewness, the range and the number of zeros.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_hist()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_hist()\n\n\n@pyplot m.diag.ppc_hist()\n\n\n\nSee m.diag.ppc_hist for further information regarding the list of arguments.\n\n\nBoxplots\nThe box of the observed data (left, black) next to the boxes of n predicted datasets (“pred 1”, “pred 2”, …): median, quartiles, whiskers and extreme points. The observed box should look like the others; an observed box that is systematically higher, wider or narrower, or extreme values that the predictions never produce (tails too light: try a Student-t likelihood), signal misfit.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_boxplot()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_boxplot()\n\n\n@pyplot m.diag.ppc_boxplot()\n\n\n\nSee m.diag.ppc_boxplot for further information regarding the list of arguments.\n\n\nTest statistic\nEach predicted dataset is summarised by one number T (the curve is the distribution of T over the predictions) and T of the observed data is marked by the vertical line. The title gives the Bayesian p-value P(T(predicted) ≥ T(observed)) and its two-sided version: around 0.5 is fine, a two-sided value below 0.05 means the model does not reproduce this aspect of the data.\nChoose the statistic with stat=: \"mean\" (default), \"median\", \"sd\", \"var\", \"min\", \"max\", \"q25\", \"q75\", \"skew\", \"n_zero\", \"n_pos\", or (Python) any function of a 1D array, for example stat=lambda v: np.percentile(v, 90). The mean is almost always reproduced because the model has a parameter for it; statistics the model does not fit directly (\"sd\" for over-dispersion, \"max\"/\"min\" for the tails, \"skew\", \"n_zero\" for counts) are more informative.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_stat(stat=\"sd\")\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_stat(stat = \"sd\")\n\n\n@pyplot m.diag.ppc_stat(stat = \"sd\")\n\n\n\nSee m.diag.ppc_stat for further information regarding the list of arguments.\n\n\nPredictive intervals\nOne vertical bar per observation: the thin line is the 90% predictive interval (prob_outer), the thick line the 50% interval (prob), the white point the median prediction and the black point the observed value. About 50% of the black points should fall on the thick bars and 90% on the thin ones. Many points outside mean the model is over-confident; all points close to the median mean it is too cautious. Pass x= (a predictor) to see where the model misses; a discrete x (a few distinct levels, e.g. a normalized 1/2/3 design) gets one tick per level instead of plotly’s default ticks, which would fall between the bars. Pass group= to get one panel per level of a second variable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_intervals()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_intervals()\n\n\n@pyplot m.diag.ppc_intervals()\n\n\n\nSee m.diag.ppc_intervals for further information regarding the list of arguments.\n\n\nPredictive ribbon\nThe same intervals drawn as continuous ribbons (light: 90%, dark: 50%; line: median prediction) with the observed values as points. Easier to read than the bars when x is a continuous variable, here the predictor weight: the ribbon should follow the cloud of points over the whole range of x, without a curvature it misses.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_ribbon(x=m.df.weight)\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_ribbon(x = m$df$weight)\n\n\n@pyplot m.diag.ppc_ribbon(x = m.df.weight)\n\n\n\nSee m.diag.ppc_ribbon for further information regarding the list of arguments.\n\n\nAverage predictive error\nAverage predictive error e_i = observed_i − mean prediction_i of each observation (x axis) against the observed value (y axis); the dashed vertical line at 0 is where a perfectly calibrated observation sits. Read it like a residual plot: no pattern in the cloud is good. A slope means the errors depend on the observed value (the model under-predicts at one end and over-predicts at the other), a funnel (spread growing with the observed value) indicates heteroscedasticity, and a shift off 0 a systematic bias.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_error_scatter()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_error_scatter()\n\n\n@pyplot m.diag.ppc_error_scatter()\n\n\n\nSee m.diag.ppc_error_scatter for further information regarding the list of arguments.\n\n\nBinned residuals\nFor binary (or proportion) outcomes: observations are grouped into bins by their expected value (posterior probability), and each panel — one per posterior draw — plots the average error per bin against that expected value, with a ±2 SE band around the dashed line at 0. Read it: most points inside the band and no trend across bins is good; points systematically above or below the band, or a slope, mean the predicted probabilities are mis-calibrated. The model on this page has a continuous outcome, so no example is shown here.\n\n\nKaplan–Meier overlay (ppc_km_overlay)\nFor time-to-event outcomes: status_y marks each observation as an event (1) or censored (0), and the plot overlays the Kaplan–Meier survival curve of the observed data (thick line) on the Kaplan–Meier curves of the posterior predictive replications (thin lines), which — as in bayesplot — carry no censoring. Read it: the observed curve should lie inside the band of predicted curves; a curve systematically above or below the band means the model mis-predicts survival times. The model on this page has a continuous outcome, so no example is shown here; see Survival analysis.\n\n\nResiduals\nHistogram of the residuals r_i = observed_i − mean prediction_i. It should be centred on 0 and roughly symmetric; a shift is a systematic bias, skewness a wrong likelihood family, two modes a missing group, and long tails a few badly predicted observations (see LOO influence).\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_error_hist()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_error_hist()\n\n\n@pyplot m.diag.ppc_error_hist()\n\n\n\nSee m.diag.ppc_error_hist for further information regarding the list of arguments.\n\n\nObserved versus individual predictions\nEach panel plots the observed data against one predicted dataset (not the mean), so the observation noise is included and the cloud is wider than in the plot above. The width of the cloud around the diagonal should be similar from one panel to the next; observed values that systematically overshoot on one side mean the simulated noise is mis-calibrated.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_scatter()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_scatter()\n\n\n@pyplot m.diag.ppc_scatter()\n\n\n\nSee m.diag.ppc_scatter for further information regarding the list of arguments.\n\n\nLOO-PIT uniformity check\nFor each observation, the PIT (probability integral transform) is the quantile of its predictive distribution at which the observed value falls: PIT_i = P(prediction_i ≤ y_i). If the model is calibrated these values are uniform between 0 and 1, so their density (blue) is flat around the dashed line at 1. The grey curves are densities of the same number of truly uniform values: they show how far from flat a perfectly calibrated model can be by chance, so a blue curve that stays inside the grey band is fine.\n\n\n\n\n\n\n\nShape of the blue curve\nDiagnosis\n\n\n\n\nflat, inside the grey band\ncalibrated\n\n\nU-shaped (high at 0 and 1)\npredictions too narrow: the model is over-confident\n\n\nbell-shaped (peak at 0.5)\npredictions too wide: the model is too cautious\n\n\ntilted to one side\nbias: the model over- or under-predicts\n\n\n\nPIT versus LOO-PIT. The plain PIT scores each observation with draws from a posterior that was fitted to that same observation, so the predictions are pulled towards it and the PIT values towards 0.5: a model that is over-confident can look calibrated. The LOO-PIT uses the leave-one-out predictive distribution instead, each observation being scored by a posterior fitted without it. Refitting n times is not needed: Pareto-smoothed importance sampling reweights the draws with the pointwise log-likelihood. m.diag.ppc_loo_pit() computes that log-likelihood from the fitted model automatically. When you pass your own predictions with yrep=, also pass log_likelihood= with the pointwise log-likelihood of the same draws, shape (draws, observations); without it the plain PIT is plotted and a warning is raised.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_loo_pit()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_loo_pit()\n\n\n@pyplot m.diag.ppc_loo_pit()\n\n\n\nSee m.diag.ppc_loo_pit for further information regarding the list of arguments.\n\n\nPredictive intervals sorted by observed value\nThe predictive intervals with the observations ordered by their observed value, so the black points rise from left to right. The medians should follow the black points. A little “regression towards the mean” is normal (the smallest values slightly over-predicted, the largest slightly under-predicted, because the posterior shrinks them); a strong and systematic gap means the model flattens the extremes, for example because a predictor or a variance term is missing.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.ppc_intervals_sorted()\n\n\n                            \n                                            \n\n\n\n\nm$diag$ppc_intervals_sorted()\n\n\n@pyplot m.diag.ppc_intervals_sorted()\n\n\n\nSee m.diag.ppc_intervals_sorted for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#regression-plot",
+    "href": "start/Diagnostics.html#regression-plot",
+    "title": "Model Diagnostic",
+    "section": "Regression plot",
+    "text": "Regression plot\nObserved data plus n smooth posterior regression lines E[y | x, theta] and their posterior mean, overlaid against a predictor variable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.plot_regression(\"weight\", n = 20)\n\n\n                            \n                                            \n\n\n\n\nm$diag$plot_regression(\"weight\", n = 20L)\n\n\n@pyplot m.diag.plot_regression(\"weight\", n = 20)\n\n\n\nSee m.diag.plot_regression for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#sensitivity",
+    "href": "start/Diagnostics.html#sensitivity",
+    "title": "Model Diagnostic",
+    "section": "Sensitivity",
+    "text": "Sensitivity\n\nPrior sensitivity\nOverlays the posteriors from models fitted with different priors to assess how much the conclusions change when the priors vary.\n\nPythonRJulia\n\n\n\n\nCode\n# Refit the same model with a tighter prior on b\nposteriors_weak = m.posteriors\n\ndef model_strong(weight, height):\n    a = m.dist.normal(178, 20, name=\"a\")\n    b = m.dist.log_normal(0, 0.1, name=\"b\")\n    s = m.dist.uniform(0, 50, name=\"s\")\n    m.dist.normal(a + b * weight, s, obs=height, shape=(weight.shape[0],))\n\nm.fit(model_strong, num_samples=500, num_chains=4)\n\nm.diag.prior_sensitivity([posteriors_weak, m.posteriors],\n                         labels=[\"weak prior\", \"strong prior\"])\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n                            \n                                            \n\n\n\n\n# Refit the same model with a tighter prior on b\nposteriors_weak &lt;- m$posteriors\n\nmodel_strong &lt;- function(weight, height) {\n    a &lt;- bf.dist.normal(178, 20, name = \"a\")\n    b &lt;- bf.dist.log_normal(0, 0.1, name = \"b\")\n    s &lt;- bf.dist.uniform(0, 50, name = \"s\")\n    bf.dist.normal(a + b * weight, s, obs = height)\n}\n\nm$fit(model_strong, num_samples = 500, num_chains = 4)\n\nm$diag$prior_sensitivity(list(posteriors_weak, m$posteriors),\n                         labels = list(\"weak prior\", \"strong prior\"))\n\n\n# Refit the same model with a tighter prior on b\nposteriors_weak = m.posteriors\n\n@BF function model_strong(weight, height)\n    a = m.dist.normal(178, 20, name = \"a\")\n    b = m.dist.log_normal(0, 0.1, name = \"b\")\n    s = m.dist.uniform(0, 50, name = \"s\")\n    m.dist.normal(a + b * weight, s, obs = height)\nend\n\nm.fit(model_strong, num_samples = 500, num_chains = 4)\n\n@pyplot m.diag.prior_sensitivity([posteriors_weak, m.posteriors],\n                                 labels = [\"weak prior\", \"strong prior\"])\n\n\n\n\nDeclaring the prior variations (parallel)\nInstead of refitting by hand, declare which priors vary. The model takes the bf instance m first, then the data, then the prior hyper-parameters (their defaults are the baseline). prior_sensitivity fits the baseline plus one variation at a time (each prior moved alone, the others at baseline) in parallel, through run_simulations, and plots the results.\n\nPythonRJulia\n\n\n\n\nCode\ndef model_decl(m, weight, height, a_sd=20.0, b_sd=1.0):\n    a = m.dist.normal(178, a_sd, name=\"a\")\n    b = m.dist.log_normal(0, b_sd, name=\"b\")\n    s = m.dist.uniform(0, 50, name=\"s\")\n    m.dist.normal(a + b * weight, s, obs=height, shape=(weight.shape[0],))\n\nfig, table = m.diag.prior_sensitivity(\n    model_decl,\n    priors={\"b_sd\": [0.1, 0.5, 2.0], \"a_sd\": [5, 50]},   # 1 + 5 = 6 fits\n    obs=dict(weight=m.df.weight.to_numpy(dtype=\"float32\"),\n             height=m.df.height.to_numpy(dtype=\"float32\")),\n    fit_kwargs=dict(num_samples=500, num_chains=1),\n    progress=False,\n    return_results=True)       # table: mean, sd, HDI and shift_sd vs baseline\nfig\n\n\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\nAn NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.\n\n\n                            \n                                            \n\n\n\n\nmodel &lt;- function(m, weight, height, a_sd = 20, b_sd = 1) {\n    a &lt;- m$dist$normal(178, a_sd, name = \"a\")\n    b &lt;- m$dist$log_normal(0, b_sd, name = \"b\")\n    s &lt;- m$dist$uniform(0, 50, name = \"s\")\n    m$dist$normal(a + b * weight, s, obs = height, name = \"height\")\n}\n\nout &lt;- m$diag$prior_sensitivity(\n    model,\n    priors = list(b_sd = list(0.1, 0.5, 2.0), a_sd = list(5, 50)),   # 1 + 5 = 6 fits\n    obs = list(weight = weight, height = height),\n    fit_kwargs = list(num_samples = 500L, num_chains = 1L),\n    return_results = TRUE)     # out[[1]]: figure, out[[2]]: table\n\n\n@sim function model(m, weight, height; a_sd = 20.0, b_sd = 1.0)\n    a = m.dist.normal(178, a_sd, name = \"a\")\n    b = m.dist.log_normal(0, b_sd, name = \"b\")\n    s = m.dist.uniform(0, 50, name = \"s\")\n    m.dist.normal(a + b * weight, s, obs = height, name = \"height\")\nend\n\nfig, table = m.diag.prior_sensitivity(\n    model,\n    priors = Dict(\"b_sd\" =&gt; [0.1, 0.5, 2.0], \"a_sd\" =&gt; [5, 50]),   # 1 + 5 = 6 fits\n    obs = Dict(\"weight\" =&gt; weight, \"height\" =&gt; height),\n    fit_kwargs = Dict(\"num_samples\" =&gt; 500, \"num_chains\" =&gt; 1),\n    return_results = true)\n\n\n\nThe default plot (plot=\"by_prior\") has one row per varied prior and one column per parameter: each cell shows the baseline posterior (grey, dashed) and the posteriors when that prior alone is varied. plot=\"shift\" gives a dot plot of the posterior-mean shift (in baseline sd) per variation, and plot=\"overlay\" puts every fit in one panel per parameter.\nmode=\"grid\" crosses all the lists instead (captures interactions, but the number of fits is the product of the list lengths); joint={\"all tighter\": {\"a_sd\": 5, \"b_sd\": 0.1}} adds scenarios where several priors move together. shift_sd is the change of the posterior mean from the baseline, in baseline posterior sd.\nSee m.diag.prior_sensitivity for further information regarding the list of arguments.\n\n\n\nLOO influence\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nOne point per observation with its Pareto k, from PSIS-LOO: how much the posterior would change if this observation were left out.\n\n\n\n\n\n\n\nk\nReading\n\n\n\n\n&lt; 0.5\nfine\n\n\n0.5 – 0.7 (orange line)\nnoticeable influence, the LOO estimate is still reliable\n\n\n&gt; 0.7 (red line, red points)\nvery influential observation; LOO is unreliable for it\n\n\n\nA few red points are often outliers or data errors (hover to see their index and value). Many red points mean the model is misspecified or too flexible (for example one parameter per observation); try a robust likelihood (Student-t) or a more structured model. When some k exceed 0.7, model comparison with m.diag.loo() / compare is not reliable.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.influence()\n\n\n                            \n                                            \n\n\n\n\nm$diag$influence()\n\n\n@pyplot m.diag.influence()\n\n\n\nSee m.diag.influence for further information regarding the list of arguments.\n\n\nCalibration\nFor several interval levels (50%, 60%, …, 99%), the share of observed values that actually fall inside the predictive interval of that level (y axis) against the level itself (x axis); the dashed diagonal is perfect calibration. Points below the diagonal (the “90%” interval contains only, say, 70% of the data) mean the model is over-confident, which is the most serious case; points above it mean the model is too cautious. These intervals are not leave-one-out, so a slight over-coverage is expected.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.calibration()\n\n\n                            \n                                            \n\n\n\n\nm$diag$calibration()\n\n\n@pyplot m.diag.calibration()\n\n\n\nSee m.diag.calibration for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#multimodality-check",
+    "href": "start/Diagnostics.html#multimodality-check",
+    "title": "Model Diagnostic",
+    "section": "Multimodality check",
+    "text": "Multimodality check\n\n\n\n\n\n\n\n\nWarning\n\n\n\n⚠️This function is still in development. Use it with caution. ⚠️\n\n\n\n\nFlags parameters whose posterior density has more than one local maximum (potential multimodality) and overlays the densities of the individual chains.\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.multimodality()\n\n\n                            \n                                            \n\n\n\n\nm$diag$multimodality()\n\n\n@pyplot m.diag.multimodality()\n\n\n\nSee m.diag.multimodality for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#pareto-smoothed",
+    "href": "start/Diagnostics.html#pareto-smoothed",
+    "title": "Model Diagnostic",
+    "section": "Pareto-smoothed",
+    "text": "Pareto-smoothed\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.loo()\n\n\nComputed from 2000 posterior samples and 346 observations log-likelihood matrix.\n\n         Estimate       SE\nelpd_loo -1140.63    11.99\np_loo        2.40        -\n\n\n\n\nm$diag$loo()\n\n\nm.diag.loo()\n\n\n\nSee m.diag.loo for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  },
+  {
+    "objectID": "start/Diagnostics.html#widely-applicable-information-criterion",
+    "href": "start/Diagnostics.html#widely-applicable-information-criterion",
+    "title": "Model Diagnostic",
+    "section": "Widely applicable information criterion",
+    "text": "Widely applicable information criterion\n\nPythonRJulia\n\n\n\n\nCode\nm.diag.WAIC()\n\n\nelpd_waic       -1140.625551\nse                    11.975\np_waic              2.397558\nn_samples               2000\nn_data_points            346\nscale                    log\ndtype: object\n\n\n\n\nm$diag$WAIC()\n\n\nm.diag.WAIC()\n\n\n\nSee m.diag.WAIC for further information regarding the list of arguments.",
+    "crumbs": [
+      "Get started",
+      "Pipeline",
+      "Model Diagnostic"
+    ]
+  }
+]

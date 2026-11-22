@@ -1257,6 +1257,13 @@ def _parallel(fn, scenarios, fn_kwargs, workers, cores_per_worker,
     # spawn, not fork: setup_device must configure XLA before the backend comes
     # up, and forking a process that has already initialised JAX is unsafe.
     ctx = multiprocessing.get_context("spawn")
+    # spawn reads __main__.__spec__ to rebuild the parent's main module. Some
+    # kernels (e.g. the Jupyter kernel quarto starts) leave it unset rather
+    # than None, and spawn then fails with AttributeError. None means "no
+    # importable main module", which is what such a kernel is.
+    import __main__
+    if not hasattr(__main__, "__spec__"):
+        __main__.__spec__ = None
 
     # GPU budget (M7): with several devices visible, each worker gets its own
     # CUDA_VISIBLE_DEVICES (round-robin over the visible ids), applied in the
