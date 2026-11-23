@@ -1,9 +1,21 @@
+"""Jupyter diagnostics for fitted models (``diagWIP``).
+
+.. deprecated::
+    Superseded by :mod:`BayesForge.Diagnostic.patch_diag`, which patches the
+    same class with the JAX/ArviZ-matching backend. Kept for the legacy
+    hand-rolled ``diagnose()`` report; new code should use
+    :func:`patch_diag.patch_diag_class` or :mod:`jax_diagnostics` directly
+    (RELEASE_AUDIT bug 18 / 26).
+"""
+import warnings
 import arviz as az
 import inspect
 
 import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 from numpyro.infer import log_likelihood as _numpyro_log_likelihood
+from numpyro.infer import NUTS as _NUTS
+from BayesForge.Diagnostic.jax_diagnostics import _acf, _ebfmi_per_chain
 import numpy as np
 import pandas as pd
 import itertools
@@ -20,24 +32,6 @@ importer.schedule_import("plotly.figure_factory", "ff")
 importer.schedule_import("plotly.colors", "n_colors")
 importer.schedule_import("seaborn", "sns")
 importer.schedule_import("matplotlib.pyplot", "plt")
-
-
-def _acf(x, max_lag=40):
-    """Autocorrelation function of a 1D chain, lags 0..max_lag-1.
-
-    Centres on the GLOBAL mean and divides by the global variance. Computing
-    ``np.corrcoef(x[:-t], x[t:])`` instead re-centres and re-scales each window
-    separately, which is not the ACF: it diverges at large lag and the
-    resulting sequence is not positive-definite.
-    """
-    x = np.asarray(x, dtype=float)
-    n = x.size
-    max_lag = int(min(max_lag, n))
-    xc = x - x.mean()
-    denom = np.dot(xc, xc)
-    if denom <= 0:
-        return [1.0] + [0.0] * (max_lag - 1)
-    return [float(np.dot(xc[: n - t], xc[t:]) / denom) for t in range(max_lag)]
 
 
 def _az_hdi(data, prob):
@@ -73,6 +67,21 @@ def _az_from_dict(groups):
     if "posterior" in inspect.signature(az.from_dict).parameters:
         return az.from_dict(**groups)
     return az.from_dict(groups)
+
+
+def _az_result_values(result, name):
+    """NumPy values of `name` from an ``az.ess``/``az.rhat`` result.
+
+    ArviZ 1.x returns an ``xarray.DataTree`` rooted at the group it computed
+    (0.x returned a plain ``xarray.Dataset``); the variable sits at
+    ``result[name]`` either way, with ``result["posterior"][name]`` as the
+    fallback for builds that keep the group as a child node.
+    """
+    try:
+        obj = result[name]
+    except (KeyError, TypeError):
+        obj = result["posterior"][name]
+    return np.asarray(obj.values, dtype=float)
 
 
 def _numpy_backed_idata(idata, groups=("posterior", "log_likelihood", "sample_stats")):
@@ -219,7 +228,7 @@ def _pointwise_loglik_from_tfp(sampler, var_name=None):
         value = tuple(params) + obs_tuple
         dists, _ = jd.sample_distributions(seed=key, value=value)
         obs_dists = dists[-n_obs:]
-        outs = [_pointwise(od, ob) for od, ob in zip(obs_dists, obs_tuple)]
+        outs = [_pointwise(od, ob) for od, ob in zip(obs_dists, obs_tuple, strict=True)]
         return outs[0] if n_obs == 1 else jnp.concatenate(outs, axis=-1)
 
     ll = jax.vmap(one_draw)(tuple(flat))
@@ -301,14 +310,70 @@ def _waic(log_likelihood, pointwise=False, scale="log"):
     return result
 
 
+class _DictPosterior:
+    """Sampler-like view over a plain ``{name: array}`` of posterior draws.
+
+    RELEASE_AUDIT bug 25: ``diagWIP`` used to require a fitted sampler object,
+    so draws held as a dict (SBI posteriors, results reloaded from disk,
+    external chains) could not be diagnosed without hand-building a fake
+    sampler. The shape convention is ArviZ's ``from_dict`` one: 1-D arrays are
+    ``(chain, draw)``, higher-dimensional ones ``(chain, draw, *)``. The
+    leading axis IS the chain axis, so ``num_chains`` is inferred from it in
+    :meth:`__init__` and matches the cross-check in :meth:`diagWIP.__init__`.
+
+    Deliberately does NOT set ``az_from_dict``: that flag triggers the
+    simulation-based pseudo-chain warning, which is about ABC/NPE posteriors,
+    not about any dict of draws. With a single chain R-hat is NaN (ArviZ's own
+    behaviour; RELEASE_AUDIT bug 3, owner decision 2026-11-13); ESS and the
+    plots are valid.
+    """
+
+    num_chains = 1  # fallback; __init__ infers the real value from the data
+
+    def __init__(self, samples):
+        if not isinstance(samples, dict) or not samples:
+            raise ValueError(
+                "expected a non-empty dict {name: array} of posterior draws; "
+                f"got {type(samples).__name__}"
+            )
+        self._samples = {}
+        for name, arr in samples.items():
+            arr = np.asarray(arr)
+            if arr.ndim == 0:
+                raise ValueError(
+                    f"posterior draws for {name!r} are scalar; expected at "
+                    "least 1-D (chain, draw) following the az.from_dict "
+                    "shape convention"
+                )
+            self._samples[name] = arr
+        # Leading axis is the chain axis (az.from_dict convention); infer the
+        # real num_chains so the cross-check in diagWIP.__init__ agrees.
+        self.num_chains = int(next(iter(self._samples.values())).shape[0])
+
+    def get_samples(self, group_by_chain=False):
+        if group_by_chain:
+            return dict(self._samples)
+        # (chain, draw, *) -> (chain*draw, *), same flattening as numpyro.
+        return {
+            k: v.reshape((-1,) + v.shape[2:]) for k, v in self._samples.items()
+        }
+
+    def get_extra_fields(self, group_by_chain=False):
+        # Signature-compatible with the sampler interface: sensitivity's
+        # _per_chain calls get_extra_fields(group_by_chain=True).
+        return {}
+
+
 class diagWIP:
     """
     The diag class serves as a comprehensive toolkit for diagnosing and visualizing the results of Bayesian models,
     particularly those fitted using MCMC samplers like NumPyro. It is built to provide interactive plotting
-    functionalities using Plotly and operates directly on a dictionary of posterior samples. The
-    hand-rolled convergence measures used by ``diagnose`` (rank-normalized split R-hat, bulk/tail
-    ESS, E-BFMI) and the ``summary`` statistics are computed with NumPy/SciPy (not JAX); the public
-    ``rhat``/``ess`` methods delegate to ArviZ.
+    functionalities using Plotly and operates directly on a dictionary of posterior samples.
+    ``summary`` and the ESS / R-hat sections of ``diagnose`` delegate to ArviZ
+    (owner decision 2026-11-13); the hand-rolled estimators (``_rhat_manual``,
+    ``_ess_bulk_manual``, ``_ess_tail_manual``, ``_ebfmi_manual``) remain
+    available as private helpers, and the public ``rhat``/``ess`` methods have
+    always delegated to ArviZ.
     """
 
     def __init__(self, sampler):
@@ -316,9 +381,25 @@ class diagWIP:
         Initialize the diagnostic class.
 
         Args:
-            sampler: A fitted NumPyro MCMC sampler object.
+            sampler: A fitted NumPyro MCMC sampler object, or a plain
+                ``{name: array}`` of posterior draws (RELEASE_AUDIT bug 25),
+                wrapped as a single-chain :class:`_DictPosterior`.
         """
+        if isinstance(sampler, dict):
+            sampler = _DictPosterior(sampler)
         self.sampler = sampler
+        # RELEASE_AUDIT bug 14: draws from an SVI result are not MCMC chains;
+        # R-hat/ESS are meaningless on them. Flag it from construction so the
+        # first rhat()/ess()/summary()/diagnose() call already warns (the
+        # to_az() branch below sets the same flag when the trace is built).
+        self.is_variational = hasattr(sampler, "svi")
+        if getattr(sampler, "az_from_dict", False) and not hasattr(sampler, "svi"):
+            warnings.warn(
+                "Simulation-based posterior (ABC/NPE): its independent draws are split into "
+                "pseudo-chains, so R-hat ~ 1 and ESS ~ n by construction. They do not "
+                "assess whether the posterior approximation is calibrated; use a "
+                "simulation-based calibration (SBC) or coverage check instead.",
+                UserWarning, stacklevel=2)
         # Get samples with chain information preserved
         self.posterior_samples = sampler.get_samples(group_by_chain=True)
         self.priors_name = list(self.posterior_samples.keys())
@@ -346,23 +427,43 @@ class diagWIP:
     def to_az(
         self,
         backend="numpyro",
-        sample_stats_name=[
+        # Same order as mcmc_tfp.trace_fn, which returns these 5 statistics.
+        sample_stats_name=(
             "target_log_prob",
-            "log_accept_ratio",
+            "leapfrogs_taken",
             "has_divergence",
             "energy",
-        ],
+            "log_accept_ratio",
+        ),
     ):
-        """Convert the sampler output to an arviz trace object.
+        """Convert the sampler output to an ArviZ ``InferenceData`` trace object.
 
-        This method prepares the trace for use with arviz diagnostic tools.
+        This method prepares the trace for use with ArviZ diagnostic tools.
+
+        Args:
+            backend (str): Backend used to fit the model (``"numpyro"`` or ``"tfp"``).
+            sample_stats_name (list[str]): Sample statistics keys for the TFP backend.
 
         Returns:
-            self.trace: The arviz trace object containing the diagnostic data
+            arviz.InferenceData: The ArviZ ``InferenceData`` object stored in ``m.diag.trace``.
+            Updates on m.diag: sets ``m.diag.trace`` (``arviz.InferenceData``) and
+                ``m.diag.priors_name`` (list of posterior variable names).
         """
         if backend == "numpyro":
-            if hasattr(self.sampler, "svi"):
-                # Handle SVI wrapper
+            if (hasattr(self.sampler, "svi")
+                    or getattr(self.sampler, "az_from_dict", False)
+                    or isinstance(self.sampler, _DictPosterior)):
+                # SVI and simulation-based samplers (ABC, NPE; see
+                # SBIPosterior in Samplers/SBI/simulate.py) have no NumPyro MCMC
+                # object, so az.from_numpyro() cannot read them. They expose
+                # get_samples(group_by_chain=True) instead, so we build the trace
+                # from that dict. az_from_dict = True is the opt-in flag.
+                # _DictPosterior (plain {name: array} input, bug 25) is in the
+                # same category: no NumPyro MCMC object behind it.
+                if hasattr(self.sampler, "svi"):
+                    # RELEASE_AUDIT bug 14: SVI draws are a variational
+                    # approximation, not MCMC chains.
+                    self.is_variational = True
                 posterior_samples = self.sampler.get_samples(group_by_chain=True)
                 self.trace = _az_from_dict({"posterior": posterior_samples})
             else:
@@ -372,15 +473,25 @@ class diagWIP:
 
         elif backend == "tfp":
             var_names = list(self.sampler.model_info.keys())
+            if len(sample_stats_name) != len(self.sampler.sample_stats):
+                raise ValueError(
+                    f"{len(sample_stats_name)} sample_stats_name for "
+                    f"{len(self.sampler.sample_stats)} TFP trace statistics; the names "
+                    "must follow mcmc_tfp.trace_fn's order.")
             sample_stats = {
                 k: jnp.transpose(v)
-                for k, v in zip(sample_stats_name, self.sampler.sample_stats)
+                for k, v in zip(sample_stats_name, self.sampler.sample_stats, strict=True)
             }
             trace = {}
             # First dim is the number of chains
             # Second dim is the number of sampling
             # The rest is the shape of the object
-            for name, samp in zip(var_names, self.sampler.posterior):
+            if len(var_names) != len(self.sampler.posterior):
+                raise ValueError(
+                    f"{len(var_names)} var_names from model_info for "
+                    f"{len(self.sampler.posterior)} TFP posterior sites; the "
+                    "sampled sites must follow mcmc_tfp.model_info's order.")
+            for name, samp in zip(var_names, self.sampler.posterior, strict=True):
                 trace[name] = samp
 
             self.trace = _az_from_dict({"posterior": trace, "sample_stats": sample_stats})
@@ -643,6 +754,24 @@ class diagWIP:
         return az.compare(compare_dict, **kwargs)
 
     @staticmethod
+    def _warn_ignored(method, **given):
+        """Warn once about ArviZ 0.x-only options set to a non-default value.
+
+        ``given`` holds name=value pairs the caller already filtered down to
+        the non-default ones. RELEASE_AUDIT bugs 22-23. Shared with the
+        legacy diag class in Diag.py, which imports it from here: Diag.py
+        imports from Diag2, so Diag2 must never import back.
+        """
+        if given:
+            names = ", ".join(sorted(given))
+            warnings.warn(
+                "%s: argument(s) %s are ArviZ 0.x options with no ArviZ >= "
+                "1.2 equivalent; ignored." % (method, names),
+                UserWarning,
+                stacklevel=2,
+            )
+
+    @staticmethod
     def plot_compare(
         comp_df,
         insample_dev=False,
@@ -659,99 +788,54 @@ class diagWIP:
         backend=None,
         backend_kwargs=None,
         show=None,
+        relative_scale=True,
+        rotated=False,
+        hide_top_model=False,
     ):
-        r"""Summary plot for model comparison.
+        r"""Summary plot for model comparison (ArviZ >= 1.2 API).
 
-        Models are compared based on their expected log pointwise predictive density (ELPD).
-        This plot is in the style of the one used in [2]_. Chapter 6 in the first edition
-        or 7 in the second.
+        Models are compared on their expected log pointwise predictive
+        density (ELPD), estimated by PSIS-LOO or WAIC (see ``compare``).
 
-        Notes
-        -----
-        The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
-        cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-        We recommend LOO in line with the work presented by [1]_.
+        Effective parameters: ``comp_df`` (the table returned by
+        ``compare``), ``backend``, and the ArviZ 1.x options
+        ``relative_scale``, ``rotated`` and ``hide_top_model``. The ArviZ
+        0.x display options -- ``insample_dev``, ``plot_standard_error``,
+        ``plot_ic_diff``, ``order_by_rank``, ``legend``, ``title``,
+        ``figsize``, ``textsize``, ``plot_kwargs``, ``ax``,
+        ``backend_kwargs``, ``show`` -- are kept for backward
+        compatibility, ignored, and trigger one warning when set to a
+        non-default value. ``labeller`` is kept for signature
+        compatibility only.
 
-        Parameters
-        ----------
-        comp_df : pandas.DataFrame
-            Result of the :func:`arviz.compare` method.
-        insample_dev : bool, default False
-            Plot in-sample ELPD, that is the value of the information criteria without the
-            penalization given by the effective number of parameters (p_loo or p_waic).
-        plot_standard_error : bool, default True
-            Plot the standard error of the ELPD.
-        plot_ic_diff : bool, default False
-            Plot standard error of the difference in ELPD between each model
-            and the top-ranked model.
-        order_by_rank : bool, default True
-            If True ensure the best model is used as reference.
-        legend : bool, default False
-            Add legend to figure.
-        figsize : (float, float), optional
-            If `None`, size is (6, num of models) inches.
-        title : bool, default True
-            Show a tittle with a description of how to interpret the plot.
-        textsize : float, optional
-            Text size scaling factor for labels, titles and lines. If `None` it will be autoscaled based
-            on `figsize`.
-        labeller : Labeller, optional
-            Class providing the method ``make_label_vert`` to generate the labels in the plot titles.
-            Read the :ref:`label_guide` for more details and usage examples.
-        plot_kwargs : dict, optional
-            Optional arguments for plot elements. Currently accepts 'color_ic',
-            'marker_ic', 'color_insample_dev', 'marker_insample_dev', 'color_dse',
-            'marker_dse', 'ls_min_ic' 'color_ls_min_ic',  'fontsize'
-        ax : matplotlib_axes or bokeh_figure, optional
-            Matplotlib axes or bokeh figure.
-        backend : {"matplotlib", "bokeh"}, default "matplotlib"
-            Select plotting backend.
-        backend_kwargs : bool, optional
-            These are kwargs specific to the backend being used, passed to
-            :func:`matplotlib.pyplot.subplots` or :class:`bokeh.plotting.figure`.
-            For additional documentation check the plotting method of the backend.
-        show : bool, optional
-            Call backend show function.
-
-        Returns
-        -------
-        axes : matplotlib_axes or bokeh_figure
-
-        See Also
-        --------
-        plot_elpd : Plot pointwise elpd differences between two or more models.
-        compare : Compare models based on PSIS-LOO loo or WAIC waic cross-validation.
-        loo : Compute Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO-CV).
-        waic : Compute the widely applicable information criterion.
-
-        References
-        ----------
-        .. [1] Vehtari et al. (2016). Practical Bayesian model evaluation using leave-one-out
-           cross-validation and WAIC https://arxiv.org/abs/1507.04544
-
-        .. [2] McElreath R. (2022). Statistical Rethinking A Bayesian Course with Examples in
-           R and Stan, Second edition, CRC Press.
-
-
-
+        Returns:
+            The PlotCollection returned by ``az.plot_compare``.
         """
-        return az.plot_compare(
-            comp_df,
-            insample_dev=insample_dev,
-            plot_standard_error=plot_standard_error,
-            plot_ic_diff=plot_ic_diff,
-            order_by_rank=order_by_rank,
-            legend=legend,
-            title=title,
-            figsize=figsize,
-            textsize=textsize,
-            labeller=labeller,
-            plot_kwargs=plot_kwargs,
-            ax=ax,
-            backend=backend,
-            backend_kwargs=backend_kwargs,
-            show=show,
-        )
+        ignored = {}
+        for name, value, default in (
+            ("insample_dev", insample_dev, False),
+            ("plot_standard_error", plot_standard_error, True),
+            ("plot_ic_diff", plot_ic_diff, False),
+            ("order_by_rank", order_by_rank, True),
+            ("legend", legend, False),
+            ("title", title, True),
+            ("figsize", figsize, None),
+            ("textsize", textsize, None),
+            ("plot_kwargs", plot_kwargs, None),
+            ("ax", ax, None),
+            ("backend_kwargs", backend_kwargs, None),
+            ("show", show, None),
+        ):
+            if value != default:
+                ignored[name] = value
+        diagWIP._warn_ignored("plot_compare", **ignored)
+        kw = {
+            "backend": backend,
+            "relative_scale": relative_scale,
+            "rotated": rotated,
+            "hide_top_model": hide_top_model,
+        }
+        return az.plot_compare(comp_df, **kw)
 
     def rhat(self, *args, **kwargs):
         """Calculate R-hat statistics for convergence.
@@ -762,6 +846,13 @@ class diagWIP:
         Returns:
             rhat: R-hat values
         """
+        if getattr(self, "is_variational", False):
+            # RELEASE_AUDIT bug 14: SVI draws have no chains to mix.
+            warnings.warn(
+                "These draws come from a variational approximation (SVI), "
+                "not from MCMC chains: R-hat and ESS do not measure "
+                "convergence here.",
+                UserWarning, stacklevel=2)
         # NOTE: results are stored under a private name. Assigning to
         # ``self.rhat`` replaced this bound method with its own return value,
         # so a second call raised "'Dataset' object is not callable".
@@ -777,6 +868,13 @@ class diagWIP:
         Returns:
             ess: Effective sample sizes
         """
+        if getattr(self, "is_variational", False):
+            # RELEASE_AUDIT bug 14: SVI draws are not Markov chains.
+            warnings.warn(
+                "These draws come from a variational approximation (SVI), "
+                "not from MCMC chains: R-hat and ESS do not measure "
+                "convergence here.",
+                UserWarning, stacklevel=2)
         self._ess_result = az.ess(self._ensure_trace(), *args, **kwargs)
         return self._ess_result
 
@@ -815,6 +913,11 @@ class diagWIP:
 
         Kept as one function so the scalar and the multi-dimensional branches of
         ``summary`` cannot drift apart.
+
+        RELEASE (owner decision 2026-11-13): ``summary`` now delegates to
+        ``az.summary``; this manual row builder is no longer called by it and
+        is kept as the reference for the column names and column order the
+        ArviZ-backed table reproduces.
         """
         chains = np.asarray(chains, dtype=float)
         flat = chains.flatten()
@@ -841,6 +944,14 @@ class diagWIP:
                 exclude_vars=None, kind="all"):
         """Generate a summary table of posterior statistics.
 
+        The numbers are computed by ``az.summary`` (owner decision 2026-11-13:
+        ArviZ is the reference estimator and benchmarks 7-15% faster than the
+        manual loops on SRM-sized posteriors). The column names, column order,
+        row labels ("name", "name[i, j]") and the final rounding keep the
+        BayesForge convention of the old manual table; the ess_tail column
+        follows ArviZ's default tail probability (1 - hdi_prob), which is
+        intended.
+
         Args:
             round_to: Number of decimal places to round the statistics to
             hdi_prob: Credible interval probability (e.g., 0.89 for 89% HDI)
@@ -853,6 +964,14 @@ class diagWIP:
         Returns:
             summary_stats: Dictionary containing summary statistics
         """
+        if getattr(self, "is_variational", False):
+            # RELEASE_AUDIT bug 14: the convergence block of the summary is
+            # meaningless on variational draws.
+            warnings.warn(
+                "These draws come from a variational approximation (SVI), "
+                "not from MCMC chains: R-hat and ESS do not measure "
+                "convergence here.",
+                UserWarning, stacklevel=2)
         import numpy as np
         import arviz as az
         import pandas as pd
@@ -860,7 +979,6 @@ class diagWIP:
         if kind not in ("all", "stats"):
             raise ValueError(f"unknown kind {kind!r}; expected 'all' or 'stats'")
 
-        summary_stats = {}
         vars_to_process = list(self.posterior_samples.keys())
 
         # --- FIX 2: Add variable filtering ---
@@ -875,22 +993,54 @@ class diagWIP:
                 exclude_vars = [exclude_vars]
             vars_to_process = [v for v in vars_to_process if v not in exclude_vars]
 
-        for var_name in vars_to_process:
-            samples = self.posterior_samples[var_name]
-            param_shape = samples.shape[2:]
+        if not vars_to_process:
+            # Same as the old manual path: an empty table, no ArviZ call.
+            self.tab_summary = pd.DataFrame()
+            return self.tab_summary
 
+        # RELEASE (owner decision 2026-11-13): the table is computed by ArviZ.
+        # round_to="none" -- NOT None: since arviz-stats 1.3 a None falls back
+        # to the stats.round_to rcParam ("2g") and would pre-round the values;
+        # "none" returns them raw, and the table is rounded with `round_to` at
+        # the end, exactly as the manual implementation did.
+        az_tab = az.summary(
+            self._ensure_trace(),
+            var_names=vars_to_process,
+            kind=kind,
+            ci_prob=hdi_prob,
+            ci_kind="hdi",
+            round_to="none",
+        )
+        # ArviZ names the HDI columns hdi{int(prob*100)}_lb/_ub; BayesForge
+        # has always used hdi_{prob*100}%_lower/_upper (see _summary_row).
+        ci = int(hdi_prob * 100)
+        lower = f"hdi_{hdi_prob * 100}%_lower"
+        upper = f"hdi_{hdi_prob * 100}%_upper"
+        az_tab = az_tab.rename(
+            columns={f"hdi{ci}_lb": lower, f"hdi{ci}_ub": upper})
+
+        # az.summary(kind="stats"/"all") has no median column; the BayesForge
+        # table has one right after mean. np.median over chains and draws per
+        # row; ArviZ's row labels ("name", "name[i, j]") match the BayesForge
+        # ones, so the Series aligns by label.
+        medians = {}
+        for var_name in vars_to_process:
+            samples = np.asarray(self.posterior_samples[var_name], dtype=float)
+            param_shape = samples.shape[2:]
             if not param_shape:
-                summary_stats[var_name] = self._summary_row(
-                    samples, hdi_prob, kind)
+                medians[var_name] = np.median(samples)
             else:
                 for idx in np.ndindex(param_shape):
-                    idx_str = "[" + ", ".join(map(str, idx)) + "]"
-                    full_name = f"{var_name}{idx_str}"
-                    element_samples = samples[(slice(None), slice(None)) + idx]
-                    summary_stats[full_name] = self._summary_row(
-                        element_samples, hdi_prob, kind)
+                    label = var_name + "[" + ", ".join(map(str, idx)) + "]"
+                    medians[label] = np.median(
+                        samples[(slice(None), slice(None)) + idx])
+        az_tab.insert(1, "median", pd.Series(medians))
 
-        self.tab_summary = pd.DataFrame(summary_stats).T.round(round_to)
+        # Column order of the old manual table (see _summary_row).
+        columns = ["mean", "median", "sd", lower, upper]
+        if kind == "all":
+            columns += ["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail", "r_hat"]
+        self.tab_summary = az_tab[columns].round(round_to)
         return self.tab_summary
 
     def pair(
@@ -899,6 +1049,7 @@ class diagWIP:
         colorscale="Viridis",
         max_points=1000,
         point_color="rgba(40, 150, 200, 0.4)",
+        seed=42,
     ):
         go = importer.get_module("go")
 
@@ -926,7 +1077,7 @@ class diagWIP:
         n_vars = len(expanded_vars)
         df = pd.DataFrame(expanded_samples)
         plot_df = (
-            df.sample(n=max_points, random_state=42) if len(df) > max_points else df
+            df.sample(n=max_points, random_state=seed) if len(df) > max_points else df
         )
         fig = make_subplots(
             rows=n_vars, cols=n_vars, horizontal_spacing=0.03, vertical_spacing=0.03
@@ -1231,9 +1382,27 @@ class diagWIP:
         max of bulk R-hat (rank-normalized draws) and tail R-hat
         (rank-normalized |x - median(x)|). The folded half is what detects a
         chain whose VARIANCE has not converged; without it this returned ~1.00
-        for chains ArviZ scores at 1.12.
+        for chains ArviZ scores at 1.12. NaN with fewer than 2 chains, as in
+        ArviZ (owner decision 2026-11-13).
         """
-        split = self._split_chains(np.asarray(chains, dtype=float))
+        # RELEASE_AUDIT bug 3: with C == 1 the split R-hat only compares the
+        # two halves of the same chain, which is not a between-chain
+        # convergence check. ArviZ returns NaN in that case, so we do too
+        # (owner decision 2026-11-13); the user is warned why.
+        if np.asarray(chains).shape[0] < 2:
+            warnings.warn(
+                "R-hat with a single chain only compares its two halves "
+                "(within-chain stationarity); run >= 2 chains to check "
+                "convergence between chains.",
+                UserWarning, stacklevel=2)
+            return np.nan
+        chains = np.asarray(chains, dtype=float)
+        # RELEASE_AUDIT bug 4: ArviZ's _rhat_rank checks min_draws=4 on the
+        # UNSPLIT chains; the guard must run before splitting, not on the
+        # split halves.
+        if chains.shape[-1] < 4:
+            return np.nan
+        split = self._split_chains(chains)
         rhat_bulk = self._rhat_core(self._rank_normalize(split))
         folded = np.abs(split - np.median(split))
         rhat_tail = self._rhat_core(self._rank_normalize(folded))
@@ -1246,7 +1415,13 @@ class diagWIP:
 
         Splits BEFORE rank-normalizing, as ArviZ does (matters for odd S).
         """
-        split = self._split_chains(np.asarray(chains, dtype=float))
+        chains = np.asarray(chains, dtype=float)
+        # RELEASE_AUDIT bug 4: ArviZ's _not_valid(min_draws=4) runs on the
+        # UNSPLIT chains; guard before splitting so chains of 4..7 draws get
+        # an ESS (on their 2..3 split draws), like az.ess.
+        if chains.shape[-1] < 4:
+            return np.nan
+        split = self._split_chains(chains)
         return self._ess_raw_manual(self._rank_normalize(split))
 
     def _ess_tail_manual(self, chains: np.ndarray, prob: float = 0.05) -> float:
@@ -1256,7 +1431,12 @@ class diagWIP:
         _ess_quantile; the strict comparison differed whenever a quantile landed
         exactly on a sample, as it does for discrete outcomes.
         """
-        split = self._split_chains(np.asarray(chains, dtype=float))
+        chains = np.asarray(chains, dtype=float)
+        # RELEASE_AUDIT bug 4: minimum-draws guard on the UNSPLIT chains,
+        # like ArviZ's _not_valid(min_draws=4) in _ess_tail.
+        if chains.shape[-1] < 4:
+            return np.nan
+        split = self._split_chains(chains)
         q_lo = (split <= np.quantile(split, prob)).astype(float)
         q_hi = (split <= np.quantile(split, 1 - prob)).astype(float)
         return min(self._ess_raw_manual(q_lo), self._ess_raw_manual(q_hi))
@@ -1268,7 +1448,12 @@ class diagWIP:
         ESS on them. No rank normalization -- that is bulk ESS, and using it
         here would report the wrong Monte Carlo error.
         """
-        split = self._split_chains(np.asarray(chains, dtype=float))
+        chains = np.asarray(chains, dtype=float)
+        # RELEASE_AUDIT bug 4: minimum-draws guard on the UNSPLIT chains,
+        # like ArviZ's _not_valid(min_draws=4) in _ess_mean.
+        if chains.shape[-1] < 4:
+            return np.nan
+        split = self._split_chains(chains)
         return self._ess_raw_manual(split)
 
     def _mcse_mean_manual(self, chains: np.ndarray) -> float:
@@ -1314,7 +1499,12 @@ class diagWIP:
         if split.ndim == 1:
             split = np.atleast_2d(split)
         n_chain, n_draw = split.shape
-        if n_draw < 4:
+        # RELEASE_AUDIT bug 4: the minimum-draws guard (>= 4 per chain) now
+        # lives in the callers, on the UNSPLIT chains, like ArviZ's
+        # _not_valid(min_draws=4); here only refuse arrays too short for the
+        # lag-1 autocovariance (a split chain of 2 draws is what ArviZ
+        # computes on, from 4 unsplit draws).
+        if n_draw < 2:
             return np.nan
         # A constant array has ess == its size (matches ArviZ).
         if (np.max(split) - np.min(split)) < np.finfo(float).resolution:
@@ -1376,16 +1566,13 @@ class diagWIP:
     def _ebfmi_manual(self, energy: np.ndarray) -> list:
         """E-BFMI per chain. energy: (C, S). Returns list of floats.
 
-        Numerator is the MEAN SQUARED energy difference, matching Stan and
-        az.bfmi. Using var(diff, ddof=1) instead subtracts mean(diff)**2 and
-        rescales by (N-1)/(N-2), which biased every reported value.
+        Delegates to the shared :func:`jax_diagnostics._ebfmi_per_chain`
+        (RELEASE_AUDIT bug 16) so this and
+        ``sensitivity.divergence_energy_plot`` cannot drift apart. The
+        numerator is the MEAN SQUARED energy difference, matching Stan and
+        az.bfmi; a constant-energy chain yields nan.
         """
-        result = []
-        for chain in np.atleast_2d(np.asarray(energy, dtype=float)):
-            denom = np.var(chain, ddof=1)
-            num = np.mean(np.diff(chain) ** 2)
-            result.append(float(num / denom) if denom > 0 else np.nan)
-        return result
+        return _ebfmi_per_chain(energy).tolist()
 
     def diagnose(
         self,
@@ -1393,6 +1580,7 @@ class diagWIP:
         ebfmi_threshold: float = 0.3,
         rhat_threshold: float = 1.01,
         ess_threshold: float = 400.0,
+        var_names: list = None,
     ) -> str:
         """
         Run MCMC convergence diagnostics on a fitted BF model.
@@ -1407,12 +1595,23 @@ class diagWIP:
             R-hat values above this trigger a warning (default 1.01).
         ess_threshold : float
             ESS values below this trigger a warning (default 400).
+        var_names : list, optional
+            Restrict the ESS and R-hat sections to these posterior variables
+            (RELEASE_AUDIT bug 19). Unknown names raise ValueError.
 
         Returns
         -------
         str
             Human-readable diagnostic report.
         """
+        if getattr(self, "is_variational", False):
+            # RELEASE_AUDIT bug 14: the R-hat/ESS thresholds below assume
+            # MCMC chains; SVI draws have none.
+            warnings.warn(
+                "These draws come from a variational approximation (SVI), "
+                "not from MCMC chains: R-hat and ESS do not measure "
+                "convergence here.",
+                UserWarning, stacklevel=2)
         lines = []
         problems = []
         # Not every backend exposes extra_fields (TFP / SVI). Each section below
@@ -1424,12 +1623,28 @@ class diagWIP:
             extra = {}
         num_chains = self.num_chains
         posteriors_by_chain = self.posterior_samples
+        if var_names is not None:
+            unknown = [v for v in var_names if v not in posteriors_by_chain]
+            if unknown:
+                raise ValueError(
+                    f"var_names {unknown} not in posterior "
+                    f"{list(posteriors_by_chain)}."
+                )
+            posteriors_by_chain = {k: posteriors_by_chain[k] for k in var_names}
 
         # ------------------------------------------------------------------
         # 1. Treedepth
         # ------------------------------------------------------------------
         lines.append("Checking sampler transitions treedepth.")
-        if "num_steps" in extra and extra["num_steps"] is not None:
+        # RELEASE_AUDIT bug 7: ceil(log2(num_steps + 1)) is a tree depth only
+        # for NUTS, whose num_steps is the leapfrog budget 2^depth - 1. Plain
+        # HMC also exposes num_steps (its leapfrog count, chosen by step size),
+        # and turning it into a treedepth invented a saturation rate for a
+        # parameter that does not exist. Unwrap HMCGibbs/MixedHMC wrappers.
+        _kernel = getattr(self.sampler, "sampler", None)
+        _kernel = getattr(_kernel, "inner_kernel", _kernel)
+        _is_nuts = isinstance(_kernel, _NUTS)
+        if "num_steps" in extra and extra["num_steps"] is not None and _is_nuts:
             num_steps = np.array(extra["num_steps"])  # (C, S)
             if num_steps.ndim == 1:
                 num_steps = num_steps.reshape(1, -1)
@@ -1448,6 +1663,13 @@ class diagWIP:
                 problems.append(msg)
             else:
                 lines.append("Treedepth satisfactory for all transitions.")
+        elif "num_steps" in extra and extra["num_steps"] is not None:
+            lines.append("$num_max_treedepth\n[1] skipped (not a NUTS kernel)")
+            lines.append(
+                "Treedepth: not reported; the sampler kernel is not NUTS, so "
+                "num_steps is not a leapfrog tree budget and no treedepth "
+                "saturation exists to check."
+            )
         else:
             lines.append("Treedepth: extra_fields not collected (unavailable).")
         lines.append("")
@@ -1509,20 +1731,24 @@ class diagWIP:
         # ------------------------------------------------------------------
         # 4. ESS
         # ------------------------------------------------------------------
+        # RELEASE (owner decision 2026-11-13): the per-element loops calling
+        # _ess_bulk_manual / _rhat_manual are replaced by one az.ess / az.rhat
+        # call each. The idata is built from the (filtered) posterior dict
+        # rather than from _ensure_trace(): diagnose() must keep working on
+        # samplers that are no NumPyro MCMC object (TFP stand-ins, plain
+        # dicts), exactly like the loops it replaces, which read
+        # posterior_samples directly.
+        posteriors_np = {k: np.asarray(v, dtype=float)
+                         for k, v in posteriors_by_chain.items()}
+        idata = _az_from_dict({"posterior": posteriors_np})
         lines.append("Checking rank-normalized split effective sample size.")
         ess_problems = []
-        for param, samples in posteriors_by_chain.items():
-            arr = np.array(samples)
-            if arr.ndim == 1:
-                arr = arr.reshape(1, -1)
-            # flatten any extra dims into param indices
-            C, S = arr.shape[0], arr.shape[1]
-            extra_dims = arr.shape[2:]
-            flat = arr.reshape(C, S, -1) if extra_dims else arr.reshape(C, S, 1)
-            for idx in range(flat.shape[2]):
-                chains = flat[:, :, idx]
-                ess = self._ess_bulk_manual(chains)
-                label = f"{param}[{idx}]" if extra_dims else param
+        ess_result = az.ess(idata, var_names=list(posteriors_np), method="bulk")
+        for param in posteriors_np:
+            values = _az_result_values(ess_result, param)
+            for flat_idx, idx in enumerate(np.ndindex(values.shape)):
+                ess = float(values[idx])
+                label = f"{param}[{flat_idx}]" if values.ndim else param
                 if not np.isnan(ess) and ess < ess_threshold:
                     ess_problems.append(f"{label}: ESS={ess:.1f}")
         if ess_problems:
@@ -1540,24 +1766,32 @@ class diagWIP:
         # ------------------------------------------------------------------
         lines.append("Checking rank-normalized split R-hat values.")
         rhat_problems = []
-        for param, samples in posteriors_by_chain.items():
-            arr = np.array(samples)
-            if arr.ndim == 1:
-                arr = arr.reshape(1, -1)
-            C, S = arr.shape[0], arr.shape[1]
-            extra_dims = arr.shape[2:]
-            flat = arr.reshape(C, S, -1) if extra_dims else arr.reshape(C, S, 1)
-            for idx in range(flat.shape[2]):
-                chains = flat[:, :, idx]
-                rh = self._rhat_manual(chains)
-                label = f"{param}[{idx}]" if extra_dims else param
-                if not np.isnan(rh) and rh > rhat_threshold:
+        rhat_nan = []
+        rhat_result = az.rhat(idata, var_names=list(posteriors_np))
+        for param in posteriors_np:
+            values = _az_result_values(rhat_result, param)
+            for flat_idx, idx in enumerate(np.ndindex(values.shape)):
+                rh = float(values[idx])
+                label = f"{param}[{flat_idx}]" if values.ndim else param
+                if np.isnan(rh):
+                    rhat_nan.append(label)
+                elif rh > rhat_threshold:
                     rhat_problems.append(f"{label}: R-hat={rh:.4f}")
         if rhat_problems:
             msg = "High R-hat for: " + "; ".join(rhat_problems) + "."
             lines.append(msg)
             problems.append(msg)
-        else:
+        if rhat_nan:
+            # RELEASE (owner decision 2026-11-13): az.rhat is NaN with fewer
+            # than 2 chains (or too few draws) -- ArviZ behaviour. That is not
+            # "satisfactory": diagnose must not report success when
+            # between-chain convergence was never checked.
+            msg = ("R-hat could not be computed for: " + ", ".join(rhat_nan)
+                   + " (fewer than 2 chains or too few draws); convergence "
+                   "between chains is not checked.")
+            lines.append(msg)
+            problems.append(msg)
+        if not rhat_problems and not rhat_nan:
             lines.append(
                 "Rank-normalized split R-hat values satisfactory for all parameters."
             )

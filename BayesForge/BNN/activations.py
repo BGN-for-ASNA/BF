@@ -138,7 +138,9 @@ class activation:
         Returns:
         - jnp.ndarray: The array with ELU applied element-wise.
         """
-        return jnp.where(x >= 0, x, alpha * (jnp.exp(x) - 1))
+        # expm1 is accurate for small |x|; the clamp keeps the exponential branch
+        # out of the overflow-prone region for large positive x.
+        return jnp.where(x >= 0, x, alpha * jnp.expm1(jnp.minimum(x, 0)))
 
     @staticmethod
     def gelu(x: jnp.ndarray) -> jnp.ndarray:
@@ -208,9 +210,12 @@ class activation:
 
         Returns:
         - jnp.ndarray: The array with Softplus applied element-wise.
+
+        Note: computed as logaddexp(x, 0), the numerically stable form of
+        log(1 + exp(x)) (MAJ-1); the naive form overflowed to inf for
+        x > 88 and the inf propagated through the autograd chain.
         """
-        return jnp.log(1.0 + jnp.exp(x))
-        # A more numerically stable version is: jax.nn.softplus(x)
+        return jnp.logaddexp(x, 0.0)
 
     @staticmethod
     def linear(x: jnp.ndarray) -> jnp.ndarray:
@@ -245,5 +250,9 @@ class activation:
 
         Returns:
         - jnp.ndarray: The array with exponential applied element-wise.
+
+        Note: the input is clipped at 80 before exponentiating (MAJ-2);
+        exp(x) overflows to inf for x > 88.7 in float32 and inf propagates
+        through the autograd chain.
         """
-        return jnp.exp(x)
+        return jnp.exp(jnp.minimum(x, 80.0))

@@ -27,6 +27,7 @@ Seed semantics (matching the historical ``rand_seed`` contract):
   stored so it can be reported via :meth:`get_seed` and replayed later.
 """
 
+import weakref
 import hashlib
 import time
 
@@ -37,11 +38,35 @@ _UINT32_MASK = 0xFFFFFFFF
 
 
 class RNG:
+    # Every live manager, so a read-only model run (m.graph(), m.latex()) can
+    # snapshot and restore all streams (RELEASE_AUDIT X15).
+    _instances = weakref.WeakSet()
+
+    @classmethod
+    def snapshot_streams(cls):
+        """Return the stream state of every live RNG manager."""
+        return [(r, r._key) for r in list(cls._instances)]
+
+    @staticmethod
+    def restore_streams(snapshot):
+        """Restore the stream states returned by :meth:`snapshot_streams`."""
+        for r, k in snapshot:
+            r._key = k
+
     def __init__(self, rand_seed=False):
+        RNG._instances.add(self)
         self.rand_seed = rand_seed
         self.base = self._resolve_base(rand_seed)
-        # Live key used by the split-based ``stream`` pattern.
-        self._key = jax.random.PRNGKey(self.base)
+        # Live key used by the split-based ``stream`` pattern. Created on the
+        # first stream() call: building a PRNGKey here would initialise the JAX
+        # backend at import time (module-level UnifiedDist singletons), before
+        # setup_device can apply cores/platform.
+        self._key = None
+
+        # True once seed_globals() has been called for this instance (the
+        # opt-in bf(seed_global_rngs=True) path). set_seed() uses it to keep
+        # the numpy/stdlib globals in sync with the JAX stream.
+        self._globals_seeded = False
 
     @staticmethod
     def _resolve_base(rand_seed):
@@ -69,11 +94,25 @@ class RNG:
     def stream(self):
         """Return a fresh, independent PRNGKey and advance the stream.
 
+        Reproducibility is order-dependent by design (module docstring): the
+        split is mutating, so the sequence of ``sample=True`` draws depends on
+        how many draws happened before it — stable for a fixed call order.
+
         Raises:
             RuntimeError: called while JAX is tracing (e.g. ``sample=True``
                 inside a model passed to ``m.fit``/``m.svi``). Storing a traced
                 key would leak a tracer and fail later with a cryptic JAX error.
+
+        Note:
+            The tracer guard below reads ``jax.core.Tracer``. ``jax.core`` is
+            a deprecated alias of the private ``jax._src.core`` module, in the
+            process of being moved out of the public surface (RELEASE_AUDIT,
+            Utils, stream). Behaviour is intentionally kept, but this line
+            must be re-checked on every JAX upgrade: if ``jax.core`` is
+            removed, fall back to ``jax._src.core.Tracer``.
         """
+        if self._key is None:
+            self._key = jax.random.PRNGKey(self.base)
         new_key, sub = jax.random.split(self._key)
         if isinstance(sub, jax.core.Tracer):
             raise RuntimeError(
@@ -90,13 +129,30 @@ class RNG:
         return self.base
 
     def set_seed(self, seed):
-        """Reset the manager to a new base seed and rewind the stream."""
+        """Reset the manager to a new base seed and rewind the stream.
+
+        Consistency with the constructor path (RELEASE_AUDIT, Utils,
+        set_seed): when this RNG was built through ``bf(seed_global_rngs=True)``
+        the numpy/stdlib globals were seeded from the base seed, so
+        ``set_seed`` re-seeds them with the new base — the JAX and numpy
+        halves of the session stay in sync. Without that opt-in the globals
+        are never touched (the default ``bf()`` contract).
+        """
         self.rand_seed = seed
         self.base = self._resolve_base(seed)
-        self._key = jax.random.PRNGKey(self.base)
+        self._key = None  # rewound: rebuilt from the new base on next stream()
+        if self._globals_seeded:
+            self.seed_globals()
 
     def seed_globals(self):
-        """Seed the NumPy and stdlib global RNGs so non-JAX paths reproduce too."""
+        """Seed the NumPy and stdlib global RNGs so non-JAX paths reproduce too.
+
+        Opt-in: ``bf()`` calls this only when constructed with
+        ``seed_global_rngs=True``; by default BF never touches the user's
+        global ``numpy.random`` / ``random`` state. Once called, later
+        :meth:`set_seed` calls re-apply the new base to the globals (see
+        :meth:`set_seed`).
+        """
         import random as _pyrand
 
         try:
@@ -106,3 +162,4 @@ class RNG:
         except ImportError:
             pass
         _pyrand.seed(self.base)
+        self._globals_seeded = True

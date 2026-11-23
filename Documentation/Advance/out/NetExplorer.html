@@ -39,6 +39,8 @@ body {
   position: relative;
   flex: 0 0 var(--panel-w);
   width: var(--panel-w);
+  min-width: 200px;
+  max-width: 80vw;
   height: 100%;
   /* min-height:0 lets this flex item shrink below its content height so the
      overflow-y scroll actually engages — otherwise the control list overflows
@@ -92,18 +94,34 @@ body {
 
 /* forms / sliders */
 .main-menu form { margin: 4px 0 0; }
-.main-menu form > div { display: flex; align-items: center; gap: 8px; }
-.main-menu form span { font-size: 10.5px; color: var(--muted); flex: 0 0 auto; }
+.main-menu form > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.main-menu form span { font-size: 10px; color: var(--muted); flex: 0 0 auto; user-select: none; }
+
+.slider-wrapper {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 60px;
+}
 
 input[type=range] {
   -webkit-appearance: none;
   appearance: none;
+  width: 100%;
   flex: 1 1 auto;
-  height: 4px;
+  height: 5px;
   border-radius: 4px;
   background: #dfe4ea;
   outline: none;
   accent-color: var(--accent);
+  margin: 0;
+  cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -123,16 +141,86 @@ input[type=range]::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Bulle indicatrice de valeur pour les sliders */
+.slider-bubble {
+  position: absolute;
+  top: -24px;
+  transform: translateX(-50%);
+  background: rgba(22, 28, 38, 0.92);
+  color: #ffffff;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  z-index: 100;
+  letter-spacing: 0.02em;
+}
+.slider-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -4px;
+  border-width: 4px;
+  border-style: solid;
+  border-color: rgba(22, 28, 38, 0.92) transparent transparent transparent;
+}
+.slider-bubble.visible {
+  opacity: 1;
+}
+
 input[type=number] {
-  width: 58px;
+  width: 54px;
+  min-width: 50px;
+  flex: 0 0 54px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 3px 6px;
+  padding: 3px 4px;
   font: inherit;
   font-size: 11.5px;
   text-align: center;
   background: #f7f9fb;
   color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type=number]:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+
+/* Poignée de redimensionnement entre le menu et le graphe */
+.menu-resizer {
+  position: relative;
+  flex: 0 0 6px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: var(--line);
+  z-index: 55;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+.menu-resizer:hover, .menu-resizer.is-resizing {
+  background-color: var(--accent);
+}
+.menu-resizer::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - 15px);
+  left: 2px;
+  width: 2px;
+  height: 30px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.2);
+}
+.menu-resizer:hover::after, .menu-resizer.is-resizing::after {
+  background: #ffffff;
 }
 
 #dataviz_builtWithD3 select {
@@ -224,7 +312,67 @@ div.tooltip p { margin: 3px 0 0; }
   cursor: pointer;
 }
 
+body[data-theme="dark"] .menu-resizer { background: var(--line); }
+body[data-theme="dark"] .menu-resizer:hover,
+body[data-theme="dark"] .menu-resizer.is-resizing { background: var(--accent); }
+body[data-theme="dark"] .slider-bubble { background: rgba(35, 43, 54, 0.95); }
+body[data-theme="dark"] .slider-bubble::after { border-color: rgba(35, 43, 54, 0.95) transparent transparent transparent; }
+
+/* Loading spinner overlay --------------------------------------- */
+#netLoader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(230, 230, 232, 0.85);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 100;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#netLoader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body[data-theme="dark"] #netLoader {
+  background: rgba(20, 24, 33, 0.85);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(47, 109, 246, 0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: netSpin 0.9s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.loader-text {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+@keyframes netSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 820px) {
+  .menu-resizer { display: none; }
   .main-menu {
     position: absolute;
     z-index: 50;
@@ -627,6 +775,10 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
 </style>
 </head>
 <body>
+  <div id="netLoader">
+    <div class="spinner"></div>
+    <div class="loader-text">Loading network...</div>
+  </div>
   <button id="menuToggle" type="button" aria-label="Toggle panel"
           onclick="document.body.classList.toggle('menu-open')">&#9776;</button>
   <nav class="main-menu">
@@ -694,7 +846,7 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
     dropdownButton.on("change", function(d) {
       // recover the option that has been chosen
       var selectedLayout = d3.select(this).property("value")
-      if(Layout != 'Multilayer'){
+      if(selectedLayout != 'Multilayer'){
         document.getElementById("param layer 0").style.visibility = "visible";
         document.getElementById("param layer 0").style.display = "block";
 
@@ -786,9 +938,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpace" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpace" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceV" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=sliderNSpaceV.value"
+           <input id="sliderNSpaceV" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -809,9 +963,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpace2" type="range" min="0" max="100000" oninput="sliderNSpaceV2.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpace2" type="range" min="0" max="100000" oninput="sliderNSpaceV2.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceV2" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace2.value=sliderNSpaceV2.value"
+           <input id="sliderNSpaceV2" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace2.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -830,9 +986,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpaceH" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpaceH" type="range" min="0" max="100000" oninput="sliderNSpaceVH.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceVH" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=sliderNSpaceV.value"
+           <input id="sliderNSpaceVH" type="number" value= "1" min="0" max="100000" oninput="sliderNSpaceH.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -858,9 +1016,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
            <form>
              <div>
                <span>0</span>
-               <input id="sliderSize" type="range" min="0" max="100000" oninput="sliderSizeV.value=rangeInput.value" value="0" step="any"/>
+               <div class="slider-wrapper">
+                 <input id="sliderSize" type="range" min="0" max="100000" oninput="sliderSizeV.value=this.value" value="0" step="any"/>
+               </div>
                <span>100k</span>
-               <input id="sliderSizeV" type="number" value= "0" min="0" max="100000" oninput="sliderSize.value=sliderSizeV.value"
+               <input id="sliderSizeV" type="number" value= "0" min="0" max="100000" oninput="sliderSize.value=this.value"
                style="border: 0; text-align: center; background-color: #ecebeb;"/>
              </div>
            </form>
@@ -880,9 +1040,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderNWidth" type="range" min="0" max="100000" oninput="sliderNWidthV.value=rangeInput.value" value="0" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderNWidth" type="range" min="0" max="100000" oninput="sliderNWidthV.value=this.value" value="0" step="any"/>
+                 </div>
                  <span>100k</span>
-                 <input id="sliderNWidthV" type="number" value= "0" min="0" max="100000" oninput="sliderNWidth.value=sliderNWidthV.value"
+                 <input id="sliderNWidthV" type="number" value= "0" min="0" max="100000" oninput="sliderNWidth.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -902,9 +1064,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
            <form>
              <div>
                <span>0</span>
-               <input id="sliderLab" type="range" min="0" max="100000" oninput="sliderLabV.value=rangeInput.value" value="0" step="any"/>
+               <div class="slider-wrapper">
+                 <input id="sliderLab" type="range" min="0" max="100000" oninput="sliderLabV.value=this.value" value="0" step="any"/>
+               </div>
                <span>100k</span>
-               <input id="sliderLabV" type="number" value= "0" min="0" max="100000" oninput="sliderLab.value=sliderLabV.value"
+               <input id="sliderLabV" type="number" value= "0" min="0" max="100000" oninput="sliderLab.value=this.value"
                style="border: 0; text-align: center; background-color: #ecebeb;"/>
              </div>
            </form>
@@ -932,9 +1096,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLWidth" type="range" min="0" max="100000" oninput="sliderLWidthV.value=rangeInput.value" value="1" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderLWidth" type="range" min="0" max="100000" oninput="sliderLWidthV.value=this.value" value="1" step="any"/>
+                 </div>
                  <span>100k</span>
-                 <input id="sliderLWidthV" type="number" value= "1" min="0" max="100000" oninput="sliderLWidth.value=sliderLWidthV.value"
+                 <input id="sliderLWidthV" type="number" value= "1" min="0" max="100000" oninput="sliderLWidth.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -954,9 +1120,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacity" type="range" min="0" max="1" oninput="sliderLOpacityV.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacity" type="range" min="0" max="1" oninput="sliderLOpacityV.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacity.value=sliderLOpacityV.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacity.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -976,9 +1144,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacityM" type="range" min="0" max="1" oninput="sliderLOpacityMV.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacityM" type="range" min="0" max="1" oninput="sliderLOpacityMV.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityMV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM.value=sliderLOpacityMV.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityMV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -996,9 +1166,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacityM2" type="range" min="0" max="1" oninput="sliderLOpacityMV2.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacityM2" type="range" min="0" max="1" oninput="sliderLOpacityMV2.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityMV2" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM2.value=sliderLOpacityMV2.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityMV2" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM2.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -1019,9 +1191,11 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLCurve" type="range" min="0" max="2" oninput="sliderLCurveV.value=rangeInput.value" value="0.5" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderLCurve" type="range" min="0" max="2" oninput="sliderLCurveV.value=this.value" value="0.5" step="any"/>
+                 </div>
                  <span>2</span>
-                 <input id="sliderLCurveV" type="number" value= "0.5" min="0" max="2" oninput="sliderLCurve.value=sliderLCurveV.value"
+                 <input id="sliderLCurveV" type="number" value= "0.5" min="0" max="2" oninput="sliderLCurve.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -1031,12 +1205,16 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
 
         <li class="darkerli"><span class="nav-text">Min edge weight</span>
           <form><div><span>0</span>
-            <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
-            <span id="edgeThreshV">0</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="edgeThresh" type="range" min="0" max="1" step="0.001" value="0"/>
+            </div>
+            <span id="edgeThreshV" style="min-width: 32px; text-align: right;">0</span></div></form></li>
         <li class="darkerlishadowdown" id="liArrow"><span class="nav-text">Arrow size</span>
           <form><div><span>0</span>
-            <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
-            <span id="arrowSizeV">9</span></div></form></li>
+            <div class="slider-wrapper">
+              <input id="arrowSize" type="range" min="0" max="100" step="1" value="9"/>
+            </div>
+            <span id="arrowSizeV" style="min-width: 32px; text-align: right;">9</span></div></form></li>
         <li style="height: 1%;"></li>
 
         <!--Save network-->
@@ -1068,6 +1246,7 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
       </li>
 
     </nav>
+  <div id="menuResizer" class="menu-resizer" title="Drag to resize menu"></div>
 
   <svg xmlns="http://www.w3.org/2000/svg" width='100%' height='100%' id = 'net'></svg>
 </body>
@@ -1206,7 +1385,8 @@ body[data-theme="dark"] .main-menu .tool { background: #232b36; color: var(--ink
         .style('opacity', 0.7);
         tooltip.html(
 
-'id : '+ d.id ).style( 'left' ,(d3.event.pageX) + 'px')
+'id : '+ d.id + '\u003cp/>predictor (size) : '+ d.sizeValue + '\u003cp/>group (color) : '+ d.colorValue + '\u003cp/>rank (stroke color) : '+ d.strokeColValue + '\u003cp/>age (stroke width) : '+ d.strokeWValue + '\u003cp/>sex (shape) : '+ d.shapeValue 
+).style( 'left' ,(d3.event.pageX) + 'px')
 .style( 'top' ,(d3.event.pageY) + 'px');
 })
 
@@ -1279,12 +1459,16 @@ var dist = 500
 
 
     {
-      // map pos[layout] in [0,1] onto a centred square so aspect is preserved
+      // map pos[layout] in [0,1] onto a centred square so aspect is preserved, scaled by Spread slider (dist)
       var _pk = Layout.toLowerCase(),
           _navW = 250, _pad = 40,
-          _S = Math.min(width - _navW, height) - 2 * _pad,
-          _ox = _navW + (width - _navW - _S) / 2,
-          _oy = (height - _S) / 2;
+          _spread = (typeof dist !== 'undefined' && dist > 0) ? (dist / 500) : 1,
+          _baseS = Math.min(width - _navW, height) - 2 * _pad,
+          _S = _baseS * _spread,
+          _cx = _navW + (width - _navW) / 2,
+          _cy = height / 2,
+          _ox = _cx - _S / 2,
+          _oy = _cy - _S / 2;
       if (!window.ScatterMode) graph.nodes.forEach(function(d) {
         var p = d.pos && d.pos[_pk];
         if (p) { d.x = _ox + p[0] * _S; d.y = _oy + p[1] * _S; d.fx = d.x; d.fy = d.y; }
@@ -1439,7 +1623,18 @@ var dist = 500
 
          simulation.alpha(0.5).restart();
        }
+       // MDS, Layered, Arc, Radial and other pinned layouts
+       if(['Circle', 'Linear', 'Multilayer', 'Force', 'Chord'].indexOf(Layout) === -1){
+         dist = size;
+         ticked(dist);
+         simulation.alpha(0.3).restart();
+       }
      }
+
+     d3.select("#sliderNSpace").on("input", function(d){
+               selectedValue = this.value
+               changeNodeSpace(selectedValue)
+     })
 
      d3.select("#sliderNSpace").on("change", function(d){
                selectedValue = this.value
@@ -1447,6 +1642,11 @@ var dist = 500
      })
 
      d3.select("#sliderNSpaceV").on("input", function(d){
+               selectedValue = this.value
+               changeNodeSpace(selectedValue)
+     })
+
+     d3.select("#sliderNSpace2").on("input", function(d){
                selectedValue = this.value
                changeNodeSpace(selectedValue)
      })
@@ -1612,7 +1812,7 @@ var dist = 500
     })
       /*Change Layouts------------------------------------------------------------------------*/
       // Create data = list of groups
-      layouts = ["Force", "Circle", "Linear", "Multilayer", "Clustered", "Spectral", "MDS", "Radial", "Arc", "Layered"]
+      layouts = ["Force", "Circle", "Linear", "Multilayer", "Spectral", "Radial", "Arc", "Layered"]
 
       // Initialize the button
       var dropdownButton = d3.select("#dataviz_builtWithD3")
@@ -1654,65 +1854,521 @@ var dist = 500
 
            function getData() {
    let json = { 'nodes':[
-{'id':'n1','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.52941,0.14577],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.57500,0.50000],'arc':[0.05000,0.50000],'layered':[0.21277,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n2','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.18609,0.23734],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.58301,0.51049],'arc':[0.06837,0.50000],'layered':[0.05957,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n3','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.78762,0.76292],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.58945,0.52297],'arc':[0.08673,0.50000],'layered':[0.38511,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n4','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.80277,0.67530],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.59393,0.53719],'arc':[0.10510,0.50000],'layered':[0.25106,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n5','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.52218,0.88000],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.59613,0.55285],'arc':[0.12347,0.50000],'layered':[0.92128,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n6','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.58453,0.12000],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.59576,0.56957],'arc':[0.14184,0.50000],'layered':[0.40426,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n7','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.73155,0.17976],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.59261,0.58697],'arc':[0.16020,0.50000],'layered':[0.61489,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n8','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.63795,0.15438],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.58651,0.60457],'arc':[0.17857,0.50000],'layered':[0.28936,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n9','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.87229,0.55728],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.57737,0.62191],'arc':[0.19694,0.50000],'layered':[0.88298,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n10','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.46450,0.48280],'spectral':[1.00000,0.00000],'mds':[1.00000,0.50000],'radial':[0.71289,0.95241],'arc':[0.95000,0.50000],'layered':[0.50000,0.00000]},'cent':{'degree':2.00000,'strength':2.00000,'indegree':0.00000,'outdegree':2.00000,'instrength':0.00000,'outstrength':2.00000,'eigenvector':0.81483,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n11','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.49817,0.54097],'spectral':[1.00000,1.00000],'mds':[0.00000,0.00000],'radial':[0.64111,0.93428],'arc':[0.83980,0.50000],'layered':[0.34681,1.00000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':0.00000,'outdegree':1.00000,'instrength':0.00000,'outstrength':1.00000,'eigenvector':0.40944,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n12','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.50291,0.77994],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.52868,0.65035],'arc':[0.21531,0.50000],'layered':[0.67234,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n13','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.76401,0.27705],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.51070,0.67007],'arc':[0.23367,0.50000],'layered':[0.78723,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n14','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.84608,0.71783],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.48984,0.66142],'arc':[0.25204,0.50000],'layered':[0.82553,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n15','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.46406,0.47930],'spectral':[1.00000,0.29289],'mds':[0.94018,0.50000],'radial':[0.41119,0.96558],'arc':[0.85816,0.50000],'layered':[0.72500,0.50000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':1.00000,'outdegree':0.00000,'instrength':1.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n16','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.83911,0.38541],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.44466,0.67032],'arc':[0.27041,0.50000],'layered':[0.74894,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n17','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.12340,0.46711],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.41267,0.68558],'arc':[0.28878,0.50000],'layered':[0.48085,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n18','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.30826,0.20860],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.39475,0.66585],'arc':[0.30714,0.50000],'layered':[0.59574,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n19','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.45909,0.87364],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.38032,0.64467],'arc':[0.32551,0.50000],'layered':[0.84468,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n20','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.58348,0.49987],'spectral':[0.00000,1.00000],'mds':[0.00000,1.00000],'radial':[0.14816,0.83040],'arc':[0.87653,0.50000],'layered':[0.36596,1.00000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':0.00000,'outdegree':1.00000,'instrength':0.00000,'outstrength':1.00000,'eigenvector':0.40944,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n21','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.46560,0.15297],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.30600,0.64095],'arc':[0.34388,0.50000],'layered':[0.69149,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n22','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.68414,0.20114],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.27466,0.62388],'arc':[0.36224,0.50000],'layered':[0.65319,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n23','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.34490,0.84482],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.26898,0.59147],'arc':[0.38061,0.50000],'layered':[0.32766,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n24','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.17012,0.35503],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.24253,0.56611],'arc':[0.39898,0.50000],'layered':[0.15532,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n25','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.16967,0.72236],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.22767,0.53440],'arc':[0.41735,0.50000],'layered':[0.76809,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n26','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.82954,0.32147],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.27755,0.50000],'arc':[0.43571,0.50000],'layered':[0.80638,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n27','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.80073,0.24392],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.27070,0.47103],'arc':[0.45408,0.50000],'layered':[0.11702,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n28','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.24714,0.22233],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.20893,0.42527],'arc':[0.47245,0.50000],'layered':[0.46170,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n29','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.25758,0.77334],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.30124,0.42130],'arc':[0.49082,0.50000],'layered':[0.90213,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n30','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.46470,0.48627],'spectral':[1.00000,0.29289],'mds':[0.94018,0.50000],'radial':[0.09225,0.27584],'arc':[0.89490,0.50000],'layered':[0.27500,0.50000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':1.00000,'outdegree':0.00000,'instrength':1.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n31','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.35070,0.16538],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.26390,0.32846],'arc':[0.50918,0.50000],'layered':[0.44255,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n32','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.13041,0.40473],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.29358,0.30616],'arc':[0.52755,0.50000],'layered':[0.55745,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n33','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.13589,0.52274],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.28080,0.23504],'arc':[0.54592,0.50000],'layered':[0.42340,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n34','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.28708,0.83255],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.32039,0.21698],'arc':[0.56429,0.50000],'layered':[0.53830,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n35','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.40879,0.13500],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.36097,0.20455],'arc':[0.58265,0.50000],'layered':[0.57660,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n36','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.68588,0.83220],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.40178,0.19770],'arc':[0.60102,0.50000],'layered':[0.63404,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n37','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.39857,0.87018],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.44206,0.19629],'arc':[0.61939,0.50000],'layered':[0.13617,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n38','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.22734,0.31581],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.47514,0.10486],'arc':[0.63776,0.50000],'layered':[0.27021,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n39','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.58758,0.87834],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.52540,0.09621],'arc':[0.65612,0.50000],'layered':[0.07872,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n40','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.88000,0.43653],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.57744,0.09405],'arc':[0.67449,0.50000],'layered':[0.19362,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n41','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.86239,0.49438],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.60894,0.16470],'arc':[0.69286,0.50000],'layered':[0.94043,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n42','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.62985,0.83874],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.65380,0.17315],'arc':[0.71122,0.50000],'layered':[0.23191,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n43','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.17586,0.65470],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.69820,0.18768],'arc':[0.72959,0.50000],'layered':[0.30851,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n44','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.73845,0.80246],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.74131,0.20831],'arc':[0.74796,0.50000],'layered':[0.71064,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n45','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.12000,0.57869],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.78229,0.23491],'arc':[0.76633,0.50000],'layered':[0.86383,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n46','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.49533,0.54169],'spectral':[1.00000,1.00000],'mds':[0.00000,0.00000],'radial':[0.89749,0.21121],'arc':[0.91327,0.50000],'layered':[0.09787,1.00000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':1.00000,'outdegree':0.00000,'instrength':1.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n47','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.12311,0.64909],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.87735,0.29255],'arc':[0.78469,0.50000],'layered':[0.72979,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n48','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.58436,0.50260],'spectral':[0.00000,1.00000],'mds':[0.00000,1.00000],'radial':[0.91650,0.33510],'arc':[0.93163,0.50000],'layered':[0.17447,1.00000]},'cent':{'degree':1.00000,'strength':1.00000,'indegree':1.00000,'outdegree':0.00000,'instrength':1.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n49','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.21257,0.78121],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.92548,0.39075],'arc':[0.80306,0.50000],'layered':[0.51915,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
-{'id':'n50','size':1,'color':'black','strokeCol':NaN,'strokeW':0,'shape':0,'opacity':1,'layers':1,'pos':{'clustered':[0.86557,0.62562],'spectral':[1.00000,1.00000],'mds':[0.06343,0.50000],'radial':[0.91861,0.44712],'arc':[0.82143,0.50000],'layered':[0.50000,1.00000]},'cent':{'degree':0.00000,'strength':0.00000,'indegree':0.00000,'outdegree':0.00000,'instrength':0.00000,'outstrength':0.00000,'eigenvector':0.00405,'betweenness':0.00000,'clustering':0.00000}},
+{'id':'n0','size':2.2059899225820505,'color':'#1b9e77','strokeCol':'#fbfbfb','strokeW':3,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.7371122049320381,'colorValue':'A','strokeColValue':0.0244906774933632,'strokeWValue':3,'shapeValue':'female','pos':{'spectral':[1.00000,0.05465],'radial':[0.91327,0.50000],'arc':[0.74796,0.50000],'layered':[0.26477,0.50000]},'cent':{'degree':30.00000,'strength':30.00000,'indegree':11.00000,'outdegree':19.00000,'instrength':11.00000,'outstrength':19.00000,'eigenvector':0.13854,'betweenness':0.01534,'clustering':0.60145},'av':{"predictor":-0.7371122049320381,"sex":'female',"group":'A',"age":3,"rank":0.0244906774933632}},
+{'id':'n1','size':4.087920370743252,'color':'#d95f02','strokeCol':'#535353','strokeW':20,'shape':3,'opacity':1,'layers':1,'sizeValue':1.1621639959491017,'colorValue':'C','strokeColValue':0.6734598871529389,'strokeWValue':20,'shapeValue':'male','pos':{'spectral':[0.16245,0.10662],'radial':[0.63464,0.51701],'arc':[0.16020,0.50000],'layered':[0.68000,1.00000]},'cent':{'degree':5.00000,'strength':5.00000,'indegree':3.00000,'outdegree':2.00000,'instrength':3.00000,'outstrength':2.00000,'eigenvector':0.05028,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":1.1621639959491017,"sex":'male',"group":'C',"age":20,"rank":0.6734598871529389}},
+{'id':'n2','size':2.066496829154399,'color':'#1b9e77','strokeCol':'#131313','strokeW':23,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.8778910061854489,'colorValue':'A','strokeColValue':0.9190886196338225,'strokeWValue':23,'shapeValue':'male','pos':{'spectral':[0.51250,0.70536],'radial':[0.93389,0.61140],'arc':[0.83980,0.50000],'layered':[0.10114,0.50000]},'cent':{'degree':42.00000,'strength':42.00000,'indegree':11.00000,'outdegree':31.00000,'instrength':11.00000,'outstrength':31.00000,'eigenvector':0.14323,'betweenness':0.02276,'clustering':0.44129},'av':{"predictor":-0.8778910061854489,"sex":'male',"group":'A',"age":23,"rank":0.9190886196338225}},
+{'id':'n3','size':2.2067574754969117,'color':'#7a7e3c','strokeCol':'#2b2b2b','strokeW':23,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.7363375774820503,'colorValue':'B','strokeColValue':0.8268253295567211,'strokeWValue':23,'shapeValue':'male','pos':{'spectral':[0.52539,0.83403],'radial':[0.90037,0.65852],'arc':[0.80306,0.50000],'layered':[0.44886,0.50000]},'cent':{'degree':36.00000,'strength':36.00000,'indegree':9.00000,'outdegree':27.00000,'instrength':9.00000,'outstrength':27.00000,'eigenvector':0.12609,'betweenness':0.01703,'clustering':0.45567},'av':{"predictor":-0.7363375774820503,"sex":'male',"group":'B',"age":23,"rank":0.8268253295567211}},
+{'id':'n4','size':2.8252816986968248,'color':'#d95f02','strokeCol':'#1c1c1c','strokeW':26,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.11211241658946067,'colorValue':'C','strokeColValue':0.8855202667099468,'strokeWValue':26,'shapeValue':'female','pos':{'spectral':[0.49035,0.20853],'radial':[0.77094,0.64895],'arc':[0.47245,0.50000],'layered':[0.30568,0.50000]},'cent':{'degree':15.00000,'strength':15.00000,'indegree':10.00000,'outdegree':5.00000,'instrength':10.00000,'outstrength':5.00000,'eigenvector':0.13646,'betweenness':0.00120,'clustering':0.89091},'av':{"predictor":-0.11211241658946067,"sex":'female',"group":'C',"age":26,"rank":0.8855202667099468}},
+{'id':'n5','size':2.4110404244263677,'color':'#1b9e77','strokeCol':'#565656','strokeW':6,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.5301717526362755,'colorValue':'A','strokeColValue':0.6603553805205233,'strokeWValue':6,'shapeValue':'female','pos':{'spectral':[0.36834,0.73519],'radial':[0.85539,0.75821],'arc':[0.82143,0.50000],'layered':[0.08068,0.50000]},'cent':{'degree':38.00000,'strength':38.00000,'indegree':17.00000,'outdegree':21.00000,'instrength':17.00000,'outstrength':21.00000,'eigenvector':0.20027,'betweenness':0.04819,'clustering':0.47783},'av':{"predictor":-0.5301717526362755,"sex":'female',"group":'A',"age":6,"rank":0.6603553805205233}},
+{'id':'n6','size':2.7883139671141604,'color':'#d95f02','strokeCol':'#c2c2c2','strokeW':17,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.14942087974978602,'colorValue':'C','strokeColValue':0.24555226724317758,'strokeWValue':17,'shapeValue':'male','pos':{'spectral':[0.33805,0.59223],'radial':[0.71906,0.70571],'arc':[0.49082,0.50000],'layered':[0.46932,0.50000]},'cent':{'degree':11.00000,'strength':11.00000,'indegree':10.00000,'outdegree':1.00000,'instrength':10.00000,'outstrength':1.00000,'eigenvector':0.13078,'betweenness':0.00034,'clustering':0.83636},'av':{"predictor":-0.14942087974978602,"sex":'male',"group":'C',"age":17,"rank":0.24555226724317758}},
+{'id':'n7','size':1,'color':'#1b9e77','strokeCol':'#3a3a3a','strokeW':24,'shape':3,'opacity':1,'layers':1,'sizeValue':-1.9542177364890565,'colorValue':'A','strokeColValue':0.7685169988962544,'strokeWValue':24,'shapeValue':'male','pos':{'spectral':[0.16753,0.93565],'radial':[0.79660,0.85852],'arc':[0.87653,0.50000],'layered':[0.69432,0.50000]},'cent':{'degree':54.00000,'strength':54.00000,'indegree':17.00000,'outdegree':37.00000,'instrength':17.00000,'outstrength':37.00000,'eigenvector':0.20873,'betweenness':0.09690,'clustering':0.38407},'av':{"predictor":-1.9542177364890565,"sex":'male',"group":'A',"age":24,"rank":0.7685169988962544}},
+{'id':'n8','size':2.3650744986029135,'color':'#1b9e77','strokeCol':'#cacaca','strokeW':11,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.5765613463926524,'colorValue':'A','strokeColValue':0.2116747426075105,'strokeWValue':11,'shapeValue':'female','pos':{'spectral':[0.64879,0.41129],'radial':[0.67961,0.78302],'arc':[0.60102,0.50000],'layered':[0.34659,0.50000]},'cent':{'degree':13.00000,'strength':13.00000,'indegree':3.00000,'outdegree':10.00000,'instrength':3.00000,'outstrength':10.00000,'eigenvector':0.03723,'betweenness':0.00006,'clustering':0.84615},'av':{"predictor":-0.5765613463926524,"sex":'female',"group":'A',"age":11,"rank":0.2116747426075105}},
+{'id':'n9','size':1.4031203914663417,'color':'#d95f02','strokeCol':'#2a2a2a','strokeW':6,'shape':0,'opacity':1,'layers':1,'sizeValue':-1.5473817844218583,'colorValue':'C','strokeColValue':0.8312748346644612,'strokeWValue':6,'shapeValue':'female','pos':{'spectral':[0.00328,0.48814],'radial':[0.70920,0.94457],'arc':[0.93163,0.50000],'layered':[0.06023,0.50000]},'cent':{'degree':50.00000,'strength':50.00000,'indegree':12.00000,'outdegree':38.00000,'instrength':12.00000,'outstrength':38.00000,'eigenvector':0.16666,'betweenness':0.03931,'clustering':0.35358},'av':{"predictor":-1.5473817844218583,"sex":'female',"group":'C',"age":6,"rank":0.8312748346644612}},
+{'id':'n10','size':1.6249043168627204,'color':'#7a7e3c','strokeCol':'#f1f1f1','strokeW':14,'shape':3,'opacity':1,'layers':1,'sizeValue':-1.3235536766111178,'colorValue':'B','strokeColValue':0.06271792257076825,'strokeWValue':14,'shapeValue':'male','pos':{'spectral':[0.10795,0.08944],'radial':[0.64647,0.95078],'arc':[0.89490,0.50000],'layered':[0.40795,0.50000]},'cent':{'degree':53.00000,'strength':53.00000,'indegree':18.00000,'outdegree':35.00000,'instrength':18.00000,'outstrength':35.00000,'eigenvector':0.23130,'betweenness':0.08312,'clustering':0.38122},'av':{"predictor":-1.3235536766111178,"sex":'male',"group":'B',"age":14,"rank":0.06271792257076825}},
+{'id':'n11','size':2.5007068725200474,'color':'#7a7e3c','strokeCol':'#2c2c2c','strokeW':3,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.43967884890103426,'colorValue':'B','strokeColValue':0.8254878133935558,'strokeWValue':3,'shapeValue':'female','pos':{'spectral':[0.43881,0.94931],'radial':[0.57094,0.87187],'arc':[0.69286,0.50000],'layered':[0.75568,0.50000]},'cent':{'degree':23.00000,'strength':23.00000,'indegree':6.00000,'outdegree':17.00000,'instrength':6.00000,'outstrength':17.00000,'eigenvector':0.09469,'betweenness':0.01072,'clustering':0.64912},'av':{"predictor":-0.43967884890103426,"sex":'female',"group":'B',"age":3,"rank":0.8254878133935558}},
+{'id':'n12','size':4.4379568806929,'color':'#1b9e77','strokeCol':'#d6d6d6','strokeW':7,'shape':0,'opacity':1,'layers':1,'sizeValue':1.5154267923698947,'colorValue':'A','strokeColValue':0.1645072664741013,'strokeWValue':7,'shapeValue':'female','pos':{'spectral':[0.45084,0.20793],'radial':[0.51832,0.79126],'arc':[0.50918,0.50000],'layered':[0.87841,0.50000]},'cent':{'degree':11.00000,'strength':11.00000,'indegree':11.00000,'outdegree':0.00000,'instrength':11.00000,'outstrength':0.00000,'eigenvector':0.15978,'betweenness':0.00000,'clustering':0.90909},'av':{"predictor":1.5154267923698947,"sex":'female',"group":'A',"age":7,"rank":0.1645072664741013}},
+{'id':'n13','size':3.4941530327175094,'color':'#1b9e77','strokeCol':'#a0a0a0','strokeW':25,'shape':3,'opacity':1,'layers':1,'sizeValue':0.5629239044384298,'colorValue':'A','strokeColValue':0.37514699649664185,'strokeWValue':25,'shapeValue':'male','pos':{'spectral':[0.33165,0.97503],'radial':[0.48984,0.66142],'arc':[0.17857,0.50000],'layered':[0.32000,1.00000]},'cent':{'degree':5.00000,'strength':5.00000,'indegree':5.00000,'outdegree':0.00000,'instrength':5.00000,'outstrength':0.00000,'eigenvector':0.05769,'betweenness':0.00000,'clustering':0.90000},'av':{"predictor":0.5629239044384298,"sex":'male',"group":'A',"age":25,"rank":0.37514699649664185}},
+{'id':'n14','size':3.7901813341807666,'color':'#7a7e3c','strokeCol':'#afafaf','strokeW':20,'shape':0,'opacity':1,'layers':1,'sizeValue':0.8616806987215478,'colorValue':'B','strokeColValue':0.3167381665569643,'strokeWValue':20,'shapeValue':'female','pos':{'spectral':[0.50748,0.74272],'radial':[0.43556,0.83779],'arc':[0.61939,0.50000],'layered':[0.91932,0.50000]},'cent':{'degree':16.00000,'strength':16.00000,'indegree':12.00000,'outdegree':4.00000,'instrength':12.00000,'outstrength':4.00000,'eigenvector':0.17039,'betweenness':0.00105,'clustering':0.94505},'av':{"predictor":0.8616806987215478,"sex":'female',"group":'B',"age":20,"rank":0.3167381665569643}},
+{'id':'n15','size':2.8883890654655193,'color':'#7a7e3c','strokeCol':'#4e4e4e','strokeW':25,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.04842338922866179,'colorValue':'B','strokeColValue':0.6913370352777413,'strokeWValue':25,'shapeValue':'female','pos':{'spectral':[0.75798,0.24031],'radial':[0.38033,0.86829],'arc':[0.71122,0.50000],'layered':[0.83750,0.50000]},'cent':{'degree':23.00000,'strength':23.00000,'indegree':16.00000,'outdegree':7.00000,'instrength':16.00000,'outstrength':7.00000,'eigenvector':0.20005,'betweenness':0.00355,'clustering':0.77778},'av':{"predictor":-0.04842338922866179,"sex":'female',"group":'B',"age":25,"rank":0.6913370352777413}},
+{'id':'n16','size':5,'color':'#7a7e3c','strokeCol':'#d3d3d3','strokeW':25,'shape':3,'opacity':1,'layers':1,'sizeValue':2.082650263041717,'colorValue':'B','strokeColValue':0.17857187817437192,'strokeWValue':25,'shapeValue':'male','pos':{'spectral':[0.61944,0.14993],'radial':[0.46068,0.58356],'arc':[0.05000,0.50000],'layered':[0.55114,0.50000]},'cent':{'degree':2.00000,'strength':2.00000,'indegree':2.00000,'outdegree':0.00000,'instrength':2.00000,'outstrength':0.00000,'eigenvector':0.02192,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":2.082650263041717,"sex":'male',"group":'B',"age":25,"rank":0.17857187817437192}},
+{'id':'n17','size':3.0473971351894154,'color':'#d95f02','strokeCol':'#9b9b9b','strokeW':26,'shape':3,'opacity':1,'layers':1,'sizeValue':0.11205025785522693,'colorValue':'C','strokeColValue':0.39625616221698645,'strokeWValue':26,'shapeValue':'male','pos':{'spectral':[0.09339,0.46980],'radial':[0.39940,0.65853],'arc':[0.25204,0.50000],'layered':[0.67386,0.50000]},'cent':{'degree':6.00000,'strength':6.00000,'indegree':5.00000,'outdegree':1.00000,'instrength':5.00000,'outstrength':1.00000,'eigenvector':0.06829,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.11205025785522693,"sex":'male',"group":'C',"age":26,"rank":0.39625616221698645}},
+{'id':'n18','size':4.304645977346989,'color':'#7a7e3c','strokeCol':'#ffffff','strokeW':10,'shape':0,'opacity':1,'layers':1,'sizeValue':1.380887162443483,'colorValue':'B','strokeColValue':0.0058245951079809455,'strokeWValue':10,'shapeValue':'female','pos':{'spectral':[0.14309,0.38364],'radial':[0.45219,0.55779],'arc':[0.06837,0.50000],'layered':[0.93977,0.50000]},'cent':{'degree':2.00000,'strength':2.00000,'indegree':2.00000,'outdegree':0.00000,'instrength':2.00000,'outstrength':0.00000,'eigenvector':0.02411,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":1.380887162443483,"sex":'female',"group":'B',"age":10,"rank":0.0058245951079809455}},
+{'id':'n19','size':2.270163037821318,'color':'#7a7e3c','strokeCol':'#bdbdbd','strokeW':14,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.6723476060971382,'colorValue':'B','strokeColValue':0.2624947127501015,'strokeWValue':14,'shapeValue':'female','pos':{'spectral':[0.61528,0.00000],'radial':[0.23036,0.75321],'arc':[0.67449,0.50000],'layered':[0.42841,0.50000]},'cent':{'degree':23.00000,'strength':23.00000,'indegree':6.00000,'outdegree':17.00000,'instrength':6.00000,'outstrength':17.00000,'eigenvector':0.10093,'betweenness':0.00114,'clustering':0.76471},'av':{"predictor":-0.6723476060971382,"sex":'female',"group":'B',"age":14,"rank":0.2624947127501015}},
+{'id':'n20','size':2.7604346114770157,'color':'#d95f02','strokeCol':'#949494','strokeW':18,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.17755719940456802,'colorValue':'C','strokeColValue':0.42118881422895527,'strokeWValue':18,'shapeValue':'male','pos':{'spectral':[0.51950,0.83794],'radial':[0.31302,0.63585],'arc':[0.36224,0.50000],'layered':[0.77614,0.50000]},'cent':{'degree':9.00000,'strength':9.00000,'indegree':7.00000,'outdegree':2.00000,'instrength':7.00000,'outstrength':2.00000,'eigenvector':0.09879,'betweenness':0.00009,'clustering':0.92857},'av':{"predictor":-0.17755719940456802,"sex":'male',"group":'C',"age":18,"rank":0.42118881422895527}},
+{'id':'n21','size':3.005172170346764,'color':'#d95f02','strokeCol':'#e6e6e6','strokeW':8,'shape':3,'opacity':1,'layers':1,'sizeValue':0.069436105516574,'colorValue':'C','strokeColValue':0.10592123670732445,'strokeWValue':8,'shapeValue':'male','pos':{'spectral':[0.15930,0.53367],'radial':[0.42668,0.54031],'arc':[0.08673,0.50000],'layered':[0.50000,1.00000]},'cent':{'degree':3.00000,'strength':3.00000,'indegree':1.00000,'outdegree':2.00000,'instrength':1.00000,'outstrength':2.00000,'eigenvector':0.01629,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.069436105516574,"sex":'male',"group":'C',"age":8,"rank":0.10592123670732445}},
+{'id':'n22','size':3.8392117176165383,'color':'#7a7e3c','strokeCol':'#5d5d5d','strokeW':27,'shape':3,'opacity':1,'layers':1,'sizeValue':0.9111629951956954,'colorValue':'B','strokeColValue':0.6331599460365578,'strokeWValue':27,'shapeValue':'male','pos':{'spectral':[0.15294,0.21096],'radial':[0.38188,0.54677],'arc':[0.19694,0.50000],'layered':[0.73523,0.50000]},'cent':{'degree':5.00000,'strength':5.00000,'indegree':4.00000,'outdegree':1.00000,'instrength':4.00000,'outstrength':1.00000,'eigenvector':0.05956,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.9111629951956954,"sex":'male',"group":'B',"age":27,"rank":0.6331599460365578}},
+{'id':'n23','size':1.6319805994532173,'color':'#1b9e77','strokeCol':'#9f9f9f','strokeW':1,'shape':3,'opacity':1,'layers':1,'sizeValue':-1.3164121719248143,'colorValue':'A','strokeColValue':0.38042426988653233,'strokeWValue':1,'shapeValue':'male','pos':{'spectral':[0.15839,0.18160],'radial':[0.05771,0.61356],'arc':[0.85816,0.50000],'layered':[0.38750,0.50000]},'cent':{'degree':54.00000,'strength':54.00000,'indegree':19.00000,'outdegree':35.00000,'instrength':19.00000,'outstrength':35.00000,'eigenvector':0.24642,'betweenness':0.07595,'clustering':0.39039},'av':{"predictor":-1.3164121719248143,"sex":'male',"group":'A',"age":1,"rank":0.38042426988653233}},
+{'id':'n24','size':4.428860307915093,'color':'#d95f02','strokeCol':'#464646','strokeW':25,'shape':3,'opacity':1,'layers':1,'sizeValue':1.5062463764818619,'colorValue':'C','strokeColValue':0.7252939380762389,'strokeWValue':25,'shapeValue':'male','pos':{'spectral':[0.17291,0.52967],'radial':[0.38257,0.51484],'arc':[0.12347,0.50000],'layered':[0.20341,0.50000]},'cent':{'degree':4.00000,'strength':4.00000,'indegree':4.00000,'outdegree':0.00000,'instrength':4.00000,'outstrength':0.00000,'eigenvector':0.05073,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":1.5062463764818619,"sex":'male',"group":'C',"age":25,"rank":0.7252939380762389}},
+{'id':'n25','size':3.3905056725904403,'color':'#7a7e3c','strokeCol':'#585858','strokeW':19,'shape':0,'opacity':1,'layers':1,'sizeValue':0.458321226605228,'colorValue':'B','strokeColValue':0.6538660110683944,'strokeWValue':19,'shapeValue':'female','pos':{'spectral':[0.11798,0.61375],'radial':[0.26020,0.50000],'arc':[0.39898,0.50000],'layered':[0.85795,0.50000]},'cent':{'degree':10.00000,'strength':10.00000,'indegree':8.00000,'outdegree':2.00000,'instrength':8.00000,'outstrength':2.00000,'eigenvector':0.11053,'betweenness':0.00040,'clustering':0.91667},'av':{"predictor":0.458321226605228,"sex":'female',"group":'B',"age":19,"rank":0.6538660110683944}},
+{'id':'n26','size':3.8193591848929445,'color':'#d95f02','strokeCol':'#929292','strokeW':8,'shape':0,'opacity':1,'layers':1,'sizeValue':0.8911274816803166,'colorValue':'C','strokeColValue':0.4312267487774062,'strokeWValue':8,'shapeValue':'female','pos':{'spectral':[0.42021,0.29150],'radial':[0.21907,0.46451],'arc':[0.52755,0.50000],'layered':[0.89886,0.50000]},'cent':{'degree':11.00000,'strength':11.00000,'indegree':11.00000,'outdegree':0.00000,'instrength':11.00000,'outstrength':0.00000,'eigenvector':0.16742,'betweenness':0.00000,'clustering':0.96364},'av':{"predictor":0.8911274816803166,"sex":'female',"group":'C',"age":8,"rank":0.4312267487774062}},
+{'id':'n27','size':3.3919338935642855,'color':'#7a7e3c','strokeCol':'#212121','strokeW':21,'shape':3,'opacity':1,'layers':1,'sizeValue':0.45976261149162173,'colorValue':'B','strokeColValue':0.8673205056421992,'strokeWValue':21,'shapeValue':'male','pos':{'spectral':[0.14566,0.28468],'radial':[0.39375,0.47272],'arc':[0.14184,0.50000],'layered':[0.16250,0.50000]},'cent':{'degree':4.00000,'strength':4.00000,'indegree':2.00000,'outdegree':2.00000,'instrength':2.00000,'outstrength':2.00000,'eigenvector':0.02916,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.45976261149162173,"sex":'male',"group":'B',"age":21,"rank":0.8673205056421992}},
+{'id':'n28','size':1.6314666815005534,'color':'#7a7e3c','strokeCol':'#5e5e5e','strokeW':12,'shape':0,'opacity':1,'layers':1,'sizeValue':-1.3169308266591877,'colorValue':'B','strokeColValue':0.632135117500167,'strokeWValue':12,'shapeValue':'female','pos':{'spectral':[0.05995,0.15290],'radial':[0.05124,0.32232],'arc':[0.91327,0.50000],'layered':[0.53068,0.50000]},'cent':{'degree':57.00000,'strength':57.00000,'indegree':29.00000,'outdegree':28.00000,'instrength':29.00000,'outstrength':28.00000,'eigenvector':0.30652,'betweenness':0.16583,'clustering':0.38549},'av':{"predictor":-1.3169308266591877,"sex":'female',"group":'B',"age":12,"rank":0.632135117500167}},
+{'id':'n29','size':3.212505033412386,'color':'#1b9e77','strokeCol':'#303030','strokeW':25,'shape':0,'opacity':1,'layers':1,'sizeValue':0.2786799555567497,'colorValue':'A','strokeColValue':0.8102743521062991,'strokeWValue':25,'shapeValue':'female','pos':{'spectral':[0.07329,0.44772],'radial':[0.35067,0.41791],'arc':[0.27041,0.50000],'layered':[0.51023,0.50000]},'cent':{'degree':7.00000,'strength':7.00000,'indegree':6.00000,'outdegree':1.00000,'instrength':6.00000,'outstrength':1.00000,'eigenvector':0.09330,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.2786799555567497,"sex":'female',"group":'A',"age":25,"rank":0.8102743521062991}},
+{'id':'n30','size':1.9346156106491825,'color':'#7a7e3c','strokeCol':'#a9a9a9','strokeW':29,'shape':0,'opacity':1,'layers':1,'sizeValue':-1.010987773866157,'colorValue':'B','strokeColValue':0.341794723940113,'strokeWValue':29,'shapeValue':'female','pos':{'spectral':[0.16528,0.23875],'radial':[0.09549,0.20611],'arc':[0.95000,0.50000],'layered':[0.50000,0.00000]},'cent':{'degree':54.00000,'strength':54.00000,'indegree':10.00000,'outdegree':44.00000,'instrength':10.00000,'outstrength':44.00000,'eigenvector':0.14237,'betweenness':0.05096,'clustering':0.32030},'av':{"predictor":-1.010987773866157,"sex":'female',"group":'B',"age":29,"rank":0.341794723940113}},
+{'id':'n31','size':2.85206476802174,'color':'#7a7e3c','strokeCol':'#747474','strokeW':9,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.08508248771771978,'colorValue':'B','strokeColValue':0.5436692896684556,'strokeWValue':9,'shapeValue':'female','pos':{'spectral':[0.21559,0.65393],'radial':[0.30623,0.31804],'arc':[0.45408,0.50000],'layered':[0.63295,0.50000]},'cent':{'degree':10.00000,'strength':10.00000,'indegree':10.00000,'outdegree':0.00000,'instrength':10.00000,'outstrength':0.00000,'eigenvector':0.15376,'betweenness':0.00000,'clustering':0.97778},'av':{"predictor":-0.08508248771771978,"sex":'female',"group":'B',"age":9,"rank":0.5436692896684556}},
+{'id':'n32','size':3.2883846982784815,'color':'#d95f02','strokeCol':'#cecece','strokeW':14,'shape':3,'opacity':1,'layers':1,'sizeValue':0.3552590032850147,'colorValue':'C','strokeColValue':0.1962968851147534,'strokeWValue':14,'shapeValue':'male','pos':{'spectral':[0.20895,0.57781],'radial':[0.43561,0.42216],'arc':[0.10510,0.50000],'layered':[0.48977,0.50000]},'cent':{'degree':2.00000,'strength':2.00000,'indegree':2.00000,'outdegree':0.00000,'instrength':2.00000,'outstrength':0.00000,'eigenvector':0.02740,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.3552590032850147,"sex":'male',"group":'C',"age":14,"rank":0.1962968851147534}},
+{'id':'n33','size':2.8416043396776507,'color':'#d95f02','strokeCol':'#000000','strokeW':7,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.0956393298286288,'colorValue':'C','strokeColValue':0.9961411901186279,'strokeWValue':7,'shapeValue':'female','pos':{'spectral':[0.62694,0.21335],'radial':[0.28786,0.16572],'arc':[0.72959,0.50000],'layered':[0.61250,0.50000]},'cent':{'degree':23.00000,'strength':23.00000,'indegree':19.00000,'outdegree':4.00000,'instrength':19.00000,'outstrength':4.00000,'eigenvector':0.24325,'betweenness':0.00403,'clustering':0.73099},'av':{"predictor":-0.0956393298286288,"sex":'female',"group":'C',"age":7,"rank":0.9961411901186279}},
+{'id':'n34','size':3.807248482899902,'color':'#1b9e77','strokeCol':'#c2c2c2','strokeW':21,'shape':0,'opacity':1,'layers':1,'sizeValue':0.8789051553484252,'colorValue':'A','strokeColValue':0.24321546430632712,'strokeWValue':21,'shapeValue':'female','pos':{'spectral':[0.11536,0.47465],'radial':[0.39421,0.27518],'arc':[0.41735,0.50000],'layered':[0.65341,0.50000]},'cent':{'degree':11.00000,'strength':11.00000,'indegree':9.00000,'outdegree':2.00000,'instrength':9.00000,'outstrength':2.00000,'eigenvector':0.13540,'betweenness':0.00028,'clustering':0.97222},'av':{"predictor":0.8789051553484252,"sex":'female',"group":'A',"age":21,"rank":0.24321546430632712}},
+{'id':'n35','size':4.303225675449523,'color':'#7a7e3c','strokeCol':'#bfbfbf','strokeW':19,'shape':0,'opacity':1,'layers':1,'sizeValue':1.3794537696235951,'colorValue':'B','strokeColValue':0.25686746722710274,'strokeWValue':19,'shapeValue':'female','pos':{'spectral':[0.00000,0.29214],'radial':[0.44466,0.32968],'arc':[0.28878,0.50000],'layered':[0.71477,0.50000]},'cent':{'degree':6.00000,'strength':6.00000,'indegree':6.00000,'outdegree':0.00000,'instrength':6.00000,'outstrength':0.00000,'eigenvector':0.10159,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":1.3794537696235951,"sex":'female',"group":'B',"age":19,"rank":0.25686746722710274}},
+{'id':'n36','size':2.3247010612445353,'color':'#d95f02','strokeCol':'#eeeeee','strokeW':25,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.6173069057184264,'colorValue':'C','strokeColValue':0.07319007239096598,'strokeWValue':25,'shapeValue':'male','pos':{'spectral':[0.87179,0.53137],'radial':[0.42094,0.08553],'arc':[0.78469,0.50000],'layered':[0.18295,0.50000]},'cent':{'degree':31.00000,'strength':31.00000,'indegree':22.00000,'outdegree':9.00000,'instrength':22.00000,'outstrength':9.00000,'eigenvector':0.27330,'betweenness':0.01675,'clustering':0.61000},'av':{"predictor":-0.6173069057184264,"sex":'male',"group":'C',"age":25,"rank":0.07319007239096598}},
+{'id':'n37','size':3.071538689566338,'color':'#1b9e77','strokeCol':'#bebebe','strokeW':24,'shape':0,'opacity':1,'layers':1,'sizeValue':0.1364143249360092,'colorValue':'A','strokeColValue':0.2578031189967366,'strokeWValue':24,'shapeValue':'female','pos':{'spectral':[0.52768,0.41820],'radial':[0.48276,0.22605],'arc':[0.54592,0.50000],'layered':[0.32614,0.50000]},'cent':{'degree':14.00000,'strength':14.00000,'indegree':9.00000,'outdegree':5.00000,'instrength':9.00000,'outstrength':5.00000,'eigenvector':0.12237,'betweenness':0.00134,'clustering':0.90909},'av':{"predictor":0.1364143249360092,"sex":'female',"group":'A',"age":24,"rank":0.2578031189967366}},
+{'id':'n38','size':3.512206215699244,'color':'#7a7e3c','strokeCol':'#3c3c3c','strokeW':29,'shape':3,'opacity':1,'layers':1,'sizeValue':0.581143483605589,'colorValue':'B','strokeColValue':0.7631285325440532,'strokeWValue':29,'shapeValue':'male','pos':{'spectral':[0.15936,0.25608],'radial':[0.50907,0.35590],'arc':[0.21531,0.50000],'layered':[0.12159,0.50000]},'cent':{'degree':5.00000,'strength':5.00000,'indegree':5.00000,'outdegree':0.00000,'instrength':5.00000,'outstrength':0.00000,'eigenvector':0.08214,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.581143483605589,"sex":'male',"group":'B',"age":29,"rank":0.7631285325440532}},
+{'id':'n39','size':2.8582535371129807,'color':'#d95f02','strokeCol':'#4d4d4d','strokeW':28,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.07883667674249079,'colorValue':'C','strokeColValue':0.6978935706830813,'strokeWValue':28,'shapeValue':'female','pos':{'spectral':[0.72489,0.17117],'radial':[0.56119,0.17925],'arc':[0.56429,0.50000],'layered':[0.24432,0.50000]},'cent':{'degree':13.00000,'strength':13.00000,'indegree':10.00000,'outdegree':3.00000,'instrength':10.00000,'outstrength':3.00000,'eigenvector':0.13858,'betweenness':0.00051,'clustering':0.87879},'av':{"predictor":-0.07883667674249079,"sex":'female',"group":'C',"age":28,"rank":0.6978935706830813}},
+{'id':'n40','size':3.1321634418873674,'color':'#7a7e3c','strokeCol':'#e0e0e0','strokeW':26,'shape':0,'opacity':1,'layers':1,'sizeValue':0.19759785559206983,'colorValue':'B','strokeColValue':0.12867321231716944,'strokeWValue':26,'shapeValue':'female','pos':{'spectral':[0.18214,0.50783],'radial':[0.54730,0.35443],'arc':[0.23367,0.50000],'layered':[0.86000,1.00000]},'cent':{'degree':5.00000,'strength':5.00000,'indegree':2.00000,'outdegree':3.00000,'instrength':2.00000,'outstrength':3.00000,'eigenvector':0.03223,'betweenness':0.00000,'clustering':0.90000},'av':{"predictor":0.19759785559206983,"sex":'female',"group":'B',"age":26,"rank":0.12867321231716944}},
+{'id':'n41','size':3.13693879145838,'color':'#7a7e3c','strokeCol':'#a0a0a0','strokeW':5,'shape':3,'opacity':1,'layers':1,'sizeValue':0.2024172195595183,'colorValue':'B','strokeColValue':0.37623850142809423,'strokeWValue':5,'shapeValue':'male','pos':{'spectral':[0.57807,0.93016],'radial':[0.58733,0.31442],'arc':[0.30714,0.50000],'layered':[0.28523,0.50000]},'cent':{'degree':8.00000,'strength':8.00000,'indegree':5.00000,'outdegree':3.00000,'instrength':5.00000,'outstrength':3.00000,'eigenvector':0.06393,'betweenness':0.00009,'clustering':0.90476},'av':{"predictor":0.2024172195595183,"sex":'male',"group":'B',"age":5,"rank":0.37623850142809423}},
+{'id':'n42','size':3.3102114267586726,'color':'#d95f02','strokeCol':'#949494','strokeW':2,'shape':0,'opacity':1,'layers':1,'sizeValue':0.3772869087190482,'colorValue':'C','strokeColValue':0.4209213946174629,'strokeWValue':2,'shapeValue':'female','pos':{'spectral':[0.53610,0.07918],'radial':[0.61919,0.31218],'arc':[0.38061,0.50000],'layered':[0.36705,0.50000]},'cent':{'degree':10.00000,'strength':10.00000,'indegree':6.00000,'outdegree':4.00000,'instrength':6.00000,'outstrength':4.00000,'eigenvector':0.08337,'betweenness':0.00000,'clustering':0.96429},'av':{"predictor":0.3772869087190482,"sex":'female',"group":'C',"age":2,"rank":0.4209213946174629}},
+{'id':'n43','size':2.368460963213124,'color':'#7a7e3c','strokeCol':'#555555','strokeW':14,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.5731436687385264,'colorValue':'B','strokeColValue':0.6649842463619607,'strokeWValue':14,'shapeValue':'female','pos':{'spectral':[0.69303,1.00000],'radial':[0.75790,0.18826],'arc':[0.76633,0.50000],'layered':[0.79659,0.50000]},'cent':{'degree':34.00000,'strength':34.00000,'indegree':15.00000,'outdegree':19.00000,'instrength':15.00000,'outstrength':19.00000,'eigenvector':0.19895,'betweenness':0.02967,'clustering':0.63043},'av':{"predictor":-0.5731436687385264,"sex":'female',"group":'B',"age":14,"rank":0.6649842463619607}},
+{'id':'n44','size':3.463627382720452,'color':'#d95f02','strokeCol':'#8b8b8b','strokeW':11,'shape':0,'opacity':1,'layers':1,'sizeValue':0.5321168995289299,'colorValue':'C','strokeColValue':0.45592896304374886,'strokeWValue':11,'shapeValue':'female','pos':{'spectral':[0.51696,0.75862],'radial':[0.75700,0.25866],'arc':[0.63776,0.50000],'layered':[0.14205,0.50000]},'cent':{'degree':17.00000,'strength':17.00000,'indegree':13.00000,'outdegree':4.00000,'instrength':13.00000,'outstrength':4.00000,'eigenvector':0.17896,'betweenness':0.00070,'clustering':0.91429},'av':{"predictor":0.5321168995289299,"sex":'female',"group":'C',"age":11,"rank":0.45592896304374886}},
+{'id':'n45','size':4.457117556081798,'color':'#d95f02','strokeCol':'#696969','strokeW':26,'shape':0,'opacity':1,'layers':1,'sizeValue':1.534764071701605,'colorValue':'C','strokeColValue':0.5865183268255314,'strokeWValue':26,'shapeValue':'female','pos':{'spectral':[0.34591,0.87815],'radial':[0.65891,0.38454],'arc':[0.32551,0.50000],'layered':[0.14000,1.00000]},'cent':{'degree':7.00000,'strength':7.00000,'indegree':7.00000,'outdegree':0.00000,'instrength':7.00000,'outstrength':0.00000,'eigenvector':0.09950,'betweenness':0.00000,'clustering':0.95238},'av':{"predictor":1.534764071701605,"sex":'female',"group":'C',"age":26,"rank":0.5865183268255314}},
+{'id':'n46','size':2.428784330872661,'color':'#1b9e77','strokeCol':'#282828','strokeW':24,'shape':0,'opacity':1,'layers':1,'sizeValue':-0.5122643006063476,'colorValue':'A','strokeColValue':0.8396846036089424,'strokeWValue':24,'shapeValue':'female','pos':{'spectral':[0.49084,0.07383],'radial':[0.77854,0.34687],'arc':[0.58265,0.50000],'layered':[0.81705,0.50000]},'cent':{'degree':15.00000,'strength':15.00000,'indegree':10.00000,'outdegree':5.00000,'instrength':10.00000,'outstrength':5.00000,'eigenvector':0.14708,'betweenness':0.00025,'clustering':0.90909},'av':{"predictor":-0.5122643006063476,"sex":'female',"group":'A',"age":24,"rank":0.8396846036089424}},
+{'id':'n47','size':2.3654687604405864,'color':'#1b9e77','strokeCol':'#454545','strokeW':13,'shape':3,'opacity':1,'layers':1,'sizeValue':-0.5761634506436676,'colorValue':'A','strokeColValue':0.7264736103123705,'strokeWValue':13,'shapeValue':'male','pos':{'spectral':[0.44082,0.57456],'radial':[0.83586,0.36702],'arc':[0.65612,0.50000],'layered':[0.22386,0.50000]},'cent':{'degree':16.00000,'strength':16.00000,'indegree':8.00000,'outdegree':8.00000,'instrength':8.00000,'outstrength':8.00000,'eigenvector':0.08976,'betweenness':0.00121,'clustering':0.70833},'av':{"predictor":-0.5761634506436676,"sex":'male',"group":'A',"age":13,"rank":0.7264736103123705}},
+{'id':'n48','size':4.144857385076312,'color':'#7a7e3c','strokeCol':'#a3a3a3','strokeW':17,'shape':3,'opacity':1,'layers':1,'sizeValue':1.2196257987365915,'colorValue':'B','strokeColValue':0.36500726350855894,'strokeWValue':17,'shapeValue':'male','pos':{'spectral':[0.22184,0.76164],'radial':[0.74906,0.43605],'arc':[0.43571,0.50000],'layered':[0.59205,0.50000]},'cent':{'degree':9.00000,'strength':9.00000,'indegree':9.00000,'outdegree':0.00000,'instrength':9.00000,'outstrength':0.00000,'eigenvector':0.12666,'betweenness':0.00000,'clustering':0.91667},'av':{"predictor":1.2196257987365915,"sex":'male',"group":'B',"age":17,"rank":0.36500726350855894}},
+{'id':'n49','size':3.1341622145972896,'color':'#d95f02','strokeCol':'#8d8d8d','strokeW':18,'shape':3,'opacity':1,'layers':1,'sizeValue':0.19961505098982535,'colorValue':'C','strokeColValue':0.44839630934448427,'strokeWValue':18,'shapeValue':'male','pos':{'spectral':[0.06026,0.36484],'radial':[0.71209,0.47321],'arc':[0.34388,0.50000],'layered':[0.57159,0.50000]},'cent':{'degree':8.00000,'strength':8.00000,'indegree':6.00000,'outdegree':2.00000,'instrength':6.00000,'outstrength':2.00000,'eigenvector':0.09472,'betweenness':0.00000,'clustering':1.00000},'av':{"predictor":0.19961505098982535,"sex":'male',"group":'C',"age":18,"rank":0.44839630934448427}},
 ],
 'links':[
-{'source':'n10','target':'n15','colorL':'black','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
-{'source':'n10','target':'n30','colorL':'black','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
-{'source':'n11','target':'n46','colorL':'black','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
-{'source':'n20','target':'n48','colorL':'black','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n0','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n0','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n0','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n14','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n0','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n0','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n1','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n1','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n1','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n2','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n2','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n2','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n33','target':'n2','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n37','target':'n2','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n2','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n3','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n3','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n3','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n3','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n3','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n3','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n3','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n3','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n40','target':'n3','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n4','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n4','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n4','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n4','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n4','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n4','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n4','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n4','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n4','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n4','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n5','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n5','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n5','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n5','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n20','target':'n5','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n5','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n27','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n5','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n40','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n41','target':'n5','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n5','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n6','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n6','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n6','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n6','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n6','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n6','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n6','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n6','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n6','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n6','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n7','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n21','target':'n7','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n29','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n37','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n7','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n46','target':'n7','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n8','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n8','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n8','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n9','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n4','target':'n9','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n9','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n9','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n9','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n9','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n10','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n10','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n10','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n4','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n10','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n10','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n10','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n10','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n10','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n10','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n33','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n39','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n42','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n10','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n44','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n49','target':'n10','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n11','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n11','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n25','target':'n11','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n11','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n11','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n11','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n12','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n12','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n12','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n12','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n12','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n12','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n12','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n12','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n12','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n12','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n12','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n13','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n13','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n13','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n13','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n13','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n14','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n14','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n14','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n14','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n14','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n14','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n14','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n14','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n14','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n14','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n14','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n44','target':'n14','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n15','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n15','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n39','target':'n15','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n42','target':'n15','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n15','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n16','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n16','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n17','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n17','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n17','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n17','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n17','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n18','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n18','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n19','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n19','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n19','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n19','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n19','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n19','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n20','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n20','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n20','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n20','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n20','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n20','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n20','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n21','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n22','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n22','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n22','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n22','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n4','target':'n23','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n23','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n14','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n34','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n23','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n23','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n46','target':'n23','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n24','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n24','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n24','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n24','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n25','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n25','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n25','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n25','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n25','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n25','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n25','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n25','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n26','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n26','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n26','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n26','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n26','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n26','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n27','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n27','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n1','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n4','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n17','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n21','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n22','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n25','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n27','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n33','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n34','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n37','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n40','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n28','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n44','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n46','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n28','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n49','target':'n28','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n29','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n29','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n29','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n29','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n29','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n29','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n30','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n30','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n30','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n30','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n30','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n30','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n30','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n30','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n42','target':'n30','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n30','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n31','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n31','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n31','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n31','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n31','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n31','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n31','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n31','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n31','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n31','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n32','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n32','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n1','target':'n33','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n33','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n33','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n37','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n42','target':'n33','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n33','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n46','target':'n33','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n34','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n34','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n34','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n34','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n34','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n34','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n34','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n34','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n34','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n35','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n35','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n35','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n35','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n35','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n35','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n4','target':'n36','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n36','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n14','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n15','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n20','target':'n36','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n33','target':'n36','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n37','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n41','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n36','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n44','target':'n36','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n36','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n37','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n37','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n37','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n37','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n37','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n37','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n37','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n37','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n37','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n38','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n38','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n38','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n38','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n38','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n39','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n39','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n39','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n39','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n39','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n39','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n39','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n39','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n39','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n46','target':'n39','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n40','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n40','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n41','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n41','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n41','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n41','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n41','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n42','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n42','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n42','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n42','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n42','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n42','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n43','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n43','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n43','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n43','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n43','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n14','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n43','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n36','target':'n43','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n39','target':'n43','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n41','target':'n43','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n44','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n44','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n47','target':'n44','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n45','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n45','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n45','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n45','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n45','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n45','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n45','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n0','target':'n46','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n46','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n5','target':'n46','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n46','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n46','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n46','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n19','target':'n46','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n46','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n46','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n46','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n47','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n3','target':'n47','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n47','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n8','target':'n47','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n47','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n47','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n47','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n47','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n48','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n6','target':'n48','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n48','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n48','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n10','target':'n48','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n11','target':'n48','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n48','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n48','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n43','target':'n48','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n2','target':'n49','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n7','target':'n49','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n9','target':'n49','colorL':'#d95f02','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n23','target':'n49','colorL':'#1b9e77','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n28','target':'n49','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
+{'source':'n30','target':'n49','colorL':'#7a7e3c','lOpacity':1,'weigth':1,'intralayer':NaN,'interlayer':NaN},
 ]}
-json["stats"] = {"nodes": 50, "edges": 4, "directed": true, "density": 0.0016, "mean_degree": 0.16, "components": 46, "diameter": 2, "global_clustering": 0.0};
-json["legend"] = [];
+json["stats"] = {"nodes": 50, "edges": 460, "directed": true, "density": 0.1878, "mean_degree": 18.4, "components": 1, "diameter": 3, "global_clustering": 0.808};
+json["legend"] = [{"kind": "swatches", "title": "Colour", "col": "group", "items": [{"label": "A", "color": "#1b9e77"}, {"label": "C", "color": "#d95f02"}, {"label": "B", "color": "#7a7e3c"}]}, {"kind": "shapes", "title": "Shape", "col": "sex", "items": [{"label": "female", "shape": 0}, {"label": "male", "shape": 3}]}, {"kind": "size", "title": "Size", "col": "predictor", "lo": -1.954, "hi": 2.083}, {"kind": "gradient", "title": "Border colour", "col": "rank", "stops": ["#ffffff", "#000000"], "lo": 0.006, "hi": 0.996}, {"kind": "size", "title": "Border width", "col": "age", "lo": 1.0, "hi": 29.0}];
 json["theme"] = "light";
 json["palette"] = "default";
 json["directed"] = true;
@@ -1720,7 +2376,7 @@ json["hasPosterior"] = false;
 json["canvas"] = false;
 json["background"] = "#e6e6e8";
 json["metricNames"] = ["degree", "strength", "indegree", "outdegree", "instrength", "outstrength", "eigenvector", "betweenness", "clustering"];
-json["axisCols"] = [];
+json["axisCols"] = [{"name": "predictor", "type": "num"}, {"name": "sex", "type": "cat", "cats": ["female", "male"]}, {"name": "group", "type": "cat", "cats": ["A", "B", "C"]}, {"name": "age", "type": "num"}, {"name": "rank", "type": "num"}];
 json["axisX"] = "(none)";
 json["axisY"] = "(none)";
 return json;
@@ -1942,10 +2598,12 @@ return json;
   /* fit to view --------------------------------------- */
   var bf = document.getElementById('btnFit');
   if (bf) bf.onclick = function () {
-    var xs = G.nodes.map(function (d) { return d.x; }), ys = G.nodes.map(function (d) { return d.y; });
+    var xs = G.nodes.map(function (d) { return d.x; }).filter(isFinite),
+        ys = G.nodes.map(function (d) { return d.y; }).filter(isFinite);
+    if (!xs.length) return;
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs),
         y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 45;
+    var w = (x1 - x0) || 1, hh = (y1 - y0) || 1, pad = 65;
     var k = Math.min((width - 2 * pad) / w, (height - 2 * pad) / hh, 4);
     var tx = width / 2 - k * (x0 + x1) / 2, ty = height / 2 - k * (y0 + y1) / 2;
     gSel.transition().duration(400).attr('transform', 'translate(' + tx + ',' + ty + ') scale(' + k + ')');
@@ -2097,6 +2755,128 @@ return json;
     svgEl.addEventListener('pointermove', function (e) { if (e.buttons) schedule(); });
     svgEl.addEventListener('pointerup', schedule);
     drawCanvas();
+  }
+
+  /* resizable left panel (splitter drag) -------------------------- */
+  var resizer = document.getElementById('menuResizer');
+  var menu = document.querySelector('.main-menu');
+  if (resizer && menu) {
+    var isDragging = false;
+    var startX = 0;
+    var startW = 0;
+
+    resizer.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      isDragging = true;
+      startX = e.clientX;
+      startW = menu.getBoundingClientRect().width;
+      resizer.classList.add('is-resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      var newW = Math.max(200, Math.min(startW + (e.clientX - startX), window.innerWidth * 0.85));
+      document.documentElement.style.setProperty('--panel-w', newW + 'px');
+      menu.style.flex = '0 0 ' + newW + 'px';
+      menu.style.width = newW + 'px';
+      if (typeof autoFit === 'function') autoFit();
+    });
+
+    window.addEventListener('mouseup', function () {
+      if (isDragging) {
+        isDragging = false;
+        resizer.classList.remove('is-resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  }
+
+  /* slider value tooltips (floating bubbles) --------------------- */
+  function formatBubbleVal(v) {
+    var num = parseFloat(v);
+    if (isNaN(num)) return v;
+    if (Math.abs(num) >= 1000) {
+      if (num % 1000 === 0) return (num / 1000) + 'k';
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    if (Number.isInteger(num)) return '' + num;
+    var s = num.toFixed(3);
+    return s.replace(/\.?0+$/, '');
+  }
+
+  var rangeSliders = document.querySelectorAll('input[type="range"]');
+  rangeSliders.forEach(function (slider) {
+    var bubble = document.createElement('div');
+    bubble.className = 'slider-bubble';
+    var parent = slider.parentElement;
+    if (parent) {
+      if (parent.style.position !== 'relative' && parent.style.position !== 'absolute') {
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(bubble);
+    }
+
+    function updateBubble() {
+      bubble.textContent = formatBubbleVal(slider.value);
+      var min = parseFloat(slider.min) || 0;
+      var max = parseFloat(slider.max) || 100;
+      var val = parseFloat(slider.value) || 0;
+      var pct = max > min ? (val - min) / (max - min) : 0;
+      // Compenser la largeur du pouce (15px thumb)
+      var thumbW = 15;
+      var sliderW = slider.offsetWidth || 100;
+      var px = pct * (sliderW - thumbW) + (thumbW / 2);
+      bubble.style.left = px + 'px';
+    }
+
+    function showBubble() {
+      updateBubble();
+      bubble.classList.add('visible');
+    }
+
+    function hideBubble() {
+      bubble.classList.remove('visible');
+    }
+
+    slider.addEventListener('input', updateBubble);
+    slider.addEventListener('focus', showBubble);
+    slider.addEventListener('blur', hideBubble);
+    slider.addEventListener('mouseenter', showBubble);
+    slider.addEventListener('mouseleave', hideBubble);
+    slider.addEventListener('mousedown', showBubble);
+  });
+
+  /* loading spinner dismissal ------------------------------------ */
+  var loader = document.getElementById('netLoader');
+  if (loader) {
+    function hideLoader() {
+      if (loader && !loader.classList.contains('is-hidden')) {
+        loader.classList.add('is-hidden');
+        setTimeout(function () {
+          if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 500);
+      }
+    }
+
+    if (typeof simulation !== 'undefined') {
+      // D3 force simulation: hide spinner when simulation ends, or on tick when alpha is low enough
+      var tickCount = 0;
+      simulation.on('tick.loader', function () {
+        tickCount++;
+        // Once the network has stabilized a few frames or reached low energy
+        if (tickCount > 15 || simulation.alpha() < 0.1) {
+          simulation.on('tick.loader', null);
+          hideLoader();
+        }
+      });
+      simulation.on('end.loader', hideLoader);
+    }
+    // Safety fallback: ensure spinner never stays visible indefinitely
+    setTimeout(hideLoader, 1200);
   }
 })();
 

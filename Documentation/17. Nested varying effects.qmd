@@ -58,7 +58,7 @@ def model_nested(y, x, group_id, region_id, N_groups=20, N_regions=5):
     )
 
     # 2. Group level — parent mapping via JAX scatter (traceable under pmap)
-    group_to_region = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
+    group_to_region = jnp.zeros(N_groups, dtype=region_id.dtype).at[group_id].set(region_id)
     sigma_grp  = m.dist.exponential(1, shape=(2,), name='sigma_group')
     corr_grp   = m.dist.lkj(2, 2, name='corr_group')
     cov_grp    = jnp.diag(sigma_grp) @ corr_grp @ jnp.diag(sigma_grp)
@@ -90,7 +90,7 @@ def model_nested_noncentered(y, x, group_id, region_id, N_groups=20, N_regions=5
     region_effects = mu_global + ((sigma_region[..., None] * L_region) @ z_region).T
 
     # 2. Group level — parent mapping via JAX scatter (traceable under pmap)
-    pid          = jnp.zeros(N_groups, dtype=jnp.int32).at[group_id].set(region_id)
+    pid          = jnp.zeros(N_groups, dtype=region_id.dtype).at[group_id].set(region_id)
     sigma_group  = m.dist.exponential(1, shape=(2,), name='sigma_group')
     L_group      = m.dist.lkj_cholesky(2, 2, name='L_group')
     z_group      = m.dist.normal(0, 1, name='z_group', shape=(2, N_groups))
@@ -179,24 +179,36 @@ m = importBF(platform="cpu")
 data_path = m.load.sim_nested_effects(only_path=true)
 m.data(data_path)
 
+# The Julia wrapper exposes no Python-visible defaults, so pass the model
+# data (DataFrame columns + scalar sizes) explicitly.
+m.data_on_model = pydict(
+    y         = jnp.array(m.df["y"]),
+    x         = jnp.array(m.df["x"]),
+    group_id  = jnp.array(m.df["group_id"]),
+    region_id = jnp.array(m.df["region_id"]),
+    N_groups  = 20,
+    N_regions = 5,
+)
+
 # Define model ------------------------------------------------
 @BF function model(y, x, group_id, region_id, N_groups=20, N_regions=5)
     sigma = m.dist.exponential(1, name="sigma")
 
-    a_g_est, b_g_est = m.effects.nested_varying_effects(
+    veff = m.effects.nested_varying_effects(
         N_vars    = 2,
         names     = ["region", "group"],
         N_groups  = [N_regions, N_groups],
         group_ids = [region_id, group_id],
         centered  = false,
     )
+    a_g_est, b_g_est = veff
 
-    mu = a_g_est .+ b_g_est .* x
-    m.dist.normal(mu, sigma, obs=y)
+    mu = a_g_est + b_g_est * x
+    m.dist.normal(mu, sigma, obs=y, name="y")
 end
 
 # Run mcmc ------------------------------------------------
-m.fit(model)
+m.fit(model, num_samples=1000, num_warmup=500, num_chains=1)
 m.summary()
 ```
 
@@ -206,11 +218,23 @@ library(BayesForge)
 
 # Setup platform ------------------------------------------------
 m = importBF(platform='cpu')
+jnp = reticulate::import("jax.numpy")
 
 # Load data — column args mapped automatically from the DataFrame.
 # N_groups and N_regions are dataset-specific; provide them as defaults.
 data_path = m$load$sim_nested_effects(only_path=TRUE)
 m$data(data_path)
+
+# The R wrapper exposes no Python-visible defaults, so pass the model
+# data (DataFrame columns + scalar sizes) explicitly.
+m$data_on_model = list(
+  y         = jnp$array(m$df$y),
+  x         = jnp$array(m$df$x),
+  group_id  = jnp$array(as.integer(m$df$group_id)),
+  region_id = jnp$array(as.integer(m$df$region_id)),
+  N_groups  = 20L,
+  N_regions = 5L
+)
 
 # Define model ------------------------------------------------
 model <- function(y, x, group_id, region_id, N_groups=20L, N_regions=5L) {
@@ -219,7 +243,7 @@ model <- function(y, x, group_id, region_id, N_groups=20L, N_regions=5L) {
   veff = m$effects$nested_varying_effects(
     N_vars    = 2L,
     names     = list('region', 'group'),
-    N_groups  = list(N_regions, N_groups),
+    N_groups  = list(as.integer(N_regions), as.integer(N_groups)),
     group_ids = list(region_id, group_id),
     centered  = FALSE,
   )
@@ -227,14 +251,62 @@ model <- function(y, x, group_id, region_id, N_groups=20L, N_regions=5L) {
   b_g_est = veff[[2]]
 
   mu = a_g_est + b_g_est * x
-  m$dist$normal(mu, sigma, obs=y)
+  m$dist$normal(mu, sigma, obs=y, name='y')
 }
 
 # Run MCMC ------------------------------------------------
-m$fit(model)
+m$fit(model, num_samples=1000L, num_warmup=500L, num_chains=1L)
 m$summary()
 ```
 :::
+
+<!--
+### Posterior predictive checks
+
+Does the model reproduce the mean outcome of every region?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_stat(stat="mean", group="region_id")
+```
+
+#### R
+```r
+# m$diag$ppc_stat(stat = "mean", group = "region_id")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_stat(stat="mean", group="region_id")
+```
+:::
+
+One panel per region: observed mean (vertical line) against the means of simulated datasets; p-values near 0 flag a region whose level is missed. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_density(group="region_id")
+```
+
+#### R
+```r
+# m$diag$ppc_density(group = "region_id")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_density(group="region_id")
+```
+:::
+
+The distribution of the outcome within each region (black) against simulated ones (blue), on a shared x axis.
+:::
+-->
 
 ## Mathematical Details
 
@@ -285,6 +357,13 @@ $$
 \begin{bmatrix} \alpha_j \\ \beta_j \end{bmatrix} = \begin{bmatrix} \gamma_{\alpha, [k(j)]} \\ \gamma_{\beta, [k(j)]} \end{bmatrix} + \text{diag}(\mathbf{S}_{group}) L_{group} \begin{bmatrix} z_{\alpha, j} \\ z_{\beta, j} \end{bmatrix}
 $$
 
+
+## Model validation tests
+
+- [Parameter recovery](https://github.com/BGN-for-ASNA/BF/tree/main/Test/5.%20Nested%20effect): `builtin_function.py` simulates nested data with known parameters, fits the built-in nested model and checks that the parameters are recovered.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Notes
 ::: callout-note 

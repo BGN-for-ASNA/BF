@@ -107,6 +107,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -128,14 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -243,7 +253,7 @@ window.Quarto = {
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./api_dist.html"> 
+    <a class="nav-link" href="./reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -610,7 +620,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -618,6 +628,7 @@ window.Quarto = {
   <li><a href="#considerations" id="toc-considerations" class="nav-link" data-scroll-target="#considerations">Considerations</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#mathematical-details" id="toc-mathematical-details" class="nav-link" data-scroll-target="#mathematical-details">Mathematical Details</a></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="22.-Latent-variable.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
     </div>
@@ -670,10 +681,10 @@ Y = f(X, Z) + \epsilon
 <h2 class="anchored" data-anchor-id="example">Example</h2>
 <p>Below is an example code snippet demonstrating Bayesian regression with latent variables using TensorFlow Probability:</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="e5a76dcc" class="cell" data-execution_count="1">
+<div id="9fc82ca5" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -694,53 +705,52 @@ Y = f(X, Z) + \epsilon
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># offsets: Generate random normal offsets for each of the NV observations</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>means <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NY,), sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">10</span>)</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>offsets <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NV, <span class="dv">1</span>), sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> offsets <span class="op">+</span> means</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># observation noise (sd 0.5)</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>noise <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.5</span>, shape<span class="op">=</span>(NV, NY), sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">30</span>)</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate individual-level random effects (e.g., random slopes or intercepts)</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># b_individual: A matrix of size (N, K) where N is the number of individuals and K is the number of covariates</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>b_individual <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(N, K), sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># mu: Add an additional effect 'a' to the individual-level random effects 'b_individual'</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># 'a' could represent a population-level effect or a baseline</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>mu <span class="op">=</span> b_individual <span class="op">+</span> a</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert Y2 to a JAX array for further computation in a JAX-based framework</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> jnp.array(Y2)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Set data ------------------------------------------------</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="bu">dict</span>(</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    NY <span class="op">=</span> NY,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    NV <span class="op">=</span> NV,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    Y2 <span class="op">=</span> Y2</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(NY, NV, Y2):</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    means <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">'means'</span>)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    offset <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NV, <span class="dv">1</span>), name<span class="op">=</span><span class="st">'offset'</span>)</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">'sigma'</span>)</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    tmp <span class="op">=</span> jnp.tile(means, (NV, <span class="dv">1</span>)).reshape(NV, NY)</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    mu_l <span class="op">=</span> tmp <span class="op">+</span> offset</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu_l, jnp.tile(sigma, [NV, <span class="dv">1</span>]), obs<span class="op">=</span>Y2)</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> offsets <span class="op">+</span> means <span class="op">+</span> noise</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate individual-level random effects (e.g., random slopes or intercepts)</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># b_individual: A matrix of size (N, K) where N is the number of individuals and K is the number of covariates</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>b_individual <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(N, K), sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># mu: Add an additional effect 'a' to the individual-level random effects 'b_individual'</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># 'a' could represent a population-level effect or a baseline</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>mu <span class="op">=</span> b_individual <span class="op">+</span> a</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert Y2 to a JAX array for further computation in a JAX-based framework</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> jnp.array(Y2)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Set data ------------------------------------------------</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    NY <span class="op">=</span> NY,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    NV <span class="op">=</span> NV,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    Y2 <span class="op">=</span> Y2</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(NY, NV, Y2):</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    means <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">'means'</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    offset <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(NV, <span class="dv">1</span>), name<span class="op">=</span><span class="st">'offset'</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">'sigma'</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    tmp <span class="op">=</span> jnp.tile(means, (NV, <span class="dv">1</span>)).reshape(NV, NY)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    mu_l <span class="op">=</span> tmp <span class="op">+</span> offset</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu_l, jnp.tile(sigma, [NV, <span class="dv">1</span>]), obs<span class="op">=</span>Y2)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/work/3.12venv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
-jax.local_device_count 32</code></pre>
+<pre><code>bf v 0.0.60 package loaded
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -752,207 +762,207 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">means[0]</td>
-<td>-1.51</td>
-<td>0.17</td>
-<td>-1.65</td>
-<td>-1.21</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.95</td>
+<td>-1.17</td>
+<td>0.37</td>
+<td>-1.76</td>
+<td>-0.58</td>
+<td>532.98</td>
+<td>820.51</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">means[1]</td>
-<td>-0.79</td>
-<td>0.17</td>
-<td>-0.92</td>
-<td>-0.49</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.29</td>
-<td>11.32</td>
-<td>357.41</td>
+<td>-0.50</td>
+<td>0.32</td>
+<td>-1.01</td>
+<td>0.02</td>
+<td>374.85</td>
+<td>587.82</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">means[2]</td>
-<td>1.18</td>
-<td>0.17</td>
-<td>1.05</td>
-<td>1.48</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.30</td>
+<td>1.42</td>
+<td>0.33</td>
+<td>0.89</td>
+<td>1.96</td>
+<td>432.54</td>
+<td>477.51</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">means[3]</td>
-<td>-0.66</td>
-<td>0.17</td>
-<td>-0.80</td>
-<td>-0.37</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.95</td>
+<td>-0.50</td>
+<td>0.35</td>
+<td>-1.06</td>
+<td>0.05</td>
+<td>389.32</td>
+<td>486.56</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[0, 0]</td>
-<td>-0.58</td>
-<td>0.17</td>
-<td>-0.87</td>
-<td>-0.44</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.95</td>
+<td>-0.65</td>
+<td>0.35</td>
+<td>-1.22</td>
+<td>-0.09</td>
+<td>458.46</td>
+<td>590.19</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[1, 0]</td>
-<td>0.81</td>
-<td>0.17</td>
-<td>0.52</td>
-<td>0.95</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.95</td>
+<td>0.80</td>
+<td>0.34</td>
+<td>0.24</td>
+<td>1.37</td>
+<td>472.85</td>
+<td>620.76</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[2, 0]</td>
-<td>-1.08</td>
-<td>0.17</td>
-<td>-1.37</td>
-<td>-0.94</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.96</td>
+<td>-0.84</td>
+<td>0.36</td>
+<td>-1.42</td>
+<td>-0.22</td>
+<td>440.95</td>
+<td>583.23</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[3, 0]</td>
-<td>0.16</td>
-<td>0.17</td>
-<td>-0.14</td>
-<td>0.29</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.96</td>
+<td>0.33</td>
+<td>0.38</td>
+<td>-0.25</td>
+<td>0.95</td>
+<td>284.30</td>
+<td>245.27</td>
+<td>1.02</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[4, 0]</td>
-<td>-0.23</td>
-<td>0.17</td>
-<td>-0.53</td>
-<td>-0.10</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.96</td>
+<td>-0.65</td>
+<td>0.35</td>
+<td>-1.19</td>
+<td>-0.07</td>
+<td>451.99</td>
+<td>640.11</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[5, 0]</td>
-<td>-0.74</td>
-<td>0.17</td>
-<td>-1.04</td>
-<td>-0.61</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.94</td>
+<td>-0.32</td>
+<td>0.37</td>
+<td>-0.91</td>
+<td>0.29</td>
+<td>449.22</td>
+<td>632.54</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[6, 0]</td>
-<td>0.23</td>
-<td>0.17</td>
-<td>-0.06</td>
-<td>0.37</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.96</td>
+<td>0.06</td>
+<td>0.36</td>
+<td>-0.53</td>
+<td>0.63</td>
+<td>380.28</td>
+<td>650.50</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[7, 0]</td>
-<td>0.81</td>
-<td>0.17</td>
-<td>0.51</td>
-<td>0.95</td>
-<td>0.08</td>
-<td>0.07</td>
-<td>4.28</td>
-<td>11.32</td>
-<td>361.95</td>
+<td>0.44</td>
+<td>0.35</td>
+<td>-0.11</td>
+<td>0.98</td>
+<td>405.32</td>
+<td>581.76</td>
+<td>1.01</td>
+<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma[0]</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>5.98</td>
-<td>11.36</td>
-<td>2.92</td>
+<td>0.67</td>
+<td>0.21</td>
+<td>0.40</td>
+<td>1.04</td>
+<td>533.19</td>
+<td>801.55</td>
+<td>1.01</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma[1]</td>
+<td>0.27</td>
+<td>0.16</td>
+<td>0.06</td>
+<td>0.56</td>
+<td>143.07</td>
+<td>90.91</td>
+<td>1.02</td>
+<td>0.01</td>
 <td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>5.08</td>
-<td>10.70</td>
-<td>25.33</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma[2]</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>4.99</td>
-<td>11.33</td>
-<td>24.21</td>
+<td>0.36</td>
+<td>0.18</td>
+<td>0.08</td>
+<td>0.67</td>
+<td>262.91</td>
+<td>132.91</td>
+<td>1.02</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma[3]</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>5.87</td>
-<td>12.89</td>
-<td>1.77</td>
+<td>0.46</td>
+<td>0.18</td>
+<td>0.24</td>
+<td>0.78</td>
+<td>737.56</td>
+<td>862.68</td>
+<td>1.01</td>
+<td>0.01</td>
+<td>0.01</td>
 </tr>
 </tbody>
 </table>
@@ -962,15 +972,121 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="travaux-routiers.png" class="img-fluid quarto-figure quarto-figure-center figure-img"></p>
-</figure>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"jax.numpy"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device ------------------------------------------------</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Data Simulation ------------------------------------------------</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>NY <span class="ot">&lt;-</span> <span class="dv">4</span>L  <span class="co"># Number of dependent variables or outcomes (e.g., dimensions for latent variables)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>NV <span class="ot">&lt;-</span> <span class="dv">8</span>L  <span class="co"># Number of observations or individual-level data points (e.g., subjects)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">100</span>L</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="dv">5</span>L</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>means <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NY), <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">10</span>L)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>offsets <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NV, <span class="dv">1</span>L), <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">20</span>L)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>noise <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NV, NY), <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">30</span>L)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>Y2 <span class="ot">&lt;-</span> offsets <span class="sc">+</span> means <span class="sc">+</span> noise</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>b_individual <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(N, K), <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">0</span>L)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> b_individual <span class="sc">+</span> a</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>Y2 <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">array</span>(Y2)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Set data ------------------------------------------------</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">NY =</span> NY, <span class="at">NV =</span> NV, <span class="at">Y2 =</span> Y2)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(NY, NV, Y2) {</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  means <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NY), <span class="at">name =</span> <span class="st">"means"</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  offset <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NV, <span class="dv">1</span>L), <span class="at">name =</span> <span class="st">"offset"</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(NY), <span class="at">name =</span> <span class="st">"sigma"</span>)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  tmp <span class="ot">&lt;-</span> jnp<span class="sc">$</span><span class="fu">reshape</span>(jnp<span class="sc">$</span><span class="fu">tile</span>(means, reticulate<span class="sc">::</span><span class="fu">tuple</span>(NV, <span class="dv">1</span>L)), reticulate<span class="sc">::</span><span class="fu">tuple</span>(NV, NY))</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  mu_l <span class="ot">&lt;-</span> tmp <span class="sc">+</span> offset</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu_l, jnp<span class="sc">$</span><span class="fu">tile</span>(sigma, <span class="fu">list</span>(NV, <span class="dv">1</span>L)), <span class="at">obs =</span> Y2, <span class="at">name =</span> <span class="st">"y"</span>)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">progress_bar =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device ------------------------------------------------</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Data Simulation ------------------------------------------------</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>NY <span class="op">=</span> <span class="fl">4</span>  <span class="co"># Number of dependent variables or outcomes (e.g., dimensions for latent variables)</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>NV <span class="op">=</span> <span class="fl">8</span>  <span class="co"># Number of observations or individual-level data points (e.g., subjects)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">100</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="fl">5</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>means <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(NY,), sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">10</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>offsets <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(NV, <span class="fl">1</span>), sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">20</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>noise <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, shape<span class="op">=</span>(NV, NY), sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">30</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> offsets <span class="op">+</span> means <span class="op">+</span> noise</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>b_individual <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(N, K), sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>mu <span class="op">=</span> b_individual <span class="op">+</span> a</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>Y2 <span class="op">=</span> jnp.<span class="fu">array</span>(Y2)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Set data ------------------------------------------------</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> <span class="fu">pydict</span>(NY <span class="op">=</span> NY, NV <span class="op">=</span> NV, Y2 <span class="op">=</span> Y2)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(NY, NV, Y2)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    means <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">"means"</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    offset <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(NV, <span class="fl">1</span>), name<span class="op">=</span><span class="st">"offset"</span>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, shape<span class="op">=</span>(NY,), name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    tmp <span class="op">=</span> jnp.<span class="fu">reshape</span>(jnp.<span class="fu">tile</span>(means, (NV, <span class="fl">1</span>)), (NV, NY))</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    mu_l <span class="op">=</span> tmp <span class="op">+</span> offset</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu_l, jnp.<span class="fu">tile</span>(sigma, (NV, <span class="fl">1</span>)), obs<span class="op">=</span>Y2, name<span class="op">=</span><span class="st">"y"</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Run sampler ------------------------------------------------</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, progress_bar<span class="op">=</span><span class="cn">false</span>)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
-</div>
+<!--
+### Posterior predictive checks
+
+Does the model reproduce the distribution of the observed values?
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#e6dd5a7b .cell execution_count=2}
+``` {.python .cell-code}
+# m.diag.ppc_density()
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_density()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_density()
+```
+:::
+
+The black curve is the density of all observed values, the blue curves the densities of simulated datasets; the black curve should look like one more blue curve. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -1004,6 +1120,12 @@ The latent variable _Z_ introduces additional flexibility to the model, capturin
 - **Mixed Models**: In hierarchical or mixed models, latent variables can represent group-specific intercepts or slopes.
 
 --></p>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python and R examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>).</li>
+</ul>
 
 
 </section>
@@ -1762,6 +1884,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

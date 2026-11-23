@@ -84,7 +84,7 @@ plot_comparaison(m, df_stan, param_map=param_map, model_name=model_name)
 
 # 4. Parameter Recovery --------------------------------------
 def estimate(gid, applications, a_true, phi_true):
-    theta = float(phi_true) + 2.0
+    theta = float(np.squeeze(phi_true)) + 2.0
     pbar = jax.nn.sigmoid(a_true[gid])
     # Beta-binomial simulation
     p = np.random.beta(pbar * theta, (1.0 - pbar) * theta)

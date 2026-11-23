@@ -39,6 +39,8 @@ warning.
 
 Sharding is a two-step opt-in: build a multi-device mesh at construction, then request it per fit.
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
 from BayesForge import bf
 import jax.numpy as jnp
@@ -47,10 +49,68 @@ import jax.numpy as jnp
 m = bf(platform='cpu', cores=4)
 
 # ... attach data, define model ...
+x = m.dist.normal(0, 1, shape=(1000,), sample=True)
+y = m.dist.normal(1 + 2 * x, 0.5, sample=True)
+m.data_on_model = dict(x=x, y=y)
+
+def model(x, y):
+    a = m.dist.normal(0, 1, name='a')
+    b = m.dist.normal(0, 1, name='b')
+    s = m.dist.exponential(1, name='s')
+    m.dist.normal(a + b * x, s, obs=y)
 
 # 2. Opt in for this fit
-m.fit(model, shard=True)
+m.fit(model, shard=True, progress_bar=False)
 ```
+
+##### R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+
+# 1. Build a multi-device mesh (CPU: cores>1;  GPU: multiple GPUs)
+m <- importBF(platform = "cpu", cores = 4L)
+
+# ... attach data, define model ...
+x <- m$dist$normal(0, 1, shape = reticulate::tuple(1000L), sample = TRUE)
+y <- m$dist$normal(1 + 2 * x, 0.5, sample = TRUE)
+m$data_on_model <- list(x = x, y = y)
+
+model <- function(x, y) {
+  a <- m$dist$normal(0, 1, name = "a")
+  b <- m$dist$normal(0, 1, name = "b")
+  s <- m$dist$exponential(1, name = "s")
+  m$dist$normal(a + b * x, s, obs = y)
+}
+
+# 2. Opt in for this fit
+m$fit(model, shard = TRUE, progress_bar = FALSE)
+```
+
+##### Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# 1. Build a multi-device mesh (CPU: cores>1;  GPU: multiple GPUs)
+m = importBF(platform="cpu", cores=4)
+
+# ... attach data, define model ...
+x = m.dist.normal(0, 1, shape=(1000,), sample=true)
+y = m.dist.normal(1 + 2 * x, 0.5, sample=true)
+m.data_on_model = pydict(x=x, y=y)
+
+@BF function model(x, y)
+    a = m.dist.normal(0, 1, name="a")
+    b = m.dist.normal(0, 1, name="b")
+    s = m.dist.exponential(1, name="s")
+    m.dist.normal(a + b * x, s, obs=y)
+end
+
+# 2. Opt in for this fit
+m.fit(model, shard=true, progress_bar=false)
+```
+:::
 
 - `m.fit(..., shard=True)` — shard eligible arrays for this fit.
 - `m.fit(..., shard=False)` — disable (explicit).
@@ -75,12 +135,37 @@ When `shard=True`, each array in the data passed to the model is handled as foll
 
 You can control placement explicitly instead of relying on the automatic rules:
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-Y_sharded  = m.shard(jnp.array(Y))       # split along leading axis across devices
-K_full     = m.replicate(jnp.array(K))   # identical copy on every device
+x_sharded = m.shard(jnp.array(x))                # split along leading axis across devices
+y_sharded = m.shard(jnp.array(y))
+K_full    = m.replicate(jnp.array([1.0, 2.0]))   # identical copy on every device
 
-m.fit(model, obs=dict(Y=Y_sharded), num_chains=m.n_devices, shard=True)
+m.data_on_model = dict(x=x_sharded, y=y_sharded)
+m.fit(model, num_chains=m.n_devices, shard=True, progress_bar=False)
 ```
+
+##### R
+```r
+x_sharded <- m$shard(jnp$array(x))                 # split along leading axis across devices
+y_sharded <- m$shard(jnp$array(y))
+K_full    <- m$replicate(jnp$array(c(1.0, 2.0)))   # identical copy on every device
+
+m$data_on_model <- list(x = x_sharded, y = y_sharded)
+m$fit(model, num_chains = m$n_devices, shard = TRUE, progress_bar = FALSE)
+```
+
+##### Julia
+```julia
+x_sharded = m.shard(jnp.array(x))                # split along leading axis across devices
+y_sharded = m.shard(jnp.array(y))
+K_full    = m.replicate(jnp.array([1.0, 2.0]))   # identical copy on every device
+
+m.data_on_model = pydict(x=x_sharded, y=y_sharded)
+m.fit(model, num_chains=m.n_devices, shard=true, progress_bar=false)
+```
+:::
 
 - `m.shard(array)` — shard `array` along its leading axis. Returns it unchanged on a single-device setup.
 - `m.replicate(array)` — place an identical copy on every device (use for small constants / parameter
@@ -90,10 +175,25 @@ m.fit(model, obs=dict(Y=Y_sharded), num_chains=m.n_devices, shard=True)
 
 After a sharded fit, inspect exactly what the sharder did:
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
-m.fit(model, shard=True)
+m.fit(model, shard=True, progress_bar=False)
 print(m.shard_report())
 ```
+
+##### R
+```r
+m$fit(model, shard = TRUE, progress_bar = FALSE)
+print(m$shard_report())
+```
+
+##### Julia
+```julia
+m.fit(model, shard=true, progress_bar=false)
+println(m.shard_report())
+```
+:::
 
 `shard_report()` returns a dict (or `None` if no sharded fit has run) with the array names in each
 category — `sharded`, `replicated_not_divisible`, `replicated_by_caller`, `passthrough` — plus
@@ -127,6 +227,8 @@ It is not an error — it is a reminder to check that your model fits the map/re
 
 ## Example: end-to-end
 
+::: {.panel-tabset group="language"}
+##### Python
 ```python
 from BayesForge import bf
 import jax.numpy as jnp
@@ -135,18 +237,74 @@ import jax.numpy as jnp
 m = bf(platform='cpu', cores=4)
 
 # A large per-observation regression: likelihood is a pure map + axis-0 reduction → shardable
-m.data(data_path)
+N = 10_000                                 # divisible by the 4 devices
+x = m.dist.normal(0, 1, shape=(N,), sample=True)
+y = m.dist.normal(1 + 2 * x, 0.5, sample=True)
+m.data_on_model = dict(x=x, y=y)
 
 def model(x, y):
-    a = m.dist.normal(0, 1)
-    b = m.dist.normal(0, 1)
-    s = m.dist.exponential(1)
+    a = m.dist.normal(0, 1, name='a')
+    b = m.dist.normal(0, 1, name='b')
+    s = m.dist.exponential(1, name='s')
     m.dist.normal(a + b * x, s, obs=y)     # per-row map, summed over axis 0
 
-m.fit(model, shard=True, num_chains=4)
+m.fit(model, shard=True, num_chains=4, progress_bar=False)
 print(m.shard_report())                    # confirm x, y were sharded
 m.summary()
 ```
+
+##### R
+```r
+library(BayesForge)
+jnp <- reticulate::import("jax.numpy")
+
+# 4 virtual CPU devices
+m <- importBF(platform = "cpu", cores = 4L)
+
+# A large per-observation regression: likelihood is a pure map + axis-0 reduction → shardable
+N <- 10000L                                # divisible by the 4 devices
+x <- m$dist$normal(0, 1, shape = reticulate::tuple(N), sample = TRUE)
+y <- m$dist$normal(1 + 2 * x, 0.5, sample = TRUE)
+m$data_on_model <- list(x = x, y = y)
+
+model <- function(x, y) {
+  a <- m$dist$normal(0, 1, name = "a")
+  b <- m$dist$normal(0, 1, name = "b")
+  s <- m$dist$exponential(1, name = "s")
+  m$dist$normal(a + b * x, s, obs = y)     # per-row map, summed over axis 0
+}
+
+m$fit(model, shard = TRUE, num_chains = 4L, progress_bar = FALSE)
+print(m$shard_report())                    # confirm x, y were sharded
+print(m$summary())
+```
+
+##### Julia
+```julia
+using PyBayesForge
+using PythonCall
+
+# 4 virtual CPU devices
+m = importBF(platform="cpu", cores=4)
+
+# A large per-observation regression: likelihood is a pure map + axis-0 reduction → shardable
+N = 10_000                                 # divisible by the 4 devices
+x = m.dist.normal(0, 1, shape=(N,), sample=true)
+y = m.dist.normal(1 + 2 * x, 0.5, sample=true)
+m.data_on_model = pydict(x=x, y=y)
+
+@BF function model(x, y)
+    a = m.dist.normal(0, 1, name="a")
+    b = m.dist.normal(0, 1, name="b")
+    s = m.dist.exponential(1, name="s")
+    m.dist.normal(a + b * x, s, obs=y)     # per-row map, summed over axis 0
+end
+
+m.fit(model, shard=true, num_chains=4, progress_bar=false)
+println(m.shard_report())                  # confirm x, y were sharded
+println(m.summary())
+```
+:::
 
 See [Import BF class](../start/Import_class.qmd) for the `cores` / `float_precision` construction
 arguments.

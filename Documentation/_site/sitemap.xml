@@ -1,271 +1,267 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://s-sosa.com/Advance/Sampling &amp; plots.html</loc>
-    <lastmod>2026-09-03T08:55:37.541Z</lastmod>
+    <loc>https://s-sosa.com/start/Diagnostics.html</loc>
+    <lastmod>2026-11-23T10:06:04.462Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/Build in models.html</loc>
-    <lastmod>2026-09-03T12:58:30.639Z</lastmod>
+    <lastmod>2026-11-09T21:23:25.000Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/17. Nested varying effects.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/index.html</loc>
-    <lastmod>2026-09-03T08:54:11.468Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/16. Varying slopes.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/9. Gamma-Poisson.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/7. Poisson model.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/5. Binomial model.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/36. BNNC unsupervised.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/34. BNN for classification.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.025Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/3. Interaction between continuous variables.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/26. Network model.html</loc>
-    <lastmod>2026-10-21T14:34:39.317Z</lastmod>
+    <loc>https://s-sosa.com/19. Gaussian processes.html</loc>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/24. GMM.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/20. Measuring error.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/13. Zero inflated.html</loc>
-    <lastmod>2026-05-26T12:51:29.968Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/11. Multinomial model.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
+    <loc>https://s-sosa.com/15. Varying intercepts.html</loc>
+    <lastmod>2026-11-23T10:21:07.024Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/1. Linear Regression for continuous variable.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/7. Poisson model.html</loc>
+    <lastmod>2026-11-23T10:21:07.030Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/5. Binomial model.html</loc>
+    <lastmod>2026-11-23T10:21:07.030Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/20. Measuring error.html</loc>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/13. Zero inflated.html</loc>
+    <lastmod>2026-11-23T10:21:07.024Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/22. Latent variable.html</loc>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/reference/index.html</loc>
+    <lastmod>2026-11-10T10:09:39.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/35. BNN for multiclass classification.html</loc>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/33. BNN.html</loc>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/26. Network model.html</loc>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/24. GMM.html</loc>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/11. Multinomial model.html</loc>
+    <lastmod>2026-11-23T10:21:07.023Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/start/Random and fixed seeds.html</loc>
-    <lastmod>2026-08-27T12:26:41.043Z</lastmod>
+    <lastmod>2026-11-09T14:43:04.000Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/start/Installation.html</loc>
-    <lastmod>2026-10-21T08:43:14.099Z</lastmod>
+    <loc>https://s-sosa.com/start/Interoperability.html</loc>
+    <lastmod>2026-11-09T14:43:04.000Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/start/Import_class.html</loc>
-    <lastmod>2026-10-21T08:43:14.096Z</lastmod>
+    <loc>https://s-sosa.com/start/Import_data.html</loc>
+    <lastmod>2026-11-23T08:26:09.740Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/start/Handle_data.html</loc>
+    <lastmod>2026-11-23T08:26:09.736Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/start/Define model.html</loc>
-    <lastmod>2026-08-27T12:26:41.038Z</lastmod>
+    <lastmod>2026-10-21T08:43:14.096Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/api_manip.html</loc>
-    <lastmod>2026-05-26T12:37:17.424Z</lastmod>
+    <loc>https://s-sosa.com/reference/net.html</loc>
+    <lastmod>2026-11-10T08:33:42.000Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/api_diag.html</loc>
-    <lastmod>2026-05-26T12:37:17.416Z</lastmod>
+    <loc>https://s-sosa.com/reference/load.html</loc>
+    <lastmod>2026-11-22T20:46:09.111Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/reference/effects.html</loc>
+    <lastmod>2026-11-10T08:33:42.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/reference/diag.html</loc>
+    <lastmod>2026-11-23T09:00:31.095Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/gaussian_copula.html</loc>
+    <lastmod>2026-11-23T10:21:07.031Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/Data sharding.html</loc>
-    <lastmod>2026-09-03T08:44:15.136Z</lastmod>
+    <lastmod>2026-11-09T14:43:01.000Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/32. EWA.html</loc>
-    <lastmod>2026-05-26T12:51:29.948Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/30. Network Metrics.html</loc>
-    <lastmod>2026-05-26T12:01:43.396Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/28. Network control for data collection biases.html</loc>
-    <lastmod>2026-05-26T12:51:29.968Z</lastmod>
+    <lastmod>2026-11-23T10:23:45.000Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/21. Missing data.html</loc>
-    <lastmod>2026-05-26T12:51:29.968Z</lastmod>
+    <loc>https://s-sosa.com/get started.html</loc>
+    <lastmod>2026-11-23T10:21:07.031Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/translation_guide.html</loc>
     <lastmod>2026-05-26T12:45:55.004Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/get started.html</loc>
-    <lastmod>2026-05-26T12:51:29.968Z</lastmod>
-  </url>
-  <url>
     <loc>https://s-sosa.com/23. PCA.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/29. Network Edges Inference.html</loc>
-    <lastmod>2026-05-26T12:51:29.972Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/31. Network-Based Diffusion Analysis.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/BNN layers.html</loc>
-    <lastmod>2026-09-03T08:44:03.561Z</lastmod>
+    <lastmod>2026-11-09T14:43:47.000Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/Advance/build in functions.html</loc>
-    <lastmod>2026-08-27T12:26:40.981Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/api_dist.html</loc>
-    <lastmod>2026-05-26T12:51:29.960Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/gaussian_copula.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/start/Fit model.html</loc>
-    <lastmod>2026-05-26T11:57:38.268Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/start/Import_data.html</loc>
-    <lastmod>2026-05-26T12:01:43.584Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/start/Parallel simulations.html</loc>
-    <lastmod>2026-10-22T13:25:48.727Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/0.Introduction.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/10. Categorical model.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/12. Dirichlet model.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/2. Multiple continuous variables.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/22. Latent variable.html</loc>
-    <lastmod>2026-05-26T12:51:29.968Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/25. DPMM.html</loc>
-    <lastmod>2026-05-26T12:51:29.952Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/27. Network with block model.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/33. BNN.html</loc>
-    <lastmod>2026-05-26T12:51:29.964Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/35. BNN for multiclass classification.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/4. Categorical variable.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/6. Beta binomial model.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/8. Poisson mode with offset.html</loc>
-    <lastmod>2026-10-21T08:43:14.083Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/15. Varying intercepts.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/19. Gaussian processes.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/14. Survival analysis.html</loc>
-    <lastmod>2026-09-03T07:15:34.750Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/18. Phylogenetic analysis.html</loc>
-    <lastmod>2026-10-21T08:43:14.079Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/start/Diagnostics.html</loc>
-    <lastmod>2026-10-23T12:28:44.378Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/start/Interoperability.html</loc>
-    <lastmod>2026-10-21T08:43:14.099Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/reference/session.html</loc>
-    <lastmod>2026-10-23T06:54:07.840Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/reference/load.html</loc>
-    <lastmod>2026-10-23T06:54:07.125Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/reference/index.html</loc>
-    <lastmod>2026-10-23T06:54:07.832Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/reference/dist.html</loc>
-    <lastmod>2026-10-23T06:54:07.827Z</lastmod>
+    <lastmod>2026-11-09T14:43:01.000Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/data.html</loc>
-    <lastmod>2026-10-23T06:54:07.817Z</lastmod>
+    <lastmod>2026-11-23T08:25:58.902Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/reference/diag.html</loc>
-    <lastmod>2026-10-23T11:39:14.486Z</lastmod>
-  </url>
-  <url>
-    <loc>https://s-sosa.com/reference/effects.html</loc>
-    <lastmod>2026-10-23T06:54:07.828Z</lastmod>
+    <loc>https://s-sosa.com/reference/dist.html</loc>
+    <lastmod>2026-11-19T14:55:47.218Z</lastmod>
   </url>
   <url>
     <loc>https://s-sosa.com/reference/link.html</loc>
-    <lastmod>2026-10-23T06:54:07.118Z</lastmod>
+    <lastmod>2026-11-10T08:33:42.000Z</lastmod>
   </url>
   <url>
-    <loc>https://s-sosa.com/reference/net.html</loc>
-    <lastmod>2026-10-23T06:54:07.836Z</lastmod>
+    <loc>https://s-sosa.com/reference/models.html</loc>
+    <lastmod>2026-11-23T09:00:31.096Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/reference/session.html</loc>
+    <lastmod>2026-11-19T10:25:46.907Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/start/Fit model.html</loc>
+    <lastmod>2026-10-21T08:43:14.096Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/start/Import_class.html</loc>
+    <lastmod>2026-11-23T00:43:41.397Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/start/Installation.html</loc>
+    <lastmod>2026-10-21T08:43:14.099Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/start/Parallel simulations.html</loc>
+    <lastmod>2026-11-09T14:43:08.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/0.Introduction.html</loc>
+    <lastmod>2026-11-23T10:23:44.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/12. Dirichlet model.html</loc>
+    <lastmod>2026-11-23T10:21:07.023Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/25. DPMM.html</loc>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/27. Network with block model.html</loc>
+    <lastmod>2026-11-23T10:21:07.027Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/34. BNN for classification.html</loc>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/36. BNNC unsupervised.html</loc>
+    <lastmod>2026-11-23T10:21:07.028Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/10. Categorical model.html</loc>
+    <lastmod>2026-11-23T10:21:07.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/index.html</loc>
+    <lastmod>2026-11-23T10:21:07.031Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/2. Multiple continuous variables.html</loc>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/4. Categorical variable.html</loc>
+    <lastmod>2026-11-23T10:21:07.029Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/6. Beta binomial model.html</loc>
+    <lastmod>2026-11-23T10:21:07.030Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/8. Poisson mode with offset.html</loc>
+    <lastmod>2026-11-23T10:21:07.031Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/14. Survival analysis.html</loc>
+    <lastmod>2026-11-23T10:21:07.024Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/16. Varying slopes.html</loc>
+    <lastmod>2026-11-23T10:21:07.025Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/21. Missing data.html</loc>
+    <lastmod>2026-11-23T10:21:07.026Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/9. Gamma-Poisson.html</loc>
+    <lastmod>2026-11-23T10:21:07.031Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/18. Phylogenetic analysis.html</loc>
+    <lastmod>2026-11-23T10:21:07.025Z</lastmod>
+  </url>
+  <url>
+    <loc>https://s-sosa.com/Advance/Sampling &amp; plots.html</loc>
+    <lastmod>2026-11-09T14:43:01.000Z</lastmod>
   </url>
 </urlset>

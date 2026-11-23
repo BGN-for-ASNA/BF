@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -288,6 +298,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../start/Handle_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Handle data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../start/Define model.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Define model</span></a>
   </div>
@@ -341,14 +357,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">🚧 BNN layers 🚧</span></a>
+  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Direct sampling &amp; plots</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Direct sampling &amp; plots</span></a>
+  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🚧 BNN layers 🚧</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -365,7 +381,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -894,30 +910,32 @@ JIT Caching: Define the model at module level for maximum speed
 </div>
 <div class="callout-body-container callout-body">
 <p>Each worker JIT-compiles the model on its first fit. When the model is built fresh inside <code>one_sim</code> (a closure, as in the example above), <em>every</em> simulation pays full compilation because the JIT cache key changes each time. Defining it at module level lets a worker reuse its compiled executable across all the simulations it handles — often the single largest speedup available.</p>
-<p>To do this, ensure your global model function accepts <code>m</code> (the simulation’s specific <code>bf</code> instance) as an argument, and wrap it in a <code>lambda</code> when calling <code>m.fit</code>:</p>
+<p>To do this, ensure your global model function accepts <code>m</code> (the simulation’s specific <code>bf</code> instance) as an argument, and bind it with <code>functools.partial</code> when calling <code>m.fit</code>:</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-3" role="tab" aria-controls="tabset-7-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
-<div class="sourceCode" id="cb22"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Define the model globally, requiring 'm' as an argument</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> linreg(m, x<span class="op">=</span><span class="va">None</span>, y<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"a"</span>)</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"b"</span>)</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.exponential(<span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"s"</span>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(a <span class="op">+</span> b <span class="op">*</span> x, s, name<span class="op">=</span><span class="st">"y"</span>, obs<span class="op">=</span>y)</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_sim(N, b_true, seed, <span class="op">**</span>_):</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> bf(rand_seed<span class="op">=</span>seed, print_devices_found<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># [ simulate x and y here ]</span></span>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Define the model globally, requiring 'm' as an argument</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> linreg(m, x<span class="op">=</span><span class="va">None</span>, y<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"a"</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"b"</span>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.exponential(<span class="fl">1.0</span>, name<span class="op">=</span><span class="st">"s"</span>)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(a <span class="op">+</span> b <span class="op">*</span> x, s, name<span class="op">=</span><span class="st">"y"</span>, obs<span class="op">=</span>y)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_sim(N, b_true, seed, <span class="op">**</span>_):</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> bf(rand_seed<span class="op">=</span>seed, print_devices_found<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Use a lambda to inject 'm' into the global function</span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    m.fit(<span class="kw">lambda</span> x<span class="op">=</span>x, y<span class="op">=</span>y: linreg(m, x, y), </span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>          obs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y),</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>          num_warmup<span class="op">=</span><span class="dv">500</span>, num_samples<span class="op">=</span><span class="dv">500</span>, num_chains<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>          progress_bar<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"b_hat"</span>: <span class="bu">float</span>(m.summary().loc[<span class="st">"b"</span>, <span class="st">"mean"</span>])}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># [ simulate x and y here ]</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Bind 'm' to the global function with functools.partial</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    m.fit(partial(linreg, m),</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>          obs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y),</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>          num_warmup<span class="op">=</span><span class="dv">500</span>, num_samples<span class="op">=</span><span class="dv">500</span>, num_chains<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>          progress_bar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"b_hat"</span>: <span class="bu">float</span>(m.summary().loc[<span class="st">"b"</span>, <span class="st">"mean"</span>])}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
 <div class="sourceCode" id="cb23"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># R: m$fit() converts the R model into a new Python function at every call,</span></span>
@@ -1706,6 +1724,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

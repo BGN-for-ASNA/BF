@@ -1,27 +1,29 @@
 Comparison Table for 13.Gaussian processes
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-        a  1.4104    1.3934  0.0170 0.0433
-    rhosq  1.3393    1.3118  0.0275 0.0495
-        g  0.6147    0.6157 -0.0010 0.0802
-    etasq  0.1978    0.1965  0.0013 0.0556
-        b  0.2811    0.2784  0.0027 0.2397
+        b  0.2818    0.2771  0.0047 0.1217
+        g  0.6035    0.6035 -0.0000 0.0685
+    etasq  0.1832    0.1927 -0.0095 0.1312
+        a  1.3688    1.4222 -0.0534 0.0681
+    rhosq  1.3232    1.2988  0.0244 0.0711
 ============================================================
 
 ================================================================
 WAIC cross-check  -  13.Gaussian processes
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -46.677818    p_waic = 4.112939
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -46.677818  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -62.598148    p_waic = 5.031811
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -62.598148    p_waic = 5.031811
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=10)
 ----------------------------------------------------------------
 LOO cross-check  -  13.Gaussian processes
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -49.341655    p_loo  = 6.776777
+      elpd_loo  = -65.792521    p_loo  = 8.226184
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -49.528207    p_loo  = 6.963329
-|delta elpd_loo| = 1.866e-01      |delta p_loo| = 1.866e-01
+      elpd_loo  = -65.791096    p_loo  = 8.224758
+|delta elpd_loo| = 1.425e-03      |delta p_loo| = 1.425e-03
 RESULT: PASS
 ================================================================

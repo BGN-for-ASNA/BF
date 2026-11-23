@@ -65,7 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../reference/dist.html" rel="next">
-<link href="../reference/session.html" rel="prev">
+<link href="../reference/models.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -256,6 +266,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Built-in models (<code>m.models</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/data.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span></a>
   </div>
@@ -302,22 +318,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
-  <ul class="collapse">
+  <ul>
   <li><a href="#OHE" id="toc-OHE" class="nav-link active" data-scroll-target="#OHE"><code>m.OHE</code></a></li>
   <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data"><code>m.data</code></a></li>
   <li><a href="#data_to_model" id="toc-data_to_model" class="nav-link" data-scroll-target="#data_to_model"><code>m.data_to_model</code></a></li>
   <li><a href="#index" id="toc-index" class="nav-link" data-scroll-target="#index"><code>m.index</code></a></li>
   <li><a href="#pd_to_jax" id="toc-pd_to_jax" class="nav-link" data-scroll-target="#pd_to_jax"><code>m.pd_to_jax</code></a></li>
   <li><a href="#scale" id="toc-scale" class="nav-link" data-scroll-target="#scale"><code>m.scale</code></a></li>
-  <li><a href="#scale_var" id="toc-scale_var" class="nav-link" data-scroll-target="#scale_var"><code>m.scale_var</code></a></li>
   <li><a href="#to_float" id="toc-to_float" class="nav-link" data-scroll-target="#to_float"><code>m.to_float</code></a></li>
   <li><a href="#to_int" id="toc-to_int" class="nav-link" data-scroll-target="#to_int"><code>m.to_int</code></a></li>
   <li><a href="#z_score" id="toc-z_score" class="nav-link" data-scroll-target="#z_score"><code>m.z_score</code></a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="data.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -346,60 +361,307 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="OHE" class="level2">
 <h2 class="anchored" data-anchor-id="OHE"><code>m.OHE</code></h2>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>m.OHE(cols<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Perform one-hot encoding on specified columns</strong> <strong>Args</strong> - <em>cols</em> (str or list): Columns to encode. Use ‘all’ for all object-type columns</p>
-<p><strong>Returns</strong> - <em>pd.DataFrame</em>: DataFrame with encoded columns</p>
+<p><strong>Perform one-hot encoding on specified columns</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cols</code></td>
+<td><code>str</code> or <code>list</code></td>
+<td>Columns to encode. Use <code>'all'</code> for all object-type columns.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>pd.DataFrame</code>: DataFrame containing the newly created one-hot encoded columns (with <code>.</code> and spaces in column names replaced by <code>_</code>).</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: appends the newly created one-hot encoded columns in-place (<code>m.df = pd.concat([m.df, OHE], axis=1)</code>).</li>
+<li><code>m.data_modification['OHE']</code>: records <code>cols</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="data" class="level2">
 <h2 class="anchored" data-anchor-id="data"><code>m.data</code></h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>m.data(path, <span class="op">**</span>kwargs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Load tabular data.</strong> <strong>Args</strong> - <em>path</em> (str, path-like or data frame): Path to a CSV file, or an in-memory table: a pandas DataFrame, or anything pandas.DataFrame() accepts (e.g.&nbsp;a dict of columns). R data.frames passed through reticulate arrive as pandas DataFrames, so R users can pass their data directly without writing a file. - * **kwargs*: Additional arguments for pd.read_csv (CSV paths only)</p>
-<p><strong>Returns</strong> pd.DataFrame: Loaded dataframe</p>
+<p><strong>Load tabular data.</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>path</code></td>
+<td><code>str</code>, path-like or data frame</td>
+<td>Path to a CSV file, or an in-memory table: a pandas DataFrame, or anything <code>pandas.DataFrame()</code> accepts (e.g.&nbsp;a dict of columns). R <code>data.frame</code>s passed through <code>reticulate</code> arrive as pandas DataFrames, so R users can pass their data directly without writing a file.</td>
+</tr>
+<tr class="even">
+<td><code>**kwargs</code></td>
+<td></td>
+<td>Additional arguments for <code>pd.read_csv</code> (CSV paths only).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>pd.DataFrame</code>: Loaded dataframe (<code>m.df</code>).</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: stores a copy of the loaded DataFrame.</li>
+<li><code>m.data_original_path</code>: stores the CSV path (or <code>None</code> when loaded from an in-memory object).</li>
+<li><code>m.data_args</code>: stores the <code>read_csv</code> keyword arguments (<code>dict</code>).</li>
+<li><code>m.data_modification</code>: resets to <code>{}</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="data_to_model" class="level2">
 <h2 class="anchored" data-anchor-id="data_to_model"><code>m.data_to_model</code></h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.data_to_model(cols)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Prepare data for model input in JAX format</strong> <strong>Args</strong> - <em>cols</em> (list): List of columns to include in model data</p>
-<p><strong>Returns</strong> - <em>dict</em>: JAX formatted dictionary</p>
+<p><strong>Prepare data for model input in JAX format</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cols</code></td>
+<td><code>list</code></td>
+<td>List of column names from <code>m.df</code> to include in the model data dictionary.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>None</code> (populates <code>m.data_on_model</code> in-place).</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.data_on_model</code>: sets <code>{col: jnp.array(m.df[col].values)}</code> for each column in <code>cols</code>.</li>
+<li><code>m.data_modification['data_on_model']</code>: records <code>cols</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="index" class="level2">
 <h2 class="anchored" data-anchor-id="index"><code>m.index</code></h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.index(cols<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Create index encoding for categorical columns</strong> <strong>Args</strong> - <em>cols</em> (str or list): Columns to encode. Use ‘all’ for all object-type columns</p>
-<p><strong>Returns</strong> - <em>pd.DataFrame</em>: DataFrame with encoded columns</p>
+<p><strong>Create index encoding for categorical columns</strong></p>
+<p>Codes are 0-based and follow the category order: the level order of a pandas <code>Categorical</code> or R <code>factor</code>, alphabetical for text columns. <code>m.index_map[col]</code> maps each code to its level.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cols</code></td>
+<td><code>str</code> or <code>list</code></td>
+<td>Columns to encode. Use <code>'all'</code> for all text (<code>object</code>) and <code>category</code> columns (e.g.&nbsp;R factors).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>pd.DataFrame</code>: The updated DataFrame <code>m.df</code> with added <code>index_&lt;col&gt;</code> columns.</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: adds 0-based integer columns <code>index_&lt;col&gt;</code> (<code>int64</code>) for each encoded column and replaces <code>.</code> and spaces in <code>m.df.columns</code> with <code>_</code>.</li>
+<li><code>m.index_map</code>: dictionary mapping each encoded column name <code>col</code> to <code>{code: category_label}</code>.</li>
+<li><code>m.data_modification['index']</code>: records <code>cols</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="pd_to_jax" class="level2">
 <h2 class="anchored" data-anchor-id="pd_to_jax"><code>m.pd_to_jax</code></h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.pd_to_jax(model, bit<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert pandas dataframe to JAX compatible format for a model.</strong> <strong>Args</strong> - <em>model</em>: JAX model to prepare data for - <em>bit</em> (str): Bit precision for numbers (default: 32)</p>
-<p><strong>Returns</strong> - <em>dict</em>: JAX formatted dictionary</p>
+<p><strong>Convert pandas dataframe to JAX compatible format for a model.</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>model</code></td>
+<td><code>callable</code></td>
+<td>Model function whose signature determines which columns to extract from <code>m.df</code>.</td>
+</tr>
+<tr class="even">
+<td><code>bit</code></td>
+<td><code>str</code>, optional</td>
+<td>Bit precision for numbers (e.g.&nbsp;<code>'32'</code> to force 32-bit types; default <code>None</code> preserves <code>m.df</code> dtypes).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>dict</code>: Dictionary mapping the model’s parameter names to JAX arrays (extracted from <code>m.df</code>) or static default values.</li>
+<li><strong>Updates on <code>m</code></strong>: Does not mutate <code>m</code> directly when called standalone, but is called automatically by <code>m.fit()</code> and <code>m.svi()</code> to populate <code>m.data_on_model</code> when <code>m.data_on_model is None</code>.</li>
+</ul>
 </section>
 <section id="scale" class="level2">
 <h2 class="anchored" data-anchor-id="scale"><code>m.scale</code></h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.scale(data<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Standardize specified columns.</strong> <strong>Args</strong> - <em>data</em> (str or list): Columns to standardize. Use ‘all’ for all columns</p>
-<p><strong>Returns</strong> - <em>pd.DataFrame</em>: Standardized dataframe</p>
-</section>
-<section id="scale_var" class="level2">
-<h2 class="anchored" data-anchor-id="scale_var"><code>m.scale_var</code></h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.scale_var(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>JAX-jitted function to scale/standardize a single variable</strong></p>
+<p><strong>Standardize specified columns.</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>data</code></td>
+<td><code>str</code> or <code>list</code></td>
+<td>Columns of <code>m.df</code> to standardize (pass a <code>list</code> of column names, or <code>'all'</code> for all columns).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>pd.DataFrame</code>: The standardized DataFrame <code>m.df</code>.</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: standardizes the specified columns in-place to zero mean and unit standard deviation (<code>(col - col.mean()) / col.std()</code>).</li>
+<li><code>m.data_modification['scale']</code>: records <code>data</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="to_float" class="level2">
 <h2 class="anchored" data-anchor-id="to_float"><code>m.to_float</code></h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.to_float(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert specified columns to float type</strong> <strong>Args</strong> - <em>cols</em> (str or list): Columns to convert. Use ‘all’ for all columns - <em>type</em> (str): Float type to convert to (default: float32)</p>
-<p><strong>Returns</strong> - <em>pd.DataFrame</em>: Converted dataframe</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.to_float(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Convert specified columns to float type</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cols</code></td>
+<td><code>str</code> or <code>list</code></td>
+<td>Columns to convert. Use <code>'all'</code> for all columns.</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td><code>str</code></td>
+<td>Float dtype to convert to (default: <code>'float32'</code>).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>pd.DataFrame</code>: The converted DataFrame <code>m.df</code>.</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: casts the specified columns of <code>m.df</code> in-place to <code>type</code>.</li>
+<li><code>m.data_modification['float']</code>: records <code>cols</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="to_int" class="level2">
 <h2 class="anchored" data-anchor-id="to_int"><code>m.to_int</code></h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.to_int(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'int32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert specified columns to integer type</strong> <strong>Args</strong> - <em>cols</em> (str or list): Columns to convert. Use ‘all’ for all columns - <em>type</em> (str): Integer type to convert to (default: int32)</p>
-<p><strong>Returns</strong> - <em>pd.DataFrame</em>: Converted dataframe</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.to_int(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'int32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Convert specified columns to integer type</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cols</code></td>
+<td><code>str</code> or <code>list</code></td>
+<td>Columns to convert. Use <code>'all'</code> for all columns.</td>
+</tr>
+<tr class="even">
+<td><code>type</code></td>
+<td><code>str</code></td>
+<td>Integer dtype to convert to (default: <code>'int32'</code>).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li><code>None</code> (modifies <code>m.df</code> in-place).</li>
+<li><strong>Updates on <code>m</code></strong>:
+<ul>
+<li><code>m.df</code>: casts the specified columns of <code>m.df</code> in-place to <code>type</code>.</li>
+<li><code>m.data_modification['int']</code>: records <code>cols</code>.</li>
+</ul></li>
+</ul>
 </section>
 <section id="z_score" class="level2">
 <h2 class="anchored" data-anchor-id="z_score"><code>m.z_score</code></h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.z_score(X, axis<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Performs Z-score scaling (standardization) on a JAX array. (X - mean) / std_dev</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.z_score(X, axis<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Performs Z-score scaling (standardization) on a JAX array: <code>(X - mean) / std_dev</code>.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -416,19 +678,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><code>X</code></td>
-<td>jnp.ndarray</td>
-<td>The input JAX array (e.g., shape (n_samples, n_features)).</td>
+<td><code>jnp.ndarray</code></td>
+<td>The input JAX array (e.g., shape <code>(n_samples, n_features)</code>).</td>
 </tr>
 <tr class="even">
 <td><code>axis</code></td>
-<td>int</td>
-<td>The axis along which to calculate mean and std. axis=0 scales features (columns).</td>
+<td><code>int</code></td>
+<td>The axis along which to calculate mean and std. <code>axis=0</code> scales features (columns).</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li>jnp.ndarray: The scaled array.</li>
+<li><code>jnp.ndarray</code>: The scaled array. Does not modify <code>m.df</code>.</li>
 </ul>
 
 
@@ -1189,6 +1451,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
       }, 50);
     });
   })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
+  })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
@@ -1756,8 +2094,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../reference/session.html" class="pagination-link" aria-label="Session (`m`)">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Session (<code>m</code>)</span>
+      <a href="../reference/models.html" class="pagination-link" aria-label="Built-in models (`m.models`)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Built-in models (<code>m.models</code>)</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

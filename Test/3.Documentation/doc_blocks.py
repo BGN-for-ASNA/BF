@@ -7,13 +7,33 @@ A block is left out of the execution tests when its fence carries the
 ``.no-test`` class (```{.python .no-test}, ```{.r .no-test},
 ```{.julia .no-test}) or its code contains ``# doc-test: skip``: install
 commands, GPU-only code, placeholders such as ``<your model>``.
+
+Data files that the examples open by name live in ``data/`` next to this
+module; ``copy_data`` copies them into the directory a page runs in.
 """
 import pathlib
 import re
+import shutil
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCS = ROOT / "Documentation"
 START_PAGES = sorted((DOCS / "start").glob("*.qmd"))
+_NOT_MODEL_PAGES = {"index", "get started", "0.Introduction"}
+MODEL_PAGES = sorted(p for p in DOCS.glob("*.qmd") if p.stem not in _NOT_MODEL_PAGES)
+# "Advance" pages of the Get started sidebar (API reference with examples).
+# Sync-conflict copies ("<page> (conflicted copy ...).qmd") are not pages.
+ADVANCE_PAGES = sorted(p for p in (DOCS / "Advance").glob("*.qmd") if "conflicted copy" not in p.stem)
+MODEL_PAGES = MODEL_PAGES + ADVANCE_PAGES
+
+# Data files the examples read from the working directory (e.g. 'BNN.json'):
+# copied into the temporary directory each page runs in.
+DATA = pathlib.Path(__file__).resolve().parent / "data"
+
+
+def copy_data(dest):
+    """Copy the files of Test/3.Documentation/data into ``dest``."""
+    if DATA.is_dir():
+        shutil.copytree(DATA, dest, dirs_exist_ok=True)
 
 # Language of a fence info string: ```python, ``` R, ```{r}, ```{.julia .no-test}
 LANGS = {"python": "python", "r": "r", "julia": "julia"}
@@ -33,11 +53,22 @@ def iter_blocks(page):
     """Yield (lang, info, code, line) for every fenced code block of a page.
 
     ``lang`` is None for blocks that are not Python, R or Julia (shell
-    commands, program output, diagrams).
+    commands, program output, diagrams). Blocks inside ``<!-- ... -->``
+    HTML comments are skipped.
     """
     lines = pathlib.Path(page).read_text().splitlines()
     i = 0
+    in_comment = False
     while i < len(lines):
+        if in_comment:
+            if "-->" in lines[i]:
+                in_comment = False
+            i += 1
+            continue
+        if re.match(r"^\s*<!--", lines[i]) and "-->" not in lines[i]:
+            in_comment = True
+            i += 1
+            continue
         match = _FENCE_OPEN.match(lines[i])
         if match:
             info = (match.group(1) or "").strip()
@@ -88,29 +119,101 @@ def language_tabs(page):
     """
     lines = pathlib.Path(page).read_text().splitlines()
     out = []
-    stack = []          # open divs: [is_tabset, line, current_tab]
+    stack = []          # open divs: [is_tabset, line, current_tab, tab_level]
     in_code = None
+    in_comment = False  # inside <!-- ... -->: not rendered, not counted
     for n, line in enumerate(lines, 1):
+        if in_comment:
+            in_comment = "-->" not in line
+            continue
         if in_code is not None:
             if re.match(r"^```+\s*$", line):
-                lang, start = in_code
-                tabset = next((d for d in reversed(stack) if d[0]), None)
-                if lang is not None:
+                lang, start, info = in_code
+                tabsets = [d for d in reversed(stack) if d[0]]
+                # The enclosing language tab, even when a topic tabset sits
+                # inside it (e.g. Python > "Explicit model" / "Built-in model").
+                tabset = next((d for d in tabsets
+                               if (d[2] or "").split(" (")[0] in LANGS), None)
+                tabset = tabset or (tabsets[0] if tabsets else None)
+                # ``.lang-only``: a note about one language (e.g. an R indexing caveat).
+                if lang is not None and "lang-only" not in info:
                     out.append((lang, tabset[2] if tabset else None,
                                 tabset[1] if tabset else None, start))
                 in_code = None
             continue
+        if re.match(r"^\s*<!--", line) and "-->" not in line:
+            in_comment = True
+            continue
         fence = _FENCE_OPEN.match(line)
         if fence:
-            in_code = (_fence_lang((fence.group(1) or "").strip()), n)
+            info = (fence.group(1) or "").strip()
+            in_code = (_fence_lang(info), n, info)
             continue
         if re.match(r"^:::+\s*$", line):
             if stack:
                 stack.pop()
         elif re.match(r"^:::+\s*\S", line):
-            stack.append([".panel-tabset" in line, n, None])
-        elif stack and re.match(r"^##\s+\S", line):
+            stack.append([".panel-tabset" in line, n, None, None])
+        elif stack and re.match(r"^#+\s+\S", line):
+            # Like Quarto: the tabs of a tabset are the headings at the level
+            # of the first heading inside it (##, ###, #####, ...).
             tabset = next((d for d in reversed(stack) if d[0]), None)
+            level = len(line) - len(line.lstrip("#"))
             if tabset is not None:
-                tabset[2] = line.lstrip("#").strip().lower()
+                if tabset[3] is None:
+                    tabset[3] = level
+                if level == tabset[3]:
+                    tabset[2] = line.lstrip("#").strip().lower()
     return out
+
+
+def doc_model(page, index=0, name="model"):
+    """The ``index``-th function ``name`` defined in the python blocks of a doc page.
+
+    The page is run the way a reader runs it: every python block up to and
+    including the target one is executed in ONE shared namespace, each block
+    truncated before (not including) its first top-level line starting with
+    ``m.fit(``, so nothing is sampled. Blocks before the target may fail (they
+    plot, call ``m.summary()`` on an unfitted model, ...): their errors are
+    collected and the run continues. An error in the target block itself is
+    re-raised with those collected errors appended, because it is usually a
+    ``NameError`` for something an earlier block was meant to define.
+
+    The returned function closes over that shared namespace, so it sees the
+    ``m`` (and the data) the page itself built. Deep tests fit it with their own
+    bf object: the model as published is the model tested.
+    """
+    path = pathlib.Path(page)
+    if not path.exists():
+        path = DOCS / page
+    all_blocks = blocks(path, "python")
+    candidates = [n for n, b in enumerate(all_blocks) if f"def {name}(" in b]
+    if not -len(candidates) <= index < len(candidates):
+        raise LookupError(f"no python block #{index} defining {name} in "
+                          f"{pathlib.Path(page).name}")
+    target = candidates[index]
+    ns = {"__name__": "doc_page"}
+    earlier_errors = []
+    for n, block in enumerate(all_blocks[:target + 1]):
+        lines = block.splitlines()
+        for k, line in enumerate(lines):
+            if line.startswith("m.fit("):
+                lines = lines[:k]
+                break
+        code = "\n".join(lines)
+        if n < target:
+            try:
+                exec(code, ns)
+            except Exception as exc:
+                earlier_errors.append(f"block {n}: {type(exc).__name__}: {exc}")
+        else:
+            try:
+                exec(code, ns)
+            except Exception as exc:
+                note = ("; ".join(earlier_errors) if earlier_errors
+                        else "no earlier-block error")
+                raise RuntimeError(
+                    f"{pathlib.Path(page).name}: python block #{index} defining "
+                    f"{name} failed: {type(exc).__name__}: {exc} "
+                    f"(errors of the earlier blocks run before it: {note})") from exc
+    return ns[name]

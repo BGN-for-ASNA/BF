@@ -10,6 +10,7 @@ Run a single page with:  pytest Test/3.Documentation/Python -k "seeds"
 import os
 import subprocess
 import sys
+import textwrap
 
 import pytest
 
@@ -28,7 +29,11 @@ def test_page_python_examples_run(page, tmp_path):
         pytest.skip("no python blocks")
     script = tmp_path / "page.py"
     # Headless plotting; never open windows from a test run.
-    script.write_text("import matplotlib\nmatplotlib.use('Agg')\n" + "\n\n".join(code))
+    # Under a main guard, as a reader's script must be: run_simulations spawns
+    # worker processes that re-import the script.
+    body = textwrap.indent("\n\n".join(code), "    ")
+    script.write_text("import matplotlib\nmatplotlib.use('Agg')\n"
+                      'if __name__ == "__main__":\n' + body)
     env = dict(os.environ, JAX_PLATFORMS="cpu",
                PYTHONPATH=os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")])))
     proc = subprocess.run(

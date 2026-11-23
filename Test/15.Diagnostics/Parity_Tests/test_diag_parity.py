@@ -18,17 +18,28 @@
 #   * the summary table (mean / std / HDI).
 #
 # One model is fitted once (module-scoped fixture) and shared by every test.
+#
+# The reference values are read through the helpers below, which adapt only
+# *how* ArviZ is asked for a statistic: 1.x (arviz-stats) takes
+# `az.from_dict({"posterior": ...})` instead of `from_dict(posterior=...)`,
+# returns DataTrees instead of Datasets, renamed `hdi_prob=` to `prob=` (hdi)
+# and `ci_prob=` (summary), and removed `az.waic` (its numbers are recomputed here
+# from the standard formulas). No tolerance, expectation or comparison changed.
 
 # NOTE: import BayesForge *before* arviz. BayesForge.__init__ applies a
 # jax.interpreters.pxla compatibility patch on import; importing arviz (which
 # pulls in jax) first can leave that submodule in a state that breaks the patch.
 from BayesForge import bf
 from BayesForge.Diagnostic.Diag import diag as diag_ref      # ArviZ reference
-from BayesForge.Diagnostic.Diag2 import diagWIP as diag_wip  # JAX/NumPy reimpl.
+from BayesForge.Diagnostic.Diag2 import (                    # JAX/NumPy reimpl.
+    diagWIP as diag_wip,
+    _az_from_dict,
+)
 
 import numpy as np
 import pytest
 import arviz as az
+from scipy.special import logsumexp
 
 
 # ================== Shared fitted model ==================
@@ -73,8 +84,18 @@ def _chains(wip, param):
 
 
 def _ds_val(ds, param):
-    """Extract a scalar metric for `param` from an ArviZ rhat/ess Dataset."""
-    return float(np.asarray(ds[param].values))
+    """Scalar metric for `param` from an ArviZ rhat/ess result.
+
+    ArviZ 1.x returns an ``xarray.DataTree`` rooted at the group it computed
+    (0.x returned an ``xarray.Dataset``); the variable is at ``ds[param]``
+    either way, with ``ds["posterior"][param]`` as the fallback for builds that
+    keep the group as a child node.
+    """
+    try:
+        obj = ds[param]
+    except (KeyError, TypeError):
+        obj = ds["posterior"][param]
+    return float(np.asarray(obj.values))
 
 
 def _elpd(res):
@@ -84,6 +105,47 @@ def _elpd(res):
         if val is not None:
             return float(val)
     raise AttributeError(f"no elpd on {type(res).__name__}")
+
+
+def _log_likelihood(idata):
+    """The pointwise log-likelihood held by an InferenceData/DataTree."""
+    node = idata["log_likelihood"]
+    names = list(node.data_vars)
+    if len(names) != 1:
+        raise KeyError(f"expected exactly one log_likelihood group variable, got {names}")
+    return np.asarray(node[names[0]].values)
+
+
+def _waic_reference(log_likelihood):
+    """(elpd_waic, p_waic, se) from the pointwise log-likelihood, no az.waic.
+
+    ``az.waic`` was removed in ArviZ 1.x, so the reference is the standard
+    estimator (Vehtari, Gelman & Gabry 2017) re-implemented here with scipy:
+
+        lppd_i    = logsumexp_s(ll_si) - log(S)      (= log mean_s exp ll_si)
+        p_waic_i  = var_s(ll_si)
+        elpd_i    = lppd_i - p_waic_i
+        elpd_waic = sum_i elpd_i,   p_waic = sum_i p_waic_i
+        se        = sqrt(N * var_i(elpd_i))
+
+    Both variances use ddof=0, the convention ArviZ itself had (xarray ``.var()``
+    default) and the one BayesForge documents in ``Diag2._waic`` and
+    ``jax_diagnostics.waic``. ddof=1 is a different statistic: it shifts p_waic
+    by 1/(S-1), ~1e-3 relative at S=6000, far outside the 1e-6 tolerance.
+    """
+    ll = np.asarray(log_likelihood, dtype=np.float64)
+    if ll.ndim == 3:
+        n_chain, n_draw, n_obs = ll.shape
+        ll = ll.reshape(n_chain * n_draw, n_obs)
+    elif ll.ndim != 2:
+        raise ValueError(f"expected a (S, N) or (C, S, N) log-likelihood, got {ll.shape}")
+    n_samples, n_obs = ll.shape
+    lppd_i = logsumexp(ll, axis=0) - np.log(n_samples)
+    p_waic_i = np.var(ll, axis=0)
+    elpd_i = lppd_i - p_waic_i
+    return (float(np.sum(elpd_i)),
+            float(np.sum(p_waic_i)),
+            float(np.sqrt(n_obs * np.var(elpd_i))))
 
 
 # ================== Parameter set parity ==================
@@ -168,9 +230,9 @@ def test_manual_rhat_detects_variance_nonconvergence(fitted):
     rng = np.random.default_rng(0)
     bad = np.stack([rng.normal(0, 1 + 0.8 * c, 2000) for c in range(4)])
     assert wip._rhat_manual(bad) > 1.05
-    idata = az.from_dict(posterior={"p": bad})
+    idata = _az_from_dict({"posterior": {"p": bad}})
     assert wip._rhat_manual(bad) == pytest.approx(
-        float(az.rhat(idata, method="rank")["p"].values), rel=1e-6)
+        _ds_val(az.rhat(idata, method="rank"), "p"), rel=1e-6)
 
 
 def test_manual_ess_bulk_matches_arviz(fitted):
@@ -241,7 +303,7 @@ def test_summary_mean_sd_match(fitted):
     # build the same ArviZ summary on a clean InferenceData of the latents only
     # (identical samples) — that is the reference Diag2 must reproduce.
     post = {p: np.asarray(wip.posterior_samples[p]) for p in params}
-    idata_ref = az.from_dict(posterior=post)   # keyword, not a positional dict
+    idata_ref = _az_from_dict({"posterior": post})   # 0.x keywords / 1.x mapping
     df_ref = _az_summary(idata_ref, kind="stats", prob=0.89, round_to=6)
 
     df_wip = wip.summary(round_to=6, hdi_prob=0.89)
@@ -284,12 +346,15 @@ def test_loo_matches(fitted):
 
 
 def test_waic_matches(fitted):
-    """WAIC() is native/arviz-free and matches both classes AND arviz's log-lik.
+    """WAIC() is native/arviz-free and matches both classes AND ArviZ's log-lik.
 
     az.waic was removed in arviz 1.x. WAIC is computed from the NumPyro pointwise
     log-likelihood (no arviz round-trip). We also verify it equals the WAIC one
     would get from arviz's *own* log_likelihood group — i.e. same result as
-    arviz, just without depending on it.
+    arviz, just without depending on it: the reference is the standard estimator
+    re-implemented in ``_waic_reference`` (formulas and ddof documented there)
+    and applied to ``az.from_numpyro(..., log_likelihood=True)``, so a wrong
+    BayesForge formula still fails.
     """
     ref, wip, params = fitted
     waic_ref = ref.WAIC()
@@ -298,16 +363,16 @@ def test_waic_matches(fitted):
     assert float(waic_ref.elpd_waic) == pytest.approx(float(waic_wip.elpd_waic), rel=1e-6, abs=1e-6)
     assert float(waic_ref.p_waic) == pytest.approx(float(waic_wip.p_waic), rel=1e-6, abs=1e-6)
 
-    # vs ARVIZ ITSELF. This used to compare _waic(ll_numpyro) against
+    # vs ARVIZ'S LOG-LIKELIHOOD. This used to compare _waic(ll_numpyro) against
     # _waic(ll_arviz) -- the same function on two nearly identical inputs, which
     # exercises the log-likelihood extraction and asserts nothing about the WAIC
     # formula. The SE bug (scaled by sqrt(|scale|) instead of |scale|) was
     # invisible to it.
     idata = az.from_numpyro(wip.sampler, log_likelihood=True)
-    waic_az = az.waic(idata)
-    assert float(waic_wip.elpd_waic) == pytest.approx(float(waic_az.elpd_waic), rel=1e-6)
-    assert float(waic_wip.p_waic) == pytest.approx(float(waic_az.p_waic), rel=1e-6)
-    assert float(waic_wip.se) == pytest.approx(float(waic_az.se), rel=1e-6)
+    elpd_az, p_az, se_az = _waic_reference(_log_likelihood(idata))
+    assert float(waic_wip.elpd_waic) == pytest.approx(elpd_az, rel=1e-6)
+    assert float(waic_wip.p_waic) == pytest.approx(p_az, rel=1e-6)
+    assert float(waic_wip.se) == pytest.approx(se_az, rel=1e-6)
 
 
 @pytest.mark.parametrize("scale,mult", [("log", 1.0), ("negative_log", -1.0),

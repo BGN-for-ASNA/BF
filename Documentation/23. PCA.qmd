@@ -33,10 +33,15 @@ Here is an example code snippet demonstrating Bayesian PCA using BF:
 
 ::: {.panel-tabset group="language"}
 
-## Build in functions
+## Python
+
+::: {.panel-tabset}
+
+### Built-in model
 ```python
 
-from BayesForge import bf, jnp
+from BayesForge import bf
+import jax.numpy as jnp
 m= bf()
 data_path = m.load.iris(only_path=True)
 m.data(data_path)
@@ -48,12 +53,12 @@ m.models.pca.plot(
     X = m.df.iloc[:,1:4].values,
     y = m.df.iloc[:,5].values, 
     feature_names = m.df.columns[1:4], 
-    target_names = m.df.iloc[:,6].unique(),
+    target_names = m.df.iloc[:,5].unique(),
     color_var = m.df.iloc[:,1].values
 )
 ```
 
-## Standard  
+### Explicit model
 ```python
 def model(x_train, data_dim, latent_dim, num_datapoints): 
     # Gaussian prior for the principal component 'W'.
@@ -67,6 +72,10 @@ def model(x_train, data_dim, latent_dim, num_datapoints):
 
     # Likelihood
     m.dist.normal(w @ z , epsilon, obs = x_train)  
+
+x_train_h = jnp.array(m.df.iloc[:,1:4].values.T)
+data_dim = x_train_h.shape[0]
+num_datapoints = x_train_h.shape[1]
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -86,7 +95,7 @@ import jax.numpy as jnp
 
 m = bf(platform='cpu')
 
-def model_ARD(X, data_dim, latent_dim, num_datapoints):
+def model_ARD(x_train, data_dim, latent_dim, num_datapoints):
     # --- Automatic Dimensionality Selection using an ARD Prior ---
     # There is one 'alpha' for each latent dimension.
     # This 'alpha' acts as a prior on the "relevance" of each principal component. A large alpha will signal low relevance.
@@ -106,8 +115,8 @@ def model_ARD(X, data_dim, latent_dim, num_datapoints):
     stddv = 1. / jnp.sqrt(precision)
 
     # Likelihood
-    # 'X' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
-    m.dist.normal(w @ z, stddv, obs=X)
+    # 'x_train' is modeled as a linear projection of the latents (w @ z) plus Gaussian noise.
+    m.dist.normal(w @ z, stddv, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -131,7 +140,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
 
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     # This defines the prior on the scale (similar to standard deviation) of the noise.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # This is a prior on the "degrees of freedom" ('nu') of the Student's t-distribution.
     # This parameter controls the "heaviness" of the tails. A small 'nu' means
@@ -143,7 +152,7 @@ def model_robust(x_train, data_dim, latent_dim, num_datapoints):
     # As your description states, this "heavy-tailed distribution... reduces the
     # influence of outliers" by treating them as more plausible events than a
     # Gaussian distribution would, thus preventing them from skewing the results.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -235,14 +244,14 @@ def model_sparse_robust_ard(x_train, data_dim, latent_dim, num_datapoints):
     # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
     
     # Prior on the scale of the Student's t-distribution.
-    sigma = m.dist.halfcauchy(1.0, name='sigma')
+    sigma = m.dist.half_cauchy(1.0, name='sigma')
 
     # Prior on the degrees of freedom 'nu', which controls the robustness.
     nu = m.dist.gamma(2.0, 0.1, name='nu')
 
     # The likelihood is the Student's t-distribution, which makes the entire
     # model robust to outliers in the observed data 'x_train'.
-    m.dist.studentt(df=nu, loc=w @ z, scale=sigma, obs=x_train)
+    m.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=x_train)
 
 m.data_on_model = dict(
     x_train=x_train_h,
@@ -256,14 +265,71 @@ m.summary()
 ```
 -->
 
+:::
+
+## R
+::: {.panel-tabset}
+
+### Built-in model
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+np <- reticulate::import("numpy")
+
+# Iris data: sepal width, petal length and petal width
+d <- read.csv(m$load$iris(only_path = TRUE))
+X <- as.matrix(d[, 2:4])
+m$data_on_model <- list(X = jnp$array(X))
+m$fit(m$models$pca(type = "classic"), progress_bar = FALSE) # or robust, sparse, classic, sparse_robust_ard
+
+m$models$pca$plot(
+  X = X,
+  y = np$array(d$species),
+  feature_names = names(d)[2:4],
+  target_names = unique(d$species),
+  color_var = d[, 2]
+)
+```
+### Explicit model
+```r
+model <- function(x_train, data_dim, latent_dim, num_datapoints) {
+  # Gaussian prior for the principal component 'W'.
+  w <- m$dist$normal(0, 1, shape = reticulate::tuple(data_dim, latent_dim), name = "w")
+
+  # Gaussian prior on the latent variables 'Z'
+  z <- m$dist$normal(0, 1, shape = reticulate::tuple(latent_dim, num_datapoints), name = "z")
+
+  # Exponential prior on the noise variance 'epsilon'
+  epsilon <- m$dist$exponential(1, name = "epsilon")
+
+  # Likelihood
+  m$dist$normal(jnp$matmul(w, z), epsilon, obs = x_train)
+}
+
+x_train_h <- jnp$array(t(X))
+m$data_on_model <- list(
+  x_train = x_train_h,
+  data_dim = nrow(t(X)),
+  latent_dim = 4L,
+  num_datapoints = ncol(t(X))
+)
+m$fit(model)
+```
+:::
+
 ## Julia
+::: {.panel-tabset}
+
+### Built-in model
 ```julia
 using PyBayesForge
+using PythonCall
 m = importBF(platform="cpu")
 data_path = m.load.iris(only_path=true)
 m.data(data_path)
 m.data_on_model = pydict(
-    X=jnp.array(m.df.iloc[:,1:4].values)
+    X=jnp.array(m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(1, 4)].values)
 )
 m.fit(m.models.pca(type="classic"))
 
@@ -287,11 +353,11 @@ plt.show = dummy_show
 
 # 5. Run your plot
 m.models.pca.plot(
-    X = m.df.iloc[:,1:4].values,
-    y = m.df.iloc[:,5].values, 
-    feature_names = m.df.columns[1:4], 
-    target_names = m.df.iloc[:,6].unique(),
-    color_var = m.df.iloc[:,1].values
+    X = m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(1, 4)].values,
+    y = m.df.iloc[pybuiltins.slice(nothing), 5].values, 
+    feature_names = m.df.columns[pybuiltins.slice(1, 4)], 
+    target_names = m.df.iloc[pybuiltins.slice(nothing), 5].unique(),
+    color_var = m.df.iloc[pybuiltins.slice(nothing), 1].values
 )
 
 # 6. Restore real show
@@ -301,6 +367,32 @@ plt.show = real_show
 display(plt.gcf())
 plt.close()
 ```
+### Explicit model
+```julia
+@BF function model(x_train, data_dim, latent_dim, num_datapoints)
+    # Gaussian prior for the principal component 'W'.
+    w = m.dist.normal(0, 1, shape=(data_dim, latent_dim), name="w")
+
+    # Gaussian prior on the latent variables 'Z'
+    z = m.dist.normal(0, 1, shape=(latent_dim, num_datapoints), name="z")
+
+    # Exponential prior on the noise variance 'epsilon'
+    epsilon = m.dist.exponential(1, name="epsilon")
+
+    # Likelihood
+    m.dist.normal(jnp.matmul(w, z), epsilon, obs=x_train)
+end
+
+x_train_h = jnp.array(m.df.iloc[pybuiltins.slice(nothing), pybuiltins.slice(1, 4)].values.T)
+m.data_on_model = pydict(
+    x_train=x_train_h,
+    data_dim=x_train_h.shape[0],
+    latent_dim=4,
+    num_datapoints=x_train_h.shape[1]
+)
+m.fit(model)
+```
+:::
 
 :::
 
@@ -309,18 +401,18 @@ plt.close()
 
 ## Mathematical Details
 
-We assume the observed data matrix $X$ is centered and arranged with features as rows and samples as columns, $X \in \mathbb{R}^{N \times V}$ where $N$ is the number of observations and $V$ the number of variables. The generative model projects the data into a lower-dimensional space with $K$ latent variables, $K \leq V$, using the following equation:
+We assume the observed data matrix $X$ is centered and arranged with features as rows and samples as columns, $X \in \mathbb{R}^{V \times N}$ where $V$ is the number of variables and $N$ the number of observations. The generative model projects the data into a lower-dimensional space with $K$ latent variables, $K \leq V$, using the following equation:
 $$
-X \sim \text{Normal}(Z \cdot W, \sigma)
+X \sim \text{Normal}(W \cdot Z, \sigma)
 $$
 
 where :
 
 - $X$ is the observed data matrix.
 
-- $Z \in \mathbb{R}^{N \times K}$ is the latent variable matrix (latent features) with $K \ll D$. $Z$ is defined by a Normal distribution with mean 0 and variance 1.
+- $W \in \mathbb{R}^{V \times K}$ is the matrix of principal components (*projection matrix*). $W$ is defined by a Normal distribution with mean 0 and variance 1.
 
-- $W \in \mathbb{R}^{K \times V}$ is the matrix of principal components (*projection matrix*). $W$ is defined by a Normal distribution with mean 0 and variance 1.
+- $Z \in \mathbb{R}^{K \times N}$ is the latent variable matrix (latent features) with $K \leq V$. $Z$ is defined by a Normal distribution with mean 0 and variance 1.
 
 - $\sigma$ is the standard deviation of the normal distribution.
 
@@ -330,7 +422,7 @@ The likelihood and priors are defined element-wise for $v=1...V$, $n=1...N$, and
 
 
 $$
-X \sim \text{Normal}(Z \cdot W, \sigma)
+X \sim \text{Normal}(W \cdot Z, \sigma)
 $$
 $$
 Z \sim \text{Normal}(0, 1)
@@ -454,11 +546,21 @@ $$
 \sigma \sim \text{HalfCauchy}(1) 
 $$
 -->
+
+## Model validation tests
+
+- [PCA test](https://github.com/BGN-for-ASNA/BF/tree/main/Test/8.PCA): `PCA.py` fits the Bayesian PCA models of this page on simulated data.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
 ## Note 
 - To account for **[<span style="color:#0D6EFD">sign ambiguity 🛈</span>]{#signAmbiguity}** in PCA, we can set the number of latent dimensions $K$ to be equal to the number of variables $V$. Then, we can calculate the dot product between the estimated parameters and the data. If it is negative, we multiply the estimated parameters by -1 to align them with the data. Below, a code snippet highlights how to do this:
 
 
-```python
+::: {.panel-tabset group="language"}
+## Python
+```{.python .no-test}
 
 true_params = jnp.array(real_data)      
 estimated_params = jnp.array(m.posteriors) 
@@ -478,6 +580,51 @@ plt.ylabel('Estimated Parameters')
 plt.title('True vs. Estimated Parameters After Sign Alignment')
 plt.show()
 ```
+
+## R
+```{.r .no-test}
+true_params <- jnp$array(real_data)
+estimated_params <- jnp$array(m$posteriors)
+
+# Compute dot product
+dot_product <- jnp$dot(true_params, estimated_params)
+
+# Align signs if necessary
+if (py_to_r(dot_product) < 0) {
+  estimated_params <- -estimated_params
+}
+
+# Plot the aligned parameters
+tp <- as.numeric(py_to_r(true_params)); ep <- as.numeric(py_to_r(estimated_params))
+plot(tp, ep, xlab = "True Parameters", ylab = "Estimated Parameters",
+     main = "True vs. Estimated Parameters After Sign Alignment")
+abline(0, 1, col = "red", lty = 2)
+```
+
+## Julia
+```{.julia .no-test}
+true_params = jnp.array(real_data)
+estimated_params = jnp.array(m.posteriors)
+
+# Compute dot product
+dot_product = jnp.dot(true_params, estimated_params)
+
+# Align signs if necessary
+if pyconvert(Float64, dot_product) < 0
+    estimated_params = -estimated_params
+end
+
+# Plot the aligned parameters
+plt = pyimport("matplotlib.pyplot")
+plt.scatter(true_params, estimated_params, alpha=0.7)
+lo, hi = jnp.min(true_params), jnp.max(true_params)
+plt.plot([lo, hi], [lo, hi], "r--")
+plt.xlabel("True Parameters")
+plt.ylabel("Estimated Parameters")
+plt.title("True vs. Estimated Parameters After Sign Alignment")
+plt.show()
+```
+:::
 ![](pca2.png)
 
 

@@ -76,6 +76,10 @@ def test_posterior_dict_fixed_values(fitted):
     y = np.asarray(out["y"])
     assert y.shape == (1, 30)
     assert np.allclose(y[0], 1 + 2 * np.asarray(X), atol=0.5)
+    # the residual spread must match the fixed s=0.1 (3 MC-SE of a std)
+    out = fitted.sample(posterior=dict(a=1.0, b=2.0, s=0.1), samples=1000, seed=1)
+    r = np.asarray(out["y"]) - (1 + 2 * np.asarray(X))
+    assert abs(np.std(r) - 0.1) < 3 * 0.1 / np.sqrt(2 * r.size)
     out = fitted.sample(posterior=dict(a=1.0, b=2.0, s=0.1), samples=3, seed=0)
     assert np.asarray(out["y"]).shape == (3, 30)
 
@@ -123,3 +127,19 @@ def test_explicit_seed_is_reproducible(fitted):
     out1 = fitted.sample(seed=3)
     out2 = fitted.sample(seed=3)
     assert np.array_equal(np.asarray(out1["y"]), np.asarray(out2["y"]))
+
+
+def test_posterior_draws_uses_each_draw(fitted):
+    # Two distinct draws on axis 0: each one is used, not repeated as one fixed draw.
+    draws = dict(a=jnp.array([0.0, 10.0]), b=jnp.array([0.0, 0.0]), s=jnp.array([0.01, 0.01]))
+    y = np.asarray(fitted.sample(posterior_draws=draws, seed=0)["y"])
+    assert y.shape == (2, 30)
+    assert np.allclose(y[0], 0.0, atol=0.1) and np.allclose(y[1], 10.0, atol=0.1)
+    # samples= subsamples them, as with the fitted posterior
+    assert np.asarray(fitted.sample(posterior_draws=draws, samples=1, seed=0)["y"]).shape == (1, 30)
+    with pytest.raises(ValueError):
+        fitted.sample(posterior_draws=draws, samples=3, seed=0)
+    with pytest.raises(ValueError):          # draw counts must agree
+        fitted.sample(posterior_draws=dict(a=jnp.zeros(2), b=jnp.zeros(3), s=jnp.ones(2)))
+    with pytest.raises(ValueError):          # not together with a posterior dict
+        fitted.sample(posterior=dict(a=1.0, b=2.0, s=0.1), posterior_draws=draws)

@@ -1,25 +1,27 @@
 Comparison Table for 1.Continuous variable
 ============================================================
 Parameter  BF Mean Stan Mean    Diff KL Div
-        b   5.8189    5.8191 -0.0002 0.0654
-        s   5.1472    5.1418  0.0054 0.0699
-        a 154.6541  154.6544 -0.0003 0.0621
+        s   5.1431    5.1482 -0.0051 0.0736
+        b   5.8163    5.8170 -0.0007 0.0892
+        a 154.6498  154.6474  0.0024 0.0489
 ============================================================
 
 ================================================================
 WAIC cross-check  -  1.Continuous variable
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -1058.325117    p_waic = 3.012281
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -1058.325117  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -1058.399397    p_waic = 3.106008
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -1058.399397    p_waic = 3.106008
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=346)
 ----------------------------------------------------------------
 LOO cross-check  -  1.Continuous variable
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -1058.331437    p_loo  = 3.018601
+      elpd_loo  = -1058.401377    p_loo  = 3.107988
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -1058.331314    p_loo  = 3.018478
-|delta elpd_loo| = 1.234e-04      |delta p_loo| = 1.234e-04
+      elpd_loo  = -1058.401414    p_loo  = 3.108025
+|delta elpd_loo| = 3.694e-05      |delta p_loo| = 3.694e-05
 RESULT: PASS
 ================================================================

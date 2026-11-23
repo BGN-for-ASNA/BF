@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -288,6 +298,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../start/Handle_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Handle data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../start/Define model.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Define model</span></a>
   </div>
@@ -341,14 +357,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">🚧 BNN layers 🚧</span></a>
+  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Direct sampling &amp; plots</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Direct sampling &amp; plots</span></a>
+  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🚧 BNN layers 🚧</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -365,7 +381,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -515,6 +531,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p>In R and Julia, <code>importBF()</code> takes the same arguments except <code>float_precision</code> and <code>gpu_index</code> (Python only); <code>NULL</code> (R) and <code>nothing</code> (Julia) stand for Python’s <code>None</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Writing models for <code>backend="tfp"</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>With the TFP backend a model is a Python generator: every site is written <code>yield m.dist.&lt;dist&gt;(...)</code>. Sites are matched by position, so <strong>all observed sites (<code>obs=</code>) must come after all latent parameters</strong>. Several observed sites are allowed, as long as they are all at the end and each has its own <code>name=</code> (unnamed sites share a default name, which TFP rejects as a duplicate); a model that yields a latent after an observed site raises a <code>ValueError</code> at <code>fit()</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python no-test lang-only code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(backend<span class="op">=</span><span class="st">"tfp"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(y1, y2):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> <span class="cf">yield</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"mu"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> <span class="cf">yield</span> m.dist.half_normal(<span class="fl">2.0</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">yield</span> m.dist.normal(mu, sigma, obs<span class="op">=</span>y1, name<span class="op">=</span><span class="st">"y1"</span>)   <span class="co"># observed site 1</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">yield</span> m.dist.normal(mu, sigma, obs<span class="op">=</span>y2, name<span class="op">=</span><span class="st">"y2"</span>)   <span class="co"># observed site 2, still after the latents</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 </section>
 <section id="common-initialization-patterns" class="level3">
 <h3 class="anchored" data-anchor-id="common-initialization-patterns">Common initialization patterns</h3>
@@ -522,34 +558,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>, float_precision<span class="op">=</span><span class="dv">64</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, cores<span class="op">=</span><span class="dv">8</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 32-bit precision for memory efficiency</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>, float_precision<span class="op">=</span><span class="dv">32</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU with specific device (Linux/WSL2 with an NVIDIA GPU)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"gpu"</span>, gpu_index<span class="op">=</span><span class="dv">0</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>, float_precision<span class="op">=</span><span class="dv">64</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, cores<span class="op">=</span><span class="dv">8</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 32-bit precision for memory efficiency</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>, float_precision<span class="op">=</span><span class="dv">32</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU with specific device (Linux/WSL2 with an NVIDIA GPU)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"gpu"</span>, gpu_index<span class="op">=</span><span class="dv">0</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">cores =</span> <span class="dv">8</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (Linux/WSL2 with an NVIDIA GPU; environment created with setup_env(backend = "gpu"))</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"gpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">cores =</span> <span class="dv">8</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (Linux/WSL2 with an NVIDIA GPU; environment created with setup_env(backend = "gpu"))</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"gpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, cores <span class="op">=</span> <span class="fl">8</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (Linux/WSL2 with an NVIDIA GPU; GPU build of JAX added with CondaPkg)</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"gpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproducible CPU session (default for development)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-core CPU for parallel chains</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, cores <span class="op">=</span> <span class="fl">8</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (Linux/WSL2 with an NVIDIA GPU; GPU build of JAX added with CondaPkg)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"gpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -564,17 +600,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
-<div class="sourceCode" id="cb10"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.save(<span class="st">"/path/to/my_model.pkl"</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Default filename: "{model_name}_bf.pkl" in current directory</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.save(<span class="st">"/path/to/my_model.pkl"</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Default filename: "{model_name}_bf.pkl" in current directory</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
-<div class="sourceCode" id="cb11"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A model written in R cannot be pickled: m$save() raises</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># "TypeError: cannot pickle 'PyCapsule' object". Save the draws instead:</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(<span class="fu">bf_draws</span>(m), <span class="st">"/path/to/my_model_draws.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A model written in R cannot be pickled: m$save() raises</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># "TypeError: cannot pickle 'PyCapsule' object". Save the draws instead:</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(<span class="fu">bf_draws</span>(m), <span class="st">"/path/to/my_model_draws.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
-<div class="sourceCode" id="cb12"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">save</span>(<span class="st">"/path/to/my_model.pkl"</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Default filename: "{model_name}_bf.pkl" in current directory</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">save</span>(<span class="st">"/path/to/my_model.pkl"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Default filename: "{model_name}_bf.pkl" in current directory</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -585,16 +621,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
-<div class="sourceCode" id="cb13"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf.load(<span class="st">"/path/to/my_model.pkl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf.load(<span class="st">"/path/to/my_model.pkl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
-<div class="sourceCode" id="cb14"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"/path/to/my_model_draws.rds"</span>)   <span class="co"># draws saved from R</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A bf object saved from Python or Julia loads with:</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"BayesForge"</span>)<span class="sc">$</span>bf<span class="sc">$</span><span class="fu">load</span>(<span class="st">"/path/to/my_model.pkl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"/path/to/my_model_draws.rds"</span>)   <span class="co"># draws saved from R</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A bf object saved from Python or Julia loads with:</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"BayesForge"</span>)<span class="sc">$</span>bf<span class="sc">$</span><span class="fu">load</span>(<span class="st">"/path/to/my_model.pkl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
-<div class="sourceCode" id="cb15"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> PyBayesForge.<span class="fu">BFObject</span>(<span class="fu">pyimport</span>(<span class="st">"BayesForge"</span>).bf.<span class="fu">load</span>(<span class="st">"/path/to/my_model.pkl"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> PyBayesForge.<span class="fu">BFObject</span>(<span class="fu">pyimport</span>(<span class="st">"BayesForge"</span>).bf.<span class="fu">load</span>(<span class="st">"/path/to/my_model.pkl"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -603,28 +639,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-3" role="tab" aria-controls="tabset-5-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
-<div class="sourceCode" id="cb16"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m.posteriors        <span class="co"># Posterior samples</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>m.posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>m.summary()         <span class="co"># Posterior summary table</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>m.data_on_model     <span class="co"># Data used in the fit</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>m.model             <span class="co"># Model function</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>m.diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m.posteriors        <span class="co"># Posterior samples</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>m.posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>m.summary()         <span class="co"># Posterior summary table</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>m.data_on_model     <span class="co"># Data used in the fit</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>m.model             <span class="co"># Model function</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>m.diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
-<div class="sourceCode" id="cb17"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>posteriors        <span class="co"># Posterior samples</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()         <span class="co"># Posterior summary table</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model     <span class="co"># Data used in the fit</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>model             <span class="co"># Model function</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>posteriors        <span class="co"># Posterior samples</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>()         <span class="co"># Posterior summary table</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model     <span class="co"># Data used in the fit</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>model             <span class="co"># Model function</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-5-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-3-tab">
-<div class="sourceCode" id="cb18"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m.posteriors        <span class="co"># Posterior samples</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>m.posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()         <span class="co"># Posterior summary table</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>m.data_on_model     <span class="co"># Data used in the fit</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>m.model             <span class="co"># Model function</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>m.diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>m.posteriors        <span class="co"># Posterior samples</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>m.posteriors_full   <span class="co"># Full posterior (before any filtering)</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>()         <span class="co"># Posterior summary table</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>m.data_on_model     <span class="co"># Data used in the fit</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>m.model             <span class="co"># Model function</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>m.diag              <span class="co"># Diagnostic tools</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -635,75 +671,75 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
-<div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save ---</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> jnp.linspace(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">40</span>)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fl">2.0</span> <span class="op">*</span> x <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> jnp.cos(<span class="dv">7</span> <span class="op">*</span> x)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(x, y):</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">10</span>, name<span class="op">=</span><span class="st">"alpha"</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    beta  <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, name<span class="op">=</span><span class="st">"beta"</span>)</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(alpha <span class="op">+</span> beta <span class="op">*</span> x, sigma, obs<span class="op">=</span>y)</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>m.fit(model, obs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y))</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>m.save(<span class="st">"linear_regression.pkl"</span>)</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 2: Load and analyze (no re-fit) ---</span></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf.load(<span class="st">"linear_regression.pkl"</span>)</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(m.summary())</span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(m.posteriors[<span class="st">"beta"</span>].mean())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
-<div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save the draws ---</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">40</span>)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">+</span> <span class="fl">2.0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="fl">0.1</span> <span class="sc">*</span> <span class="fu">cos</span>(<span class="dv">7</span> <span class="sc">*</span> x)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    alpha <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">10</span>, <span class="at">name =</span> <span class="st">"alpha"</span>)</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    beta  <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">name =</span> <span class="st">"beta"</span>)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="ot">&lt;-</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">"sigma"</span>)</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf.dist.normal</span>(alpha <span class="sc">+</span> beta <span class="sc">*</span> x, sigma, <span class="at">obs =</span> y)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save ---</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">"cpu"</span>, rand_seed<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> jnp.linspace(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">40</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fl">2.0</span> <span class="op">*</span> x <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> jnp.cos(<span class="dv">7</span> <span class="op">*</span> x)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(x, y):</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">10</span>, name<span class="op">=</span><span class="st">"alpha"</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    beta  <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, name<span class="op">=</span><span class="st">"beta"</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(alpha <span class="op">+</span> beta <span class="op">*</span> x, sigma, obs<span class="op">=</span>y)</span>
 <span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">obs =</span> <span class="fu">list</span>(<span class="at">x =</span> jnp<span class="sc">$</span><span class="fu">array</span>(x), <span class="at">y =</span> jnp<span class="sc">$</span><span class="fu">array</span>(y)))</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(<span class="fu">bf_draws</span>(m), <span class="st">"linear_regression_draws.rds"</span>)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>m.fit(model, obs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y))</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>m.save(<span class="st">"linear_regression.pkl"</span>)</span>
 <span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 2: Load and analyze (no re-fit) ---</span></span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"linear_regression_draws.rds"</span>)</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(posterior<span class="sc">::</span><span class="fu">summarise_draws</span>(posterior<span class="sc">::</span><span class="fu">as_draws_df</span>(draws)))</span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">mean</span>(draws<span class="sc">$</span>beta))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf.load(<span class="st">"linear_regression.pkl"</span>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(m.summary())</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(m.posteriors[<span class="st">"beta"</span>].mean())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
-<div class="sourceCode" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save ---</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span>, <span class="bu">PythonCall</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="sourceCode" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save the draws ---</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>, <span class="at">rand_seed =</span> <span class="dv">42</span>)</span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> <span class="fu">collect</span>(<span class="fu">range</span>(<span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>; length <span class="op">=</span> <span class="fl">40</span>))</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">0.5</span> <span class="op">.+</span> <span class="fl">2.0</span> <span class="op">.*</span> x <span class="op">.+</span> <span class="fl">0.1</span> <span class="op">.*</span> <span class="fu">cos</span>.(<span class="fl">7</span> <span class="op">.*</span> x)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">40</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fl">0.5</span> <span class="sc">+</span> <span class="fl">2.0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="fl">0.1</span> <span class="sc">*</span> <span class="fu">cos</span>(<span class="dv">7</span> <span class="sc">*</span> x)</span>
 <span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(x, y)</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">10</span>, name <span class="op">=</span> <span class="st">"alpha"</span>)</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    beta  <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"sigma"</span>)</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(alpha <span class="op">+</span> beta <span class="op">*</span> x, sigma, obs <span class="op">=</span> y)</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    alpha <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">10</span>, <span class="at">name =</span> <span class="st">"alpha"</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    beta  <span class="ot">&lt;-</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">name =</span> <span class="st">"beta"</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="ot">&lt;-</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">"sigma"</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf.dist.normal</span>(alpha <span class="sc">+</span> beta <span class="sc">*</span> x, sigma, <span class="at">obs =</span> y)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, obs <span class="op">=</span> <span class="fu">pydict</span>(x <span class="op">=</span> jnp.<span class="fu">array</span>(x), y <span class="op">=</span> jnp.<span class="fu">array</span>(y)))</span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">save</span>(<span class="st">"linear_regression.pkl"</span>)</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">obs =</span> <span class="fu">list</span>(<span class="at">x =</span> jnp<span class="sc">$</span><span class="fu">array</span>(x), <span class="at">y =</span> jnp<span class="sc">$</span><span class="fu">array</span>(y)))</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(<span class="fu">bf_draws</span>(m), <span class="st">"linear_regression_draws.rds"</span>)</span>
 <span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 2: Load and analyze (no re-fit) ---</span></span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span>, <span class="bu">PythonCall</span></span>
-<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> PyBayesForge.<span class="fu">BFObject</span>(<span class="fu">pyimport</span>(<span class="st">"BayesForge"</span>).bf.<span class="fu">load</span>(<span class="st">"linear_regression.pkl"</span>))</span>
-<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.<span class="fu">summary</span>())</span>
-<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.posteriors[<span class="st">"beta"</span>].<span class="fu">mean</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"linear_regression_draws.rds"</span>)</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(posterior<span class="sc">::</span><span class="fu">summarise_draws</span>(posterior<span class="sc">::</span><span class="fu">as_draws_df</span>(draws)))</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">mean</span>(draws<span class="sc">$</span>beta))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="sourceCode" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 1: Fit and save ---</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span>, <span class="bu">PythonCall</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform <span class="op">=</span> <span class="st">"cpu"</span>, rand_seed <span class="op">=</span> <span class="fl">42</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> <span class="fu">collect</span>(<span class="fu">range</span>(<span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>; length <span class="op">=</span> <span class="fl">40</span>))</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fl">0.5</span> <span class="op">.+</span> <span class="fl">2.0</span> <span class="op">.*</span> x <span class="op">.+</span> <span class="fl">0.1</span> <span class="op">.*</span> <span class="fu">cos</span>.(<span class="fl">7</span> <span class="op">.*</span> x)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(x, y)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">10</span>, name <span class="op">=</span> <span class="st">"alpha"</span>)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    beta  <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"sigma"</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(alpha <span class="op">+</span> beta <span class="op">*</span> x, sigma, obs <span class="op">=</span> y)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model, obs <span class="op">=</span> <span class="fu">pydict</span>(x <span class="op">=</span> jnp.<span class="fu">array</span>(x), y <span class="op">=</span> jnp.<span class="fu">array</span>(y)))</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">save</span>(<span class="st">"linear_regression.pkl"</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Session 2: Load and analyze (no re-fit) ---</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span>, <span class="bu">PythonCall</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> PyBayesForge.<span class="fu">BFObject</span>(<span class="fu">pyimport</span>(<span class="st">"BayesForge"</span>).bf.<span class="fu">load</span>(<span class="st">"linear_regression.pkl"</span>))</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.<span class="fu">summary</span>())</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.posteriors[<span class="st">"beta"</span>].<span class="fu">mean</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -1469,6 +1505,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

@@ -43,7 +43,6 @@ Here’s an example of a Bayesian survival analysis using the **BayesForge (BF)*
 
 ```{python}
 from BayesForge import bf
-import numpy as np
 import jax.numpy as jnp
 
 m = bf(platform='cpu')
@@ -54,7 +53,7 @@ m = bf(platform='cpu')
 # event-free), `metastasized` = "yes"/"no".
 data_path = m.load.mastectomy(only_path=True)
 m.data(data_path, sep=',')
-m.df.metastasized = (m.df.metastasized.values == "yes").astype(np.int64)
+m.df.metastasized = jnp.asarray(m.df.metastasized == "yes", dtype=jnp.int64)
 
 # --- Piecewise-constant hazard setup -------------------------------
 # Cut follow-up time into fixed intervals of length 3. For every
@@ -64,11 +63,12 @@ m.df.metastasized = (m.df.metastasized.values == "yes").astype(np.int64)
 # Censoring is encoded here: after a subject leaves (event OR censoring)
 # its exposure is 0 in every later interval, so it stops contributing
 # to the likelihood without being counted as a death.
-m.models.survival.import_time_even(m.df.time.values, m.df.event.values,
+m.models.survival.import_time_even(jnp.asarray(m.df.time.values),
+                                   jnp.asarray(m.df.event.values),
                                    interval_length=3)
 
 # Register `metastasized` as a patient-level (time-invariant) covariate.
-m.models.survival.import_covF(m.df.metastasized.values, ["metastasized"])
+m.models.survival.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
 
 # --- Censoring plot -----------------------------------------------
 # One horizontal line per subject = observed follow-up. Red = censored
@@ -153,10 +153,275 @@ from $\beta$ (equivalently the hazard ratio $e^{\beta}$) in
 
 ### R
 
-![](travaux-routiers.png){fig-align="center"}
+**Data and discrete-time setup** (shared by both approaches below).
+
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jnp <- reticulate::import("jax.numpy")
+
+# --- Data ------------------------------------------------------------
+# Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if
+# death was observed, 0 if the patient was censored (left the study
+# event-free), `metastasized` = "yes"/"no".
+data_path <- m$load$mastectomy(only_path = TRUE)
+m$data(data_path, sep = ",")
+met <- jnp$asarray(m$df$metastasized == "yes", dtype = jnp$int64)
+m$df$metastasized <- met
+
+# --- Piecewise-constant hazard setup -------------------------------
+# Cut follow-up time into fixed intervals of length 3. For every
+# (subject, interval) this builds two matrices:
+#   death[i, k]    -> 1 if subject i had the event in interval k
+#   exposure[i, k] -> time subject i spent at risk in interval k
+# Censoring is encoded here: after a subject leaves (event OR censoring)
+# its exposure is 0 in every later interval, so it stops contributing
+# to the likelihood without being counted as a death.
+m$models$survival$import_time_even(jnp$asarray(m$df$time),
+                                   jnp$asarray(m$df$event),
+                                   interval_length = 3L)
+
+# Register `metastasized` as a patient-level (time-invariant) covariate.
+m$models$survival$import_covF(met, list("metastasized"))
+
+# --- Censoring plot -----------------------------------------------
+# One horizontal line per subject = observed follow-up. Red = censored
+# (event never seen), grey = event observed, black dot = metastasized.
+# Reading it: metastasized patients tend to have shorter lines ending
+# in an event -> a first visual clue of a positive hazard effect.
+m$models$survival$plot_censoring(cov = "metastasized")
+```
+
+
+::: {.panel-tabset}
+
+#### Explicit model
+
+The full model written out, to show every prior and the likelihood.
+
+```r
+model <- function(death, cov, exposure, censoring = NULL) {
+  # --- Priors ---------------------------------------------------
+  # Baseline hazard: ONE positive rate per time interval. A
+  # Gamma(0.01, 0.01) prior is almost flat on (0, inf), so the shape
+  # of the hazard over time is driven by the data, not by a
+  # parametric family (Weibull, Gompertz, ...). This is what makes
+  # the model semi-parametric.
+  lambda0 <- m$dist$gamma(
+    0.01, 0.01, shape = reticulate::tuple(dim(exposure)[2]),
+    name = "Baseline_rate")
+
+  # Covariate effect on the LOG hazard. Normal(0, 10) is weakly
+  # informative: centred on 0 (no effect) but wide enough to let the
+  # data move it. exp(beta) is the hazard ratio for metastasized.
+  beta <- m$dist$normal(
+    0, 10, shape = reticulate::tuple(1L),
+    name = "Hazard_rate_metastasized")
+
+  # --- Likelihood -------------------------------------------------
+  # Proportional hazards: lambda[i,k] = lambda0[k] * exp(beta * x_i).
+  # Expected event count mu = lambda * exposure; the 0/1 event
+  # indicator is modelled as Poisson (equivalent to the piecewise
+  # exponential survival likelihood).
+  lambda_ <- jnp$expand_dims(jnp$exp(beta * jnp$squeeze(cov)), 1L) *
+    jnp$expand_dims(lambda0, 0L)
+  mu <- jnp$multiply(exposure, lambda_)
+  m$dist$poisson(mu + jnp$finfo(mu$dtype)$tiny, obs = death)
+}
+
+# 4 chains and target_accept_prob=0.99: the many near-empty late
+# baseline intervals make the geometry awkward, so a higher acceptance
+# target keeps the step size small enough to mix well.
+m$fit(model, num_samples = 2000L, num_warmup = 2000L, num_chains = 4L,
+      target_accept_prob = 0.99, progress_bar = FALSE)
+print(m$summary())
+
+# Posterior cumulative hazard and survival curves, by covariate group.
+m$models$survival$plot_surv(beta = "Hazard_rate_metastasized")
+```
+
+#### Built-in model
+
+Same model, assembled by BF from the imported survival object. Priors
+are attributes you can override before `fit`.
+
+```r
+# Optional: change the default priors (shown with their defaults).
+m$models$survival$baseline_rate_prior <- c(0.01, 0.01)  # Gamma(conc, rate)
+m$models$survival$hazard_rate_prior_scale <- 10.0        # Normal(0, scale)
+
+m$fit(m$models$survival$model)
+print(m$summary())
+
+m$models$survival$plot_surv(beta = "Hazard_rate_metastasized")
+```
+
+:::
+
+### Julia
+
+**Data and discrete-time setup** (shared by both approaches below).
+
+```julia
+using PyBayesForge
+using PythonCall
+m = importBF(platform="cpu")
+
+# --- Data ------------------------------------------------------------
+# Mastectomy trial. Columns: `time` = follow-up length, `event` = 1 if
+# death was observed, 0 if the patient was censored (left the study
+# event-free), `metastasized` = "yes"/"no".
+data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+m.data(data_path, sep=",")
+m.df.metastasized = jnp.asarray(m.df.metastasized.eq("yes").values, dtype=jnp.int64)
+
+# --- Piecewise-constant hazard setup -------------------------------
+# Cut follow-up time into fixed intervals of length 3. For every
+# (subject, interval) this builds two matrices:
+#   death[i, k]    -> 1 if subject i had the event in interval k
+#   exposure[i, k] -> time subject i spent at risk in interval k
+# Censoring is encoded here: after a subject leaves (event OR censoring)
+# its exposure is 0 in every later interval, so it stops contributing
+# to the likelihood without being counted as a death.
+m.models.survival.import_time_even(jnp.asarray(m.df.time.values),
+                                   jnp.asarray(m.df.event.values),
+                                   interval_length=3)
+
+# Register `metastasized` as a patient-level (time-invariant) covariate.
+m.models.survival.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
+
+# --- Censoring plot -----------------------------------------------
+# One horizontal line per subject = observed follow-up. Red = censored
+# (event never seen), grey = event observed, black dot = metastasized.
+# Reading it: metastasized patients tend to have shorter lines ending
+# in an event -> a first visual clue of a positive hazard effect.
+@pyplot m.models.survival.plot_censoring(cov="metastasized")
+```
+
+
+::: {.panel-tabset}
+
+#### Explicit model
+
+The full model written out, to show every prior and the likelihood.
+
+```julia
+@BF function model(death, cov, exposure)
+    # --- Priors ---------------------------------------------------
+    # Baseline hazard: ONE positive rate per time interval. A
+    # Gamma(0.01, 0.01) prior is almost flat on (0, inf), so the shape
+    # of the hazard over time is driven by the data, not by a
+    # parametric family (Weibull, Gompertz, ...). This is what makes
+    # the model semi-parametric.
+    lambda0 = m.dist.gamma(
+      0.01, 0.01, shape = (pyconvert(Int, exposure.shape[1]),),
+      name = "Baseline_rate")
+
+    # Covariate effect on the LOG hazard. Normal(0, 10) is weakly
+    # informative: centred on 0 (no effect) but wide enough to let the
+    # data move it. exp(beta) is the hazard ratio for metastasized.
+    beta = m.dist.normal(
+      0, 10, shape = (1,),
+      name = "Hazard_rate_metastasized")
+
+    # --- Likelihood -------------------------------------------------
+    # Proportional hazards: lambda[i,k] = lambda0[k] * exp(beta * x_i).
+    # Expected event count mu = lambda * exposure; the 0/1 event
+    # indicator is modelled as Poisson (equivalent to the piecewise
+    # exponential survival likelihood).
+    lambda_ = jnp.expand_dims(jnp.exp(beta * jnp.squeeze(cov)), 1) *
+      jnp.expand_dims(lambda0, 0)
+    mu = exposure * lambda_
+    m.dist.poisson(mu + jnp.finfo(mu.dtype).tiny, obs = death)
+end
+
+# 4 chains and target_accept_prob=0.99: the many near-empty late
+# baseline intervals make the geometry awkward, so a higher acceptance
+# target keeps the step size small enough to mix well.
+m.fit(model, num_samples = 2000, num_warmup = 2000, num_chains = 4,
+      target_accept_prob = 0.99, progress_bar = false)
+println(m.summary())
+
+# Posterior cumulative hazard and survival curves, by covariate group.
+@pyplot m.models.survival.plot_surv(beta="Hazard_rate_metastasized")
+```
+
+#### Built-in model
+
+Same model, assembled by BF from the imported survival object. Priors
+are attributes you can override before `fit`.
+
+```julia
+# Optional: change the default priors (shown with their defaults).
+m.models.survival.baseline_rate_prior = (0.01, 0.01)   # Gamma(conc, rate)
+m.models.survival.hazard_rate_prior_scale = 10.0        # Normal(0, scale)
+
+m.fit(m.models.survival.model)
+println(m.summary())
+
+@pyplot m.models.survival.plot_surv(beta="Hazard_rate_metastasized")
+```
+
+:::
 
 
 :::
+
+<!--
+### Posterior predictive checks
+
+Do survival times simulated from the fitted hazard reproduce the observed survival curve?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# s = m.models.survival
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+
+#### R
+```r
+# library(BayesForge)
+# m <- importBF(platform = "cpu")
+# jnp <- reticulate::import("jax.numpy")
+# # Fit the survival model of this page (see the Python example above)
+# data_path <- m$load$mastectomy(only_path = TRUE)
+# m$data(data_path, sep = ",")
+# met <- jnp$asarray(m$df$metastasized == "yes", dtype = jnp$int64)
+# m$df$metastasized <- met
+# s <- m$models$survival
+# s$import_time_even(jnp$asarray(m$df$time), jnp$asarray(m$df$event), interval_length = 3L)
+# s$import_covF(met, list("metastasized"))
+# s$baseline_rate_prior <- c(0.01, 0.01)
+# s$hazard_rate_prior_scale <- 10.0
+# m$fit(s$model)
+# times_rep = s$sample_times(lambda0 = "Baseline_rate", beta = "Hazard_rate_metastasized", n_draws = 100L)
+# m$diag$ppc_km_overlay(y = s$time, yrep = times_rep, status_y = s$event, name = "time")
+```
+
+#### Julia
+```julia
+# using PyBayesForge
+# using PythonCall
+# m = importBF(platform="cpu")
+# # Fit the survival model of this page (see the Python example above)
+# data_path = pyconvert(String, m.load.mastectomy(only_path=true))
+# m.data(data_path, sep=",")
+# m.df.metastasized = jnp.asarray(m.df.metastasized.eq("yes").values, dtype=jnp.int64)
+# s = m.models.survival
+# s.import_time_even(jnp.asarray(m.df.time.values), jnp.asarray(m.df.event.values), interval_length=3)
+# s.import_covF(jnp.asarray(m.df.metastasized.values), ["metastasized"])
+# s.baseline_rate_prior = (0.01, 0.01)
+# s.hazard_rate_prior_scale = 10.0
+# m.fit(s.model)
+# times_rep = s.sample_times(lambda0="Baseline_rate", beta="Hazard_rate_metastasized", n_draws=100)
+# m.diag.ppc_km_overlay(y=s.time, yrep=times_rep, status_y=s.event, name="time")
+```
+:::
+
+The black step curve is the Kaplan–Meier estimate of the observed data (censored patients included); each blue curve is the Kaplan–Meier curve of one set of survival times simulated from the posterior hazard (no censoring). The black curve should stay inside the blue band. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+-->
 
 ## Mathematical Details
 
@@ -217,6 +482,14 @@ S_i(t_K) = \exp\!\left(-\Lambda_i(t_K)\right)
 $$
 
 Where $\Delta_k$ is the width of interval $k$.
+
+## Model validation tests
+
+- [Comparison with PyMC](https://github.com/BGN-for-ASNA/BF/tree/main/Test/7.Survival%20analysis): `Survival_analysis_verify.py` fits the mastectomy survival model with BayesForge and PyMC and checks that the baseline rates and the hazard ratio agree.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
 ## Reference(s)
 https://en.wikipedia.org/wiki/Proportional_hazards_model
 https://www.mathworks.com/help/stats/cox-proportional-hazard-regression.html

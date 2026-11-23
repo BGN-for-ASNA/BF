@@ -127,6 +127,20 @@ div.csl-indent {
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -148,14 +162,10 @@ div.csl-indent {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -630,7 +640,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -642,6 +652,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#bayesian-formulation" id="toc-bayesian-formulation" class="nav-link" data-scroll-target="#bayesian-formulation"><em>Bayesian formulation</em></a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#Notes" id="toc-Notes" class="nav-link" data-scroll-target="#Notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -710,7 +721,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="8098e819" class="cell" data-execution_count="1">
+<div id="2b652ca4" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -719,32 +730,36 @@ Note
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> importlib.resources <span class="im">import</span> files</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.tulips(only_path <span class="op">=</span> <span class="va">True</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">';'</span>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.scale([<span class="st">'blooms'</span>, <span class="st">'water'</span>, <span class="st">'shade'</span>]) <span class="co"># Normalize</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.tulips(only_path <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>m.data(data_path, sep<span class="op">=</span><span class="st">';'</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">'blooms_scaled'</span>] <span class="op">=</span> m.df.blooms <span class="op">/</span> m.df.blooms.<span class="bu">max</span>()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">'water_scaled'</span>] <span class="op">=</span> m.df.water <span class="op">-</span> m.df.water.mean()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.df[<span class="st">'shade_scaled'</span>] <span class="op">=</span> m.df.shade <span class="op">-</span> m.df.shade.mean()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>m.data_to_model([<span class="st">'blooms_scaled'</span>, <span class="st">'water_scaled'</span>, <span class="st">'shade_scaled'</span>])</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(blooms,shade, water):</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, name <span class="op">=</span> <span class="st">'sigma'</span>, shape <span class="op">=</span> (<span class="dv">1</span>,))</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    bws <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bws'</span>, shape <span class="op">=</span> (<span class="dv">1</span>,))</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    bs <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bs'</span>, shape <span class="op">=</span> (<span class="dv">1</span>,))</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    bw <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bw'</span>, shape <span class="op">=</span> (<span class="dv">1</span>,))</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.normal(<span class="fl">0.5</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'a'</span>, shape <span class="op">=</span> (<span class="dv">1</span>,))</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> bw<span class="op">*</span>water <span class="op">+</span> bs<span class="op">*</span>shade <span class="op">+</span> bws<span class="op">*</span>water<span class="op">*</span>shade</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu, sigma, obs<span class="op">=</span>blooms)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(blooms_scaled, shade_scaled, water_scaled):</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential(<span class="dv">1</span>, name <span class="op">=</span> <span class="st">'sigma'</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    bws <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bws'</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    bs <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bs'</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    bw <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'bw'</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.normal(<span class="fl">0.5</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">'a'</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> bw<span class="op">*</span>water_scaled <span class="op">+</span> bs<span class="op">*</span>shade_scaled <span class="op">+</span> bws<span class="op">*</span>water_scaled<span class="op">*</span>shade_scaled</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu, sigma, obs<span class="op">=</span>blooms_scaled)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
-jax.local_device_count 32</code></pre>
+<pre><code>bf v 0.0.60 package loaded
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -756,75 +771,75 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">a[0]</td>
-<td>0.08</td>
-<td>0.10</td>
-<td>-0.08</td>
-<td>0.25</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4548.38</td>
-<td>2962.14</td>
+<td data-quarto-table-cell-role="th">a</td>
+<td>0.36</td>
+<td>0.03</td>
+<td>0.32</td>
+<td>0.40</td>
+<td>5155.86</td>
+<td>2725.12</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">bs[0]</td>
-<td>-0.31</td>
-<td>0.11</td>
-<td>-0.47</td>
+<td data-quarto-table-cell-role="th">bs</td>
+<td>-0.11</td>
+<td>0.03</td>
+<td>-0.16</td>
+<td>-0.06</td>
+<td>4902.67</td>
+<td>2975.17</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">bw</td>
+<td>0.21</td>
+<td>0.03</td>
+<td>0.15</td>
+<td>0.26</td>
+<td>5310.87</td>
+<td>3078.88</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">bws</td>
 <td>-0.14</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4343.11</td>
-<td>2680.25</td>
+<td>0.04</td>
+<td>-0.21</td>
+<td>-0.08</td>
+<td>4493.91</td>
+<td>2778.82</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">bw[0]</td>
-<td>0.57</td>
+<td data-quarto-table-cell-role="th">sigma</td>
+<td>0.14</td>
+<td>0.02</td>
 <td>0.11</td>
-<td>0.39</td>
-<td>0.74</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4593.81</td>
-<td>2662.75</td>
+<td>0.18</td>
+<td>3874.64</td>
+<td>3226.56</td>
 <td>1.0</td>
-</tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">bws[0]</td>
-<td>-0.33</td>
-<td>0.11</td>
-<td>-0.50</td>
-<td>-0.17</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>5190.03</td>
-<td>2711.98</td>
-<td>1.0</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">sigma[0]</td>
-<td>0.58</td>
-<td>0.09</td>
-<td>0.43</td>
-<td>0.71</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>3406.83</td>
-<td>2732.86</td>
-<td>1.0</td>
 </tr>
 </tbody>
 </table>
@@ -834,63 +849,128 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load csv file</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">tulips</span>(<span class="at">only_path =</span> T), <span class="at">sep =</span> <span class="st">''</span>), sep<span class="ot">=</span><span class="st">';'</span><span class="er">)</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">'blooms'</span>, <span class="st">'water'</span>, <span class="st">'shade'</span>)) <span class="co"># Normalize</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'blooms'</span>, <span class="st">'water'</span>, <span class="st">'shade'</span>)) <span class="co"># Send to model (convert to jax array)</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(blooms, water,shade){</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  alpha <span class="ot">=</span> <span class="fu">bf.dist.normal</span>( <span class="fl">0.5</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'a'</span>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  beta1 <span class="ot">=</span> <span class="fu">bf.dist.normal</span>( <span class="dv">0</span>,  <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'b1'</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  beta2 <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(  <span class="dv">0</span>,  <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'b2'</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  beta_interaction_ <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(  <span class="dv">0</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'bint'</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="at">name =</span> <span class="st">'s'</span>)</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span><span class="fu">normal</span>(alpha <span class="sc">+</span> beta1<span class="sc">*</span>water <span class="sc">+</span> beta2<span class="sc">*</span>shade <span class="sc">+</span> beta_interaction_<span class="sc">*</span>water<span class="sc">*</span>shade, sigma, <span class="at">obs=</span>blooms)</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load csv file</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">tulips</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">';'</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>blooms_scaled <span class="ot">&lt;-</span> m<span class="sc">$</span>df<span class="sc">$</span>blooms <span class="sc">/</span> <span class="fu">max</span>(m<span class="sc">$</span>df<span class="sc">$</span>blooms)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>water_scaled <span class="ot">&lt;-</span> m<span class="sc">$</span>df<span class="sc">$</span>water <span class="sc">-</span> <span class="fu">mean</span>(m<span class="sc">$</span>df<span class="sc">$</span>water)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>df<span class="sc">$</span>shade_scaled <span class="ot">&lt;-</span> m<span class="sc">$</span>df<span class="sc">$</span>shade <span class="sc">-</span> <span class="fu">mean</span>(m<span class="sc">$</span>df<span class="sc">$</span>shade)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'blooms_scaled'</span>, <span class="st">'water_scaled'</span>, <span class="st">'shade_scaled'</span>))</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(blooms_scaled, water_scaled, shade_scaled){</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parameter prior distributions</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'sigma'</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  bws <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'bws'</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  bs <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'bs'</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  bw <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'bw'</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="fl">0.5</span>, <span class="fl">0.25</span>, <span class="at">name =</span> <span class="st">'a'</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a <span class="sc">+</span> bw<span class="sc">*</span>water_scaled <span class="sc">+</span> bs<span class="sc">*</span>shade_scaled <span class="sc">+</span> bws<span class="sc">*</span>water_scaled<span class="sc">*</span>shade_scaled</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Likelihood</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, sigma, <span class="at">obs =</span> blooms_scaled, <span class="at">name =</span> <span class="st">'blooms_scaled'</span>)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">progress_bar =</span> <span class="cn">FALSE</span>) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">tulips</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="ch">';'</span>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">"blooms"</span>, <span class="st">"water"</span>, <span class="st">"shade"</span>]) <span class="co"># Normalize</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(blooms,shade, water)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"sigma"</span>, shape <span class="op">=</span> (<span class="fl">1</span>,))</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    bws <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bws"</span>, shape <span class="op">=</span> (<span class="fl">1</span>,))</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    bs <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bs"</span>, shape <span class="op">=</span> (<span class="fl">1</span>,))</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    bw <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bw"</span>, shape <span class="op">=</span> (<span class="fl">1</span>,))</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0.5</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"a"</span>, shape <span class="op">=</span> (<span class="fl">1</span>,))</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> bw<span class="op">*</span>water <span class="op">+</span> bs<span class="op">*</span>shade <span class="op">+</span> bws<span class="op">*</span>water<span class="op">*</span>shade</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, sigma, obs<span class="op">=</span>blooms)</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">tulips</span>(only_path <span class="op">=</span> <span class="cn">true</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="ch">';'</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> m.df</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"blooms_scaled"</span>] <span class="op">=</span> df[<span class="st">"blooms"</span>] <span class="op">/</span> df[<span class="st">"blooms"</span>].<span class="fu">max</span>()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"water_scaled"</span>] <span class="op">=</span> df[<span class="st">"water"</span>] <span class="op">-</span> df[<span class="st">"water"</span>].<span class="fu">mean</span>()</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"shade_scaled"</span>] <span class="op">=</span> df[<span class="st">"shade"</span>] <span class="op">-</span> df[<span class="st">"shade"</span>].<span class="fu">mean</span>()</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data_to_model</span>([<span class="st">"blooms_scaled"</span>, <span class="st">"water_scaled"</span>, <span class="st">"shade_scaled"</span>])</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(blooms_scaled, shade_scaled, water_scaled)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"sigma"</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    bws <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bws"</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    bs <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bs"</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    bw <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"bw"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0.5</span>, <span class="fl">0.25</span>, name <span class="op">=</span> <span class="st">"a"</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> bw<span class="op">*</span>water_scaled <span class="op">+</span> bs<span class="op">*</span>shade_scaled <span class="op">+</span> bws<span class="op">*</span>water_scaled<span class="op">*</span>shade_scaled</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, sigma, obs<span class="op">=</span>blooms_scaled)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
+<!--
+### Posterior predictive checks
+
+Does the model capture how the effect of water changes with shade (the interaction)?
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#328dbf1b .cell execution_count=2}
+``` {.python .cell-code}
+# m.diag.ppc_intervals(x="water", group="shade")
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_intervals(x = "water", group = "shade")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_intervals(x="water", group="shade")
+```
+:::
+
+![Posterior predictive intervals of `blooms`: one panel per `shade` level, `water` on the x axis.](Figures/3-ppc-intervals.png){fig-align="center"}
+
+How to read it: `water` and `shade` were normalized, so the three x ticks (-1.2, 0, 1.2) are the three original water levels (1, 2, 3) and the three panels are the three shade levels. Points are the observed blooms, open points the median prediction, bars the 50 % and 90 % predictive intervals. The design is 3 beds x 3 water x 3 shade, so each panel holds 9 observations stacked on 3 positions: the three points above one tick are the three beds, and their intervals overlap because they share the same predicted mean.
+
+The model passes: in every panel the observed points sit inside the bars, and the slope over `water` changes from panel to panel — steep at `shade = -1.2` (median prediction from about -0.7 to +1.6), already flatter at `shade = 0` (-0.6 to +0.8) and nearly flat at `shade = 1.2` (-0.5 to -0.1). That is the interaction, and it matches the posterior of `bws` (-0.32, 89 % CI -0.49 to -0.15): each unit of shade lowers the effect of water by about 0.3. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#6e502ff7 .cell execution_count=3}
+``` {.python .cell-code}
+# m.diag.ppc_loo_pit()
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_loo_pit()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_loo_pit()
+```
+:::
+
+`ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
+:::
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -940,6 +1020,48 @@ Y_i \sim \text{Normal}(\alpha + \beta_1 X_{[1,i]} + \beta_2 X_{[2,i]} + \beta_{3
 <li><p><span class="math inline">\sigma</span> is a standard deviation parameter, which here has an Exponential prior that constrains it to be positive.</p></li>
 </ul>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/3.Continuous%20interactions.py">Comparison with Stan</a>: <code>3.Continuous interactions.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/3.Continuous%20interactions.py">Data generative model and inference model pipeline</a>: <code>3.Continuous interactions.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>3.Continuous interactions.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/3.Continuous_interactions_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>3.Continuous interactions.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/3.Continuous_interactions_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="Notes" class="level2">
 <h2 class="anchored" data-anchor-id="Notes">Notes</h2>
@@ -1728,6 +1850,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

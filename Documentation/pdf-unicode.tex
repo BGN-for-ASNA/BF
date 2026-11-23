@@ -1,0 +1,24 @@
+% xelatex fonts lack these glyphs (emoji, box drawing, math italics).
+% Make each one an active character that prints a text/math substitute.
+% (No newunicodechar: the system TeX Live does not ship it.)
+\catcode`🛈=\active \protected\def🛈{(i)}
+\catcode`⚠=\active \protected\def⚠{/!\textbackslash{}}
+\catcode`️=\active \protected\def️{}
+\catcode`🚧=\active \protected\def🚧{[WIP]}
+\catcode`▼=\active \protected\def▼{\ensuremath{\blacktriangledown}}
+\catcode`≈=\active \protected\def≈{\ensuremath{\approx}}
+\catcode`𝑋=\active \protected\def𝑋{\ensuremath{X}}
+\catcode`𝑌=\active \protected\def𝑌{\ensuremath{Y}}
+\catcode`𝐾=\active \protected\def𝐾{\ensuremath{K}}
+\catcode`𝑦=\active \protected\def𝑦{\ensuremath{y}}
+\catcode`𝜙=\active \protected\def𝜙{\ensuremath{\phi}}
+\catcode`𝛾=\active \protected\def𝛾{\ensuremath{\gamma}}
+\catcode`𝜂=\active \protected\def𝜂{\ensuremath{\eta}}
+\catcode`─=\active \protected\def─{-}
+\catcode`│=\active \protected\def│{|}
+\catcode`┌=\active \protected\def┌{+}
+\catcode`┐=\active \protected\def┐{+}
+\catcode`└=\active \protected\def└{+}
+\catcode`┘=\active \protected\def┘{+}
+\catcode`┬=\active \protected\def┬{+}
+\catcode`┴=\active \protected\def┴{+}

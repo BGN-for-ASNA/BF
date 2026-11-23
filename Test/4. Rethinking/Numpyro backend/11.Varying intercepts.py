@@ -5,6 +5,11 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (centered version).
+PAGE_MODEL = doc_model("15. Varying intercepts.qmd", 0)
 
 model_name = "11.Varying intercepts"
 
@@ -23,12 +28,7 @@ m.data_on_model = {
     'density': jnp.array(df.density.values)
 }
 
-def model_BF(tank, surv, density):
-    sigma = m.dist.exponential(1.0)
-    a_bar = m.dist.normal(0.0, 2.0)
-    alpha = m.dist.normal(a_bar, sigma, shape=(48,))
-    p = alpha[tank]
-    m.dist.binomial(total_count=density, logits=p, obs=surv)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -51,7 +51,7 @@ parameters {
 model {
     vector[N_obs] p;
     sigma ~ exponential(1);
-    a_bar ~ normal(0, 2);
+    a_bar ~ normal(0, 1.5);
     a ~ normal(a_bar, sigma);
     for (i in 1:N_obs) {
         p[i] = a[tank[i]];
@@ -82,12 +82,7 @@ def param_recovery(tank, density, a_bar_sims, sigma_sims, alpha_sims, nsim):
     
     m_rec = bf(print_devices_found=False)
     
-    def model_rec(tank, surv, density):
-        sigma = m_rec.dist.exponential(1.0)
-        a_bar = m_rec.dist.normal(0.0, 2.0)
-        alpha = m_rec.dist.normal(a_bar, sigma, shape=(48,))
-        p = alpha[tank]
-        m_rec.dist.binomial(total_count=density, logits=p, obs=surv)
+    model_rec = PAGE_MODEL
 
     for i in range(nsim):
         a_bar_true = a_bar_sims[i]

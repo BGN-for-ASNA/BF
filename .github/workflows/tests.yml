@@ -25,15 +25,19 @@ jobs:
       - name: Install BayesForge
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
 
       # Tests of the core functions (Test/0.Core), the three-language check of
       # the "Get started" pages and their Python examples
       # (Test/3.Documentation/Python). Test/0.Core/conftest.py prints a table of
       # the statistical checks, adds it to the job summary and writes
       # Test/0.Core/_report/ (table + plots).
+      - name: Lint (unused imports, redefinitions, commented-out code)
+        run: |
+          python -m pip install ruff==0.3.3
+          ruff check BayesForge/Network --select F401,F811,ERA001
       - name: Run tests
-        run: python -m pytest Test/0.Core Test/3.Documentation/test_language_coverage.py Test/3.Documentation/Python -q -m "not pages"
+        run: python -m pytest Test/0.Core Test/3.Documentation/test_language_coverage.py Test/3.Documentation/Python Test/13.Parallel "Test/SBI (WIP)" -q -m "not pages"
 
       - name: Upload verification report
         if: always()
@@ -59,7 +63,7 @@ jobs:
       - name: Install BayesForge (Python)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
           echo "RETICULATE_PYTHON=$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install BayesForge (R, dev branch)
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -68,8 +72,13 @@ jobs:
             github::BGN-for-ASNA/BFR@dev
             any::posterior
             any::bayesplot
+            any::tidyverse
       - name: Run the R examples
         run: python -m pytest Test/3.Documentation/R -q -rA
+      - name: Run the cross-language cases (Python vs R)
+        env:
+          BF_TEST_LANGS: python,r
+        run: python -m pytest Test/test_cross_language.py -m lang -q -rA
 
   # Julia examples of the "Get started" pages (Test/3.Documentation/Julia), run
   # with the dev branch of PyBayesForge.jl against this checkout of
@@ -93,15 +102,19 @@ jobs:
       - name: Install BayesForge (Python)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
           echo "JULIA_PYTHONCALL_EXE=$(python -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       - name: Install PyBayesForge.jl (dev branch)
         run: |
           julia --project="$BF_JULIA_PROJECT" -e 'using Pkg
             Pkg.add(url = "https://github.com/BGN-for-ASNA/PyBayesForge.jl", rev = "dev")
-            Pkg.add(["PythonCall", "DataFrames", "CSV", "MCMCChains"])'
+            Pkg.add(["PythonCall", "DataFrames", "CSV", "MCMCChains", "Distributions"])'
       - name: Run the Julia examples
         run: python -m pytest Test/3.Documentation/Julia -q -rA
+      - name: Run the cross-language cases (Python vs Julia)
+        env:
+          BF_TEST_LANGS: python,julia
+        run: python -m pytest Test/test_cross_language.py -m lang -q -rA
 
   # One compatibility matrix (compat.toml) for the Python, R and Julia packages:
   # this repository's pyproject.toml and the dev branches of BFR and

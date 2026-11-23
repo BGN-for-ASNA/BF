@@ -1,0 +1,28 @@
+Comparison Table for 15.Measuring error
+============================================================
+Parameter BF Mean Stan Mean    Diff KL Div
+     beta -0.6182   -0.6181 -0.0001 0.0692
+        s  0.5851    0.5831  0.0020 0.0736
+      eta  0.0508    0.0522 -0.0014 0.0539
+        a -0.0537   -0.0515 -0.0022 0.0680
+============================================================
+
+================================================================
+WAIC cross-check  -  15.Measuring error
+================================================================
+[A] NumPyro direct (numpyro.infer.log_likelihood)
+      elpd_waic = -48.289609    p_waic = 22.744482
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -48.289609    p_waic = 22.744482
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=50)
+----------------------------------------------------------------
+LOO cross-check  -  15.Measuring error
+----------------------------------------------------------------
+[A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
+      elpd_loo  = -55.161385    p_loo  = 29.616258
+[B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
+      elpd_loo  = -55.100891    p_loo  = 29.555764
+|delta elpd_loo| = 6.049e-02      |delta p_loo| = 6.049e-02
+RESULT: PASS
+================================================================

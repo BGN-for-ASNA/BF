@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -10,6 +11,17 @@ import pytensor.tensor as pt
 import jax.numpy as jnp
 
 from BayesForge import bf
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (explicit version). Same model as the
+# built-in m.models.survival.model the script used to fit, and the same site names
+# ('Baseline_rate', 'Hazard_rate_metastasized'); same priors too - the page writes out
+# the built-in defaults Baseline_rate ~ Gamma(0.01, 0.01) and
+# Hazard_rate_metastasized ~ Normal(0, 10). The only difference is that the page has no
+# observed_mask on the Poisson likelihood (every mastectomy interval is observed here).
+PAGE_MODEL = doc_model("14. Survival analysis.qmd", 0)
+
 
 def main():
     print("Initializing BF model...")
@@ -45,7 +57,7 @@ def main():
     # baseline intervals; 4 chains x 4000 draws drives the Monte Carlo error
     # on the posterior mean well below the 0.01 comparison tolerance.
     N_DRAWS, N_WARMUP, N_CHAINS, TARGET_ACCEPT = 4000, 2000, 4, 0.99
-    m.fit(m.models.survival.model, num_samples=N_DRAWS, num_warmup=N_WARMUP,
+    m.fit(PAGE_MODEL, num_samples=N_DRAWS, num_warmup=N_WARMUP,
           num_chains=N_CHAINS, target_accept_prob=TARGET_ACCEPT,
           progress_bar=False, seed=42)
 
@@ -73,14 +85,16 @@ def main():
     poisson_offset = np.finfo(np.float64).tiny
 
     with pm.Model() as pymc_model:
-        # Baseline_rate ~ Gamma(0.01, 0.01), one rate per interval.
-        # Same hyper-parameters as BF (m.models.survival.baseline_rate_prior).
-        # (BF samples this in log space via _LogGamma; that is a sampler
-        # reparametrisation only - the prior on lambda0 is the same Gamma.)
+        # Baseline_rate ~ Gamma(0.01, 0.01), one rate per interval: the prior of the
+        # page model fitted above, which is also the built-in default stored in
+        # m.models.survival.baseline_rate_prior (read here so the two models cannot
+        # drift apart). (On the numpyro backend the built-in samples this in log space
+        # via _LogGamma; that is a sampler reparametrisation only - the prior on
+        # lambda0 is the same Gamma.)
         lambda0 = pm.Gamma("lambda0", *m.models.survival.baseline_rate_prior, shape=n_intervals)
-        # Hazard_rate ~ Normal(0, 10), same scale as BF
-        # (m.models.survival.hazard_rate_prior_scale). shape=(1,) matches
-        # BF's beta = m.dist.normal(0, scale, shape=(1,)).
+        # Hazard_rate ~ Normal(0, 10), same scale as the page model
+        # (m.models.survival.hazard_rate_prior_scale holds the same default). shape=(1,)
+        # matches the page's beta = m.dist.normal(0, 10, shape=(1,)).
         beta = pm.Normal("beta", 0, sigma=m.models.survival.hazard_rate_prior_scale, shape=(1,))
 
         # Hazard rate: lambda[i,k] = lambda0[k] * exp(beta * x_i).

@@ -119,7 +119,7 @@ def test_enum_matches_default(verify):
         a = np.asarray(m_default.posteriors[k], dtype=np.float64)
         b = np.asarray(m_enum.posteriors[k], dtype=np.float64)
         delta = np.max(np.abs(a - b))
-        verify.record(quantity=k, reference="implicit enumeration (NumPyro)",
+        verify.record(quantity=k, reference="NumPyro, other path (consistency lock)",
                       criterion="max |Δ| < 1e-10", value=delta, passed=delta < 1e-10,
                       ref=a, new=b, ref_label="implicit", new_label="enum=True")
         assert delta < 1e-10, f"site {k!r}: max |Δ| = {delta}"

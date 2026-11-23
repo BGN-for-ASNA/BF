@@ -1,23 +1,25 @@
 Comparison Table for 4.Binomial
 ============================================================
-Parameter BF Mean Stan Mean    Diff KL Div
-        a  0.3194    0.3203 -0.0009 0.0686
+Parameter BF Mean Stan Mean   Diff KL Div
+    alpha  0.3231    0.3222 0.0010 0.0667
 ============================================================
 
 ================================================================
 WAIC cross-check  -  4.Binomial
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -343.911840    p_waic = 0.941683
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -343.911840  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -343.998215    p_waic = 1.027855
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -343.998215    p_waic = 1.027855
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=504)
 ----------------------------------------------------------------
 LOO cross-check  -  4.Binomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -343.913166    p_loo  = 0.943009
+      elpd_loo  = -343.999127    p_loo  = 1.028767
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -343.913548    p_loo  = 0.943391
-|delta elpd_loo| = 3.819e-04      |delta p_loo| = 3.819e-04
+      elpd_loo  = -343.999322    p_loo  = 1.028962
+|delta elpd_loo| = 1.949e-04      |delta p_loo| = 1.949e-04
 RESULT: PASS
 ================================================================

@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -331,6 +341,12 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../start/Handle_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Handle data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../start/Define model.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Define model</span></a>
   </div>
@@ -384,14 +400,14 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">🚧 BNN layers 🚧</span></a>
+  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Direct sampling &amp; plots</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Direct sampling &amp; plots</span></a>
+  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🚧 BNN layers 🚧</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -408,7 +424,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -429,7 +445,8 @@ window.Quarto = {
   <li><a href="#example-2-interactive-sampling-with-seed-decorrelation" id="toc-example-2-interactive-sampling-with-seed-decorrelation" class="nav-link" data-scroll-target="#example-2-interactive-sampling-with-seed-decorrelation">Example 2: Interactive Sampling with Seed Decorrelation</a></li>
   <li><a href="#example-3-independence-of-interactive-draws-and-.fit" id="toc-example-3-independence-of-interactive-draws-and-.fit" class="nav-link" data-scroll-target="#example-3-independence-of-interactive-draws-and-.fit">Example 3: Independence of Interactive Draws and <code>.fit()</code></a></li>
   </ul></li>
-  <li><a href="#summary-best-practices" id="toc-summary-best-practices" class="nav-link" data-scroll-target="#summary-best-practices">5. Summary &amp; Best Practices</a></li>
+  <li><a href="#reproducibility-across-python-r-and-julia" id="toc-reproducibility-across-python-r-and-julia" class="nav-link" data-scroll-target="#reproducibility-across-python-r-and-julia">5. Reproducibility across Python, R and Julia</a></li>
+  <li><a href="#summary-best-practices" id="toc-summary-best-practices" class="nav-link" data-scroll-target="#summary-best-practices">6. Summary &amp; Best Practices</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="Random-and-fixed-seeds.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
     </div>
@@ -876,12 +893,34 @@ Auditing and Replaying Random Runs
 <hr>
 </section>
 </section>
+<section id="reproducibility-across-python-r-and-julia" class="level2">
+<h2 class="anchored" data-anchor-id="reproducibility-across-python-r-and-julia">5. Reproducibility across Python, R and Julia</h2>
+<p>With the same seed and data, Python and R give identical draws: R runs the same Python engine through <strong>reticulate</strong>, provided it uses the same Python environment (<code>RETICULATE_PYTHON</code>). Julia gives draws that are very close but not bit-identical: the Julia process loads its own math library (openlibm), and the Python engine inside Julia uses it instead of the system libm. A few functions differ in the last bit, and MCMC accumulates these tiny differences along the chain.</p>
+<p>On a converged model the effect is negligible (posterior means agree far within Monte Carlo error). On a poorly mixing chain (low ESS) means can differ visibly between Python and Julia: that is a convergence problem to fix (more warmup/draws, reparameterisation), not a Julia bug. For example, a sender-receiver network model in the test suite with ESS ~28 for <code>dr_sigma</code> differed by 0.27 posterior sd.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Bit-identical runs between Python and Julia (advanced)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>To get bit-identical results to Julia from Python (Linux only, for debugging), run Python with Julia’s libm preloaded:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="va">LD_PRELOAD</span><span class="op">=</span><span class="va">$(</span><span class="ex">julia</span> <span class="at">-e</span> <span class="st">'print(joinpath(Sys.BINDIR, "..", "lib", "julia", "libopenlibm.so.4"))'</span><span class="va">)</span> <span class="ex">python</span> my_model.py</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<p>Details and the reproduction scripts: <code>Test/CROSS_LANGUAGE.md</code> and <code>Test/0.Core/libm_julia/</code> in the repository (<a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/CROSS_LANGUAGE.md">CROSS_LANGUAGE.md</a>).</p>
+<hr>
+</section>
 <section id="summary-best-practices" class="level2">
-<h2 class="anchored" data-anchor-id="summary-best-practices">5. Summary &amp; Best Practices</h2>
+<h2 class="anchored" data-anchor-id="summary-best-practices">6. Summary &amp; Best Practices</h2>
 <ol type="1">
 <li><strong>For Publications &amp; Production:</strong> Always specify an explicit integer <code>rand_seed</code> (e.g.&nbsp;<code>rand_seed=42</code>) to guarantee reproducibility.</li>
 <li><strong>For Exploratory Work with <code>rand_seed=True</code>:</strong> Always save or log <code>m.get_seed()</code> if you intend to re-examine or verify surprising findings later.</li>
 <li><strong>Multi-Instance Concurrency:</strong> If running parallel models on multiple processes, initialize each process with its own distinct integer seed (e.g.&nbsp;<code>seed + worker_id</code>).</li>
+<li><strong>Across Languages:</strong> Compare Python, R and Julia results on converged chains; identical draws are guaranteed between Python and R, not with Julia (see section 5).</li>
 </ol>
 
 
@@ -1641,6 +1680,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

@@ -6,6 +6,13 @@ import numpy as np
 import jax.numpy as jnp
 import jax
 from jax.scipy.special import expit
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Priors are identical to the previous local
+# copy: al ~ normal(1, 0.5), ap ~ normal(-1.5, 1) (the page uses m.link.inv_logit where the
+# script used expit, and names the sites 'al' and 'ap').
+PAGE_MODEL = doc_model("13. Zero inflated.qmd", 0)
 
 model_name = "10.Zero inflated"
 
@@ -26,12 +33,7 @@ df = pd.DataFrame({'y': y})
 m.df = df
 m.data_on_model = {'y': jnp.array(y)}
 
-def model_BF(y):
-    ap = m.dist.normal(-1.5, 1.0)
-    p = expit(ap)
-    al = m.dist.normal(1.0, 0.5)
-    lambda_ = jnp.exp(al)
-    m.dist.zero_inflated_poisson(p, lambda_, obs=y)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -80,12 +82,7 @@ plot_comparaison(m, df_stan, model_name=model_name)
 def estimate(y_sim):
     m_rec = bf(print_devices_found=False)
     m_rec.data_on_model = {'y': jnp.array(y_sim)}
-    def model_rec(y):
-        ap = m_rec.dist.normal(-1.5, 1.0)
-        p = expit(ap)
-        al = m_rec.dist.normal(1.0, 0.5)
-        lambda_ = jnp.exp(al)
-        m_rec.dist.zero_inflated_poisson(p, lambda_, obs=y)
+    model_rec = PAGE_MODEL
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
     return s.iloc[:, 0]
@@ -109,6 +106,7 @@ def param_recovery(y_true, ap_sims, al_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Drawn from the page priors: ap ~ normal(-1.5, 1), al ~ normal(1, 0.5)
 ap_sims = np.random.normal(-1.5, 1.0, nsim_test)
 al_sims = np.random.normal(1.0, 0.5, nsim_test)
 

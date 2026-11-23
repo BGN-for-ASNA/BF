@@ -200,9 +200,6 @@ def model(kcal_per_g, index_clade):
 
 ### Model to Latex
 ```python
-#| label: model-to-latex
-#| results: hold
-#| echo: true
 from BayesForge import bf
 m = bf(platform='cpu')
 

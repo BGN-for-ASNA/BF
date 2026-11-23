@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -256,6 +266,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Built-in models (<code>m.models</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/data.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span></a>
   </div>
@@ -302,10 +318,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
-  <ul class="collapse">
+  <ul>
   <li><a href="#betweenness" id="toc-betweenness" class="nav-link active" data-scroll-target="#betweenness"><code>m.net.betweenness</code></a></li>
   <li><a href="#bfs" id="toc-bfs" class="nav-link" data-scroll-target="#bfs"><code>m.net.bfs</code></a></li>
   <li><a href="#block_build_mu_ij" id="toc-block_build_mu_ij" class="nav-link" data-scroll-target="#block_build_mu_ij"><code>m.net.block_build_mu_ij</code></a></li>
@@ -319,8 +335,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#diameter" id="toc-diameter" class="nav-link" data-scroll-target="#diameter"><code>m.net.diameter</code></a></li>
   <li><a href="#dijkstra" id="toc-dijkstra" class="nav-link" data-scroll-target="#dijkstra"><code>m.net.dijkstra</code></a></li>
   <li><a href="#dijkstra_jax" id="toc-dijkstra_jax" class="nav-link" data-scroll-target="#dijkstra_jax"><code>m.net.dijkstra_jax</code></a></li>
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters:</a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns:</a></li>
   <li><a href="#dyad_vec_to_mat" id="toc-dyad_vec_to_mat" class="nav-link" data-scroll-target="#dyad_vec_to_mat"><code>m.net.dyad_vec_to_mat</code></a></li>
   <li><a href="#dyadic_effect" id="toc-dyadic_effect" class="nav-link" data-scroll-target="#dyadic_effect"><code>m.net.dyadic_effect</code></a></li>
   <li><a href="#dyadic_random_effects" id="toc-dyadic_random_effects" class="nav-link" data-scroll-target="#dyadic_random_effects"><code>m.net.dyadic_random_effects</code></a></li>
@@ -335,8 +349,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#instrength" id="toc-instrength" class="nav-link" data-scroll-target="#instrength"><code>m.net.instrength</code></a></li>
   <li><a href="#instrength_jit" id="toc-instrength_jit" class="nav-link" data-scroll-target="#instrength_jit"><code>m.net.instrength_jit</code></a></li>
   <li><a href="#is_symmetric" id="toc-is_symmetric" class="nav-link" data-scroll-target="#is_symmetric"><code>m.net.is_symmetric</code></a></li>
-  <li><a href="#parameters-1" id="toc-parameters-1" class="nav-link" data-scroll-target="#parameters-1">Parameters:</a></li>
-  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns:</a></li>
   <li><a href="#logit" id="toc-logit" class="nav-link" data-scroll-target="#logit"><code>m.net.logit</code></a></li>
   <li><a href="#mat_to_edgl" id="toc-mat_to_edgl" class="nav-link" data-scroll-target="#mat_to_edgl"><code>m.net.mat_to_edgl</code></a></li>
   <li><a href="#nodal_fixed_effects" id="toc-nodal_fixed_effects" class="nav-link" data-scroll-target="#nodal_fixed_effects"><code>m.net.nodal_fixed_effects</code></a></li>
@@ -362,7 +374,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#vec_to_mat" id="toc-vec_to_mat" class="nav-link" data-scroll-target="#vec_to_mat"><code>m.net.vec_to_mat</code></a></li>
   <li><a href="#weighted_cc" id="toc-weighted_cc" class="nav-link" data-scroll-target="#weighted_cc"><code>m.net.weighted_cc</code></a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="net.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -716,16 +728,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.net.dijkstra_jax(adjacency_matrix, source)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute the shortest path from a source node to all other nodes using Dijkstra’s algorithm.</p>
 <p>Dijkstra’s algorithm finds the shortest paths between nodes in a graph, particularly useful for graphs with non-negative edge weights. This function uses JAX for efficient computation.</p>
-</section>
-<section id="parameters" class="level2">
-<h2 class="anchored" data-anchor-id="parameters">Parameters:</h2>
-<p>adjacency_matrix : jax.numpy.ndarray A square (n x n) adjacency matrix representing the graph. The element at (i, j) represents the weight of the edge from node i to node j. Non-zero values indicate a connection, and higher values indicate longer paths.</p>
+<p><strong>Parameters</strong> adjacency_matrix : jax.numpy.ndarray A square (n x n) adjacency matrix representing the graph. The element at (i, j) represents the weight of the edge from node i to node j. Non-zero values indicate a connection, and higher values indicate longer paths.</p>
 <p><strong>int</strong></p>
 <p>The index of the source node from which the shortest paths are computed.</p>
-</section>
-<section id="returns" class="level2">
-<h2 class="anchored" data-anchor-id="returns">Returns:</h2>
-<p>jax.numpy.ndarray A 1D array of length n where each element represents the shortest distance from the source node to the corresponding node. The source node will have a distance of 0.</p>
+<p><strong>Returns</strong> jax.numpy.ndarray A 1D array of length n where each element represents the shortest distance from the source node to the corresponding node. The source node will have a distance of 0.</p>
 </section>
 <section id="dyad_vec_to_mat" class="level2">
 <h2 class="anchored" data-anchor-id="dyad_vec_to_mat"><code>m.net.dyad_vec_to_mat</code></h2>
@@ -1200,14 +1206,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="is_symmetric"><code>m.net.is_symmetric</code></h2>
 <div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>m.net.is_symmetric(arr, rtol<span class="op">=</span><span class="fl">1e-05</span>, atol<span class="op">=</span><span class="fl">1e-08</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Efficiently check if a 2D array is symmetric using JIT compilation.</p>
-</section>
-<section id="parameters-1" class="level2">
-<h2 class="anchored" data-anchor-id="parameters-1">Parameters:</h2>
-<p>arr : jax.numpy.ndarray Input 2D array to check for symmetry rtol : float, optional Relative tolerance for comparison (default: 1e-5) atol : float, optional Absolute tolerance for comparison (default: 1e-8)</p>
-</section>
-<section id="returns-1" class="level2">
-<h2 class="anchored" data-anchor-id="returns-1">Returns:</h2>
-<p>bool True if the array is symmetric, False otherwise</p>
+<p><strong>Parameters</strong> arr : jax.numpy.ndarray Input 2D array to check for symmetry rtol : float, optional Relative tolerance for comparison (default: 1e-5) atol : float, optional Absolute tolerance for comparison (default: 1e-8)</p>
+<p><strong>Returns</strong> bool True if the array is symmetric, False otherwise</p>
 </section>
 <section id="logit" class="level2">
 <h2 class="anchored" data-anchor-id="logit"><code>m.net.logit</code></h2>
@@ -2760,6 +2760,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

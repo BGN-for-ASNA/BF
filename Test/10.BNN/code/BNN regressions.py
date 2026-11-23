@@ -4,6 +4,30 @@ from BayesForge import bf
 import jax.numpy as jnp
 import numpy as np
 import jax
+import os, sys
+
+# The script is run with Test/10.BNN as working directory (run_all.py), but its
+# data/ and results/ folders are located from the script itself so that it also
+# runs from its own directory.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, os.pardir))
+
+sys.path.insert(0, os.path.join(_HERE, "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+
+# The model as published on the documentation page.
+# Same statistical model and the same priors as the copy this script carried
+# (w1 ~ normal(0, 1) of shape (D_X, D_H) with tanh, w2 ~ normal(0, 1) of shape
+# (D_H, D_Y), sigma ~ exponential(1), Y ~ normal(w2, sigma)); the only
+# difference is the name of the likelihood scale: the page calls it 'sigma',
+# the old copy 's'.
+# The page opens 'BNN.json' from the working directory, so the page is loaded
+# with the folder holding that file (Test/10.BNN/data) as working directory.
+_CWD = os.getcwd()
+os.chdir(os.path.join(_ROOT, "data"))
+PAGE_MODEL = doc_model("33. BNN.qmd", 0)
+os.chdir(_CWD)
+
 m = bf(platform='cpu')
 
 # %%
@@ -56,29 +80,9 @@ m.data_on_model= dict(X=X, Y=Y)
 
 
 # %%
-def model(X, Y,  D_H=5, D_Y=1):  
-    N, D_X = X.shape
-    
-    # First hidden layer: Transforms input to N × D_H (hidden units)
-    w1 = m.bnn.layer_linear(
-        X=X, 
-        dist=m.dist.normal(0, 1,  name='w1',shape=(D_X,D_H)),
-        activation='tanh'
-        )
-
-    # sample final layer of weights and neural network output
-    # Final layer (z3) computes linear combination of second hidden layer
-    w2 = m.bnn.layer_linear(
-        X=w1, 
-        dist=m.dist.normal(0, 1,  name='w2',shape=(D_H,D_Y))
-        )
-
-
-    s = m.dist.exponential(1, name='s')
-
-    m.dist.normal(w2, s, obs=Y,name='Y')
-
-m.fit(model, num_samples=500) 
+# The BNN is the one published on the page (PAGE_MODEL): one tanh hidden layer of
+# D_H = 5 units, linear output layer, exponential(1) scale on the Normal likelihood.
+m.fit(PAGE_MODEL, num_samples=500) 
 
 # --- CORRECTED PLOTTING CODE ---
 pred_standardized = m.sample(samples = 500)['Y']
@@ -136,7 +140,7 @@ ax.set_ylim(top=140) # Set y-limit to match example image
 
 plt.show()
 # save plot
-plt.savefig("results/bnn_prediction_linear.png")
+plt.savefig(os.path.join(_ROOT, "results", "bnn_prediction_linear.png"))
 # %%
 def get_data(N=50, D_X=1, sigma_obs=0.05, N_test=500):
     D_Y = 1  # create 1d outputs
@@ -165,9 +169,9 @@ X=(X - jnp.mean(X))/jnp.std(X)
 m.data_on_model=dict(X=X, Y=Y) 
 
 import json
-with open("data/BNN.json", "w") as outfile:
+with open(os.path.join(_ROOT, "data", "BNN.json"), "w") as outfile:
     json.dump(dict(X=X.tolist(), Y=Y.tolist()), outfile)
-m.fit(model, num_samples=500)   
+m.fit(PAGE_MODEL, num_samples=500)   
 #%%
 pred = m.sample(samples = 500)['Y']
 pred = pred[..., 0]
@@ -186,4 +190,4 @@ ax.plot(X[:, 1], mean_prediction, "blue", ls="solid", lw=2.0)
 ax.set(xlabel="X", ylabel="Y", title="Mean predictions with 90% CI")
 
 #save plot
-fig.savefig("results/bnn_prediction_non_linear.png")
+fig.savefig(os.path.join(_ROOT, "results", "bnn_prediction_non_linear.png"))

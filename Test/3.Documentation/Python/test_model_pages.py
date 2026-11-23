@@ -18,19 +18,17 @@ import sys
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from doc_blocks import DOCS, blocks  # noqa: E402
-
-NOT_MODEL_PAGES = {"index", "get started", "0.Introduction"}
-PAGES = sorted(p for p in DOCS.glob("*.qmd") if p.stem not in NOT_MODEL_PAGES)
+from doc_blocks import MODEL_PAGES, blocks, copy_data  # noqa: E402
 
 
 @pytest.mark.pages
-@pytest.mark.parametrize("page", PAGES, ids=[p.stem for p in PAGES])
+@pytest.mark.parametrize("page", MODEL_PAGES, ids=[p.stem for p in MODEL_PAGES])
 def test_model_page_python_examples_run(page, tmp_path):
     code = blocks(page, "python")
     if not code:
         pytest.skip("no python blocks")
     script = tmp_path / "page.py"
+    copy_data(tmp_path)
     script.write_text("import matplotlib\nmatplotlib.use('Agg')\n" + "\n\n".join(code))
     env = dict(os.environ, JAX_PLATFORMS="cpu", MPLBACKEND="Agg")
     proc = subprocess.run([sys.executable, str(script)], cwd=tmp_path, env=env,

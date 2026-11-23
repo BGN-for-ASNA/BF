@@ -39,20 +39,8 @@ def prepare_bi_data(m):
 
     # Loop through each array in the dictionary
     for key, array in data_dict.items():
-        # TFP and other backends might return (chains, draws, ...)
-        # If we have a chain dimension, we flatten it for the comparison plots
-        if array.ndim >= 2:
-            # Check if this looks like (chains, draws, ...)
-            # We assume it has a chain dimension if it came from TFP and has 2+ dims,
-            # OR if the first dim matches num_chains.
-            is_tfp = (hasattr(m, 'backend') and m.backend == 'tfp')
-            num_chains = getattr(m, 'num_chains', 1)
-            
-            if is_tfp or array.shape[0] == num_chains:
-                # Flatten chains and draws into a single samples dimension
-                new_shape = (-1,) + array.shape[2:]
-                array = array.reshape(new_shape)
-
+        # m.posteriors is flat (draws, ...) on every backend (RELEASE_AUDIT
+        # Samplers M3): no chain axis to merge here.
         # Now handle the flattened array
         if array.ndim == 1:
             all_params.append(pd.DataFrame({key: array}))

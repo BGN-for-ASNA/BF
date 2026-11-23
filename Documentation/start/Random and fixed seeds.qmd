@@ -402,8 +402,29 @@ println("Posterior samples match perfectly regardless of prior ad-hoc sampling."
 
 ---
 
-## 5. Summary & Best Practices
+## 5. Reproducibility across Python, R and Julia {#reproducibility-across-python-r-and-julia}
+
+With the same seed and data, Python and R give identical draws: R runs the same Python engine through **reticulate**, provided it uses the same Python environment (`RETICULATE_PYTHON`). Julia gives draws that are very close but not bit-identical: the Julia process loads its own math library (openlibm), and the Python engine inside Julia uses it instead of the system libm. A few functions differ in the last bit, and MCMC accumulates these tiny differences along the chain.
+
+On a converged model the effect is negligible (posterior means agree far within Monte Carlo error). On a poorly mixing chain (low ESS) means can differ visibly between Python and Julia: that is a convergence problem to fix (more warmup/draws, reparameterisation), not a Julia bug. For example, a sender-receiver network model in the test suite with ESS ~28 for `dr_sigma` differed by 0.27 posterior sd.
+
+::: callout-tip
+## Bit-identical runs between Python and Julia (advanced)
+
+To get bit-identical results to Julia from Python (Linux only, for debugging), run Python with Julia's libm preloaded:
+
+```bash
+LD_PRELOAD=$(julia -e 'print(joinpath(Sys.BINDIR, "..", "lib", "julia", "libopenlibm.so.4"))') python my_model.py
+```
+:::
+
+Details and the reproduction scripts: `Test/CROSS_LANGUAGE.md` and `Test/0.Core/libm_julia/` in the repository ([CROSS_LANGUAGE.md](https://github.com/BGN-for-ASNA/BF/blob/main/Test/CROSS_LANGUAGE.md)).
+
+---
+
+## 6. Summary & Best Practices
 
 1. **For Publications & Production:** Always specify an explicit integer `rand_seed` (e.g. `rand_seed=42`) to guarantee reproducibility.
 2. **For Exploratory Work with `rand_seed=True`:** Always save or log `m.get_seed()` if you intend to re-examine or verify surprising findings later.
 3. **Multi-Instance Concurrency:** If running parallel models on multiple processes, initialize each process with its own distinct integer seed (e.g. `seed + worker_id`).
+4. **Across Languages:** Compare Python, R and Julia results on converged chains; identical draws are guaranteed between Python and R, not with Julia (see section 5).

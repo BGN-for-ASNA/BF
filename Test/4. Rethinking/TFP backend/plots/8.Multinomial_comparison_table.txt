@@ -1,27 +1,27 @@
 Comparison Table for 8.Multinomial
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-        b  0.4090    0.4095 -0.0006 0.0834
-     a[0]  0.4996    0.4996  0.0000 0.0802
-     a[1] -0.0979   -0.0989  0.0010 0.0371
+     a[1] -0.0987   -0.0952 -0.0035 0.0566
+     a[0]  0.5023    0.5035 -0.0012 0.0376
+        b  0.4095    0.4096 -0.0001 0.0746
 ============================================================
 
 ================================================================
 WAIC cross-check  -  8.Multinomial
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -832.859772    p_waic = 2.989368
+      elpd_waic = -832.911954    p_waic = 3.042655
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -832.859775    p_waic = 2.989368
-|delta elpd_waic| = 3.328e-06      |delta p_waic| = 0.000e+00
+      elpd_waic = -832.911962    p_waic = 3.042654
+|delta elpd_waic| = 8.503e-06      |delta p_waic| = 2.384e-07
 RESULT: PASS   (S=4000, N=1000)
 ----------------------------------------------------------------
 LOO cross-check  -  8.Multinomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -832.862913    p_loo  = 2.992857
+      elpd_loo  = -832.916041    p_loo  = 3.046724
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -832.863057    p_loo  = 2.993047
-|delta elpd_loo| = 1.441e-04      |delta p_loo| = 1.903e-04
+      elpd_loo  = -832.916126    p_loo  = 3.047173
+|delta elpd_loo| = 8.478e-05      |delta p_loo| = 4.489e-04
 RESULT: PASS
 ================================================================

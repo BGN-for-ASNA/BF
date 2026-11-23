@@ -11,6 +11,41 @@ import pandas as pd
 import matplotlib
 import jax
 
+# RELEASE_AUDIT W2: one module-level instance shared by every pca object, so
+# bf._bind_library_rng can rebind its seed/RNG (the module-level ``dist`` is
+# the UnifiedDist class itself, not an instance).
+_dist = dist()
+
+# MINOR_AUDIT P8: the five model names accepted by __init__ and get_model.
+_PCA_TYPES = ('ARD', 'robust', 'sparse', 'sparse_robust_ard', 'classic')
+
+
+def _check_pca_type(type):
+    """Raise ValueError for a PCA type name that no model implements."""
+    if type not in _PCA_TYPES:
+        raise ValueError(
+            f"Unknown PCA type {type!r}; options: 'ARD', 'robust', 'sparse', "
+            "'sparse_robust_ard', 'classic'."
+        )
+
+
+def _scale_sizes(s, lo=10.0, span=100.0):
+    """Scale marker sizes to [lo, lo + span].
+
+    MINOR_AUDIT P3: the old inline min/max scaling divided by zero when all
+    values were identical (NaN sizes); a constant input now maps to the
+    middle of the range, lo + span / 2.
+    """
+    s = jnp.asarray(s, dtype=float)
+    s_min = jnp.min(s)
+    s_max = jnp.max(s)
+    rng = s_max - s_min
+    return jnp.where(
+        rng > 0,
+        lo + span * (s - s_min) / jnp.where(rng > 0, rng, 1.0),
+        lo + span / 2,
+    )
+
 
 class pca:
     """
@@ -23,13 +58,16 @@ class pca:
         None    
     """
     def __init__(self, X=None, latent_dim=None,type="classic"):
+        # MINOR_AUDIT P8: reject unknown type names up front, same message
+        # as get_model.
+        _check_pca_type(type)
         if type != "classic":
             print(f"{type} is in development. Use with caution.")
         self.posterior = None
         self.bayesian_pca_results = None
         self.__name__ = 'pca'
         self.type = type
-        self.dist = dist()
+        self.dist = _dist
     
 
         if latent_dim is None:
@@ -56,10 +94,12 @@ class pca:
             'model_sparse_robust_ard': self.model_sparse_robust_ard
         }
 
-    def __call__(self, X=None, latent_dim=None, type="ARD"):
+    def __call__(self, X=None, latent_dim=None, type="classic"):
         """
         Makes the instance callable, allowing for re-initialization.
         This acts as a factory for creating a new pca model object.
+        MINOR_AUDIT P7: the default ``type`` matches the constructor
+        default ("classic").
         """
 
         # When an existing instance is called, return a fresh new instance.
@@ -82,25 +122,38 @@ class pca:
             return self.model_sparse_robust_ard
         elif type == 'classic':
             return self.pca_classic
+        else:
+            # MINOR_AUDIT P8: an unknown type used to fall through and
+            # return None.
+            _check_pca_type(type)
 
     def pca_classic(self, X, data_dim, latent_dim, num_data_points ): 
+        """
+        Classic Probabilistic PCA model with standard isotropic Gaussian priors.
+
+        Parameters:
+        - X: Observed data matrix (shape: [num_data_points, data_dim]).
+        - data_dim: Number of features / observed dimensions.
+        - latent_dim: Number of latent principal components.
+        - num_data_points: Number of observations.
+        """
         # Gaussian prior for the principal component 'W'.
         w = self.dist.normal(0, 1, shape=(data_dim, latent_dim), name='w')
 
         # Gaussian prior on the latent variables 'Z'
-        z = self.dist.normal(0, 1, shape=(latent_dim, num_data_points), name='z')
+        z = self.dist.normal(0, 1, shape=(num_data_points, latent_dim), name='z')
 
-        # Exponential prior on the noise variance 'epsilon'
+        # Exponential prior on the noise standard deviation (scale) 'epsilon'
         epsilon = self.dist.exponential(1, name='epsilon')
 
-        # Likelihood
-        self.dist.normal(w @ z, epsilon, obs = X)  
+        # Likelihood: z @ w.T is (num_data_points, data_dim), matching X (RELEASE_AUDIT P1).
+        self.dist.normal(z @ w.T, epsilon, obs=X)
 
     def pca_ARD(self, X, data_dim, latent_dim, num_data_points ):
         """
         Probabilistic PCA model with ARD (Automatic Relevance Determination) prior on weights and a correctly defined noise model. ARD helps in automatic relevance determination of latent dimensions, by allowing the model to learn which dimensions are important.
         Args:
-            x_train: Observed data matrix of shape (data_dim, num_datapoints).
+            X: Observed data matrix of shape (num_data_points, data_dim).
             data_dim: Dimensionality of the observed data.
             latent_dim: Dimensionality of the latent space.
             num_data_points: Number of data points.
@@ -110,7 +163,7 @@ class pca:
         w = self.dist.normal(0, 1. / jnp.sqrt(alpha)[None, :], shape=(data_dim, latent_dim), name='w')
 
         # Prior on z (This part is correct)
-        z = self.dist.normal(0, 1., shape=(latent_dim, num_data_points), name='z')
+        z = self.dist.normal(0, 1., shape=(num_data_points, latent_dim), name='z')
 
         # --- CORRECTED NOISE MODEL ---
         # Prior on the precision (1 / variance)
@@ -118,16 +171,19 @@ class pca:
         # The standard deviation is 1 / sqrt(precision)
         stddv = 1. / jnp.sqrt(precision)
 
-        # Use the correctly defined standard deviation in the likelihood
-        self.dist.normal(w @ z, stddv, obs=X)
+        # Use the correctly defined standard deviation in the likelihood.
+        # z @ w.T is (num_data_points, data_dim), matching X.
+        self.dist.normal(z @ w.T, stddv, obs=X)
 
     def pca_robust(self, X, data_dim, latent_dim, num_data_points ):
         """
         Robust Bayesian PCA model using a Student's t-distribution for the likelihood.
+
+        X is the observed data matrix of shape (num_data_points, data_dim).
         """
         # --- Standard Priors for W and Z ---
         w = self.dist.normal(0, 1., shape=(data_dim, latent_dim), name='w')
-        z = self.dist.normal(0, 1., shape=(latent_dim, num_data_points), name='z')
+        z = self.dist.normal(0, 1., shape=(num_data_points, latent_dim), name='z')
 
         # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
         # This defines the prior on the scale (similar to standard deviation) of the noise.
@@ -143,11 +199,14 @@ class pca:
         # As your description states, this "heavy-tailed distribution... reduces the
         # influence of outliers" by treating them as more plausible events than a
         # Gaussian distribution would, thus preventing them from skewing the results.
-        self.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=X)
+        # z @ w.T is (num_data_points, data_dim), matching X.
+        self.dist.student_t(df=nu, loc=z @ w.T, scale=sigma, obs=X)
 
     def pca_sparse(self, X, data_dim, latent_dim, num_data_points ):
         """
         Sparse Bayesian PCA model using a Laplace prior on the weights (w).
+
+        X is the observed data matrix of shape (num_data_points, data_dim).
         """
         # --- Sparsity for High-Dimensional Data via a Sparsity-Inducing Prior ---
 
@@ -166,7 +225,7 @@ class pca:
 
         # We place a standard Gaussian prior on the latent variables 'Z', as described
         # in the note: "We place Gaussian priors on both Z and W...".
-        z = self.dist.normal(0., 1., shape=(latent_dim, num_data_points), name='z')
+        z = self.dist.normal(0., 1., shape=(num_data_points, latent_dim), name='z')
 
         # This section defines the standard Gaussian noise model, which is separate
         # from the sparsity-inducing prior on the weights.
@@ -175,7 +234,8 @@ class pca:
 
         # This is the standard likelihood, same as in the ARD model. The generative story
         # is unchanged, but the prior on 'W' now enforces the desired sparsity property.
-        self.dist.normal(w @ z, stddv, obs=X)
+        # z @ w.T is (num_data_points, data_dim), matching X.
+        self.dist.normal(z @ w.T, stddv, obs=X)
 
     def model_sparse_robust_ard(self, X, data_dim, latent_dim, num_data_points ):
         """
@@ -185,6 +245,8 @@ class pca:
         - Robustness: Achieved with a Student's t-distribution for the likelihood.
         - ARD: Achieved by placing a hierarchical prior on the scale of the Laplace
           distribution, allowing entire latent dimensions to be pruned.
+
+        X is the observed data matrix of shape (num_data_points, data_dim).
         """
         # --- ARD and Sparsity-Inducing Prior on w ---
 
@@ -205,7 +267,7 @@ class pca:
         # --- Standard Prior for Z ---
 
         # The prior on the latent variables 'Z' remains a standard Gaussian.
-        z = self.dist.normal(0., 1., shape=(latent_dim, num_data_points), name='z')
+        z = self.dist.normal(0., 1., shape=(num_data_points, latent_dim), name='z')
 
         # --- Robustness to Outliers via a Heavy-Tailed Noise Model ---
 
@@ -217,7 +279,8 @@ class pca:
 
         # The likelihood is the Student's t-distribution, which makes the entire
         # model robust to outliers in the observed data 'x_train'.
-        self.dist.student_t(df=nu, loc=w @ z, scale=sigma, obs=X)
+        # z @ w.T is (num_data_points, data_dim), matching X.
+        self.dist.student_t(df=nu, loc=z @ w.T, scale=sigma, obs=X)
 
     ## Get attributes---------------------------------------------
     # --- Functions 1 : 
@@ -263,15 +326,14 @@ class pca:
         Returns:
             The component matrix with a consistent sign convention.
         """
-        # Process each component (column)
-        for i in range(components.shape[1]):
-            # Find the index of the element with the largest absolute value
-            max_abs_idx = jnp.argmax(jnp.abs(components[:, i]))
-            # Check the sign of this element
-            if components[max_abs_idx, i] < 0:
-                # If it's negative, flip the sign of the entire column
-                components = components.at[:, i].set(components[:, i] * -1)
-        return components
+        # MINOR_AUDIT P9: vectorised sign flip. The old Python loop branched
+        # on a traced value (if components[max_abs_idx, i] < 0), which breaks
+        # under jax.jit. Same result: flip each column whose largest-|.|
+        # entry is negative.
+        idx = jnp.argmax(jnp.abs(components), axis=0)
+        signs = jnp.sign(components[idx, jnp.arange(components.shape[1])])
+        signs = jnp.where(signs == 0, 1.0, signs)
+        return components * signs[None, :]
 
     # --- Function 3: 
     def analyze_aligned_posteriors(self, X_scaled, aligned_w_samples):
@@ -318,7 +380,9 @@ class pca:
     def get_attributes(self, X, posteriors=None):
         if posteriors is None:
             if self.posterior is None:
-                return Warning("No posterior samples available. Please run the model first.")
+                # MINOR_AUDIT P1: a constructed Warning that is merely
+                # returned is never raised; fail loudly.
+                raise ValueError("No posterior samples available. Please run the model first.")
             else:
                 posteriors = self.posterior
         raw_w_samples = posteriors['w']
@@ -352,7 +416,11 @@ class pca:
             raise ValueError("x and y must be the same size")
 
         cov = jnp.cov(x, y)
-        pearson = cov[0, 1] / jnp.sqrt(cov[0, 0] * cov[1, 1])
+        # MINOR_AUDIT P4: a zero-variance group made pearson NaN, and a
+        # numerically out-of-range correlation could take sqrt of a negative.
+        denom = jnp.sqrt(cov[0, 0] * cov[1, 1])
+        pearson = jnp.where(denom > 0, cov[0, 1] / jnp.where(denom > 0, denom, 1.0), 0.0)
+        pearson = jnp.clip(pearson, -1.0, 1.0)
 
         ell_radius_x = jnp.sqrt(1 + pearson)
         ell_radius_y = jnp.sqrt(1 - pearson)
@@ -387,13 +455,20 @@ class pca:
         df_bayesian = pd.DataFrame(bayesian_comps, index=feature_names, columns=pc_names)
 
         # If no axis is provided, create a new figure and axis
+        # MINOR_AUDIT P6: the old dead guard re-tested ax after it had been
+        # filled in, so plt.show() never ran; use the show_plot pattern of
+        # cumulative_variance.
+        show_plot = False
         if ax is None:
             fig, ax = plt.subplots(figsize=(10, 8))
+            show_plot = True
 
         sns.heatmap(df_bayesian, annot=True, cmap='viridis', ax=ax)
         ax.set_title('Components Heatmap')
 
-        if ax is None:
+        # Only show plot if the function created its own figure
+        if show_plot:
+            plt.tight_layout()
             plt.show()
 
     def cumulative_variance(
@@ -439,10 +514,15 @@ class pca:
 
     def variable_correlation(self, feature_names, X=None, bayesian_results=None, ax=None):
         """Generates a variable correlation plot with cos2 values."""
-        if X is None: X = self.X.T
+        if X is None: X = self.X  # self.X is (num_data_points, data_dim), RELEASE_AUDIT P2
         if bayesian_results is None: bayesian_results = self.bayesian_pca_results
 
         components, ratio, _, _, _ = self.extract_results_for_plot(bayesian_results, X)
+        # MINOR_AUDIT P5: the plot needs Dim 1 and Dim 2 (ratio[1]).
+        if components.shape[1] < 2:
+            raise ValueError(
+                "variable_correlation needs a model with at least 2 components "
+                "to plot Dim 1 against Dim 2.")
         loadings = components
         var_cos2 = loadings**2
         var_cos2_pc1_pc2 = jnp.sum(var_cos2[:, :2], axis=1)
@@ -494,16 +574,22 @@ class pca:
             """
             if X is None:
                 if self.X is not None:
-                    X = self.X.T
+                    X = self.X  # self.X is (num_data_points, data_dim), RELEASE_AUDIT P2
                 else:
-                    Warning("No X found")        
+                    # MINOR_AUDIT P1: constructed Warnings were discarded.
+                    raise ValueError("No X found")
             if bayesian_results is None:
                 if self.bayesian_pca_results is not None:
                     bayesian_results = self.bayesian_pca_results
                 else:
-                    Warning("No Bayesian PCA results found. Please run get_attributes first.")
+                    raise ValueError("No Bayesian PCA results found. Please run get_attributes first.")
             # --- Extract Bayesian PCA results ---
             components, explained_variance_ratio, cumulative_variance, X_projected, component_indices = self.   extract_results_for_plot(bayesian_results, X)
+            # MINOR_AUDIT P5: the plot needs Dim 1 and Dim 2.
+            if components.shape[1] < 2:
+                raise ValueError(
+                    "individual_correlation needs a model with at least 2 components "
+                    "to plot Dim 1 against Dim 2.")
 
             # If no axis is provided, create a new figure and axis
             show_plot = False
@@ -550,7 +636,7 @@ class pca:
 
             if color_var is not None and size_var is not None and shape_var is not None:
                 if isinstance(size_var, (jnp.ndarray, list, SampledData)):
-                    size_var = 100 * (jnp.array(size_var) - min(size_var)) / (max(size_var) - min(size_var)) + 10
+                    size_var = _scale_sizes(size_var)
                 for shape in unique_shapes:
                     indices = jnp.where(shape_var == shape)[0]
                     ax.scatter(
@@ -563,7 +649,7 @@ class pca:
                         alpha=0.8,
                         label=f'Shape: {shape}'
                     )
-                scatter = plt.cScalarMappable(cmap='viridis')
+                scatter = matplotlib.cm.ScalarMappable(cmap='viridis')
                 scatter.set_array(color_var)
                 plt.colorbar(scatter, ax=ax, label='Color Variable')
                 # Place legend outside the plot
@@ -599,7 +685,7 @@ class pca:
 
             elif size_var is not None and shape_var is not None:
                 if isinstance(size_var, (jnp.ndarray, list, SampledData)):
-                    size_var = 100 * (jnp.array(size_var) - min(size_var)) / (max(size_var) - min(size_var)) + 10
+                    size_var = _scale_sizes(size_var)
                 for shape in unique_shapes:
                     indices = jnp.where(shape_var == shape)[0]
                     ax.scatter(
@@ -630,7 +716,7 @@ class pca:
 
             elif size_var is not None:
                 if isinstance(size_var, (jnp.ndarray, list, SampledData)):
-                    size_var = 100 * (jnp.array(size_var) - min(size_var)) / (max(size_var) - min(size_var)) + 10
+                    size_var = _scale_sizes(size_var)
                 ax.scatter(
                     X_projected[:, 0],
                     X_projected[:, 1],

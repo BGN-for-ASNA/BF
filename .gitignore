@@ -8,8 +8,11 @@
 BF/honnor/__pycache__/Network.cpython-310.pyc
 /.luarc.json
 __pycache__
+# build & packaging
+build/
 BayesForge.egg-info/
 dist/
+*.egg-info
 .codegpt
 .vscode/
 *.pkl

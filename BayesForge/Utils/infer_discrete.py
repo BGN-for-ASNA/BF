@@ -9,6 +9,14 @@ and collapses to a uniform draw over the site's support, independent of the
 data. This module reimplements the same forward-filter/backward-sample logic
 without that masking step, so discrete sites are drawn from their true
 posterior, conditioned on the observed data.
+
+Private-API dependency (RELEASE_AUDIT, Utils, infer_discrete): the exact
+enumeration below calls ``numpyro.contrib.funsor.discrete._sample_posterior``
+and ``numpyro.infer.util._guess_max_plate_nesting`` — both private numpyro
+symbols that can move or change signature on a numpyro upgrade with no
+warning. The regression smoke test lives in
+``Test/0.Core/test_audit_utils_minor_b.py``; run it after every numpyro
+bump.
 """
 
 import jax
@@ -37,9 +45,34 @@ def sample_discrete_posterior(model, posterior_samples, rng_key, model_kwargs=No
     Returns:
         dict of sampled sites (discrete + everything else in the trace),
         each shaped (S, ...).
+
+    Raises:
+        ValueError: if ``posterior_samples`` is empty, a site carries no
+            draws (empty axis 0), or the sites disagree on their leading
+            (batch) dimension. Input assumptions (RELEASE_AUDIT, Utils,
+            infer_discrete) are validated up front instead of surfacing as
+            a bare ``IndexError`` from ``tree_leaves(...)[0]`` or ``x[0]``.
     """
     model_kwargs = model_kwargs or {}
-    batch_shape = jax.tree_util.tree_leaves(posterior_samples)[0].shape[:1]
+    leaves = jax.tree_util.tree_leaves(posterior_samples)
+    if not leaves:
+        raise ValueError(
+            "posterior_samples is empty: at least one site with draws is "
+            "required to infer the batch shape."
+        )
+    for leaf in leaves:
+        if len(leaf.shape) < 1 or leaf.shape[0] == 0:
+            raise ValueError(
+                "every posterior_samples site needs at least one draw on "
+                f"axis 0; found a site with shape {tuple(leaf.shape)}."
+            )
+    batch_shape = leaves[0].shape[:1]
+    for leaf in leaves[1:]:
+        if leaf.shape[:1] != batch_shape:
+            raise ValueError(
+                "posterior_samples sites have inconsistent leading (batch) "
+                f"dimensions: {batch_shape[0]} vs {leaf.shape[0]}."
+            )
 
     rng_key, subkey = random.split(rng_key)
     prototype_sample = jax.tree.map(lambda x: x[0], posterior_samples)

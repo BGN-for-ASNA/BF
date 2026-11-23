@@ -40,14 +40,30 @@ def _met():
     return met
 
 
+def _density(n: int, edges: int, undirected: bool) -> float:
+    """Fallback density matching ``met.density`` (m15): self-loops excluded,
+    ``E / (n (n - 1))`` for a directed graph and ``E / (n (n - 1) / 2)``
+    (``= 2 E / (n (n - 1))``) for an undirected one, where ``edges`` counts
+    each undirected edge **once**. Returns 0.0 for ``n < 2``."""
+    if n < 2:
+        return 0.0
+    return edges / (n * (n - 1) / (2 if undirected else 1))
+
+
 def network_stats(adj) -> dict:
     """Global summary — n, edges, density, mean degree, components, diameter,
-    global clustering."""
+    global clustering.
+
+    Self-loops (the diagonal) are **excluded** from ``edges``, ``mean_degree``
+    and the density fallback (m15); the primary density path (``met.density``)
+    ignores them too, so both paths agree on the same convention.
+    """
     from BayesForge.Network.layouts import _bfs_all_pairs
 
     A = np.asarray(adj, dtype=float)
     n = int(A.shape[0])
     abin = A != 0
+    np.fill_diagonal(abin, False)  # self-loops out of every count (m15)
     undirected = bool(np.allclose(A, A.T))
     edges = int(abin.sum() / (2 if undirected else 1))
     deg = abin.sum(1) + abin.sum(0) if not undirected else abin.sum(1)
@@ -71,7 +87,9 @@ def network_stats(adj) -> dict:
     try:
         dens = float(np.asarray(m.density(adj)))
     except Exception:
-        dens = edges / (n * (n - 1) / 2) if n > 1 else 0.0
+        # same convention as met.density (m15): directed E/(n(n-1)),
+        # undirected 2E/(n(n-1)), self-loops excluded
+        dens = _density(n, edges, undirected)
     try:
         gcc = float(np.nanmean(np.asarray(m.cc(adj))))
     except Exception:
@@ -91,6 +109,9 @@ def network_stats(adj) -> dict:
 
 def centralities(adj, directed: bool = False) -> dict:
     """name -> per-node float array, for the Size-by / Colour-by dropdowns."""
+    import os
+    import warnings
+
     import jax.numpy as jnp
 
     m = _met()
@@ -116,7 +137,19 @@ def centralities(adj, directed: bool = False) -> dict:
         _try("instrength", lambda: m.instrength(Aj))
         _try("outstrength", lambda: m.outstrength(Aj))
     _try("eigenvector", lambda: m.eigenvector(Aj))
-    _try("betweenness", lambda: m.betweenness(Abin, n_nodes=n, directed=directed))
+    # betweenness vmaps a per-source routine that materialises (N, N, N):
+    # ~2 GB at N=800, ~13 GB at N=1500. Skip it above a configurable limit,
+    # the same way the _try failure path omits a metric.
+    limit = int(os.environ.get("BF_BETWEENNESS_MAX_N", 500))
+    if n > limit:
+        warnings.warn(
+            f"vis_net: betweenness skipped for N={n} > {limit} nodes "
+            "(memory O(N^3)); set BF_BETWEENNESS_MAX_N to raise the limit.",
+            UserWarning,
+            stacklevel=2,
+        )
+    else:
+        _try("betweenness", lambda: m.betweenness(Abin, n_nodes=n, directed=directed))
     _try("clustering", lambda: m.cc(Aj))
     return out
 

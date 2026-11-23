@@ -127,6 +127,20 @@ div.csl-indent {
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -148,14 +162,10 @@ div.csl-indent {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -630,7 +640,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -646,6 +656,7 @@ window.Quarto = {
   <li><a href="#non-centered-parameterization" id="toc-non-centered-parameterization" class="nav-link" data-scroll-target="#non-centered-parameterization">Non-centered parameterization</a></li>
   <li><a href="#multivariate-model-with-one-random-slope-for-each-variable" id="toc-multivariate-model-with-one-random-slope-for-each-variable" class="nav-link" data-scroll-target="#multivariate-model-with-one-random-slope-for-each-variable"><em>Multivariate Model with One Random Slope for Each Variable</em></a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -717,7 +728,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="d65967ea" class="cell" data-execution_count="1">
+<div id="d9210955" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -761,19 +772,12 @@ Note
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
-jax.local_device_count 32</code></pre>
-</div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/sosa/.local/lib/python3.10/site-packages/arviz/stats/diagnostics.py:596: RuntimeWarning:
-
-invalid value encountered in scalar divide
-
-/home/sosa/.local/lib/python3.10/site-packages/arviz/stats/diagnostics.py:991: RuntimeWarning:
-
-invalid value encountered in scalar divide
-</code></pre>
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>bf v 0.0.60 package loaded
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -785,13 +789,13 @@ invalid value encountered in scalar divide
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
@@ -801,35 +805,35 @@ invalid value encountered in scalar divide
 <td>0.00</td>
 <td>1.00</td>
 <td>1.00</td>
-<td>0.00</td>
+<td>4000.00</td>
+<td>4000.00</td>
 <td>NaN</td>
-<td>4000.00</td>
-<td>4000.00</td>
+<td>0.00</td>
 <td>NaN</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">Rho[0, 1]</td>
 <td>-0.55</td>
 <td>0.22</td>
-<td>-0.87</td>
-<td>-0.22</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>1835.95</td>
-<td>1790.87</td>
+<td>-0.84</td>
+<td>-0.15</td>
+<td>1447.68</td>
+<td>1240.32</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Rho[1, 0]</td>
 <td>-0.55</td>
 <td>0.22</td>
-<td>-0.87</td>
-<td>-0.22</td>
-<td>0.01</td>
-<td>0.01</td>
-<td>1835.95</td>
-<td>1790.87</td>
+<td>-0.84</td>
+<td>-0.15</td>
+<td>1447.68</td>
+<td>1240.32</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">Rho[1, 1]</td>
@@ -837,23 +841,23 @@ invalid value encountered in scalar divide
 <td>0.00</td>
 <td>1.00</td>
 <td>1.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3789.06</td>
-<td>3624.07</td>
+<td>4022.06</td>
+<td>3956.42</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>3.85</td>
+<td>3.86</td>
 <td>0.26</td>
 <td>3.43</td>
-<td>4.26</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3437.45</td>
-<td>2614.95</td>
+<td>4.28</td>
+<td>4700.96</td>
+<td>3317.59</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[0, 0]</td>
@@ -861,479 +865,479 @@ invalid value encountered in scalar divide
 <td>0.21</td>
 <td>3.89</td>
 <td>4.57</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3721.22</td>
-<td>2820.27</td>
+<td>4531.21</td>
+<td>3366.17</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[0, 1]</td>
 <td>-1.49</td>
-<td>0.24</td>
-<td>-1.89</td>
+<td>0.23</td>
+<td>-1.86</td>
 <td>-1.13</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2877.04</td>
-<td>2781.24</td>
+<td>3318.42</td>
+<td>3091.49</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[1, 0]</td>
 <td>0.40</td>
-<td>0.23</td>
-<td>0.02</td>
-<td>0.75</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2778.61</td>
-<td>2505.39</td>
+<td>0.22</td>
+<td>0.05</td>
+<td>0.76</td>
+<td>2904.26</td>
+<td>2335.79</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[1, 1]</td>
-<td>-0.71</td>
+<td>-0.72</td>
 <td>0.29</td>
-<td>-1.19</td>
-<td>-0.25</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>2171.03</td>
-<td>1992.38</td>
+<td>-1.18</td>
+<td>-0.24</td>
+<td>1926.52</td>
+<td>2118.62</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[2, 0]</td>
 <td>4.43</td>
-<td>0.22</td>
-<td>4.11</td>
-<td>4.80</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>4004.96</td>
-<td>3128.74</td>
+<td>0.21</td>
+<td>4.10</td>
+<td>4.77</td>
+<td>4613.45</td>
+<td>3277.91</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[2, 1]</td>
-<td>-1.40</td>
-<td>0.24</td>
+<td>-1.39</td>
+<td>0.23</td>
 <td>-1.78</td>
-<td>-1.03</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3705.87</td>
-<td>2854.43</td>
+<td>-1.04</td>
+<td>4144.49</td>
+<td>3266.40</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[3, 0]</td>
 <td>3.65</td>
 <td>0.22</td>
-<td>3.28</td>
-<td>3.97</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2835.27</td>
-<td>2730.90</td>
+<td>3.30</td>
+<td>4.00</td>
+<td>2649.75</td>
+<td>2987.76</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[3, 1]</td>
 <td>-1.61</td>
-<td>0.26</td>
-<td>-2.01</td>
-<td>-1.18</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>1847.59</td>
-<td>2566.11</td>
+<td>0.27</td>
+<td>-2.05</td>
+<td>-1.22</td>
+<td>1886.19</td>
+<td>2628.11</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[4, 0]</td>
-<td>3.19</td>
+<td>3.20</td>
 <td>0.22</td>
-<td>2.86</td>
-<td>3.55</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3172.98</td>
-<td>2805.11</td>
+<td>2.84</td>
+<td>3.54</td>
+<td>2605.67</td>
+<td>2772.66</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[4, 1]</td>
 <td>-1.02</td>
 <td>0.25</td>
-<td>-1.42</td>
-<td>-0.64</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>2345.07</td>
-<td>2468.35</td>
+<td>-1.40</td>
+<td>-0.59</td>
+<td>1998.95</td>
+<td>3044.43</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[5, 0]</td>
-<td>3.01</td>
-<td>0.22</td>
+<td>3.00</td>
+<td>0.21</td>
 <td>2.67</td>
-<td>3.36</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3373.37</td>
-<td>3090.52</td>
+<td>3.34</td>
+<td>3676.20</td>
+<td>2681.76</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[5, 1]</td>
 <td>-1.40</td>
 <td>0.25</td>
-<td>-1.79</td>
-<td>-1.01</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>2420.85</td>
-<td>2594.64</td>
+<td>-1.81</td>
+<td>-1.03</td>
+<td>2785.28</td>
+<td>2751.89</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[6, 0]</td>
 <td>2.87</td>
-<td>0.23</td>
-<td>2.48</td>
-<td>3.20</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2464.20</td>
-<td>2378.74</td>
+<td>0.22</td>
+<td>2.50</td>
+<td>3.23</td>
+<td>2709.09</td>
+<td>2897.32</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[6, 1]</td>
 <td>-0.85</td>
-<td>0.27</td>
-<td>-1.28</td>
-<td>-0.41</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>1959.15</td>
-<td>2009.66</td>
+<td>0.28</td>
+<td>-1.27</td>
+<td>-0.37</td>
+<td>1379.17</td>
+<td>1079.91</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[7, 0]</td>
 <td>3.02</td>
 <td>0.22</td>
-<td>2.68</td>
+<td>2.69</td>
 <td>3.37</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3476.93</td>
-<td>2735.52</td>
+<td>3674.60</td>
+<td>2891.80</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[7, 1]</td>
 <td>-1.44</td>
-<td>0.26</td>
-<td>-1.83</td>
-<td>-1.02</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>2545.59</td>
-<td>2834.91</td>
+<td>0.25</td>
+<td>-1.86</td>
+<td>-1.07</td>
+<td>2624.31</td>
+<td>2861.83</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[8, 0]</td>
-<td>5.48</td>
+<td>5.47</td>
 <td>0.21</td>
 <td>5.13</td>
-<td>5.79</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3512.37</td>
-<td>2889.24</td>
+<td>5.82</td>
+<td>3480.79</td>
+<td>3131.87</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[8, 1]</td>
 <td>-1.48</td>
 <td>0.25</td>
-<td>-1.83</td>
-<td>-1.05</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3533.26</td>
-<td>2969.89</td>
+<td>-1.87</td>
+<td>-1.09</td>
+<td>3187.97</td>
+<td>3022.77</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[9, 0]</td>
-<td>3.46</td>
+<td>3.45</td>
 <td>0.21</td>
-<td>3.14</td>
-<td>3.81</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3722.71</td>
-<td>3168.59</td>
+<td>3.12</td>
+<td>3.79</td>
+<td>4014.88</td>
+<td>3196.80</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[9, 1]</td>
-<td>-1.38</td>
-<td>0.24</td>
-<td>-1.76</td>
-<td>-1.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3134.76</td>
-<td>3027.44</td>
+<td>-1.37</td>
+<td>0.23</td>
+<td>-1.75</td>
+<td>-1.01</td>
+<td>3711.84</td>
+<td>2726.82</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[10, 0]</td>
 <td>3.96</td>
 <td>0.21</td>
-<td>3.61</td>
-<td>4.29</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3859.95</td>
-<td>2892.07</td>
+<td>3.62</td>
+<td>4.30</td>
+<td>3907.35</td>
+<td>3130.64</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[10, 1]</td>
 <td>-1.12</td>
 <td>0.25</td>
-<td>-1.52</td>
-<td>-0.74</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2889.16</td>
-<td>3154.98</td>
+<td>-1.49</td>
+<td>-0.70</td>
+<td>2509.79</td>
+<td>2735.57</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[11, 0]</td>
-<td>4.19</td>
+<td>4.20</td>
 <td>0.21</td>
 <td>3.86</td>
 <td>4.53</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>4192.67</td>
-<td>3466.78</td>
+<td>3921.49</td>
+<td>3224.05</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[11, 1]</td>
 <td>-1.30</td>
-<td>0.23</td>
-<td>-1.68</td>
-<td>-0.95</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3385.70</td>
-<td>2791.08</td>
+<td>0.24</td>
+<td>-1.67</td>
+<td>-0.93</td>
+<td>3475.42</td>
+<td>3048.89</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[12, 0]</td>
-<td>5.39</td>
+<td>5.38</td>
 <td>0.22</td>
-<td>5.06</td>
-<td>5.75</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3020.10</td>
-<td>2456.52</td>
+<td>5.05</td>
+<td>5.73</td>
+<td>3620.20</td>
+<td>3290.75</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[12, 1]</td>
-<td>-1.66</td>
+<td>-1.65</td>
 <td>0.25</td>
-<td>-2.06</td>
-<td>-1.27</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>2421.16</td>
-<td>2820.90</td>
+<td>-2.08</td>
+<td>-1.26</td>
+<td>2726.63</td>
+<td>3122.27</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[13, 0]</td>
 <td>3.52</td>
 <td>0.21</td>
-<td>3.20</td>
-<td>3.86</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3887.91</td>
-<td>2905.77</td>
+<td>3.18</td>
+<td>3.87</td>
+<td>3449.83</td>
+<td>3146.39</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[13, 1]</td>
 <td>-1.20</td>
-<td>0.24</td>
-<td>-1.57</td>
-<td>-0.83</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3371.14</td>
-<td>2820.03</td>
+<td>0.23</td>
+<td>-1.56</td>
+<td>-0.82</td>
+<td>2933.41</td>
+<td>2556.19</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[14, 0]</td>
 <td>3.48</td>
 <td>0.21</td>
-<td>3.11</td>
-<td>3.79</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3186.82</td>
-<td>2755.45</td>
+<td>3.15</td>
+<td>3.82</td>
+<td>3410.54</td>
+<td>2881.56</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[14, 1]</td>
 <td>-1.14</td>
 <td>0.24</td>
-<td>-1.49</td>
+<td>-1.50</td>
 <td>-0.75</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2754.25</td>
-<td>2311.29</td>
+<td>3133.61</td>
+<td>3092.29</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[15, 0]</td>
 <td>4.30</td>
-<td>0.20</td>
+<td>0.21</td>
 <td>3.97</td>
-<td>4.60</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3408.77</td>
-<td>2501.18</td>
+<td>4.64</td>
+<td>3991.05</td>
+<td>3215.63</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[15, 1]</td>
-<td>-1.40</td>
+<td>-1.39</td>
 <td>0.23</td>
-<td>-1.79</td>
-<td>-1.05</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3557.33</td>
-<td>3084.03</td>
+<td>-1.77</td>
+<td>-1.04</td>
+<td>4073.10</td>
+<td>2895.77</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[16, 0]</td>
 <td>4.56</td>
-<td>0.21</td>
+<td>0.22</td>
 <td>4.22</td>
-<td>4.90</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2978.61</td>
-<td>3294.58</td>
+<td>4.91</td>
+<td>3380.27</td>
+<td>3032.48</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[16, 1]</td>
-<td>-1.61</td>
-<td>0.25</td>
+<td>-1.60</td>
+<td>0.24</td>
 <td>-2.00</td>
 <td>-1.23</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>1897.40</td>
-<td>2486.10</td>
+<td>2525.99</td>
+<td>3137.54</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[17, 0]</td>
 <td>4.66</td>
 <td>0.21</td>
-<td>4.33</td>
-<td>5.00</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3523.10</td>
-<td>2906.45</td>
+<td>4.32</td>
+<td>4.99</td>
+<td>4334.47</td>
+<td>3354.24</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[17, 1]</td>
-<td>-1.35</td>
+<td>-1.34</td>
 <td>0.24</td>
 <td>-1.71</td>
-<td>-0.94</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3254.28</td>
-<td>2535.04</td>
+<td>-0.95</td>
+<td>3855.07</td>
+<td>3000.99</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[18, 0]</td>
 <td>5.42</td>
 <td>0.22</td>
-<td>5.05</td>
-<td>5.75</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>2676.39</td>
-<td>2989.87</td>
+<td>5.08</td>
+<td>5.77</td>
+<td>3235.83</td>
+<td>2837.43</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[18, 1]</td>
-<td>-1.76</td>
+<td>-1.77</td>
 <td>0.26</td>
-<td>-2.15</td>
-<td>-1.31</td>
-<td>0.01</td>
-<td>0.00</td>
-<td>1799.03</td>
-<td>1707.36</td>
+<td>-2.20</td>
+<td>-1.36</td>
+<td>2073.02</td>
+<td>2208.05</td>
 <td>1.0</td>
+<td>0.01</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[19, 0]</td>
 <td>3.89</td>
 <td>0.21</td>
 <td>3.55</td>
-<td>4.22</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3986.96</td>
-<td>2695.93</td>
+<td>4.23</td>
+<td>3731.68</td>
+<td>3044.90</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[19, 1]</td>
-<td>-1.19</td>
-<td>0.24</td>
-<td>-1.55</td>
-<td>-0.80</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3469.75</td>
-<td>2647.27</td>
+<td>-1.20</td>
+<td>0.23</td>
+<td>-1.56</td>
+<td>-0.83</td>
+<td>2716.22</td>
+<td>2872.48</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">b</td>
@@ -1341,11 +1345,11 @@ invalid value encountered in scalar divide
 <td>0.11</td>
 <td>-1.49</td>
 <td>-1.14</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>1915.26</td>
-<td>2211.98</td>
+<td>2559.98</td>
+<td>2800.18</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma</td>
@@ -1353,35 +1357,35 @@ invalid value encountered in scalar divide
 <td>0.03</td>
 <td>0.49</td>
 <td>0.59</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>3437.50</td>
-<td>2509.96</td>
+<td>4018.33</td>
+<td>2869.39</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma_cafe[0]</td>
-<td>1.18</td>
-<td>0.20</td>
-<td>0.87</td>
-<td>1.47</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>4679.95</td>
-<td>2850.23</td>
+<td>1.17</td>
+<td>0.19</td>
+<td>0.91</td>
+<td>1.51</td>
+<td>3274.10</td>
+<td>2743.67</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma_cafe[1]</td>
 <td>0.36</td>
-<td>0.11</td>
+<td>0.12</td>
 <td>0.17</td>
-<td>0.53</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>869.14</td>
-<td>877.18</td>
+<td>0.55</td>
+<td>668.03</td>
+<td>666.11</td>
 <td>1.0</td>
+<td>0.00</td>
+<td>0.0</td>
 </tr>
 </tbody>
 </table>
@@ -1391,7 +1395,7 @@ invalid value encountered in scalar divide
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="5a5db6f2" class="cell" data-execution_count="2">
+<div id="c6774eb1" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -1429,7 +1433,7 @@ invalid value encountered in scalar divide
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>jax.local_device_count 32</code></pre>
+<pre><code>jax.local_device_count(cpu) = 32</code></pre>
 </div>
 </div>
 </div>
@@ -1441,41 +1445,35 @@ invalid value encountered in scalar divide
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/Sim data multivariatenormal.csv"</span>, <span class="at">sep =</span> <span class="st">''</span>), <span class="at">sep=</span><span class="st">','</span>)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'cafe'</span>, <span class="st">'wait'</span>, <span class="st">'afternoon'</span>))</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/Sim data multivariatenormal.csv"</span>, <span class="at">sep =</span> <span class="st">''</span>), <span class="at">sep=</span><span class="st">','</span>)</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data_to_model</span>(<span class="fu">list</span>(<span class="st">'cafe'</span>, <span class="st">'wait'</span>, <span class="st">'afternoon'</span>))</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(cafe, afternoon, wait, <span class="at">N_cafes =</span> <span class="fu">as.integer</span>(<span class="dv">20</span>) ){</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">5</span>, <span class="dv">2</span>, <span class="at">name =</span> <span class="st">'a'</span>)</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'b'</span>)</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  sigma_cafe <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">shape=</span> <span class="fu">c</span>(<span class="dv">2</span>), <span class="at">name =</span> <span class="st">'sigma_cafe'</span>)</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>( <span class="dv">1</span>, <span class="at">name =</span> <span class="st">'sigma'</span>)</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  Rho <span class="ot">=</span> <span class="fu">bf.dist.lkj</span>(<span class="fu">as.integer</span>(<span class="dv">2</span>), <span class="fu">as.integer</span>(<span class="dv">2</span>), <span class="at">name =</span> <span class="st">'Rho'</span>)</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  cov <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">outer</span>(sigma_cafe, sigma_cafe) <span class="sc">*</span> Rho</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  a_cafe_b_cafe <span class="ot">=</span> <span class="fu">bf.dist.multivariate_normal</span>(</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    jnp<span class="sc">$</span><span class="fu">squeeze</span>(jnp<span class="sc">$</span><span class="fu">stack</span>(<span class="fu">list</span>(a, b))), </span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    cov, </span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape =</span> <span class="fu">c</span>(N_cafes), <span class="at">name =</span> <span class="st">'a_cafe'</span>)  </span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  a_cafe <span class="ot">=</span> a_cafe_b_cafe[, <span class="dv">0</span>]</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  b_cafe <span class="ot">=</span> a_cafe_b_cafe[, <span class="dv">1</span>]</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a_cafe[cafe] <span class="sc">+</span> b_cafe[cafe] <span class="sc">*</span> afternoon</span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(mu, sigma, <span class="at">obs=</span>wait)</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="ot">=</span> m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">sim_multivariate_normal</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(data_path, <span class="at">sep =</span> <span class="st">','</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">cafe =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.integer</span>(m<span class="sc">$</span>df<span class="sc">$</span>cafe), <span class="at">dtype =</span> jnp<span class="sc">$</span>int32),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">wait =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.numeric</span>(m<span class="sc">$</span>df<span class="sc">$</span>wait), <span class="at">dtype =</span> jnp<span class="sc">$</span>float32),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">N_cafes =</span> <span class="fu">as.integer</span>(<span class="fu">length</span>(<span class="fu">unique</span>(m<span class="sc">$</span>df<span class="sc">$</span>cafe))),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">afternoon =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">as.numeric</span>(m<span class="sc">$</span>df<span class="sc">$</span>afternoon), <span class="at">dtype =</span> jnp<span class="sc">$</span>float32)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(cafe, wait, N_cafes, afternoon){</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'sigma'</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  veff <span class="ot">=</span> m<span class="sc">$</span>effects<span class="sc">$</span><span class="fu">varying_effects</span>(</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_vars =</span> <span class="dv">1</span>L, <span class="at">N_group =</span> N_cafes, <span class="at">group_id =</span> cafe, <span class="at">group_name =</span> <span class="st">'cafe'</span>, <span class="at">centered =</span> <span class="cn">FALSE</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  varying_intercept <span class="ot">=</span> veff[[<span class="dv">1</span>]]</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  varying_slope <span class="ot">=</span> veff[[<span class="dv">2</span>]]</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> varying_intercept <span class="sc">+</span> varying_slope <span class="sc">*</span> afternoon</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, sigma, <span class="at">obs =</span> wait, <span class="at">name =</span> <span class="st">'wait'</span>)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model, <span class="at">progress_bar =</span> <span class="cn">FALSE</span>) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-4" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-4-tab">
 <div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
@@ -1520,6 +1518,61 @@ invalid value encountered in scalar divide
 </div>
 </div>
 </div>
+<!--
+### Posterior predictive checks
+
+Does each café get its own variability of waiting times right?
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#1c320161 .cell execution_count=3}
+``` {.python .cell-code}
+# m.diag.ppc_stat(stat="sd", group="cafe")
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_stat(stat = "sd", group = "cafe")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_stat(stat="sd", group="cafe")
+```
+:::
+
+One panel per café: the vertical line is the observed standard deviation of waiting times in that café, the curve the simulated ones (hover the line for its value; two-sided p-value in the panel title). Several p-values near 0 would mean the model's single residual sigma does not fit all cafés. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#17fcaa78 .cell execution_count=4}
+``` {.python .cell-code}
+# m.diag.ppc_intervals(x="afternoon", group="cafe")
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_intervals(x = "afternoon", group = "cafe")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_intervals(x="afternoon", group="cafe")
+```
+:::
+
+One panel per café, observed waits in the morning (0) and afternoon (1) with predictive intervals: the varying slopes should follow the morning–afternoon difference of each café.
+:::
+-->
 </section>
 </section>
 <section id="mathematical-details" class="level2">
@@ -1654,6 +1707,48 @@ L \sim \text{LKJ Cholesky}(2)
 </span></p>
 </section>
 </section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/12.Varying%20effects.py">Comparison with Stan</a>: <code>12.Varying effects.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/12.Varying%20effects.py">Data generative model and inference model pipeline</a>: <code>12.Varying effects.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>12.Varying effects.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/12.Varying_effects_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>12.Varying effects.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/12.Varying_effects_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+</section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -1671,7 +1766,11 @@ Note
 <li><p>We can apply categorical variables similarly to <a href="./4. Categorical variable.html">Chapter 4</a>.</p></li>
 <li><p>We can apply multiple random effects in BayesForge as follows:</p></li>
 </ul>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(cafe, wait, N_cafes, afternoon, state):</span>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="sourceCode" id="cb8"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(cafe, wait, N_cafes, afternoon, state):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.exponential( <span class="dv">1</span>,  name <span class="op">=</span> <span class="st">'sigma'</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ⚠️ Note: `alpha_bar` and `beta_bar` are set to zero to ensure the same intercepts for all varying effects. ⚠️</span></span>
@@ -1688,7 +1787,7 @@ Note
 <span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    varying_intercept_2, varying_slope_2 <span class="op">=</span> m.effects.varying_effects(</span>
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        N_vars <span class="op">=</span> <span class="dv">1</span>,</span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        N_group <span class="op">=</span> <span class="dv">4</span>,</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        group_id <span class="op">=</span> states, </span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        group_id <span class="op">=</span> state, </span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        group_name<span class="op">=</span><span class="st">'states'</span>,</span>
 <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        alpha_bar <span class="op">=</span> jnp.array([<span class="dv">0</span>]),</span>
 <span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        beta_bar <span class="op">=</span> jnp.array([<span class="dv">0</span>]),</span>
@@ -1698,8 +1797,75 @@ Note
 <span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    varying_intercept <span class="op">=</span> varying_intercept_1 <span class="op">+</span> varying_intercept_2</span>
 <span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    varying_slope <span class="op">=</span> varying_slope_1 <span class="op">+</span> varying_slope_2</span>
 <span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> varying_intercept <span class="op">+</span> varying_slope[:,<span class="dv">0</span>] <span class="op">*</span> afternoon </span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu, sigma, obs<span class="op">=</span>wait</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> varying_intercept <span class="op">+</span> varying_slope <span class="op">*</span> afternoon </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    m.dist.normal(mu, sigma, obs<span class="op">=</span>wait)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb9"><pre class="sourceCode r no-test code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(cafe, wait, N_cafes, afternoon, state) {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  sigma <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">"sigma"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ⚠️ Note: `alpha_bar` and `beta_bar` are set to zero to ensure the same intercepts for all varying effects. ⚠️</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  veff_1 <span class="ot">&lt;-</span> m<span class="sc">$</span>effects<span class="sc">$</span><span class="fu">varying_effects</span>(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_vars =</span> <span class="dv">1</span>L,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_group =</span> N_cafes,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_id =</span> cafe,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_name =</span> <span class="st">"cafe"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_bar =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(<span class="dv">0</span>)),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta_bar =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(<span class="dv">0</span>)),</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">centered =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  veff_2 <span class="ot">&lt;-</span> m<span class="sc">$</span>effects<span class="sc">$</span><span class="fu">varying_effects</span>(</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_vars =</span> <span class="dv">1</span>L,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">N_group =</span> <span class="dv">4</span>L,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_id =</span> state,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_name =</span> <span class="st">"states"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_bar =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(<span class="dv">0</span>)),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta_bar =</span> jnp<span class="sc">$</span><span class="fu">array</span>(<span class="fu">list</span>(<span class="dv">0</span>)),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">centered =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  varying_intercept <span class="ot">&lt;-</span> veff_1[[<span class="dv">1</span>]] <span class="sc">+</span> veff_2[[<span class="dv">1</span>]]</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  varying_slope <span class="ot">&lt;-</span> veff_1[[<span class="dv">2</span>]] <span class="sc">+</span> veff_2[[<span class="dv">2</span>]]</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> varying_intercept <span class="sc">+</span> varying_slope <span class="sc">*</span> afternoon</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, sigma, <span class="at">obs =</span> wait)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode julia no-test code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(cafe, wait, N_cafes, afternoon, state)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name<span class="op">=</span><span class="st">"sigma"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ⚠️ Note: `alpha_bar` and `beta_bar` are set to zero to ensure the same intercepts for all varying effects. ⚠️</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    varying_intercept_1, varying_slope_1 <span class="op">=</span> m.effects.<span class="fu">varying_effects</span>(</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        N_vars<span class="op">=</span><span class="fl">1</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        N_group<span class="op">=</span>N_cafes,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        group_id<span class="op">=</span>cafe,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        group_name<span class="op">=</span><span class="st">"cafe"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        alpha_bar<span class="op">=</span>jnp.<span class="fu">array</span>([<span class="fl">0</span>]),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        beta_bar<span class="op">=</span>jnp.<span class="fu">array</span>([<span class="fl">0</span>]),</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        centered<span class="op">=</span><span class="cn">true</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    varying_intercept_2, varying_slope_2 <span class="op">=</span> m.effects.<span class="fu">varying_effects</span>(</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        N_vars<span class="op">=</span><span class="fl">1</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        N_group<span class="op">=</span><span class="fl">4</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        group_id<span class="op">=</span>state,</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        group_name<span class="op">=</span><span class="st">"states"</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        alpha_bar<span class="op">=</span>jnp.<span class="fu">array</span>([<span class="fl">0</span>]),</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        beta_bar<span class="op">=</span>jnp.<span class="fu">array</span>([<span class="fl">0</span>]),</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        centered<span class="op">=</span><span class="cn">true</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    varying_intercept <span class="op">=</span> varying_intercept_1 <span class="op">+</span> varying_intercept_2</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    varying_slope <span class="op">=</span> varying_slope_1 <span class="op">+</span> varying_slope_2</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> varying_intercept <span class="op">+</span> varying_slope <span class="op">*</span> afternoon</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(mu, sigma, obs<span class="op">=</span>wait)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 <p>Where <code>state</code> is a second varying effect, representing cafes clustered by state.</p>
 <p>⚠️ Note: <code>alpha_bar</code> and <code>beta_bar</code> are set to zero to ensure the same intercepts for all varying effects. ⚠️ <!---
 - We can apply varying slopes with any distribution presented in previous chapters. Below is the formula and the code snippet for a Binomial multivariate model with an interaction between two independent variables $X_1$ and $X_2$ and multiple varying effects for each actor and each group.
@@ -1794,7 +1960,7 @@ $$
 
 <br>
 
-``` python
+```{.python .no-test}
 from main import *
 # Setup device------------------------------------------------
 m = bf(platform='cpu')
@@ -2607,6 +2773,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

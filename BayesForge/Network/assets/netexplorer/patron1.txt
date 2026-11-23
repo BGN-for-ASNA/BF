@@ -24,6 +24,10 @@ a.dispatchEvent(e);
 
 </head>
 <body>
+  <div id="netLoader">
+    <div class="spinner"></div>
+    <div class="loader-text">Loading network...</div>
+  </div>
   <button id="menuToggle" type="button" aria-label="Toggle panel"
           onclick="document.body.classList.toggle('menu-open')">&#9776;</button>
   <nav class="main-menu">
@@ -91,7 +95,7 @@ a.dispatchEvent(e);
     dropdownButton.on("change", function(d) {
       // recover the option that has been chosen
       var selectedLayout = d3.select(this).property("value")
-      if(Layout != 'Multilayer'){
+      if(selectedLayout != 'Multilayer'){
         document.getElementById("param layer 0").style.visibility = "visible";
         document.getElementById("param layer 0").style.display = "block";
 
@@ -183,9 +187,11 @@ a.dispatchEvent(e);
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpace" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpace" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceV" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=sliderNSpaceV.value"
+           <input id="sliderNSpaceV" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -206,9 +212,11 @@ a.dispatchEvent(e);
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpace2" type="range" min="0" max="100000" oninput="sliderNSpaceV2.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpace2" type="range" min="0" max="100000" oninput="sliderNSpaceV2.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceV2" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace2.value=sliderNSpaceV2.value"
+           <input id="sliderNSpaceV2" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace2.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -227,9 +235,11 @@ a.dispatchEvent(e);
        <form>
          <div>
            <span>0</span>
-           <input id="sliderNSpaceH" type="range" min="0" max="100000" oninput="sliderNSpaceV.value=rangeInput.value" value="0" step="any"/>
+           <div class="slider-wrapper">
+             <input id="sliderNSpaceH" type="range" min="0" max="100000" oninput="sliderNSpaceVH.value=this.value" value="0" step="any"/>
+           </div>
            <span>100k</span>
-           <input id="sliderNSpaceVH" type="number" value= "1" min="0" max="100000" oninput="sliderNSpace.value=sliderNSpaceV.value"
+           <input id="sliderNSpaceVH" type="number" value= "1" min="0" max="100000" oninput="sliderNSpaceH.value=this.value"
            style="border: 0; text-align: center; background-color: #ecebeb;"/>
          </div>
        </form>
@@ -255,9 +265,11 @@ a.dispatchEvent(e);
            <form>
              <div>
                <span>0</span>
-               <input id="sliderSize" type="range" min="0" max="100000" oninput="sliderSizeV.value=rangeInput.value" value="0" step="any"/>
+               <div class="slider-wrapper">
+                 <input id="sliderSize" type="range" min="0" max="100000" oninput="sliderSizeV.value=this.value" value="0" step="any"/>
+               </div>
                <span>100k</span>
-               <input id="sliderSizeV" type="number" value= "0" min="0" max="100000" oninput="sliderSize.value=sliderSizeV.value"
+               <input id="sliderSizeV" type="number" value= "0" min="0" max="100000" oninput="sliderSize.value=this.value"
                style="border: 0; text-align: center; background-color: #ecebeb;"/>
              </div>
            </form>
@@ -277,9 +289,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderNWidth" type="range" min="0" max="100000" oninput="sliderNWidthV.value=rangeInput.value" value="0" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderNWidth" type="range" min="0" max="100000" oninput="sliderNWidthV.value=this.value" value="0" step="any"/>
+                 </div>
                  <span>100k</span>
-                 <input id="sliderNWidthV" type="number" value= "0" min="0" max="100000" oninput="sliderNWidth.value=sliderNWidthV.value"
+                 <input id="sliderNWidthV" type="number" value= "0" min="0" max="100000" oninput="sliderNWidth.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -299,9 +313,11 @@ a.dispatchEvent(e);
            <form>
              <div>
                <span>0</span>
-               <input id="sliderLab" type="range" min="0" max="100000" oninput="sliderLabV.value=rangeInput.value" value="0" step="any"/>
+               <div class="slider-wrapper">
+                 <input id="sliderLab" type="range" min="0" max="100000" oninput="sliderLabV.value=this.value" value="0" step="any"/>
+               </div>
                <span>100k</span>
-               <input id="sliderLabV" type="number" value= "0" min="0" max="100000" oninput="sliderLab.value=sliderLabV.value"
+               <input id="sliderLabV" type="number" value= "0" min="0" max="100000" oninput="sliderLab.value=this.value"
                style="border: 0; text-align: center; background-color: #ecebeb;"/>
              </div>
            </form>
@@ -329,9 +345,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLWidth" type="range" min="0" max="100000" oninput="sliderLWidthV.value=rangeInput.value" value="1" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderLWidth" type="range" min="0" max="100000" oninput="sliderLWidthV.value=this.value" value="1" step="any"/>
+                 </div>
                  <span>100k</span>
-                 <input id="sliderLWidthV" type="number" value= "1" min="0" max="100000" oninput="sliderLWidth.value=sliderLWidthV.value"
+                 <input id="sliderLWidthV" type="number" value= "1" min="0" max="100000" oninput="sliderLWidth.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -351,9 +369,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacity" type="range" min="0" max="1" oninput="sliderLOpacityV.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacity" type="range" min="0" max="1" oninput="sliderLOpacityV.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacity.value=sliderLOpacityV.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacity.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -373,9 +393,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacityM" type="range" min="0" max="1" oninput="sliderLOpacityMV.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacityM" type="range" min="0" max="1" oninput="sliderLOpacityMV.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityMV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM.value=sliderLOpacityMV.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityMV" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -393,9 +415,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLOpacityM2" type="range" min="0" max="1" oninput="sliderLOpacityMV2.value=rangeInput.value" value="0.5" step="any">
+                 <div class="slider-wrapper">
+                   <input id="sliderLOpacityM2" type="range" min="0" max="1" oninput="sliderLOpacityMV2.value=this.value" value="0.5" step="any">
+                 </div>
                  <span>1</span>
-                 <input id="sliderLOpacityMV2" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM2.value=sliderLOpacityMV2.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
+                 <input id="sliderLOpacityMV2" type="number" value="0.5" min="0" max="1" oninput="sliderLOpacityM2.value=this.value" style="border: 0px; text-align: center; background-color: rgb(236, 235, 235); --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; --darkreader-inline-bgcolor:#ceccc7;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" data-darkreader-inline-bgcolor="">
                </div>
              </form>
             </span>
@@ -416,9 +440,11 @@ a.dispatchEvent(e);
              <form>
                <div>
                  <span>0</span>
-                 <input id="sliderLCurve" type="range" min="0" max="2" oninput="sliderLCurveV.value=rangeInput.value" value="0.5" step="any"/>
+                 <div class="slider-wrapper">
+                   <input id="sliderLCurve" type="range" min="0" max="2" oninput="sliderLCurveV.value=this.value" value="0.5" step="any"/>
+                 </div>
                  <span>2</span>
-                 <input id="sliderLCurveV" type="number" value= "0.5" min="0" max="2" oninput="sliderLCurve.value=sliderLCurveV.value"
+                 <input id="sliderLCurveV" type="number" value= "0.5" min="0" max="2" oninput="sliderLCurve.value=this.value"
                  style="border: 0; text-align: center; background-color: #ecebeb;"/>
                </div>
              </form>
@@ -435,6 +461,7 @@ a.dispatchEvent(e);
   </a>
 </li>
     </nav>
+  <div id="menuResizer" class="menu-resizer" title="Drag to resize menu"></div>
 
   <svg xmlns="http://www.w3.org/2000/svg" width='100%' height='100%' id = 'net'></svg>
 </body>

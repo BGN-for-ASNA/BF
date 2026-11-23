@@ -8,7 +8,7 @@ import scipy.stats as stats
 # Create a global instance of the importer
 importer = LazyImporter()
 
-# Schedule the heavy libraries for background import as soon as this module is loaded
+# Register the heavy plotting libraries for lazy import on first use (no threads).
 importer.schedule_import("plotly.graph_objects", "go")
 importer.schedule_import("plotly.express", "px")
 importer.schedule_import("plotly.figure_factory", "ff")
@@ -16,10 +16,56 @@ importer.schedule_import("plotly.colors", "n_colors")
 importer.schedule_import("seaborn", "sns")
 importer.schedule_import("matplotlib.pyplot", "plt")
 
+
+def _autocorr_1d(series, lags):
+    """Autocorrelation of a 1D numpy array for lags 0..lags-1, NaN-free.
+
+    RELEASE_AUDIT (Utils, autocorr): ``np.corrcoef(series[:-k], series[k:])``
+    returned NaN with a RuntimeWarning for ``k >= len(series)`` (empty slices)
+    and for constant series (zero variance), and the interactive 1D path used
+    ``np.corrcoef`` while its 2D non-interactive twin used ``jnp.corrcoef``
+    (two different NaN semantics). Every path now goes through this single
+    numpy helper: lag 0 is 1.0 and any lag whose overlap has fewer than two
+    distinct points is 0.0 (no correlation information), never NaN.
+    """
+    lags = max(int(lags), 0)
+    acf = [1.0] if lags > 0 else []
+    for k in range(1, lags):
+        a, b = series[:-k], series[k:]
+        if a.size < 2 or np.ptp(a) == 0 or np.ptp(b) == 0:
+            acf.append(0.0)
+        else:
+            acf.append(float(np.corrcoef(a, b)[0, 1]))
+    return acf
+
+
 class SampledData:
     """
     A wrapper for a JAX numpy array that adds interactive plotting methods using Plotly
     while preserving all other JAX array functionalities through attribute delegation.
+
+    Public contract (RELEASE_AUDIT, Utils, "Contrat public"): the plotting
+    methods above the delegation layer are the real added value; the
+    statistical/export surface is deliberately thin and documented here
+    rather than expanded:
+
+    * First-class statistics are only :meth:`hdi` and :meth:`to_jax`.
+      ``sd.mean()``, ``sd.std()``, ``sd.quantile()`` etc. are delegated to
+      the wrapped JAX array, so they use ``ddof=0`` (population, not sample,
+      statistics — biased on few draws), have no ``nanmean``-style variants,
+      and never treat axis 0 as a chain axis: there is no ``(chains, draws)``
+      semantics anywhere in this class.
+    * There is no CSV/ArviZ export; convert with :meth:`to_jax` or
+      ``np.asarray`` and export yourself.
+    * Plotting methods accept data containing NaN/inf without warning
+      (``np.histogram``/KDE simply ignore or fail on them); :meth:`density`
+      is the only method that filters non-finite values.
+    * ``__eq__`` is element-wise (it returns an array), so — like numpy
+      arrays — SampledData is **unhashable**: ``dict[sd] = ...`` and ``set``
+      membership raise ``TypeError``.
+    * The wrapped JAX array is immutable: ``sd[idx] = v`` raises ``TypeError``
+      (use ``sd.at[idx].set(v)``), which also neutralises the views-vs-copies
+      risk on the source posterior.
     """
 
     def __init__(self, data):
@@ -44,22 +90,10 @@ class SampledData:
             return other._data
         return other
 
-    def _tree_flatten(self):
-        """
-        Tells JAX how to flatten the object.
-        Returns a tuple of array leaves and a tuple of non-array metadata.
-        """
-        children = (self._data,)  # The JAX arrays to be traced
-        aux_data = None           # Any static data you need to reconstruct the class
-        return (children, aux_data)
-
-    @classmethod
-    def _tree_unflatten(cls, aux_data, children):
-        """
-        Tells JAX how to reconstruct the object from leaves and metadata.
-        """
-        # aux_data is None, children is a tuple containing the new JAX array
-        return cls(children[0])
+    # NOTE: _tree_flatten / _tree_unflatten are defined once, near the pytree
+    # registration at the bottom of the class. An earlier duplicate pair (whose
+    # unflatten routed through __init__/jnp.asarray and broke vmap/scan) used
+    # to sit here; it was shadowed by the second pair and has been removed.
 
     def __repr__(self):
         # Mirror jax's own repr so the dtype (int/float + precision 8/16/32/64)
@@ -90,6 +124,15 @@ class SampledData:
         interactive = True,
         figsize=(6, 4),**kwargs
     ):
+        """Histogram of the draws.
+
+        For 3D data the array is read as ``(n_samples, n_groups, n_times)``:
+        axis 1 indexes groups (one colour / z-offset each), axis 2 indexes
+        times (one line each, plotted on y). The shared bin range covers the
+        data — it used to be frozen at [-4, 4], which silently dropped every
+        value outside it (``np.histogram`` ignores out-of-bin values) and
+        produced wrong densities for non-standardised draws.
+        """
         if interactive:
             """Interactive histogram visualization."""
             go=importer.get_module("go")
@@ -107,9 +150,20 @@ class SampledData:
                     fig.add_trace(go.Histogram(x=np.array(self._data[:, i]), nbinsx=nbinsx, name=f"Var {i}  ", **kwargs))
 
             elif self._data.ndim == 3:
+                # (n_samples, n_groups, n_times): groups live on axis 1, times
+                # on axis 2. The old code sliced [:, t, g] while iterating t
+                # over range(n_times) — IndexError when n_times > n_groups,
+                # silently wrong slices otherwise.
                 n_samples, n_groups, n_times = self._data.shape
+                arr = np.asarray(self._data)
                 bins = nbinsx
-                bin_edges = jnp.linspace(-4, 4, bins + 1)
+                # Data-driven bin range that keeps the historical [-4, 4]
+                # whenever the data fits inside it (identical output for
+                # standardised draws) but grows to cover outliers instead of
+                # dropping them.
+                lo = min(-4.0, float(arr.min()))
+                hi = max(4.0, float(arr.max()))
+                bin_edges = np.linspace(lo, hi, bins + 1)
                 bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
                 colorscale = px.colors.qualitative.Plotly
@@ -117,7 +171,7 @@ class SampledData:
 
                 for g in range(n_groups):
                     for t in range(n_times):
-                        values = np.array(self._data[:, t, g])
+                        values = arr[:, g, t]
                         counts, _ = np.histogram(values, bins=bin_edges, density=True)
 
                         x = bin_centers
@@ -152,7 +206,10 @@ class SampledData:
 
     def corr_heatmap(self, title="Correlation Matrix", template="plotly_white", digits=5, interactive = True, figsize=(6, 5), **kwargs):
         """
-        Visualizes the correlation matrix of the 2D data as a heatmap with annotations.
+        Visualizes the Pearson correlation matrix of the sampled data as a heatmap
+        with annotations. The input data are draws with shape
+        (n_samples, n_variables); the plotted matrix is their Pearson correlation,
+        with shape (n_variables, n_variables).
         Values are explicitly formatted as strings to ensure consistent rounding in the plot.
         The y-axis is inverted to match standard matrix representation.
         """
@@ -165,18 +222,14 @@ class SampledData:
             if self._data.ndim != 2:
                 raise ValueError(f"Correlation heatmap is only supported for 2D data. Your data has   {self.  _data.ndim} dimensions.")
             
-            # --- FIX 1: Always calculate the correlation from the samples ---
-            # The function expects self._data to be samples [n_samples, n_variables]
+            # The data are draws [n_samples, n_variables]; plot their Pearson
+            # correlation [n_variables, n_variables], never the raw draws.
             if self._data.shape[0] < 2:
                 raise ValueError("Cannot calculate correlation with fewer than 2 samples.")
-            corr_matrix = self._data
+            corr_matrix = np.corrcoef(np.asarray(self._data), rowvar=False)
         
-            # --- FIX 2: Format annotations into strings for consistent display ---
-            formatted_text = np.full(corr_matrix.shape, "", dtype=object)
-            for i in range(corr_matrix.shape[0]):
-                for j in range(corr_matrix.shape[1]):
-                    # Use an f-string to force formatting with 'digits' decimal places
-                    formatted_text[i, j] = f"{corr_matrix[i, j]:.{digits}f}"
+            # Format annotations into strings for consistent display.
+            formatted_text = np.vectorize(lambda v: f"{v:.{digits}f}")(corr_matrix)
         
             x = [f'Var {i}' for i in range(corr_matrix.shape[1])]
             y = [f'Var {i}' for i in range(corr_matrix.shape[0])]
@@ -204,8 +257,11 @@ class SampledData:
             plt=importer.get_module("plt")
             if self._data.ndim != 2:
                 raise ValueError("Heatmap requires 2D data.")
+            if self._data.shape[0] < 2:
+                raise ValueError("Cannot calculate correlation with fewer than 2 samples.")
+            corr_matrix = np.corrcoef(np.asarray(self._data), rowvar=False)
             plt.figure(figsize=figsize)
-            sns.heatmap(self._data, cmap="viridis")
+            sns.heatmap(corr_matrix, cmap="viridis")
             plt.title(title)
             plt.show()
 
@@ -378,22 +434,31 @@ class SampledData:
             plt.show()
     
     def autocorr(self, lags=50, title="Autocorrelation Plot", interactive = True,figsize=(8, 4)):
+        """Bar plot of the autocorrelation of each column (or of a 1D series).
+
+        All four branches (interactive/non-interactive x 1D/2D) share the
+        single numpy helper :func:`_autocorr_1d`: the data is converted to
+        numpy once (no per-lag device sync) and short or constant series
+        yield 0.0 instead of NaN + RuntimeWarning (see the helper's
+        docstring).
+        """
         if interactive:
             go=importer.get_module("go")
             px=importer.get_module("px")
             ff=importer.get_module("ff")
             n_colors=importer.get_module("n_colors")
             if  self._data.ndim == 1:
-                series =  self._data
-                acf = [np.corrcoef(series[:-k], series[k:])[0, 1] if k > 0 else 1 for k in range(lags)]
+                series = np.asarray(self._data)
+                acf = _autocorr_1d(series, lags)
                 fig = go.Figure([go.Bar(x=list(range(lags)), y=acf)])
                 fig.update_layout(title=title, xaxis_title="Lag", yaxis_title="Autocorrelation")
                 fig.show()
             elif  self._data.ndim == 2:
                 fig = go.Figure()
+                arr = np.asarray(self._data)
                 for i in range( self._data.shape[1]):
-                    series =  self._data[:, i]
-                    acf = [np.corrcoef(series[:-k], series[k:])[0, 1] if k > 0 else 1 for k in range(lags)]
+                    series = arr[:, i]
+                    acf = _autocorr_1d(series, lags)
                     fig.add_trace(go.Bar(x=list(range(lags)), y=acf, name=f"Var {i}", opacity=0.5))
                 fig.update_layout(title=title, xaxis_title="Lag", yaxis_title="Autocorrelation")
                 fig.show()
@@ -403,13 +468,14 @@ class SampledData:
             plt=importer.get_module("plt")
             plt.figure(figsize=figsize)
             if self._data.ndim == 1:
-                series = self._data
-                acf = [np.corrcoef(series[:-k], series[k:])[0, 1] if k > 0 else 1 for k in range(lags)]
+                series = np.asarray(self._data)
+                acf = _autocorr_1d(series, lags)
                 plt.bar(range(lags), acf)
             elif self._data.ndim == 2:
+                arr = np.asarray(self._data)
                 for i in range( self._data.shape[1]):
-                    series = self._data[:, i]
-                    acf = [jnp.corrcoef(series[:-k], series[k:])[0, 1] if k > 0 else 1 for k in range(lags)]
+                    series = arr[:, i]
+                    acf = _autocorr_1d(series, lags)
                     plt.bar(range(lags), acf, alpha=0.5, label=f"Var {i}")
                 plt.legend()
             else:
@@ -459,21 +525,32 @@ class SampledData:
         fig.show()
         
     def ridgeline(self, title="Ridgeline Plot", template="plotly_white",interactive = True,category_labels=None, offset=2):
+        """Ridgeline (joy) plot of the columns of a (n_samples, n_categories) array.
+
+        Each *column* is one category (one violin / one density ridge); rows
+        are draws. The interactive branch used to ``zip(self._data, colors)``,
+        which iterates the rows and therefore plotted the first
+        ``n_categories`` draws as if they were the variables, and it accepted
+        3D input that ``go.Violin`` cannot render. Both fixed: 2D input is
+        required and the columns are plotted.
+        """
         if interactive:
             go=importer.get_module("go")
             # importer alias "n_colors" resolves to the plotly.colors MODULE, not
             # the function; import the callable directly.
             from plotly.colors import n_colors
-            if self._data.ndim  not in [2, 3]:
-                raise ValueError(f"Ridgeline plot requires 2D or 3D data. Your data has {self._data.ndim}       dimensions.")
+            if self._data.ndim != 2:
+                raise ValueError(f"Ridgeline plot requires 2D [samples, categories] data. Your data has {self._data.ndim}       dimensions.")
 
-            colors = n_colors('rgb(5, 200, 200)', 'rgb(200, 10, 10)', self._data.shape[1], colortype='rgb')
-
+            n_samples, n_categories = self._data.shape
+            colors = n_colors('rgb(5, 200, 200)', 'rgb(200, 10, 10)', n_categories, colortype='rgb')
+            arr = np.asarray(self._data)
 
             fig = go.Figure()
-            for i, (data_line, color) in enumerate(zip(self._data, colors)):
+            for i, color in enumerate(colors):
+                # One violin per category (column), not per draw (row).
                 fig.add_trace(
-                    go.Violin(x=data_line, line_color='black', name=i, fillcolor=color)
+                    go.Violin(x=arr[:, i], line_color='black', name=i, fillcolor=color)
                     )
 
             # use negative ... cuz I'm gonna flip things later
@@ -534,10 +611,22 @@ class SampledData:
         )
         fig.show()
 
-    def ppc_plot(self, observed_data, n_samples_to_plot=50, title="Posterior Predictive Check", template="plotly_white"):
+    def ppc_plot(self, observed_data, n_samples_to_plot=50, title="Posterior Predictive Check", template="plotly_white", seed=0):
         """
         Creates a posterior predictive check plot.
+
+        The subset of draws to plot is chosen with a local
+        ``np.random.default_rng(seed)`` (never the global NumPy RNG).
+
+        KDE guards (RELEASE_AUDIT, Utils, ppc_plot): ``stats.gaussian_kde``
+        raises ``LinAlgError`` (singular covariance) on constant data with no
+        useful message. Predictive draws that are constant (or have fewer
+        than two points) carry no density information and are skipped;
+        constant observed data raises a clear ``ValueError`` instead of the
+        bare ``LinAlgError``.
         """
+        from BayesForge.Utils.dev_warning import warn_dev
+        warn_dev("ppc")
         import plotly.graph_objects as go
         import plotly.express as px
         import plotly.figure_factory as ff
@@ -548,12 +637,26 @@ class SampledData:
         observed_data = np.array(observed_data)
         sampled_data = np.array(self._data)
 
+        if observed_data.size < 2 or np.ptp(observed_data) == 0:
+            raise ValueError(
+                "ppc_plot needs observed data with at least two distinct "
+                f"values; got {observed_data.size} value(s) with zero spread. "
+                "A Gaussian KDE is undefined for constant data (singular "
+                "covariance matrix)."
+            )
+
         fig = go.Figure()
 
         # Plot densities of posterior predictive samples (thin, semi-transparent lines)
-        subset_indices = np.random.choice(sampled_data.shape[0], size=min(n_samples_to_plot, sampled_data.shape[0]), replace=False)
+        rng = np.random.default_rng(seed)
+        subset_indices = rng.choice(sampled_data.shape[0], size=min(n_samples_to_plot, sampled_data.shape[0]), replace=False)
         for i in subset_indices:
-            density = stats.gaussian_kde(sampled_data[i, :])
+            row = sampled_data[i, :]
+            if row.size < 2 or np.ptp(row) == 0:
+                # Constant predictive draw: gaussian_kde would raise
+                # LinAlgError; the draw carries no density information.
+                continue
+            density = stats.gaussian_kde(row)
             x_vals = np.linspace(min(observed_data.min(), sampled_data.min()), max(observed_data.max(), sampled_data.max()), 200)
             fig.add_trace(go.Scatter(
                 x=x_vals, y=density(x_vals),
@@ -587,23 +690,39 @@ class SampledData:
         """
         Compute highest density interval (HDI) from samples.
 
+        Axis 0 holds the draws. A 1-D array gives one interval; an array of
+        shape (draws, ...) gives one interval per column, computed
+        independently along axis 0 (e.g. shape (100, 4): 4 intervals).
+
         Args:
-            samples: 1D jax.numpy array of samples
             cred_mass: float, credible mass (default 0.95)
 
         Returns:
-            (hdi_min, hdi_max)
+            (hdi_min, hdi_max): scalars for 1-D draws, otherwise arrays of
+            shape ``data.shape[1:]``.
         """
-        samples = jnp.sort(self._data)
+        data = jnp.asarray(self._data)
+        if data.ndim == 0:
+            raise ValueError("hdi() needs an array of draws (axis 0), got a scalar.")
+        if data.shape[0] == 0:
+            raise ValueError("hdi() got no draws.")
+        if bool(jnp.any(jnp.isnan(data))):
+            raise ValueError("hdi() got NaN draws; drop them (e.g. divergent draws) first.")
+        samples = jnp.sort(data, axis=0)
         n = samples.shape[0]
         interval_idx_inc = int(jnp.floor(cred_mass * n))
+        if interval_idx_inc < 1:
+            raise ValueError(f"cred_mass * n_draws = {cred_mass * n:.3g} < 1: too few draws for this cred_mass.")
 
         lows  = samples[: n - interval_idx_inc]
         highs = samples[interval_idx_inc:]
         widths = highs - lows
 
-        min_idx = jnp.argmin(widths)
-        return lows[min_idx], highs[min_idx]
+        # Narrowest window per column (a scalar index for 1-D draws).
+        min_idx = jnp.argmin(widths, axis=0)[None]
+        lo = jnp.take_along_axis(lows, min_idx, axis=0)[0]
+        hi = jnp.take_along_axis(highs, min_idx, axis=0)[0]
+        return lo, hi
 
     def to_jax(self):
         return jnp.array(self._data)
@@ -681,6 +800,9 @@ class SampledData:
         return self._wrap_result(self._extract_data(other) >> self._data)
 
     # Comparison operators
+    # __eq__ is element-wise and returns an array, so Python sets __hash__
+    # to None: SampledData is unhashable (like a numpy array) — see the
+    # class docstring.
     def __eq__(self, other):
         return self._data == self._extract_data(other)
     def __ne__(self, other):
@@ -701,8 +823,21 @@ class SampledData:
         for item in self._data:
             yield self._wrap_result(item) if isinstance(item, jnp.ndarray) else item
     def __contains__(self, item):
+        """Membership test with numpy semantics (RELEASE_AUDIT, Utils, contracts).
+
+        ``x in sd`` asks whether the value ``x`` occurs in the wrapped array.
+        Like ``x in np_array``, testing a *multi-element* array raises
+        ``ValueError`` (the elementwise result has no truth value — see
+        ``__bool__``); use ``np.isin`` for that.
+        """
         return self._extract_data(item) in self._data
     def __bool__(self):
+        """Truth value of the wrapped array (numpy semantics).
+
+        Only valid for 0- or 1-element data; a multi-element array raises
+        ``ValueError`` instead of an ambiguous True/False. This is what makes
+        ``multi_element_array in sd`` raise (see ``__contains__``).
+        """
         return bool(self._data)
     def __int__(self):
         return int(self._data)
@@ -721,8 +856,26 @@ class SampledData:
         return np.array(self._data, dtype=dtype) if dtype else np.array(self._data)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        # out=/where= cannot work on the immutable wrapped JAX array (jax's
+        # ufunc paths reject them); computing them in numpy instead would
+        # silently write into a detached copy. Fail loudly (RELEASE_AUDIT,
+        # Utils, type contracts).
+        if "out" in kwargs or "where" in kwargs:
+            raise NotImplementedError(
+                f"SampledData does not support out=/where= for numpy ufuncs "
+                f"(np.{ufunc.__name__}(...)): the wrapped JAX array is "
+                "immutable. Unwrap with sd.to_jax() (or np.asarray(sd)) and "
+                "run the ufunc on the plain array."
+            )
         converted_inputs = [self._extract_data(inp) for inp in inputs]
         result = getattr(ufunc, method)(*converted_inputs, **kwargs)
+        if isinstance(result, np.ndarray):
+            # Non-__call__ methods (reduce/accumulate/outer/at) fall through
+            # to numpy because jax's Array returns NotImplemented for them;
+            # wrap the bare ndarray so np.add.reduce(sd) matches the
+            # SampledData that sd + x would return (same values, jnp.asarray
+            # is a dtype-preserving host copy).
+            result = jnp.asarray(result)
         return self._wrap_result(result)
 
     # Indexing and slicing
@@ -750,8 +903,31 @@ class SampledData:
         """
         Dynamically delegates attribute access to the underlying JAX array.
         This is the most direct and robust way to mimic the array's behavior.
+
+        Guards (RELEASE_AUDIT, Utils, __getattr__): reading ``self._data``
+        unguarded here recursed forever on a partially constructed object
+        (an exception in ``__init__``, or ``object.__new__`` outside the
+        pytree path) — every attribute lookup, ``_data`` included, re-entered
+        ``__getattr__`` and a RecursionError masked the original error.
+        ``__getattr__`` only runs after normal lookup fails, so probing
+        ``self.__dict__`` is the recursion-free way to find ``_data``.
+        Typos (``sd.meann()``) now raise an AttributeError naming
+        SampledData instead of the wrapped jax type.
         """
-        attr = getattr(self._data, name)
+        data = self.__dict__.get("_data")
+        if data is None:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute {name!r} "
+                "and is not initialised: '_data' was never assigned (the "
+                "constructor raised before completing)."
+            )
+        try:
+            attr = getattr(data, name)
+        except AttributeError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object (wrapping "
+                f"{type(data).__name__}) has no attribute {name!r}"
+            ) from None
 
         if callable(attr):
             # If the attribute is a method (like .sum(), .reshape()), return
@@ -771,8 +947,13 @@ class SampledData:
     def __dir__(self):
             # Start with the attributes of this class
             own_attrs = set(super().__dir__())
-            # Add the attributes from the wrapped data object
-            data_attrs = set(dir(self._data))
+            # Add the attributes from the wrapped data object (guarded: an
+            # uninitialised instance must stay introspectable, see
+            # __getattr__ above).
+            data = self.__dict__.get("_data")
+            if data is None:
+                return sorted(own_attrs)
+            data_attrs = set(dir(data))
             return sorted(list(own_attrs | data_attrs))
 
     # --- jax interop without a __class__ lie ---

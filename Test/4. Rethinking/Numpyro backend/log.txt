@@ -1,13 +1,20 @@
-Execution Log - 13 models
+Execution Log - 18 models
 ==================================================
 [SUCCESS] 1.Continuous variable.py
+[SUCCESS] 1b.Multiple continuous variables.py
 [SUCCESS] 2.Categorical variable.py
 [SUCCESS] 3.Continuous interactions.py
 [SUCCESS] 4.Binomial.py
 [SUCCESS] 5.Binomial with indices.py
 [SUCCESS] 6.Poisson.py
+[SUCCESS] 6b.Poisson with offset.py
 [SUCCESS] 7.Negative binomial.py
 [SUCCESS] 8.Multinomial.py
+[SUCCESS] 8b.Multinomial fixed income.py
 [SUCCESS] 9.Beta binomial.py
 [SUCCESS] 10.Zero inflated.py
 [SUCCESS] 11.Varying intercepts.py
+[SUCCESS] 12.Varying effects.py
+[SUCCESS] 13.Gaussian processes.py
+[SUCCESS] 14.Dirichlet.py
+[SUCCESS] 15.Measuring error.py

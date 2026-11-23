@@ -105,6 +105,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -126,14 +140,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -255,6 +265,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Built-in models (<code>m.models</code>)</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/data.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span></a>
   </div>
@@ -301,32 +317,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
-  <ul class="collapse">
+  <ul>
   <li><a href="#NBDA_events" id="toc-NBDA_events" class="nav-link active" data-scroll-target="#NBDA_events"><code>m.load.NBDA_events</code></a></li>
   <li><a href="#NBDA_network" id="toc-NBDA_network" class="nav-link" data-scroll-target="#NBDA_network"><code>m.load.NBDA_network</code></a></li>
   <li><a href="#WaffleDivorce" id="toc-WaffleDivorce" class="nav-link" data-scroll-target="#WaffleDivorce"><code>m.load.WaffleDivorce</code></a></li>
-  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns:</a></li>
   <li><a href="#chimpanzees" id="toc-chimpanzees" class="nav-link" data-scroll-target="#chimpanzees"><code>m.load.chimpanzees</code></a></li>
-  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns:</a></li>
   <li><a href="#elephants" id="toc-elephants" class="nav-link" data-scroll-target="#elephants"><code>m.load.elephants</code></a></li>
-  <li><a href="#returns-2" id="toc-returns-2" class="nav-link" data-scroll-target="#returns-2">Returns:</a></li>
   <li><a href="#howell1" id="toc-howell1" class="nav-link" data-scroll-target="#howell1"><code>m.load.howell1</code></a></li>
-  <li><a href="#returns-3" id="toc-returns-3" class="nav-link" data-scroll-target="#returns-3">Returns:</a></li>
   <li><a href="#iris" id="toc-iris" class="nav-link" data-scroll-target="#iris"><code>m.load.iris</code></a></li>
-  <li><a href="#returns-4" id="toc-returns-4" class="nav-link" data-scroll-target="#returns-4">Returns:</a></li>
   <li><a href="#islands_dist_matrix" id="toc-islands_dist_matrix" class="nav-link" data-scroll-target="#islands_dist_matrix"><code>m.load.islands_dist_matrix</code></a></li>
-  <li><a href="#returns-5" id="toc-returns-5" class="nav-link" data-scroll-target="#returns-5">Returns:</a></li>
   <li><a href="#kline" id="toc-kline" class="nav-link" data-scroll-target="#kline"><code>m.load.kline</code></a></li>
-  <li><a href="#returns-6" id="toc-returns-6" class="nav-link" data-scroll-target="#returns-6">Returns:</a></li>
   <li><a href="#kline2" id="toc-kline2" class="nav-link" data-scroll-target="#kline2"><code>m.load.kline2</code></a></li>
-  <li><a href="#returns-7" id="toc-returns-7" class="nav-link" data-scroll-target="#returns-7">Returns:</a></li>
   <li><a href="#mastectomy" id="toc-mastectomy" class="nav-link" data-scroll-target="#mastectomy"><code>m.load.mastectomy</code></a></li>
-  <li><a href="#returns-8" id="toc-returns-8" class="nav-link" data-scroll-target="#returns-8">Returns:</a></li>
   <li><a href="#milk" id="toc-milk" class="nav-link" data-scroll-target="#milk"><code>m.load.milk</code></a></li>
-  <li><a href="#returns-9" id="toc-returns-9" class="nav-link" data-scroll-target="#returns-9">Returns:</a></li>
   <li><a href="#panama_ewa" id="toc-panama_ewa" class="nav-link" data-scroll-target="#panama_ewa"><code>m.load.panama_ewa</code></a></li>
   <li><a href="#phylo_L_meta" id="toc-phylo_L_meta" class="nav-link" data-scroll-target="#phylo_L_meta"><code>m.load.phylo_L_meta</code></a></li>
   <li><a href="#phylo_L_poisson" id="toc-phylo_L_poisson" class="nav-link" data-scroll-target="#phylo_L_poisson"><code>m.load.phylo_L_poisson</code></a></li>
@@ -339,24 +345,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#phylo_simple" id="toc-phylo_simple" class="nav-link" data-scroll-target="#phylo_simple"><code>m.load.phylo_simple</code></a></li>
   <li><a href="#phylo_slopes" id="toc-phylo_slopes" class="nav-link" data-scroll-target="#phylo_slopes"><code>m.load.phylo_slopes</code></a></li>
   <li><a href="#reedfrogs" id="toc-reedfrogs" class="nav-link" data-scroll-target="#reedfrogs"><code>m.load.reedfrogs</code></a></li>
-  <li><a href="#returns-10" id="toc-returns-10" class="nav-link" data-scroll-target="#returns-10">Returns:</a></li>
   <li><a href="#sim_gamma_poisson" id="toc-sim_gamma_poisson" class="nav-link" data-scroll-target="#sim_gamma_poisson"><code>m.load.sim_gamma_poisson</code></a></li>
-  <li><a href="#returns-11" id="toc-returns-11" class="nav-link" data-scroll-target="#returns-11">Returns:</a></li>
   <li><a href="#sim_multinomial" id="toc-sim_multinomial" class="nav-link" data-scroll-target="#sim_multinomial"><code>m.load.sim_multinomial</code></a></li>
-  <li><a href="#returns-12" id="toc-returns-12" class="nav-link" data-scroll-target="#returns-12">Returns:</a></li>
   <li><a href="#sim_multivariate_normal" id="toc-sim_multivariate_normal" class="nav-link" data-scroll-target="#sim_multivariate_normal"><code>m.load.sim_multivariate_normal</code></a></li>
-  <li><a href="#returns-13" id="toc-returns-13" class="nav-link" data-scroll-target="#returns-13">Returns:</a></li>
   <li><a href="#sim_nested_effects" id="toc-sim_nested_effects" class="nav-link" data-scroll-target="#sim_nested_effects"><code>m.load.sim_nested_effects</code></a></li>
-  <li><a href="#dgp-parameters" id="toc-dgp-parameters" class="nav-link" data-scroll-target="#dgp-parameters">DGP parameters</a></li>
-  <li><a href="#columns" id="toc-columns" class="nav-link" data-scroll-target="#columns">Columns</a></li>
-  <li><a href="#trolley" id="toc-trolley" class="nav-link" data-scroll-target="#trolley"><code>m.load.trolley</code></a></li>
-  <li><a href="#returns-14" id="toc-returns-14" class="nav-link" data-scroll-target="#returns-14">Returns:</a></li>
   <li><a href="#tulips" id="toc-tulips" class="nav-link" data-scroll-target="#tulips"><code>m.load.tulips</code></a></li>
-  <li><a href="#returns-15" id="toc-returns-15" class="nav-link" data-scroll-target="#returns-15">Returns:</a></li>
   <li><a href="#ucbadmit" id="toc-ucbadmit" class="nav-link" data-scroll-target="#ucbadmit"><code>m.load.ucbadmit</code></a></li>
-  <li><a href="#returns-16" id="toc-returns-16" class="nav-link" data-scroll-target="#returns-16">Returns:</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="load.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -396,99 +392,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="WaffleDivorce"><code>m.load.WaffleDivorce</code></h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.load.WaffleDivorce(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the WaffleDivorce dataset.</p>
-</section>
-<section id="returns" class="level2">
-<h2 class="anchored" data-anchor-id="returns">Returns:</h2>
-<p>bunch : Bunch Dataset with waffle divorce data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with waffle divorce data</p>
 </section>
 <section id="chimpanzees" class="level2">
 <h2 class="anchored" data-anchor-id="chimpanzees"><code>m.load.chimpanzees</code></h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.load.chimpanzees(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the chimpanzees dataset.</p>
 <p>Chimpanzee behavioral experiment data.</p>
-</section>
-<section id="returns-1" class="level2">
-<h2 class="anchored" data-anchor-id="returns-1">Returns:</h2>
-<p>bunch : Bunch Dataset with chimpanzee behavioral data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with chimpanzee behavioral data</p>
 </section>
 <section id="elephants" class="level2">
 <h2 class="anchored" data-anchor-id="elephants"><code>m.load.elephants</code></h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.load.elephants(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the elephants dataset.</p>
-</section>
-<section id="returns-2" class="level2">
-<h2 class="anchored" data-anchor-id="returns-2">Returns:</h2>
-<p>bunch : Bunch Dataset with elephant data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with elephant data</p>
 </section>
 <section id="howell1" class="level2">
 <h2 class="anchored" data-anchor-id="howell1"><code>m.load.howell1</code></h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.load.howell1(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Howell1 dataset.</p>
 <p>Demographic data including height, weight, age, and sex.</p>
-</section>
-<section id="returns-3" class="level2">
-<h2 class="anchored" data-anchor-id="returns-3">Returns:</h2>
-<p>bunch : Bunch Dataset with 544 samples and 4 features Features: height, weight, age, male</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with 544 samples and 4 features Features: height, weight, age, male</p>
 </section>
 <section id="iris" class="level2">
 <h2 class="anchored" data-anchor-id="iris"><code>m.load.iris</code></h2>
 <div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.load.iris(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the iris dataset.</p>
 <p>The four morphological features are standardised (zero mean, unit variance). Columns: <code>sepal_length</code>, <code>sepal_width</code>, <code>petal_length</code>, <code>petal_width</code> (scaled), <code>target</code> (int 0-2), <code>species</code> (name). The file carries no index column.</p>
-</section>
-<section id="returns-4" class="level2">
-<h2 class="anchored" data-anchor-id="returns-4">Returns:</h2>
-<p>bunch : Bunch Dataset with iris data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with iris data</p>
 </section>
 <section id="islands_dist_matrix" class="level2">
 <h2 class="anchored" data-anchor-id="islands_dist_matrix"><code>m.load.islands_dist_matrix</code></h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.load.islands_dist_matrix(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the islands distance matrix dataset.</p>
 <p>Distance matrix between islands.</p>
-</section>
-<section id="returns-5" class="level2">
-<h2 class="anchored" data-anchor-id="returns-5">Returns:</h2>
-<p>bunch : Bunch Dataset with pairwise distances between islands</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with pairwise distances between islands</p>
 </section>
 <section id="kline" class="level2">
 <h2 class="anchored" data-anchor-id="kline"><code>m.load.kline</code></h2>
 <div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.load.kline(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Kline dataset.</p>
 <p>Cultural evolution data from Oceanic societies.</p>
-</section>
-<section id="returns-6" class="level2">
-<h2 class="anchored" data-anchor-id="returns-6">Returns:</h2>
-<p>bunch : Bunch Dataset with cultural and technological data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with cultural and technological data</p>
 </section>
 <section id="kline2" class="level2">
 <h2 class="anchored" data-anchor-id="kline2"><code>m.load.kline2</code></h2>
 <div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.load.kline2(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Kline2 dataset.</p>
 <p>Extended version of the Kline cultural evolution dataset.</p>
-</section>
-<section id="returns-7" class="level2">
-<h2 class="anchored" data-anchor-id="returns-7">Returns:</h2>
-<p>bunch : Bunch Dataset with cultural and technological data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with cultural and technological data</p>
 </section>
 <section id="mastectomy" class="level2">
 <h2 class="anchored" data-anchor-id="mastectomy"><code>m.load.mastectomy</code></h2>
 <div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.load.mastectomy(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the mastectomy dataset.</p>
 <p>Survival data for mastectomy patients.</p>
-</section>
-<section id="returns-8" class="level2">
-<h2 class="anchored" data-anchor-id="returns-8">Returns:</h2>
-<p>bunch : Bunch Dataset with patient survival data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with patient survival data</p>
 </section>
 <section id="milk" class="level2">
 <h2 class="anchored" data-anchor-id="milk"><code>m.load.milk</code></h2>
 <div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.load.milk(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the milk dataset.</p>
 <p>Primate milk composition data.</p>
-</section>
-<section id="returns-9" class="level2">
-<h2 class="anchored" data-anchor-id="returns-9">Returns:</h2>
-<p>bunch : Bunch Dataset with milk composition data for various primate species Features: clade, species, kcal.per.g, perc.fat, perc.protein, perc.lactose, mass, neocortex.perc</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with milk composition data for various primate species Features: clade, species, kcal.per.g, perc.fat, perc.protein, perc.lactose, mass, neocortex.perc</p>
 </section>
 <section id="panama_ewa" class="level2">
 <h2 class="anchored" data-anchor-id="panama_ewa"><code>m.load.panama_ewa</code></h2>
@@ -551,84 +517,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m.load.reedfrogs(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the reedfrogs dataset.</p>
 <p>Reed frog predation and survival experiment data.</p>
-</section>
-<section id="returns-10" class="level2">
-<h2 class="anchored" data-anchor-id="returns-10">Returns:</h2>
-<p>bunch : Bunch Dataset with experimental data on reed frog survival</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with experimental data on reed frog survival</p>
 </section>
 <section id="sim_gamma_poisson" class="level2">
 <h2 class="anchored" data-anchor-id="sim_gamma_poisson"><code>m.load.sim_gamma_poisson</code></h2>
 <div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>m.load.sim_gamma_poisson(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the simulated Gamma-Poisson dataset.</p>
 <p>Simulated data with Gamma-Poisson distribution.</p>
-</section>
-<section id="returns-11" class="level2">
-<h2 class="anchored" data-anchor-id="returns-11">Returns:</h2>
-<p>bunch : Bunch Simulated dataset for testing Gamma-Poisson models</p>
+<p><strong>Returns</strong> bunch : Bunch Simulated dataset for testing Gamma-Poisson models</p>
 </section>
 <section id="sim_multinomial" class="level2">
 <h2 class="anchored" data-anchor-id="sim_multinomial"><code>m.load.sim_multinomial</code></h2>
 <div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>m.load.sim_multinomial(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the simulated multinomial dataset.</p>
 <p>Simulated multinomial data.</p>
-</section>
-<section id="returns-12" class="level2">
-<h2 class="anchored" data-anchor-id="returns-12">Returns:</h2>
-<p>bunch : Bunch Simulated dataset for testing multinomial models</p>
+<p><strong>Returns</strong> bunch : Bunch Simulated dataset for testing multinomial models</p>
 </section>
 <section id="sim_multivariate_normal" class="level2">
 <h2 class="anchored" data-anchor-id="sim_multivariate_normal"><code>m.load.sim_multivariate_normal</code></h2>
 <div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>m.load.sim_multivariate_normal(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the simulated multivariate normal dataset.</p>
 <p>Simulated multivariate normal data.</p>
-</section>
-<section id="returns-13" class="level2">
-<h2 class="anchored" data-anchor-id="returns-13">Returns:</h2>
-<p>bunch : Bunch Simulated dataset for testing multivariate normal models</p>
+<p><strong>Returns</strong> bunch : Bunch Simulated dataset for testing multivariate normal models</p>
 </section>
 <section id="sim_nested_effects" class="level2">
 <h2 class="anchored" data-anchor-id="sim_nested_effects"><code>m.load.sim_nested_effects</code></h2>
 <div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m.load.sim_nested_effects(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load simulated nested varying-effects dataset.</p>
 <p>Simulated data with observations nested in groups, groups nested in regions. Generated with known true parameters for model validation.</p>
-</section>
-<section id="dgp-parameters" class="level2">
-<h2 class="anchored" data-anchor-id="dgp-parameters">DGP parameters</h2>
-<p>N_regions=5, N_groups_per_region=4, N_obs_per_group=20 (400 total obs) mu_a_region=5.0, mu_b_region=-1.0 sigma_a_region=1.0, sigma_b_region=0.5, rho_region=-0.5 sigma_a_group=0.5, sigma_b_group=0.2, rho_group=0.3 sigma_obs=0.5, seed=42</p>
-</section>
-<section id="columns" class="level2">
-<h2 class="anchored" data-anchor-id="columns">Columns</h2>
-<p>y : float — outcome x : float — continuous predictor (standardised) group_id : int — group index 0..19 region_id : int — region index 0..4</p>
-</section>
-<section id="trolley" class="level2">
-<h2 class="anchored" data-anchor-id="trolley"><code>m.load.trolley</code></h2>
-<div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>m.load.trolley(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Load the Trolley dataset.</p>
-<p>Trolley problem moral judgment experiment data.</p>
-</section>
-<section id="returns-14" class="level2">
-<h2 class="anchored" data-anchor-id="returns-14">Returns:</h2>
-<p>bunch : Bunch Dataset with moral judgment responses</p>
+<p><strong>DGP parameters</strong> N_regions=5, N_groups_per_region=4, N_obs_per_group=20 (400 total obs) mu_a_region=5.0, mu_b_region=-1.0 sigma_a_region=1.0, sigma_b_region=0.5, rho_region=-0.5 sigma_a_group=0.5, sigma_b_group=0.2, rho_group=0.3 sigma_obs=0.5, seed=42</p>
+<p><strong>Columns</strong> y : float — outcome x : float — continuous predictor (standardised) group_id : int — group index 0..19 region_id : int — region index 0..4</p>
 </section>
 <section id="tulips" class="level2">
 <h2 class="anchored" data-anchor-id="tulips"><code>m.load.tulips</code></h2>
-<div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m.load.tulips(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>m.load.tulips(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the tulips dataset.</p>
 <p>Tulip growth experiment data.</p>
-</section>
-<section id="returns-15" class="level2">
-<h2 class="anchored" data-anchor-id="returns-15">Returns:</h2>
-<p>bunch : Bunch Dataset with experimental data on tulip growth</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with experimental data on tulip growth</p>
 </section>
 <section id="ucbadmit" class="level2">
 <h2 class="anchored" data-anchor-id="ucbadmit"><code>m.load.ucbadmit</code></h2>
-<div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m.load.ucbadmit(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m.load.ucbadmit(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the UC Berkeley admissions dataset.</p>
 <p>Famous dataset illustrating Simpson’s paradox.</p>
-</section>
-<section id="returns-16" class="level2">
-<h2 class="anchored" data-anchor-id="returns-16">Returns:</h2>
-<p>bunch : Bunch Dataset with UC Berkeley graduate admissions data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with UC Berkeley graduate admissions data</p>
 
 
 </section>
@@ -1387,6 +1319,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

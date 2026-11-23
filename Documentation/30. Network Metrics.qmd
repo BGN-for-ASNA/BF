@@ -141,6 +141,10 @@ $$
 Where $\tau$ is the total number of triplets and $\tau_\Delta$ represents closed triplets.
 
 
+## Model validation tests
+
+- [Network metrics](https://github.com/BGN-for-ASNA/BF/tree/main/Test/6.Network/Network%20metrics): network metrics (centrality, degree, betweenness) computed from BayesForge posterior samples and checked.
+
 ## Reference(s)
 ::: {#refs}
 :::

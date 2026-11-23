@@ -1,0 +1,28 @@
+Comparison Table for 8b.Multinomial fixed income
+============================================================
+Parameter BF Mean Stan Mean    Diff KL Div
+  beta[1]  0.5018    0.5015  0.0003 0.0290
+ alpha[0]  0.5049    0.5052 -0.0003 0.0869
+ alpha[1] -0.4912   -0.4907 -0.0004 0.0706
+  beta[0]  1.0529    1.0536 -0.0007 0.0594
+============================================================
+
+================================================================
+WAIC cross-check  -  8b.Multinomial fixed income
+================================================================
+[A] NumPyro direct (numpyro.infer.log_likelihood)
+      elpd_waic = -791.418008    p_waic = 4.191198
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -791.418008    p_waic = 4.191198
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=200)
+----------------------------------------------------------------
+LOO cross-check  -  8b.Multinomial fixed income
+----------------------------------------------------------------
+[A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
+      elpd_loo  = -791.424739    p_loo  = 4.197929
+[B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
+      elpd_loo  = -791.424913    p_loo  = 4.198102
+|delta elpd_loo| = 1.734e-04      |delta p_loo| = 1.734e-04
+RESULT: PASS
+================================================================

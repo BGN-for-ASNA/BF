@@ -5,7 +5,7 @@ library(bisonR)
 library(cmdstanr)
 
 RESULTS_DIR <- "results"
-stan_out_dir <- "stan_output"
+stan_out_dir <- tempfile("stan_output_")  # per-run dir: shared stan_output/ gave empty-chain read errors
 dir.create(RESULTS_DIR,  showWarnings = FALSE, recursive = TRUE)
 dir.create(stan_out_dir, showWarnings = FALSE, recursive = TRUE)
 options(cmdstanr_output_dir = stan_out_dir)
@@ -59,7 +59,7 @@ print_priors(BF_data)
 # Re-run Stan with adapt_delta = 0.99 to eliminate divergences
 cat("  Re-running Stan model directly to fix divergences (adapt_delta=0.99)...\n")
 t_stan_start <- proc.time()
-clean_stan_fit <- fit_bison$stan_model$sample(
+clean_stan_fit <- sample_with_retry(fit_bison$stan_model,
   data = stan_data_raw, refresh = 0,
   chains = NUM_CHAINS, parallel_chains = NUM_CHAINS,
   iter_warmup = ITER_WARMUP, iter_sampling = ITER_SAMPLES,

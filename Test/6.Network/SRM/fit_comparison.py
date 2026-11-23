@@ -1,4 +1,5 @@
 import numpy as np
+import arviz as az
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -18,6 +19,8 @@ m = bf('cpu', rand_seed=False)
 print("Step 1: Simulating data 100% in Python (matching SIM.py structure)...")
 sys.stdout.flush()
 
+N_CHAINS = int(os.environ.get("SRM_CHAINS", 1))  # chains for every fit (BF, Stan, STRAND)
+N_SAMPLES = int(os.environ.get("SRM_SAMPLES", 1000))  # post-warmup draws per chain
 N_nodes = 50 
 N_focal_vars = 4
 N_target_vars = 4
@@ -109,7 +112,7 @@ m2.data_on_model = dict(
     Any=Any_jnp,
     Merica=Merica_jnp
 )
-m2.fit(model_srm_wide, num_samples=1000, num_warmup=1000, num_chains=1)
+m2.fit(model_srm_wide, num_samples=N_SAMPLES, num_warmup=1000, num_chains=N_CHAINS)
 BF_samples = m2.posteriors
 
 print("Step 2.5: Fitting model_srm_matrix (BF matrix-form — model_effects2)...")
@@ -150,7 +153,7 @@ m3.data_on_model = dict(
     Merica                = Merica_jnp,
 )
 _t0_mat = time.perf_counter()
-m3.fit(model_srm_matrix, num_samples=1000, num_warmup=1000, num_chains=1)
+m3.fit(model_srm_matrix, num_samples=N_SAMPLES, num_warmup=1000, num_chains=N_CHAINS)
 elapsed_mat = time.perf_counter() - _t0_mat
 m3_samples = m3.posteriors
 print(f"BF Matrix fitting time: {elapsed_mat:.2f}s")
@@ -227,7 +230,7 @@ exe_file = os.path.join(script_dir, 'STAN2')
 print("Loading/compiling STAN2.stan...")
 sm = CmdStanModel(stan_file=stan_file)
 
-fit = sm.sample(data=stan_data, iter_sampling=1000, iter_warmup=1000, chains=1, show_progress=False)
+fit = sm.sample(data=stan_data, iter_sampling=N_SAMPLES, iter_warmup=1000, chains=N_CHAINS, show_progress=False)
 stan_samples = fit.stan_variables()
 
 print("\nStep 3.5: Preparing data and fitting original_srm.stan...")
@@ -279,7 +282,7 @@ original_exe_file = os.path.join(script_dir, 'original_srm')
 print("Loading/compiling original_srm.stan...")
 sm_orig = CmdStanModel(stan_file=original_stan_file)
 
-fit_orig = sm_orig.sample(data=original_stan_data, iter_sampling=1000, iter_warmup=1000, chains=1, show_progress=False)
+fit_orig = sm_orig.sample(data=original_stan_data, iter_sampling=N_SAMPLES, iter_warmup=1000, chains=N_CHAINS, show_progress=False)
 orig_samples = fit_orig.stan_variables()
 
 print("Step 3.7: Preparing data and fitting STRAND NumPyro...")
@@ -320,6 +323,8 @@ Fire_t = wide_target_np[:, 3]
 
 with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.converter):
     ro.globalenv['outcome_mat'] = outcome_mat
+    ro.globalenv["n_chains"] = N_CHAINS
+    ro.globalenv["n_samples"] = N_SAMPLES
     ro.globalenv['exposure_mat'] = exposure_mat
     ro.globalenv['Kinship'] = Kinship
     ro.globalenv['Dominant'] = Dominant
@@ -367,7 +372,7 @@ with localconverter(ro.default_converter + numpy2ri.converter + pandas2ri.conver
       target_regression = ~ Mass_t + Age_t + Love_t + Fire_t,
       dyad_regression = ~ Kinship*Dominant,
       mode="numpyro",
-      mcmc_parameters = list(seed = 1, chains = 1, iter_warmup = 1000, iter_sampling = 1000)
+      mcmc_parameters = list(seed = 1, chains = n_chains, iter_warmup = 1000, iter_sampling = n_samples)
     )
     res_stan = summarize_strand_results(fit_numpyro)
     samps = res_stan$samples$srm_model_samples
@@ -473,6 +478,29 @@ for key in BF_mapped:
 
 df_comparison = pd.DataFrame(records)
 print(df_comparison.to_string(index=False))
+
+# The intercept and the block offsets trade off (only their sum is well
+# identified), so compare the identified quantity: intercept + block offset.
+print("\nIdentified block logits (Block Intercept + Block Merica i-j), posterior mean:")
+sums = []
+for i in range(3):
+    for j in range(3):
+        k = f'Block Merica {i+1}-{j+1}'
+        row = {'Block': f'{i+1}-{j+1}'}
+        for label, mp in [('BF', BF_mapped), ('BF Mat', m3_mapped), ('Stan Blk', stan_mapped),
+                          ('Stan Orig', orig_mapped), ('STRAND', strand_mapped)]:
+            x = np.asarray(mp['Block Intercept'] + mp[k]).reshape(N_CHAINS, -1)  # draws are chain-major
+            row[label] = f"{x.mean(): .3f} ±{float(az.mcse(x)):.3f}"
+        sums.append(row)
+print("(mean ± MCSE; a gap between two models above ~2*sqrt(MCSE1^2+MCSE2^2) is not noise)")
+print(pd.DataFrame(sums).to_string(index=False))
+
+# Sampling quality of the weakly identified intercept, per Stan fit.
+print("\nStan diagnostics for block_effects[1] (Block Intercept):")
+for label, f in [('Stan Blk', fit), ('Stan Orig', fit_orig)]:
+    s = f.summary().loc['block_effects[1]']
+    ess = s.get('ESS_bulk', s.get('N_Eff'))
+    print(f"  {label:9s} mean={s['Mean']: .4f}  MCSE={s['MCSE']:.4f}  ESS={ess:.0f}  R_hat={s['R_hat']:.4f}")
 sys.stdout.flush()
 
 print("\nStep 5: Generating Forest Plot 'stan-edgle V BF.png'...")

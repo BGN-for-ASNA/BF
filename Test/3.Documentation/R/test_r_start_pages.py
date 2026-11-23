@@ -20,7 +20,7 @@ import sys
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from doc_blocks import ROOT, START_PAGES, blocks  # noqa: E402
+from doc_blocks import ROOT, START_PAGES, blocks, copy_data  # noqa: E402
 
 RSCRIPT = os.environ.get("BF_RSCRIPT") or shutil.which("Rscript")
 
@@ -36,6 +36,7 @@ def test_page_r_examples_run(page, tmp_path):
     if not code:
         pytest.skip("no R blocks")
     script = tmp_path / "page.R"
+    copy_data(tmp_path)
     script.write_text(PRELUDE + "\n\n".join(code) + "\n")
     env = dict(os.environ, JAX_PLATFORMS="cpu", MPLBACKEND="Agg",
                PYTHONPATH=os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")])))

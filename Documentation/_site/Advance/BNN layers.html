@@ -64,8 +64,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../Advance/Sampling &amp; plots.html" rel="next">
-<link href="../Advance/Build in models.html" rel="prev">
+<link href="../Advance/Data sharding.html" rel="next">
+<link href="../Advance/Sampling &amp; plots.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -106,6 +106,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -127,14 +141,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -196,7 +206,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../api_dist.html"> 
+    <a class="nav-link" href="../reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -288,6 +298,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../start/Handle_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Handle data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../start/Define model.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Define model</span></a>
   </div>
@@ -302,6 +318,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../start/Diagnostics.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Model Diagnostic</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/Interoperability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Working with R and Julia tools</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -335,14 +357,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">🚧 BNN layers 🚧</span></a>
+  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Direct sampling &amp; plots</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Direct sampling &amp; plots</span></a>
+  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">🚧 BNN layers 🚧</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -359,7 +381,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -397,9 +419,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="the-stable-building-block-layer_linear" class="level2">
 <h2 class="anchored" data-anchor-id="the-stable-building-block-layer_linear">The stable building block: <code>layer_linear</code></h2>
 <p><code>m.bnn.layer_linear</code> is the documented layer used across the BNN tutorials. It performs a linear transform <code>X @ W</code> (optionally <code>+ bias</code>) followed by an optional activation.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># W is a prior over the weight array; its shape sets the layer's in/out dimensions</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(n_in, n_hidden))</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> m.bnn.layer_linear(X, W, activation<span class="op">=</span><span class="st">'tanh'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(platform<span class="op">=</span><span class="st">'cpu'</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">3</span>), sample<span class="op">=</span><span class="va">True</span>)   <span class="co"># 20 rows, n_in = 3 inputs</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># W is a prior over the weight array; its shape sets the layer's in/out dimensions</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (inside a model: W = m.dist.normal(0, 1, shape=(n_in, n_hidden), name='W'))</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> m.dist.normal(<span class="dv">0</span>, <span class="dv">1</span>, shape<span class="op">=</span>(<span class="dv">3</span>, <span class="dv">5</span>), sample<span class="op">=</span><span class="va">True</span>)    <span class="co"># n_in = 3, n_hidden = 5</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> m.bnn.layer_linear(X, W, activation<span class="op">=</span><span class="st">'tanh'</span>)       <span class="co"># (20, 5)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(m.bnn.available_activations())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">importBF</span>(<span class="at">platform =</span> <span class="st">"cpu"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">20</span>L, <span class="dv">3</span>L), <span class="at">sample =</span> <span class="cn">TRUE</span>)   <span class="co"># 20 rows, n_in = 3 inputs</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># W is a prior over the weight array; its shape sets the layer's in/out dimensions</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (inside a model: W &lt;- m$dist$normal(0, 1, shape = reticulate::tuple(n_in, n_hidden), name = "W"))</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">shape =</span> reticulate<span class="sc">::</span><span class="fu">tuple</span>(<span class="dv">3</span>L, <span class="dv">5</span>L), <span class="at">sample =</span> <span class="cn">TRUE</span>)    <span class="co"># n_in = 3, n_hidden = 5</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>h <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_linear</span>(X, W, <span class="at">activation =</span> <span class="st">"tanh"</span>)                            <span class="co"># (20, 5)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">available_activations</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PythonCall</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(<span class="fl">20</span>, <span class="fl">3</span>), sample<span class="op">=</span><span class="cn">true</span>)   <span class="co"># 20 rows, n_in = 3 inputs</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># W is a prior over the weight array; its shape sets the layer's in/out dimensions</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># (inside a model: W = m.dist.normal(0, 1, shape=(n_in, n_hidden), name="W"))</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>W <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">1</span>, shape<span class="op">=</span>(<span class="fl">3</span>, <span class="fl">5</span>), sample<span class="op">=</span><span class="cn">true</span>)    <span class="co"># n_in = 3, n_hidden = 5</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> m.bnn.<span class="fu">layer_linear</span>(X, W, activation<span class="op">=</span><span class="st">"tanh"</span>)       <span class="co"># (20, 5)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(m.bnn.<span class="fu">available_activations</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 <ul>
 <li><code>X</code>: layer input.</li>
 <li><code>dist</code>: prior array for the weights (shape defines input/output dimensions).</li>
@@ -412,19 +470,58 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="experimental-structured-covariance-layers">Experimental structured-covariance layers</h2>
 <p>These layers return a structured, symmetric positive-definite <code>(block_size, block_size)</code> covariance block. They are intended for models that learn a structured covariance (e.g.&nbsp;via <code>m.bnn.cov</code>) rather than for standard feed-forward prediction.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Diagonal</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Compound symmetry</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Toeplitz</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true">Diagonal</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false">Compound symmetry</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-3" role="tab" aria-controls="tabset-5-3" aria-selected="false">Toeplitz</a></li></ul>
 <div class="tab-content">
-<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
 <p>Independent variables — only per-variable variances are learned.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_diagonal(block_size<span class="op">=</span><span class="dv">8</span>)      <span class="co"># (8, 8) diagonal SPD block</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_diagonal(block_size<span class="op">=</span><span class="dv">8</span>, sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)      <span class="co"># (8, 8) diagonal SPD block</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>C <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_diagonal</span>(<span class="at">block_size =</span> <span class="dv">8</span>L, <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">0</span>L)      <span class="co"># (8, 8) diagonal SPD block</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.<span class="fu">layer_diagonal</span>(block_size<span class="op">=</span><span class="fl">8</span>, sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">0</span>)      <span class="co"># (8, 8) diagonal SPD block</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
 <p>All variables share a common variance and a common correlation <code>rho</code>: <code>C = sigma^2 * ((1 - rho) I + rho 11^T)</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_compound_symmetry(block_size<span class="op">=</span><span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_compound_symmetry(block_size<span class="op">=</span><span class="dv">8</span>, sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>C <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_compound_symmetry</span>(<span class="at">block_size =</span> <span class="dv">8</span>L, <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">0</span>L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.<span class="fu">layer_compound_symmetry</span>(block_size<span class="op">=</span><span class="fl">8</span>, sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-5-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-3-tab">
 <p>A decaying-correlation structure: correlation falls off with the lag between variables (<code>sigma * alpha^{|i-j|}</code>), plus a learned diagonal.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_toeplitz(block_size<span class="op">=</span><span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.layer_toeplitz(block_size<span class="op">=</span><span class="dv">8</span>, sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>C <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_toeplitz</span>(<span class="at">block_size =</span> <span class="dv">8</span>L, <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">0</span>L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>C <span class="op">=</span> m.bnn.<span class="fu">layer_toeplitz</span>(block_size<span class="op">=</span><span class="fl">8</span>, sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -439,7 +536,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="experimental-attention-layer-layer_attention" class="level2">
 <h2 class="anchored" data-anchor-id="experimental-attention-layer-layer_attention">Experimental attention layer: <code>layer_attention</code></h2>
 <p><code>m.bnn.layer_attention</code> builds a learnable coupling block through a scaled dot-product attention mechanism over learnable query / key-value embeddings. It returns a <code>(b_q, b_kv)</code> matrix.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>block <span class="op">=</span> m.bnn.layer_attention(b_kv<span class="op">=</span><span class="dv">8</span>, b_q<span class="op">=</span><span class="dv">8</span>, d_model<span class="op">=</span><span class="dv">32</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>block <span class="op">=</span> m.bnn.layer_attention(b_kv<span class="op">=</span><span class="dv">8</span>, b_q<span class="op">=</span><span class="dv">8</span>, d_model<span class="op">=</span><span class="dv">32</span>, sample<span class="op">=</span><span class="va">True</span>, seed<span class="op">=</span><span class="dv">0</span>)   <span class="co"># (8, 8)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>block <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">layer_attention</span>(<span class="at">b_kv =</span> <span class="dv">8</span>L, <span class="at">b_q =</span> <span class="dv">8</span>L, <span class="at">d_model =</span> <span class="dv">32</span>L, <span class="at">sample =</span> <span class="cn">TRUE</span>, <span class="at">seed =</span> <span class="dv">0</span>L)   <span class="co"># (8, 8)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>block <span class="op">=</span> m.bnn.<span class="fu">layer_attention</span>(b_kv<span class="op">=</span><span class="fl">8</span>, b_q<span class="op">=</span><span class="fl">8</span>, d_model<span class="op">=</span><span class="fl">32</span>, sample<span class="op">=</span><span class="cn">true</span>, seed<span class="op">=</span><span class="fl">0</span>)   <span class="co"># (8, 8)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 <ul>
 <li><code>b_q</code>, <code>b_kv</code>: query- and key/value-block sizes (the output shape is <code>(b_q, b_kv)</code>).</li>
 <li><code>d_model</code>: embedding / projection dimension.</li>
@@ -448,8 +558,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="experimental-covariance-network-cov" class="level2">
 <h2 class="anchored" data-anchor-id="experimental-covariance-network-cov">Experimental covariance network: <code>cov</code></h2>
-<p><code>m.bnn.cov</code> is a small two-layer BNN used to estimate per-unit offsets for a covariance structure. It maps a one-hot encoding of <code>N</code> units through a hidden <code>tanh</code> layer to two offsets per unit, added to the supplied <code>a</code> and <code>b</code>, and registers the result as the deterministic site <code>'rf'</code>.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> m.bnn.cov(hidden_dim<span class="op">=</span><span class="dv">16</span>, N<span class="op">=</span>N_units, a<span class="op">=</span>a, b<span class="op">=</span>b)   <span class="co"># deterministic 'rf', shape (2, N)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>m.bnn.cov</code> is a small two-layer BNN used to estimate per-unit offsets for a covariance structure. It maps a one-hot encoding of <code>N</code> units through a hidden <code>tanh</code> layer to two offsets per unit, added to the supplied <code>a</code> and <code>b</code>, and registers the result as the deterministic site <code>'rf'</code> (shape <code>(N, 2)</code>). The examples on this page use <code>sample=True</code> to draw the layers directly, outside a model.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-3" role="tab" aria-controls="tabset-7-3" aria-selected="false">Julia</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>N_units <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> m.bnn.cov(hidden_dim<span class="op">=</span><span class="dv">16</span>, N<span class="op">=</span>N_units, a<span class="op">=</span><span class="fl">0.0</span>, b<span class="op">=</span><span class="fl">0.0</span>, sample<span class="op">=</span><span class="va">True</span>)   <span class="co"># 'rf', shape (N, 2)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>N_units <span class="ot">&lt;-</span> <span class="dv">10</span>L</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>rf <span class="ot">&lt;-</span> m<span class="sc">$</span>bnn<span class="sc">$</span><span class="fu">cov</span>(<span class="at">hidden_dim =</span> <span class="dv">16</span>L, <span class="at">N =</span> N_units, <span class="at">a =</span> <span class="fl">0.0</span>, <span class="at">b =</span> <span class="fl">0.0</span>, <span class="at">sample =</span> <span class="cn">TRUE</span>)   <span class="co"># 'rf', shape (N, 2)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="tabset-7-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-3-tab">
+<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>N_units <span class="op">=</span> <span class="fl">10</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> m.bnn.<span class="fu">cov</span>(hidden_dim<span class="op">=</span><span class="fl">16</span>, N<span class="op">=</span>N_units, a<span class="op">=</span><span class="fl">0.0</span>, b<span class="op">=</span><span class="fl">0.0</span>, sample<span class="op">=</span><span class="cn">true</span>)   <span class="co"># "rf", shape (N, 2)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
 <ul>
 <li><code>hidden_dim</code>: number of hidden units.</li>
 <li><code>N</code>: number of units (rows of the one-hot input).</li>
@@ -1215,6 +1341,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
       }, 50);
     });
   })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
+  })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
@@ -1782,13 +1984,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../Advance/Build in models.html" class="pagination-link" aria-label="Build in models">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Build in models</span>
+      <a href="../Advance/Sampling &amp; plots.html" class="pagination-link" aria-label="Direct sampling &amp; plots">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Direct sampling &amp; plots</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../Advance/Sampling &amp; plots.html" class="pagination-link" aria-label="Direct sampling &amp; plots">
-        <span class="nav-page-text">Direct sampling &amp; plots</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../Advance/Data sharding.html" class="pagination-link" aria-label="🚧 Data sharding 🚧">
+        <span class="nav-page-text">🚧 Data sharding 🚧</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

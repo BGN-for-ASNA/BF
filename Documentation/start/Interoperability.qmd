@@ -119,3 +119,8 @@ Model code is executed by Python (JAX), even when written in R or Julia, so inde
 ::: callout-note
 The language interfaces are thin layers over the same Python engine: R uses **reticulate** and Julia uses **PythonCall**. Model definitions therefore follow the Python API (`m.dist.normal(...)`, `name=`, `obs=`), while data handling and post-processing stay in your language.
 :::
+
+::: callout-note
+## Same seed, same draws?
+Python and R produce identical draws for the same seed. Julia produces very close but not bit-identical draws, because Julia ships its own math library; see [Reproducibility across Python, R and Julia](Random%20and%20fixed%20seeds.qmd#reproducibility-across-python-r-and-julia).
+:::

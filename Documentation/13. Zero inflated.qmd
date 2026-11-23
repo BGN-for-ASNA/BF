@@ -132,6 +132,54 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
+### Posterior predictive checks
+
+Does the model reproduce the excess of zeros (days without production because the monks drink)?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_stat(stat="n_zero")
+```
+
+#### R
+```r
+# m$diag$ppc_stat(stat = "n_zero")
+```
+
+#### Julia
+```julia
+# m.diag.ppc_stat(stat="n_zero")
+```
+:::
+
+The vertical line is the observed number of zeros, the curve the number of zeros in simulated datasets. A plain Poisson model would put the line far to the right of the curve; the zero-inflated model should place it in the middle. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_rootogram()
+```
+
+#### R
+```r
+# m$diag$ppc_rootogram()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_rootogram()
+```
+:::
+
+`ppc_rootogram`: observed frequency of each count (bars, square-root scale) against the expected frequency (line); the bar at 0 should reach the line.
+:::
+-->
+
 # Mathematical Details
 
 We model the relationship between the independent variable $X$ and the count outcome variable $Y$. The model assumes that the data-generating process has two states: a "zero" state that generates only zero counts, and a "Poisson" state that generates counts from a Poisson distribution.
@@ -185,6 +233,27 @@ $$
 $$
 \beta_\lambda \sim \text{Normal}(0, 1)
 $$
+
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/10.Zero%20inflated.py): `10.Zero inflated.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Data generative model and inference model pipeline](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/10.Zero%20inflated.py): `10.Zero inflated.py` simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
+::: {.callout-note collapse="true"}
+## Plot: comparison with Stan (`10.Zero inflated.py`)
+
+![](Figures/validation/10.Zero_inflated_comparison.png){width=100%}
+:::
+
+::: {.callout-note collapse="true"}
+## Plot: data generative model and inference model pipeline (`10.Zero inflated.py`)
+
+![](Figures/validation/10.Zero_inflated_recovery.png){width=100%}
+:::
 
 
 ## Reference(s)

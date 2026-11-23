@@ -5,6 +5,8 @@
 | `test_language_coverage.py` | Every code example of the "Get started" pages (`Documentation/start/`) is in a Python / R / Julia tabset, with code in all three tabs |
 | `Python/test_python_start_pages.py` | The Python blocks of each "Get started" page run |
 | `Python/test_model_pages.py` | The Python blocks of each model page run (marker `pages`, weekly CI) |
+| `R/test_r_model_pages.py` | The R blocks of each model page run (marker `pages`) |
+| `Julia/test_julia_model_pages.py` | The Julia blocks of each model page run (marker `pages`) |
 | `R/test_r_start_pages.py` | The R blocks of each "Get started" page run with `Rscript` |
 | `Julia/test_julia_start_pages.py` | The Julia blocks of each "Get started" page run with `julia` |
 
@@ -41,6 +43,10 @@ example would fail for a reader. `doc_blocks.py` extracts them.
   `setup_env()`, `Pkg.add()`, `pip install`, ...) makes the test fail
   without running it.
 
+* An example that reads a data file by name (e.g. `open('BNN.json')`) finds it in the
+  working directory: put the file in `Test/3.Documentation/data/`, the tests copy that folder
+  into the directory each page runs in.
+
 ## Running
 
 The Python side is always this checkout of BayesForge (the repository root
@@ -60,3 +66,20 @@ BF_JULIA_PROJECT=/path/to/project python -m pytest Test/3.Documentation/Julia -q
 
 R and Julia tests are skipped when `Rscript` / `julia` are not found
 (`$BF_RSCRIPT`, `$BF_JULIA` to point at them).
+
+## Fast mode
+
+`BF_DOC_FAST=1` caps every `m.fit` at 50 warmup / 50 samples / 2 chains
+(Python, R and Julia all go through the same Python fit). It checks that
+every example runs, not that its estimates are good:
+
+    BF_DOC_FAST=1 pytest Test/3.Documentation -m pages
+
+## Deep tests reuse page code
+
+Deep tests in `Test/<n>.<topic>/test_doc_<page>.py` (e.g.
+`Test/4. Rethinking/test_doc_15_varying_intercepts.py`) exec the page's own
+python blocks via `doc_blocks.blocks` in one shared namespace, then add checks
+the page does not make (convergence, reference agreement). Pages must keep the
+object names their test uses: page 15 keeps `m`, two `m.fit(...)` blocks, and
+params `a_bar` / `sigma` in the first model's summary.

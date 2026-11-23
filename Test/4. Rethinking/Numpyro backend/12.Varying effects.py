@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (raw version, first python block). Priors are
+# identical to the previous local copy: a ~ normal(5, 2), b ~ normal(-1, 0.5),
+# sigma_cafe ~ exponential(1) shape (2,), sigma ~ exponential(1), Rho ~ lkj(2, 2),
+# a_b_cafe ~ multivariate_normal([a, b], outer(sigma_cafe, sigma_cafe) * Rho).
+PAGE_MODEL = doc_model("16. Varying slopes.qmd", 0)
 
 model_name = "12.Varying effects"
 
@@ -24,21 +32,7 @@ m.data_on_model = dict(
     afternoon = jnp.array(m.df.afternoon.values, dtype=jnp.float32)
 )
 
-def model(cafe, wait, N_cafes, afternoon):
-    a = m.dist.normal(0, 2)
-    b = m.dist.normal(0, 1)
-    sigma = m.dist.exponential( 1)
-
-    sigma_cafe = m.dist.exponential(1, shape=(2,))
-    Rho = m.dist.lkj(2, 2)
-
-    cov = jnp.outer(sigma_cafe, sigma_cafe) * Rho
-
-    a_b_cafe = m.dist.multivariate_normal(jnp.stack([a, b]), cov, shape = [N_cafes])
-
-    a_cafe, b_cafe = a_b_cafe[:, 0], a_b_cafe[:, 1]
-    mu = a_cafe[cafe] + b_cafe[cafe] * afternoon
-    m.dist.normal(mu, sigma, obs=wait)
+model = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model, num_samples=1000, num_warmup=1000)
@@ -47,7 +41,7 @@ print("BF Summary:")
 print(BF_summary)
 
 #%%
-# 3. Stan Model (Non-Centered Parametrization)
+# 3. Stan Model
 stan_code = """ 
 data{
     int len;
@@ -72,8 +66,8 @@ model{
     Rho ~ lkj_corr( 2 );
     sigma ~ exponential( 1 );
     sigma_cafe ~ exponential( 1 );
-    b ~ normal( 0 , 1 );
-    a ~ normal( 0 , 2 );
+    b ~ normal( -1 , 0.5 );
+    a ~ normal( 5 , 2 );
     {
         array[N_cafes] vector[2] YY;
         vector[2] MU;
@@ -127,21 +121,15 @@ results = []
 # Initialize m_rec outside the loop to prevent OOM
 m_rec = bf(print_devices_found=False)
 
-def model_rec(cafe, wait, N_cafes, afternoon):
-    a = m_rec.dist.normal(0.0, 2.0)
-    b = m_rec.dist.normal(0.0, 1.0)
-    sigma = m_rec.dist.exponential(1.0)
-    sigma_cafe = m_rec.dist.exponential(1.0, shape=(2,))
-    rho_unconstrained = m_rec.dist.normal(0, 1)
-    rho = jnp.tanh(rho_unconstrained)
-    L_Rho = jnp.array([[1.0, 0.0], [rho, jnp.sqrt(1.0 - rho**2)]])
-    z = m_rec.dist.normal(0, 1, shape=(N_cafes, 2))
-    vary_effects = jnp.stack([a, b]) + (jnp.diag(sigma_cafe) @ L_Rho @ z.T).T
-    a_cafe, b_cafe = vary_effects[:, 0], vary_effects[:, 1]
-    mu = a_cafe[cafe] + b_cafe[cafe] * afternoon
-    m_rec.dist.normal(mu, sigma, obs=wait)
+model_rec = PAGE_MODEL
 
 for i in range(nsim):
+    # True values drawn from the page priors:
+    # a ~ normal(5, 2), b ~ normal(-1, 0.5), sigma ~ exponential(1),
+    # sigma_cafe ~ exponential(1) shape (2,),
+    # Rho ~ lkj(dimension=2, concentration=2): the marginal of the single off-diagonal
+    # element of a 2x2 correlation matrix is Beta(eta + (D-2)/2, eta + (D-2)/2) = Beta(2, 2)
+    # mapped to (-1, 1).
     a_sim = np.random.normal(0.0, 2.0)
     b_sim = np.random.normal(0.0, 1.0)
     sigma_cafe_sim = np.random.exponential(1.0, size=2)

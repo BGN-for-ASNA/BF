@@ -80,6 +80,7 @@ if [ "$SHOULD_SYNC" = true ]; then
             --exclude="**/*.quarto_ipynb" \
             --exclude="*.pkl" \
             --exclude=".git/" \
+            --exclude="*(conflicted copy*" \
             "$SRC_DOCS" "$DST_DOCS"
 
         if [ $? -eq 0 ]; then

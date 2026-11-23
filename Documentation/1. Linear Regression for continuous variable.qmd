@@ -94,7 +94,7 @@ model <- function(height, weight) {
     # Parameter prior distributions
     s <- bf.dist.uniform(0, 50, name = "s")
     a <- bf.dist.normal(178, 20, name = "a")
-    b <- bf.dist.normal(0, 1, name = "b")
+    b <- bf.dist.log_normal(0, 1, name = "b")
 
     # Likelihood
     bf.dist.normal(a + b * weight, s, obs = height)
@@ -138,6 +138,66 @@ m.summary() # Get posterior distributions
 ```
 :::
 
+<!--
+### Posterior predictive checks
+
+Does the model reproduce the distribution of observed heights?
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_density()
+```
+
+#### R
+```r
+# m$diag$ppc_density()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_density()
+```
+:::
+
+Each blue curve is the density of one dataset simulated from the posterior; the black curve is the observed heights. The black curve should look like one more blue curve: a shift, a different spread or a different shape (skew, two modes) shows what the model misses. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+```{python}
+# m.diag.ppc_stat(stat="sd")
+```
+
+```{python}
+# m.diag.ppc_loo_pit()
+```
+
+#### R
+```r
+# m$diag$ppc_stat(stat = "sd")
+```
+
+```r
+# m$diag$ppc_loo_pit()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_stat(stat="sd")
+```
+
+```julia
+# m.diag.ppc_loo_pit()
+```
+:::
+
+`ppc_stat(stat="sd")`: the vertical line (observed standard deviation) should fall inside the distribution of simulated standard deviations. `ppc_loo_pit`: leave-one-out PIT values should be uniform: the observed curve should stay inside the band of uniform curves; a U shape means predictions too narrow, a hump too wide.
+:::
+-->
+
 ## Mathematical Details
 
 ### *Frequentist Formulation*
@@ -169,11 +229,11 @@ Y_i \sim \text{Normal}(\alpha + \beta   X_i, \sigma)
 $$
 
 $$
-\alpha \sim \text{Normal}(0, 1)
+\alpha \sim \text{Normal}(178, 20)
 $$
 
 $$
-\beta \sim \text{Normal}(0, 1)
+\beta \sim \text{LogNormal}(0, 1)
 $$
 
 $$
@@ -189,6 +249,27 @@ Where:
 -   $X_i$ is the independent variable for observation *i*.
 
 -   $\sigma$ is the standard deviation of the Normal distribution, which describes the variance in the relationship between the dependent variable $Y$ and the independent variable $X$.
+
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/1.Continuous%20variable.py): `1.Continuous variable.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).
+- [Data generative model and inference model pipeline](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/1.Continuous%20variable.py): `1.Continuous variable.py` simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
+::: {.callout-note collapse="true"}
+## Plot: comparison with Stan (`1.Continuous variable.py`)
+
+![](Figures/validation/1.Continuous_variable_comparison.png){width=100%}
+:::
+
+::: {.callout-note collapse="true"}
+## Plot: data generative model and inference model pipeline (`1.Continuous variable.py`)
+
+![](Figures/validation/1.Continuous_variable_recovery.png){width=100%}
+:::
 
 
 ## Notes

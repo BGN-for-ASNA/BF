@@ -127,6 +127,20 @@ div.csl-indent {
 }</script>
 <!-- header-scripts.html -->
 <script>
+  // MathJax (loaded synchronously by Plotly figure outputs, and by
+  // tooltip-scripts.html) auto-typesets the whole page at startup, which
+  // replaces the raw TeX text node inside Quarto's <span class="math">
+  // elements with its own output; Quarto's KaTeX handler (DOMContentLoaded)
+  // then renders the leftover whitespace, leaving an empty equation.
+  // Disabling MathJax's initial typeset leaves those spans to KaTeX.
+  // Plotly still typesets its own labels on demand (Hub.Queue), and the
+  // tooltips are dynamic content MathJax never scanned anyway.
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = Object.assign(window.MathJax.startup || {}, {
+    typeset: false
+  });
+</script>
+<script>
   (function() {
     const isFileUrl = () => window.location.protocol === 'file:';
     const getColorSchemeSentinel = () => {
@@ -148,14 +162,10 @@ div.csl-indent {
       // Function to instantly swap a stylesheet node to dark
       const makeNodeDark = (node) => {
         if (node.tagName === 'LINK' && node.classList.contains('quarto-color-alternate')) {
+          // Dark is layered on light in Quarto: never disable the light sheet
+          // (a `disabled` attribute survives Quarto's rel-based toggle and
+          // leaves the page unstyled once the user switches to light).
           node.removeAttribute('disabled');
-          const id = node.id;
-          if (id) {
-            const lightSib = document.querySelector(`link.quarto-color-scheme[id="${id}"]:not(.quarto-color-alternate)`);
-            if (lightSib) {
-              lightSib.setAttribute('disabled', 'true');
-            }
-          }
         }
       };
 
@@ -630,7 +640,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
@@ -640,6 +650,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#bayesian-formulation" id="toc-bayesian-formulation" class="nav-link" data-scroll-target="#bayesian-formulation"><em>Bayesian formulation</em></a></li>
   </ul></li>
+  <li><a href="#model-validation-tests" id="toc-model-validation-tests" class="nav-link" data-scroll-target="#model-validation-tests">Model validation tests</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">Reference(s)</a></li>
   </ul>
@@ -687,7 +698,7 @@ window.Quarto = {
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="d8e62a7a" class="cell" data-execution_count="1">
+<div id="24c89cac" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -703,7 +714,7 @@ window.Quarto = {
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>m.scale([<span class="st">'MedianAgeMarriage'</span>, <span class="st">'Marriage'</span>]) <span class="co"># Scale</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="bu">dict</span>(</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    D_obs <span class="op">=</span> m.z_score(m.df[<span class="st">'Divorce'</span>].values),   </span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.array(m.df[<span class="st">'Divorce SE'</span>].values <span class="op">/</span> m.df[<span class="st">'Divorce'</span>].std()), </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.array(m.df[<span class="st">'Divorce_SE'</span>].values <span class="op">/</span> m.df[<span class="st">'Divorce'</span>].std()), </span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> jnp.array(m.df[<span class="st">'MedianAgeMarriage'</span>].values), </span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.array(m.df[<span class="st">'Marriage'</span>].values),</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> m.df.shape[<span class="dv">0</span>]   </span>
@@ -726,9 +737,13 @@ window.Quarto = {
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>m.summary() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>An NVIDIA GPU may be present on this machine, but a CUDA-enabled jaxlib is not installed. Falling back to cpu.</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>bf v 0.0.48 package loaded
-jax.local_device_count 32</code></pre>
+<pre><code>bf v 0.0.60 package loaded
+jax.local_device_count(cpu) = 32
+data(): renamed columns so they can be model arguments: 'Marriage SE' -&gt; 'Marriage_SE', 'Divorce SE' -&gt; 'Divorce_SE'. The original names are still accepted by the methods of m.</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -740,663 +755,663 @@ jax.local_device_count 32</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th">mean</th>
 <th data-quarto-table-cell-role="th">sd</th>
-<th data-quarto-table-cell-role="th">hdi_5.5%</th>
-<th data-quarto-table-cell-role="th">hdi_94.5%</th>
-<th data-quarto-table-cell-role="th">mcse_mean</th>
-<th data-quarto-table-cell-role="th">mcse_sd</th>
+<th data-quarto-table-cell-role="th">eti89_lb</th>
+<th data-quarto-table-cell-role="th">eti89_ub</th>
 <th data-quarto-table-cell-role="th">ess_bulk</th>
 <th data-quarto-table-cell-role="th">ess_tail</th>
 <th data-quarto-table-cell-role="th">r_hat</th>
+<th data-quarto-table-cell-role="th">mcse_mean</th>
+<th data-quarto-table-cell-role="th">mcse_sd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[0]</td>
-<td>1.19</td>
+<td>1.17</td>
 <td>0.36</td>
-<td>0.63</td>
-<td>1.78</td>
+<td>0.61</td>
+<td>1.76</td>
+<td>5977.20</td>
+<td>2935.87</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>6629.04</td>
-<td>2878.92</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[1]</td>
 <td>0.68</td>
-<td>0.56</td>
+<td>0.55</td>
 <td>-0.19</td>
-<td>1.62</td>
+<td>1.55</td>
+<td>7015.62</td>
+<td>3319.81</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7094.65</td>
-<td>2729.13</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[2]</td>
 <td>0.43</td>
-<td>0.35</td>
-<td>-0.12</td>
-<td>0.98</td>
+<td>0.33</td>
+<td>-0.10</td>
+<td>0.96</td>
+<td>8598.54</td>
+<td>3118.58</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7764.21</td>
-<td>2816.86</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[3]</td>
 <td>1.42</td>
-<td>0.47</td>
-<td>0.66</td>
-<td>2.16</td>
+<td>0.46</td>
+<td>0.69</td>
+<td>2.17</td>
+<td>7469.03</td>
+<td>2732.97</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>8049.51</td>
-<td>3321.60</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[4]</td>
-<td>-0.91</td>
+<td>-0.90</td>
 <td>0.13</td>
 <td>-1.11</td>
 <td>-0.70</td>
+<td>10015.97</td>
+<td>3001.42</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8925.51</td>
-<td>2665.55</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[5]</td>
-<td>0.67</td>
-<td>0.41</td>
-<td>0.02</td>
-<td>1.30</td>
+<td>0.66</td>
+<td>0.40</td>
+<td>0.03</td>
+<td>1.29</td>
+<td>6590.12</td>
+<td>3213.90</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>6879.72</td>
-<td>3112.95</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[6]</td>
-<td>-1.39</td>
+<td>-1.37</td>
 <td>0.34</td>
-<td>-1.94</td>
-<td>-0.90</td>
+<td>-1.91</td>
+<td>-0.84</td>
+<td>7591.83</td>
+<td>3161.05</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7175.34</td>
-<td>2676.90</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[7]</td>
-<td>-0.34</td>
-<td>0.50</td>
-<td>-1.13</td>
+<td>-0.33</td>
+<td>0.48</td>
+<td>-1.12</td>
 <td>0.45</td>
+<td>9028.77</td>
+<td>3461.97</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7490.95</td>
-<td>2809.90</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[8]</td>
-<td>-1.91</td>
+<td>-1.87</td>
 <td>0.58</td>
 <td>-2.79</td>
-<td>-0.97</td>
+<td>-0.92</td>
+<td>5350.31</td>
+<td>3331.94</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>5408.54</td>
-<td>3604.80</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[9]</td>
-<td>-0.63</td>
-<td>0.17</td>
-<td>-0.89</td>
-<td>-0.35</td>
+<td>-0.62</td>
+<td>0.16</td>
+<td>-0.88</td>
+<td>-0.36</td>
+<td>9242.51</td>
+<td>3150.08</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8339.19</td>
-<td>2822.10</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[10]</td>
-<td>0.78</td>
-<td>0.28</td>
-<td>0.35</td>
-<td>1.26</td>
+<td>0.77</td>
+<td>0.29</td>
+<td>0.30</td>
+<td>1.24</td>
+<td>7193.60</td>
+<td>2668.53</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7008.09</td>
-<td>2717.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[11]</td>
-<td>-0.56</td>
-<td>0.50</td>
-<td>-1.38</td>
-<td>0.21</td>
+<td>-0.55</td>
+<td>0.49</td>
+<td>-1.35</td>
+<td>0.22</td>
+<td>5886.33</td>
+<td>3208.48</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6904.22</td>
-<td>2986.23</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[12]</td>
-<td>0.15</td>
-<td>0.49</td>
-<td>-0.63</td>
-<td>0.91</td>
+<td>0.17</td>
+<td>0.51</td>
+<td>-0.65</td>
+<td>0.96</td>
+<td>3955.12</td>
+<td>3335.93</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>3837.65</td>
-<td>3016.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[13]</td>
-<td>-0.88</td>
-<td>0.23</td>
-<td>-1.27</td>
-<td>-0.54</td>
+<td>-0.87</td>
+<td>0.22</td>
+<td>-1.21</td>
+<td>-0.52</td>
+<td>7753.24</td>
+<td>2902.84</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9512.46</td>
-<td>2976.93</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[14]</td>
-<td>0.57</td>
-<td>0.31</td>
-<td>0.06</td>
+<td>0.56</td>
+<td>0.30</td>
+<td>0.07</td>
 <td>1.05</td>
+<td>9248.15</td>
+<td>3023.10</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8909.69</td>
-<td>2445.22</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[15]</td>
 <td>0.29</td>
-<td>0.37</td>
-<td>-0.32</td>
-<td>0.86</td>
+<td>0.38</td>
+<td>-0.33</td>
+<td>0.89</td>
+<td>9402.05</td>
+<td>3038.88</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9092.89</td>
-<td>2919.07</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[16]</td>
 <td>0.50</td>
-<td>0.43</td>
-<td>-0.21</td>
-<td>1.13</td>
+<td>0.42</td>
+<td>-0.17</td>
+<td>1.16</td>
+<td>9141.37</td>
+<td>3021.98</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9021.36</td>
-<td>2514.60</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[17]</td>
-<td>1.28</td>
-<td>0.35</td>
-<td>0.69</td>
-<td>1.82</td>
+<td>1.26</td>
+<td>0.34</td>
+<td>0.71</td>
+<td>1.81</td>
+<td>7042.37</td>
+<td>3243.09</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8538.03</td>
-<td>2396.44</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[18]</td>
-<td>0.44</td>
+<td>0.43</td>
 <td>0.38</td>
-<td>-0.14</td>
-<td>1.06</td>
+<td>-0.17</td>
+<td>1.03</td>
+<td>7336.63</td>
+<td>2636.57</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8851.56</td>
-<td>2917.39</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[19]</td>
-<td>0.43</td>
-<td>0.54</td>
-<td>-0.42</td>
-<td>1.29</td>
+<td>0.41</td>
+<td>0.55</td>
+<td>-0.44</td>
+<td>1.32</td>
+<td>4773.00</td>
+<td>3343.50</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>4992.56</td>
-<td>3178.63</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[20]</td>
-<td>-0.56</td>
-<td>0.33</td>
+<td>-0.55</td>
+<td>0.32</td>
 <td>-1.07</td>
-<td>-0.05</td>
+<td>-0.03</td>
+<td>8833.71</td>
+<td>2806.00</td>
+<td>1.01</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8300.10</td>
-<td>3211.52</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[21]</td>
-<td>-1.10</td>
+<td>-1.09</td>
 <td>0.26</td>
-<td>-1.52</td>
+<td>-1.51</td>
 <td>-0.68</td>
+<td>8046.12</td>
+<td>3317.05</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>7504.60</td>
-<td>2795.96</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[22]</td>
-<td>-0.28</td>
-<td>0.26</td>
+<td>-0.27</td>
+<td>0.27</td>
 <td>-0.69</td>
-<td>0.15</td>
+<td>0.16</td>
+<td>8873.33</td>
+<td>2955.54</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9842.48</td>
-<td>2757.38</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[23]</td>
-<td>-1.02</td>
+<td>-1.01</td>
 <td>0.29</td>
-<td>-1.44</td>
-<td>-0.52</td>
+<td>-1.48</td>
+<td>-0.54</td>
+<td>7274.26</td>
+<td>3133.54</td>
+<td>1.00</td>
 <td>0.00</td>
-<td>0.01</td>
-<td>8002.34</td>
-<td>2955.43</td>
-<td>1.0</td>
+<td>0.00</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[24]</td>
-<td>0.44</td>
+<td>0.43</td>
 <td>0.41</td>
-<td>-0.24</td>
-<td>1.08</td>
+<td>-0.21</td>
+<td>1.11</td>
+<td>8243.77</td>
+<td>2389.92</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7483.46</td>
-<td>3180.78</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[25]</td>
 <td>-0.03</td>
 <td>0.32</td>
-<td>-0.55</td>
-<td>0.46</td>
+<td>-0.53</td>
+<td>0.47</td>
+<td>9258.61</td>
+<td>3097.60</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8085.39</td>
-<td>2743.57</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[26]</td>
-<td>-0.01</td>
-<td>0.50</td>
+<td>-0.03</td>
+<td>0.51</td>
 <td>-0.83</td>
-<td>0.77</td>
+<td>0.78</td>
+<td>8916.19</td>
+<td>2934.22</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7881.33</td>
-<td>2944.57</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[27]</td>
-<td>-0.16</td>
-<td>0.40</td>
-<td>-0.81</td>
-<td>0.48</td>
+<td>-0.15</td>
+<td>0.39</td>
+<td>-0.78</td>
+<td>0.46</td>
+<td>7286.04</td>
+<td>3001.03</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9324.57</td>
-<td>2890.59</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[28]</td>
 <td>-0.25</td>
 <td>0.50</td>
-<td>-1.10</td>
-<td>0.50</td>
+<td>-1.01</td>
+<td>0.57</td>
+<td>8158.80</td>
+<td>2960.24</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7690.81</td>
-<td>2635.79</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[29]</td>
-<td>-1.82</td>
+<td>-1.80</td>
 <td>0.24</td>
-<td>-2.22</td>
-<td>-1.46</td>
+<td>-2.18</td>
+<td>-1.43</td>
+<td>8479.76</td>
+<td>3052.28</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8466.67</td>
-<td>2320.61</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[30]</td>
 <td>0.17</td>
-<td>0.41</td>
-<td>-0.46</td>
-<td>0.86</td>
+<td>0.42</td>
+<td>-0.50</td>
+<td>0.85</td>
+<td>9236.16</td>
+<td>2740.57</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8294.74</td>
-<td>3163.74</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[31]</td>
-<td>-1.68</td>
-<td>0.16</td>
-<td>-1.94</td>
-<td>-1.42</td>
+<td>-1.66</td>
+<td>0.17</td>
+<td>-1.92</td>
+<td>-1.40</td>
+<td>8934.65</td>
+<td>2676.65</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8636.19</td>
-<td>2594.41</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[32]</td>
 <td>0.12</td>
 <td>0.24</td>
-<td>-0.25</td>
-<td>0.52</td>
+<td>-0.27</td>
+<td>0.51</td>
+<td>10684.76</td>
+<td>2507.87</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9224.69</td>
-<td>2694.10</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[33]</td>
 <td>-0.07</td>
-<td>0.50</td>
-<td>-0.81</td>
-<td>0.81</td>
+<td>0.51</td>
+<td>-0.90</td>
+<td>0.74</td>
+<td>6418.84</td>
+<td>3389.49</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7013.83</td>
-<td>3140.99</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[34]</td>
 <td>-0.12</td>
+<td>0.22</td>
+<td>-0.47</td>
 <td>0.23</td>
-<td>-0.48</td>
-<td>0.24</td>
+<td>7765.49</td>
+<td>2685.86</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>9015.09</td>
-<td>2675.53</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[35]</td>
-<td>1.29</td>
-<td>0.43</td>
-<td>0.61</td>
-<td>1.97</td>
+<td>1.28</td>
+<td>0.41</td>
+<td>0.64</td>
+<td>1.94</td>
+<td>7190.01</td>
+<td>2914.74</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>7701.31</td>
-<td>3003.09</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[36]</td>
 <td>0.23</td>
-<td>0.37</td>
-<td>-0.36</td>
-<td>0.81</td>
+<td>0.35</td>
+<td>-0.32</td>
+<td>0.79</td>
+<td>8766.85</td>
+<td>2946.34</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>10821.19</td>
-<td>2613.97</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[37]</td>
-<td>-1.04</td>
+<td>-1.03</td>
 <td>0.22</td>
-<td>-1.41</td>
-<td>-0.70</td>
+<td>-1.38</td>
+<td>-0.67</td>
+<td>10257.13</td>
+<td>3017.12</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>8946.61</td>
-<td>3099.16</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[38]</td>
-<td>-0.93</td>
-<td>0.52</td>
-<td>-1.66</td>
+<td>-0.90</td>
+<td>0.53</td>
+<td>-1.73</td>
 <td>-0.03</td>
+<td>7238.06</td>
+<td>3344.19</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6591.51</td>
-<td>3184.34</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[39]</td>
-<td>-0.69</td>
-<td>0.34</td>
+<td>-0.68</td>
+<td>0.32</td>
 <td>-1.20</td>
-<td>-0.14</td>
+<td>-0.19</td>
+<td>9236.39</td>
+<td>2990.46</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8715.45</td>
-<td>3138.81</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[40]</td>
-<td>0.24</td>
-<td>0.57</td>
-<td>-0.65</td>
-<td>1.15</td>
+<td>0.25</td>
+<td>0.56</td>
+<td>-0.64</td>
+<td>1.13</td>
+<td>6946.63</td>
+<td>3330.48</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7164.11</td>
-<td>2890.96</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[41]</td>
-<td>0.76</td>
+<td>0.74</td>
 <td>0.35</td>
-<td>0.21</td>
-<td>1.35</td>
+<td>0.20</td>
+<td>1.30</td>
+<td>8133.32</td>
+<td>3020.32</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>8313.98</td>
-<td>2428.10</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[42]</td>
 <td>0.19</td>
 <td>0.18</td>
-<td>-0.09</td>
-<td>0.49</td>
+<td>-0.10</td>
+<td>0.48</td>
+<td>10274.49</td>
+<td>3358.88</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>10597.38</td>
-<td>2509.83</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[43]</td>
-<td>0.79</td>
-<td>0.42</td>
-<td>0.15</td>
-<td>1.46</td>
+<td>0.80</td>
+<td>0.44</td>
+<td>0.08</td>
+<td>1.48</td>
+<td>5261.49</td>
+<td>3247.94</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>5438.69</td>
-<td>3058.51</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[44]</td>
-<td>-0.40</td>
-<td>0.51</td>
-<td>-1.21</td>
-<td>0.43</td>
+<td>-0.42</td>
+<td>0.54</td>
+<td>-1.24</td>
+<td>0.44</td>
+<td>8840.61</td>
+<td>3076.00</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>7106.12</td>
-<td>2860.56</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[45]</td>
-<td>-0.40</td>
+<td>-0.39</td>
 <td>0.26</td>
-<td>-0.81</td>
-<td>0.02</td>
+<td>-0.80</td>
+<td>0.03</td>
+<td>10225.37</td>
+<td>2723.05</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>7926.32</td>
-<td>2663.58</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[46]</td>
-<td>0.14</td>
+<td>0.13</td>
 <td>0.31</td>
-<td>-0.34</td>
-<td>0.62</td>
+<td>-0.36</td>
+<td>0.64</td>
+<td>9752.00</td>
+<td>2680.57</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
-<td>9719.21</td>
-<td>2947.81</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[47]</td>
 <td>0.56</td>
-<td>0.49</td>
-<td>-0.19</td>
-<td>1.35</td>
+<td>0.47</td>
+<td>-0.18</td>
+<td>1.32</td>
+<td>9244.26</td>
+<td>2789.86</td>
+<td>1.00</td>
+<td>0.00</td>
 <td>0.01</td>
-<td>0.01</td>
-<td>8806.41</td>
-<td>2846.19</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">D_true[48]</td>
-<td>-0.65</td>
-<td>0.28</td>
-<td>-1.11</td>
-<td>-0.21</td>
+<td>-0.64</td>
+<td>0.27</td>
+<td>-1.06</td>
+<td>-0.20</td>
+<td>8725.11</td>
+<td>3162.66</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>7771.87</td>
-<td>2902.06</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">D_true[49]</td>
-<td>0.84</td>
+<td>0.85</td>
 <td>0.59</td>
-<td>-0.04</td>
-<td>1.83</td>
+<td>-0.11</td>
+<td>1.79</td>
+<td>5698.91</td>
+<td>3377.58</td>
+<td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
-<td>6431.67</td>
-<td>3440.32</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
-<td>-0.06</td>
+<td>-0.05</td>
 <td>0.10</td>
-<td>-0.20</td>
-<td>0.10</td>
+<td>-0.21</td>
+<td>0.11</td>
+<td>5248.35</td>
+<td>3512.41</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>5290.36</td>
-<td>3710.99</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">beta</td>
-<td>-0.62</td>
+<td>-0.61</td>
 <td>0.16</td>
 <td>-0.86</td>
-<td>-0.37</td>
+<td>-0.35</td>
+<td>3606.35</td>
+<td>3526.75</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>3368.47</td>
-<td>3292.77</td>
-<td>1.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">eta</td>
-<td>0.05</td>
+<td>0.06</td>
 <td>0.17</td>
-<td>-0.23</td>
-<td>0.30</td>
+<td>-0.21</td>
+<td>0.33</td>
+<td>3723.44</td>
+<td>3256.25</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>3558.85</td>
-<td>3116.66</td>
-<td>1.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">s</td>
-<td>0.60</td>
-<td>0.10</td>
-<td>0.44</td>
+<td>0.59</td>
+<td>0.11</td>
+<td>0.43</td>
 <td>0.77</td>
+<td>1793.36</td>
+<td>1908.81</td>
+<td>1.00</td>
 <td>0.00</td>
 <td>0.00</td>
-<td>1641.36</td>
-<td>2319.13</td>
-<td>1.0</td>
 </tr>
 </tbody>
 </table>
@@ -1406,81 +1421,136 @@ jax.local_device_count 32</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform------------------------------------------------</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(<span class="fu">paste</span>(<span class="fu">system.file</span>(<span class="at">package =</span> <span class="st">"BayesForge"</span>),<span class="st">"/data/WaffleDivorce.csv"</span>, <span class="at">sep =</span> <span class="st">''</span>), <span class="at">sep=</span><span class="st">';'</span>)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">'MedianAgeMarriage'</span>, <span class="st">'Marriage'</span>))</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_obs <span class="ot">=</span> m<span class="sc">$</span><span class="fu">z_score</span>(jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_sd <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce SE'</span>]) <span class="sc">/</span> <span class="fu">sd</span>(<span class="fu">unlist</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>A <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'MedianAgeMarriage'</span>])</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>M <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Marriage'</span>])</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df))</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(D_obs, D_sd, A, N, M){</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="at">name =</span> <span class="st">'a'</span>) </span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'beta'</span>)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  eta <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'eta'</span>) </span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">bf.dist.exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>) </span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a <span class="sc">+</span> beta <span class="sc">*</span> A <span class="sc">+</span> eta <span class="sc">*</span> M</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  D_true <span class="ot">=</span> <span class="fu">bf.dist.normal</span>(mu, s, <span class="at">name =</span> <span class="st">'D_true'</span>) </span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bf.dist.normal</span>(D_true , D_sd, <span class="at">obs =</span> D_obs) </span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesForge)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>jnp <span class="ot">=</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">'jax.numpy'</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup platform------------------------------------------------</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>m<span class="ot">=</span><span class="fu">importBF</span>(<span class="at">platform=</span><span class="st">'cpu'</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import data ------------------------------------------------</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">data</span>(m<span class="sc">$</span>load<span class="sc">$</span><span class="fu">WaffleDivorce</span>(<span class="at">only_path =</span> <span class="cn">TRUE</span>), <span class="at">sep=</span><span class="st">';'</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">scale</span>(<span class="fu">list</span>(<span class="st">'MedianAgeMarriage'</span>, <span class="st">'Marriage'</span>))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_obs <span class="ot">=</span> m<span class="sc">$</span><span class="fu">z_score</span>(jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>D_sd <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Divorce_SE'</span>]) <span class="sc">/</span> <span class="fu">sd</span>(<span class="fu">unlist</span>(m<span class="sc">$</span>df[<span class="st">'Divorce'</span>]))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>A <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'MedianAgeMarriage'</span>])</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>M <span class="ot">=</span> jnp<span class="sc">$</span><span class="fu">array</span>(m<span class="sc">$</span>df[<span class="st">'Marriage'</span>])</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span>data_on_model<span class="sc">$</span>N <span class="ot">=</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(m<span class="sc">$</span>df))</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">function</span>(D_obs, D_sd, A, N, M){</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.2</span>, <span class="at">name =</span> <span class="st">'a'</span>) </span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'beta'</span>)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  eta <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(<span class="dv">0</span>, <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">'eta'</span>) </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">exponential</span>(<span class="dv">1</span>, <span class="at">name =</span> <span class="st">'s'</span>) </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">=</span> a <span class="sc">+</span> beta <span class="sc">*</span> A <span class="sc">+</span> eta <span class="sc">*</span> M</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  D_true <span class="ot">=</span> m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(mu, s, <span class="at">name =</span> <span class="st">'D_true'</span>) </span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  m<span class="sc">$</span>dist<span class="sc">$</span><span class="fu">normal</span>(D_true , D_sd, <span class="at">obs =</span> D_obs, <span class="at">name =</span> <span class="st">'D_obs'</span>) </span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MCMC ------------------------------------------------</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">fit</span>(model) <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>m<span class="sc">$</span><span class="fu">summary</span>() <span class="co"># Get posterior distribution</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">WaffleDivorce</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">"MedianAgeMarriage"</span>, <span class="st">"Marriage"</span>]) <span class="co"># Scale</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="fu">pydict</span>(</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    D_obs <span class="op">=</span> m.<span class="fu">z_score</span>(m.df[<span class="st">"Divorce"</span>].values),   </span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Divorce SE"</span>].values <span class="op">/</span> m.df[<span class="st">"Divorce"</span>].<span class="fu">std</span>()), </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"MedianAgeMarriage"</span>].values), </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Marriage"</span>].values),</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> m.df.shape[<span class="fl">0</span>]   </span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat <span class="co"># Send to model (convert to jax array)</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(D_obs, D_sd, A, N, M)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.2</span>, name <span class="op">=</span> <span class="st">"a"</span>) </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    eta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"eta"</span>)  </span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"s"</span>) </span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> beta <span class="op">*</span> A <span class="op">+</span> eta <span class="op">*</span> M</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    D_true <span class="op">=</span> m.dist.<span class="fu">normal</span>(mu, s, name <span class="op">=</span> <span class="st">"D_true"</span>) </span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(D_true , D_sd, obs <span class="op">=</span> D_obs) </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PyBayesForge</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup device------------------------------------------------</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="fu">importBF</span>(platform<span class="op">=</span><span class="st">"cpu"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import Data &amp; Data Manipulation ------------------------------------------------</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Import</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> m.load.<span class="fu">WaffleDivorce</span>(only_path<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">data</span>(data_path, sep<span class="op">=</span><span class="st">";"</span>) </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">scale</span>([<span class="st">"MedianAgeMarriage"</span>, <span class="st">"Marriage"</span>]) <span class="co"># Scale</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> <span class="fu">pydict</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    D_obs <span class="op">=</span> m.<span class="fu">z_score</span>(m.df[<span class="st">"Divorce"</span>].values),   </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    D_sd <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Divorce_SE"</span>].values <span class="op">/</span> m.df[<span class="st">"Divorce"</span>].<span class="fu">std</span>()), </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"MedianAgeMarriage"</span>].values), </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> jnp.<span class="fu">array</span>(m.df[<span class="st">"Marriage"</span>].values),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    N <span class="op">=</span> m.df.shape[<span class="fl">0</span>]   </span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>m.data_on_model <span class="op">=</span> dat <span class="co"># Send to model (convert to jax array)</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Define model ------------------------------------------------</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="pp">@BF</span> <span class="kw">function</span> <span class="fu">model</span>(D_obs, D_sd, A, N, M)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.2</span>, name <span class="op">=</span> <span class="st">"a"</span>) </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"beta"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    eta <span class="op">=</span> m.dist.<span class="fu">normal</span>(<span class="fl">0</span>, <span class="fl">0.5</span>, name <span class="op">=</span> <span class="st">"eta"</span>)  </span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> m.dist.<span class="fu">exponential</span>(<span class="fl">1</span>, name <span class="op">=</span> <span class="st">"s"</span>) </span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> beta <span class="op">*</span> A <span class="op">+</span> eta <span class="op">*</span> M</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    D_true <span class="op">=</span> m.dist.<span class="fu">normal</span>(mu, s, name <span class="op">=</span> <span class="st">"D_true"</span>) </span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    m.dist.<span class="fu">normal</span>(D_true , D_sd, obs <span class="op">=</span> D_obs) </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Run mcmc ------------------------------------------------</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">fit</span>(model)  <span class="co"># Optimize model parameters through MCMC sampling</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary ------------------------------------------------</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>m.<span class="fu">summary</span>() <span class="co"># Get posterior distributions</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
+<!--
+### Posterior predictive checks
+
+Does the model reproduce the observed divorce rates, given their measurement error?
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#3c69c37c .cell execution_count=2}
+``` {.python .cell-code}
+# m.diag.ppc_intervals()
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_intervals()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_intervals()
+```
+:::
+
+Points are the observed (standardised) divorce rates, bars the 50 % and 90 % predictive intervals. States measured with a large error get wide intervals. See [Diagnostics](start/Diagnostics.qmd) for every posterior predictive plot.
+
+::: {.callout-note collapse="true"}
+## More checks
+
+::: {.panel-tabset group="language"}
+#### Python
+
+::: {#4d85c523 .cell execution_count=3}
+``` {.python .cell-code}
+# m.diag.ppc_error_scatter()
+```
+:::
+
+
+#### R
+```r
+# m$diag$ppc_error_scatter()
+```
+
+#### Julia
+```julia
+# m.diag.ppc_error_scatter()
+```
+:::
+
+Average error (observed minus mean prediction) against the observed value. The errors grow with the observed value: the model pulls noisy measurements toward the regression line (shrinkage), which is expected for a measurement-error model, not a misfit.
+:::
+-->
 </section>
 <section id="mathematical-details" class="level2">
 <h2 class="anchored" data-anchor-id="mathematical-details">Mathematical Details</h2>
@@ -1509,6 +1579,48 @@ D_i \sim \text{Normal}(\mu_i, \sigma)
 <li><p><span class="math inline">\eta</span> is the regression coefficient for marriage rate.</p></li>
 </ul>
 </section>
+</section>
+<section id="model-validation-tests" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
+<ul>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/15.Measuring%20error.py">Comparison with Stan</a>: <code>15.Measuring error.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence) and parameter recovery.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/15.Measuring%20error.py">Data generative model and inference model pipeline</a>: <code>15.Measuring error.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>15.Measuring error.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/15.Measuring_error_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>15.Measuring error.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/15.Measuring_error_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
@@ -2291,6 +2403,82 @@ An activation function is a nonlinear transformation applied to the pre-activati
         adjustSidebarFolding(true);
       }, 50);
     });
+  })();
+
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  (function() {
+    function initScrollspy() {
+      const toc = document.querySelector('nav#TOC');
+      if (!toc) return;
+
+      const tocLinks = Array.from(toc.querySelectorAll('a[data-scroll-target]'));
+      if (tocLinks.length === 0) return;
+
+      function getTargetElement(link) {
+        const targetAttr = link.getAttribute('data-scroll-target');
+        if (!targetAttr) return null;
+        const id = targetAttr.startsWith('#') ? decodeURIComponent(targetAttr.slice(1)) : decodeURIComponent(targetAttr);
+        let el = document.getElementById(id);
+        if (el) return el;
+        try {
+          if (window.CSS && CSS.escape) {
+            el = document.querySelector('#' + CSS.escape(id));
+            if (el) return el;
+          }
+        } catch(e) {}
+        return document.querySelector(`[id="${id.replace(/"/g, '\\"')}"]`);
+      }
+
+      const targets = tocLinks.map(link => getTargetElement(link));
+
+      function onScroll() {
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        const offsetMargin = 150;
+        let activeIdx = -1;
+
+        if (window.innerHeight + scrollPos >= (document.documentElement.scrollHeight || document.body.offsetHeight) - 30) {
+          activeIdx = targets.length - 1;
+        } else {
+          for (let i = targets.length - 1; i >= 0; i--) {
+            const el = targets[i];
+            if (el) {
+              const top = el.getBoundingClientRect().top + scrollPos;
+              if (top <= scrollPos + offsetMargin) {
+                activeIdx = i;
+                break;
+              }
+            }
+          }
+        }
+
+        if (activeIdx === -1 && targets.length > 0) {
+          activeIdx = 0;
+        }
+
+        tocLinks.forEach((link, idx) => {
+          if (idx === activeIdx) {
+            link.classList.add('active');
+            let parent = link.closest('ul.collapse');
+            while (parent && toc.contains(parent)) {
+              parent.classList.remove('collapse');
+              parent = parent.parentElement.closest('ul.collapse');
+            }
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      setTimeout(onScroll, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initScrollspy);
+    } else {
+      initScrollspy();
+    }
   })();
 </script>
 <script id="quarto-html-after-body" type="application/javascript">

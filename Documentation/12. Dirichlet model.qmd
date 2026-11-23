@@ -93,6 +93,7 @@ print(summ[['mean']])
 library(BayesForge)
 m=importBF(platform='cpu')
 jnp = reticulate::import('jax.numpy')
+jax = reticulate::import('jax')
 
 # Simulated data ------------------------------------------------
 set.seed(42)
@@ -126,23 +127,23 @@ for(i in 1:N) {
 # Define model ------------------------------------------------
 model <- function(X, Y){
   # Parameter prior distributions
-  alpha = bf.dist.normal(0, 5, name='alpha', shape = c(2))
-  beta = bf.dist.normal(0, 5, name='beta', shape = c(2))
-  kappa = bf.dist.exponential(1.0, name='kappa')
+  alpha = m$dist$normal(0, 5, name='alpha', shape = reticulate::tuple(2L))
+  beta = m$dist$normal(0, 5, name='beta', shape = reticulate::tuple(2L))
+  kappa = m$dist$exponential(1.0, name='kappa')
   
   # Linear predictors
-  s1 = alpha[1] + beta[1] * X
-  s2 = alpha[2] + beta[2] * X
+  s1 = alpha[0L] + beta[0L] * X
+  s2 = alpha[1L] + beta[1L] * X
   s3 = jnp$zeros_like(s1)
   
   phi = jnp$stack(list(s1, s2, s3), axis=as.integer(1))
-  theta = jnp$nn$softmax(phi, axis=as.integer(1))
+  theta = jax$nn$softmax(phi, axis=as.integer(1))
   
   # Likelihood
-  bf.dist.dirichlet(theta * kappa, obs=Y)
+  m$dist$dirichlet(theta * kappa, obs = Y, name = "y")
 }
 
-m$data_on_model = list(X=X, Y=Y)
+m$data_on_model = list(X = jnp$array(as.numeric(X)), Y = jnp$array(Y))
 
 # Run mcmc ------------------------------------------------
 m$fit(model, progress_bar=FALSE)
@@ -192,18 +193,18 @@ end
     kappa = m.dist.exponential(1.0, name="kappa")
     
     # Linear predictors
-    s1 = alpha[1] .+ beta[1] .* X
-    s2 = alpha[2] .+ beta[2] .* X
+    s1 = alpha[0] + beta[0] * X
+    s2 = alpha[1] + beta[1] * X
     s3 = jnp.zeros_like(s1)
     
-    phi = jnp.stack([s1, s2, s3], axis=1)
+    phi = jnp.stack(pylist([s1, s2, s3]), axis=1)
     theta = jax.nn.softmax(phi, axis=1)
     
     # Likelihood
     m.dist.dirichlet(theta * kappa, obs=Y)
 end
 
-m.data_on_model = Dict("X" => X, "Y" => Y)
+m.data_on_model = pydict("X" => jnp.array(X), "Y" => jnp.array(Y))
 
 # Run mcmc ------------------------------------------------
 m.fit(model, progress_bar=false)
@@ -240,6 +241,27 @@ Where:
 - $\phi_i$ give the linear model for each of the $k$ categories. Note that we use the softmax function to ensure that that the probabilities $\theta_i$ form a [<span style="color:#0D6EFD">simplex 🛈</span>]{#simplex}.
   
 - Each element of $\phi_i$ is obtained by applying a linear regression model with its own respective intercept $\alpha_k$ and slope coefficient $\beta_k$. To ensure the model is identifiable, one category, *K*, is arbitrarily chosen as a reference or baseline category. The linear predictor for this reference category is set to zero. The coefficients for the other categories then represent the change in the log-odds of being in that category versus the reference category.
+
+
+## Model validation tests
+
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/14.Dirichlet.py): `14.Dirichlet.py` fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence) and parameter recovery.
+- [Data generative model and inference model pipeline](https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/14.Dirichlet.py): `14.Dirichlet.py` simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
+::: {.callout-note collapse="true"}
+## Plot: comparison with Stan (`14.Dirichlet.py`)
+
+![](Figures/validation/14.Dirichlet_comparison.png){width=100%}
+:::
+
+::: {.callout-note collapse="true"}
+## Plot: data generative model and inference model pipeline (`14.Dirichlet.py`)
+
+![](Figures/validation/14.Dirichlet_recovery.png){width=100%}
+:::
 
 
 ## Reference(s)

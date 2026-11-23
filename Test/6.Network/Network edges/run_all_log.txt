@@ -1,2 +1,10 @@
-Execution Log - 12 scripts
+Execution Log - 8 scripts
 ==================================================
+[SUCCESS] run_binary_directed_no_zi.R
+[SUCCESS] run_binary_directed_zi.R
+[SUCCESS] run_binary_undirected_no_zi.R
+[SUCCESS] run_binary_undirected_zi.R
+[SUCCESS] run_count_directed_no_zi.R
+[SUCCESS] run_count_directed_zi.R
+[SUCCESS] run_count_undirected_no_zi.R
+[SUCCESS] run_count_undirected_zi.R

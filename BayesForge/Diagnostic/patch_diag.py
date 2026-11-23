@@ -1,4 +1,5 @@
 import inspect
+import warnings
 """
 JAX+Plotly diagnostic methods for BF models.
 
@@ -8,7 +9,8 @@ Two entry points:
                                  and close over m, so m.diag.density() respects m.posteriors
 """
 import BayesForge.Diagnostic.jax_diagnostics as jd
-from BayesForge.Diagnostic.jax_diagnostics import iter_expanded, filter_posterior_dict
+from BayesForge.Diagnostic.jax_diagnostics import (
+    iter_expanded, filter_posterior_dict, _acf)
 import BayesForge.Diagnostic.ppc as _ppc
 import BayesForge.Diagnostic.sensitivity as _sens
 from BayesForge.Diagnostic.regression_plot import plot_regression as _plot_regression
@@ -17,19 +19,8 @@ import plotly.colors as pcolors
 _COLORS = pcolors.qualitative.Plotly
 
 
-def _acf(x, max_lag=40):
-    """Autocorrelation of a single chain, lags 0..max_lag-1, on the global mean."""
-    import numpy as np
-    x = np.asarray(x, dtype=float)
-    n = x.size
-    max_lag = int(min(max_lag, n))
-    xc = x - x.mean()
-    denom = float(np.dot(xc, xc))
-    if denom <= 0:
-        return [1.0] + [0.0] * (max_lag - 1)
-    return [float(np.dot(xc[: n - t], xc[t:]) / denom) for t in range(max_lag)]
-
-
+# _acf lives in jax_diagnostics (RELEASE_AUDIT bug 15): Diag2, patch_diag and
+# jax_diagnostics each had a copy, and the copies disagreed on the estimator.
 # =============================================================================
 # Shared helpers
 # =============================================================================
@@ -340,7 +331,10 @@ def _plot_ess_evolution(m, include=None, exclude=None, filter_regex=None,
     if not expanded:
         return go.Figure()
 
-    S_total = expanded[0][1].shape[1]
+    # RELEASE_AUDIT bug 10: variables can have different draw counts; the
+    # x-axis must stop where the shortest chain ends, not at the first
+    # variable's length.
+    S_total = min(a.shape[1] for _, a in expanded)
     fracs = np.linspace(1/steps, 1.0, steps)
     ns = [max(4, int(f * S_total)) for f in fracs]
 
@@ -364,7 +358,7 @@ def _plot_ess_evolution(m, include=None, exclude=None, filter_regex=None,
 
 def _plot_pair(m, include=None, exclude=None, filter_regex=None,
                colorscale="Viridis", max_points=1000,
-               point_color='rgba(40, 150, 200, 0.4)', filtered=True):
+               point_color='rgba(40, 150, 200, 0.4)', filtered=True, seed=42):
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     import pandas as pd
@@ -375,7 +369,7 @@ def _plot_pair(m, include=None, exclude=None, filter_regex=None,
     samples_dict = {name: np.asarray(s) for (name, s) in expanded}
     n_vars = len(labels)
     df = pd.DataFrame(samples_dict)
-    plot_df = df.sample(n=max_points, random_state=42) if len(df) > max_points else df
+    plot_df = df.sample(n=max_points, random_state=seed) if len(df) > max_points else df
 
     fig = make_subplots(rows=n_vars, cols=n_vars, horizontal_spacing=0.03, vertical_spacing=0.03)
     for i in range(n_vars):
@@ -459,8 +453,11 @@ def patch_diag_class(cls):
 
     def pair_jax(self, m, include=None, exclude=None, filter_regex=None,
                  colorscale="Viridis", max_points=1000,
-                 point_color='rgba(40, 150, 200, 0.4)'):
-        return _plot_pair(m, include, exclude, filter_regex, colorscale, max_points, point_color)
+                 point_color='rgba(40, 150, 200, 0.4)', seed=42):
+        # seed (RELEASE_AUDIT bug 17): the subsample of draws the pair plot is
+        # drawn from was pinned to random_state=42; now it can be varied.
+        return _plot_pair(m, include, exclude, filter_regex, colorscale,
+                          max_points, point_color, seed=seed)
 
     def model_checks_jax(self, m, include=None, exclude=None, filter_regex=None):
         kw = dict(include=include, exclude=exclude, filter_regex=filter_regex)
@@ -471,6 +468,10 @@ def patch_diag_class(cls):
         print("\nPair Plot:");          self.pair(m, **kw).show()
 
     def compute_ll(self, m, model, *args, obs_name=None, **kwargs):
+        # _get_posteriors(m) is the pooled (flat) posterior: tell
+        # compute_log_likelihood so its chain-axis heuristic cannot misfire
+        # (RELEASE_AUDIT bug 6). setdefault keeps a caller-provided value.
+        kwargs.setdefault("has_chains", False)
         return jd.compute_log_likelihood(model, _get_posteriors(m), *args,
                                           obs_name=obs_name, **kwargs)
 
@@ -479,6 +480,7 @@ def patch_diag_class(cls):
         if log_likelihood is None:
             if m is None or model is None:
                 raise ValueError("Pass m+model+data args or log_likelihood=.")
+            kwargs.setdefault("has_chains", False)  # _get_posteriors -> flat
             log_likelihood = jd.compute_log_likelihood(
                 model, _get_posteriors(m), *args, obs_name=obs_name, **kwargs)
         if reff is None and m is not None and _has_chains(m):
@@ -490,6 +492,7 @@ def patch_diag_class(cls):
         if log_likelihood is None:
             if m is None or model is None:
                 raise ValueError("Pass m+model+data args or log_likelihood=.")
+            kwargs.setdefault("has_chains", False)  # _get_posteriors -> flat
             log_likelihood = jd.compute_log_likelihood(
                 model, _get_posteriors(m), *args, obs_name=obs_name, **kwargs)
         return jd.waic(log_likelihood, pointwise=pointwise, scale=scale)
@@ -562,8 +565,16 @@ def _az_diag_for(m):
         cached = _ArvizDiag(sampler=m.sampler)
         try:
             cached.to_az(backend=getattr(m, "backend", "numpyro"))
-        except Exception:
-            pass                      # _ensure_trace() will retry on first use
+        except Exception as e:
+            # X10: keep the retry on first use (_ensure_trace() rebuilds the
+            # trace), but do not swallow the cause: stash it on the object
+            # and warn now, so a broken InferenceData is visible at fit()
+            # time instead of surfacing as an unrelated error later.
+            cached._to_az_error = e
+            warnings.warn(
+                f"Building the ArviZ InferenceData failed "
+                f"({type(e).__name__}: {e}); diagnostics will retry and "
+                "fail at first use.", RuntimeWarning, stacklevel=2)
         m._az_diag = cached
     return cached
 
@@ -665,8 +676,17 @@ def _documented(method, target, note, defaults_none=(), drop=()):
     (``defaults_none``).
     """
     sig = inspect.signature(target)
-    params = [p.replace(default=None) if p.name in defaults_none else p
-              for p in sig.parameters.values() if p.name not in drop]
+    params, seen_default = [], False
+    for p in sig.parameters.values():
+        if p.name in drop:
+            continue
+        if p.default is p.empty and (p.name in defaults_none or seen_default):
+            # a required arg after one the binding fills in (e.g. status_y
+            # after y/yrep) must still show a default to keep the signature
+            # valid; the binding raises the function's own error if missing
+            p = p.replace(default=None)
+        seen_default = seen_default or p.default is not p.empty
+        params.append(p)
     method.__signature__ = sig.replace(parameters=params)
     method.__name__ = target.__name__
     doc = inspect.getdoc(target) or ""
@@ -745,14 +765,21 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
 
         Returns:
             pandas.DataFrame: One row per parameter element.
+            Updates on m: when using the ``"arviz"`` backend, initializes and
+                caches ``m._az_diag`` (including ``m._az_diag.trace`` and
+                ``m._az_diag.tab_summary``) if not already built.
         """
         if backend == ARVIZ:
             var_names = _as_var_names(include)
+            # RELEASE_AUDIT bug 24: exclude was dropped (filter_vars=None is
+            # a no-op). ArviZ excludes the names prefixed with "~".
             kw = {}
+            excl = [v.lstrip("~") for v in (_as_var_names(exclude) or [])]
             if var_names is not None:
-                kw["var_names"] = var_names
-            if _as_var_names(exclude) is not None:
-                kw["filter_vars"] = None
+                kept = [v for v in var_names if v.lstrip("~") not in excl]
+                kw["var_names"] = kept
+            elif excl:
+                kw["var_names"] = ["~" + v for v in excl]
             return _az_diag_for(m).summary(
                 round_to=round_to, kind=kind, hdi_prob=hdi_prob, **kw)
         src = _source(m, filtered=filtered, by_chain=True)
@@ -821,11 +848,19 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         """
         if backend == ARVIZ:
             import arviz as az
+            import numpy as _np
+            import warnings as _warnings
             var_names = _as_var_names(include)
             kw = {"method": kind}
             if var_names is not None:
                 kw["var_names"] = var_names
-            return az.mcse(_az_diag_for(m)._ensure_trace(), **kw)
+            with _np.errstate(divide="ignore", invalid="ignore"), _warnings.catch_warnings():
+                _warnings.filterwarnings(
+                    "ignore",
+                    message="invalid value encountered in scalar divide",
+                    category=RuntimeWarning,
+                )
+                return az.mcse(_az_diag_for(m)._ensure_trace(), **kw)
         return jd.mcse(_source(m, filtered=filtered, by_chain=True),
                        include=include, exclude=exclude, kind=kind)
 
@@ -871,8 +906,14 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         if log_likelihood is None:
             if not hasattr(m, 'model') or m.model is None:
                 raise ValueError("No model stored on m. Pass log_likelihood= directly.")
+            # _source(..., by_chain=True) returns posteriors_by_chain[_full]
+            # when the model carries them and flat draws otherwise; mirror that
+            # condition instead of letting the <=20 heuristic guess (bug 6).
+            _bc = (getattr(m, 'posteriors_by_chain_full', None) is not None
+                   or _has_chains(m))
             log_likelihood = jd.compute_log_likelihood(
-                m.model, _source(m, filtered=False, by_chain=True), **m.data_on_model)
+                m.model, _source(m, filtered=False, by_chain=True),
+                has_chains=_bc, **m.data_on_model)
         if reff is None and _has_chains(m):
             # az.loo derives reff from the POSTERIOR; without it the PSIS tail
             # is sized as if the draws were independent, biasing pareto_k.
@@ -898,8 +939,12 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         if log_likelihood is None:
             if not hasattr(m, 'model') or m.model is None:
                 raise ValueError("No model stored on m. Pass log_likelihood= directly.")
+            # Same by_chain condition as in _loo (RELEASE_AUDIT bug 6).
+            _bc = (getattr(m, 'posteriors_by_chain_full', None) is not None
+                   or _has_chains(m))
             log_likelihood = jd.compute_log_likelihood(
-                m.model, _source(m, filtered=False, by_chain=True), **m.data_on_model)
+                m.model, _source(m, filtered=False, by_chain=True),
+                has_chains=_bc, **m.data_on_model)
         return jd.waic(log_likelihood, pointwise=pointwise, scale=scale)
 
     # ---- PPC helpers that auto-generate yrep from m ---------------------
@@ -939,7 +984,8 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         the draw order of get_yrep, and the relative efficiency for PSIS."""
         import numpy as np
         ll = jd.compute_log_likelihood(m.model, m.posteriors_by_chain,
-                                       obs_name=site, **m.data_on_model)
+                                       obs_name=site, has_chains=True,
+                                       **m.data_on_model)
         if isinstance(ll, dict):
             ll = ll[site]
         ll = np.asarray(ll, dtype=np.float64)
@@ -968,6 +1014,28 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
             if wants_ll and own_yrep and kw.get("log_likelihood") is None:
                 kw["log_likelihood"], reff = _site_log_likelihood(s, yrep.shape)
                 kw.setdefault("reff", reff)
+            # x=/group= may be given as the name of a model data entry or a
+            # column of m.df; resolve it to the array and use the name as the
+            # axis/group label.
+            import numpy as np
+            for key, label_key in (("x", "x_label"), ("group", "group_name"),
+                                   ("status_y", None)):
+                value = kw.get(key)
+                if isinstance(value, str) and key in params:
+                    data = getattr(m, "data_on_model", None) or {}
+                    if value in data:
+                        arr = np.asarray(data[value])
+                    else:
+                        df = getattr(m, "df", None)
+                        if df is not None and value in getattr(df, "columns", ()):
+                            arr = np.asarray(df[value])
+                        else:
+                            raise ValueError(
+                                f"{key}= '{value}': no such entry in "
+                                "m.data_on_model or column in m.df")
+                    kw[key] = arr
+                    if label_key and label_key in params:
+                        kw.setdefault(label_key, value)
             return plot_fn(y, yrep, **kw)
 
         def method(y=None, yrep=None, site=None, **kw):
@@ -1008,11 +1076,49 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
         return _sens.multimodality_check(m=m, param_names=param_names, **kw)
     _documented(_multimodality, _sens.multimodality_check, _M_NOTE, drop=("m",))
 
+    # V16: Diag2.diagnose() works on the posterior snapshot taken when the
+    # diag instance was built, so a `d = m.diag` kept across a second fit
+    # would report the OLD fit while summary() reports the new one. Capture
+    # the class-level implementation (via type(), not the instance, so a
+    # second bind_diag_to_model call cannot capture its own closure) and
+    # shadow it with a closure that refreshes the snapshot from m's current
+    # sampler first, exactly like _summary reads m's current fit.
+    orig_diagnose = type(diag_obj).diagnose.__get__(diag_obj)
+
+    def _diagnose(max_treedepth=10, ebfmi_threshold=0.3, rhat_threshold=1.01,
+                  ess_threshold=400.0, var_names=None):
+        """MCMC convergence report (treedepth, divergences, E-BFMI, ESS, R-hat).
+
+        Reads m's CURRENT fit: the snapshot attributes diagnose() uses
+        (sampler, posterior_samples, priors_name, num_chains,
+        is_variational) are refreshed from m.sampler before running, so a
+        diag object kept across a refit cannot mix old and new draws.
+
+        Returns:
+            str: Human-readable diagnostic report.
+        """
+        sampler = getattr(m, "sampler", None)
+        if sampler is not None:
+            diag_obj.sampler = sampler
+            diag_obj.is_variational = hasattr(sampler, "svi")
+            posterior_samples = sampler.get_samples(group_by_chain=True)
+            diag_obj.posterior_samples = posterior_samples
+            diag_obj.priors_name = list(posterior_samples.keys())
+            if diag_obj.priors_name:
+                diag_obj.num_chains = int(
+                    posterior_samples[diag_obj.priors_name[0]].shape[0])
+        return orig_diagnose(max_treedepth=max_treedepth,
+                             ebfmi_threshold=ebfmi_threshold,
+                             rhat_threshold=rhat_threshold,
+                             ess_threshold=ess_threshold,
+                             var_names=var_names)
+
     # ---- wire everything up --------------------------------------------
     diag_obj.summary        = _summary
     diag_obj.rhat           = _rhat
     diag_obj.ess            = _ess
     diag_obj.mcse           = _mcse
+    diag_obj.diagnose       = _diagnose
     diag_obj.plot_trace     = _bind_plot(m, _plot_trace, "Trace plot of each chain (mixing and stationarity).")
     diag_obj.posterior      = _bind_plot(m, _plot_posterior, "Posterior density of each parameter with its credible interval.")
     diag_obj.autocor        = _bind_plot(m, _plot_autocor, "Autocorrelation of the draws of each parameter, per chain.")
@@ -1025,8 +1131,11 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.waic           = _waic
     diag_obj.WAIC           = _waic  # backward-compatible alias
     diag_obj.model_checks   = _model_checks
-    # regression
-    diag_obj.plot_regression = _plot_regression_bound
+    # In development, not exposed on m.diag (code kept for development):
+    # Diagnostic.ppc.ppc_loo_pit, ppc_km_overlay, ppc_error_scatter,
+    # ppc_error_binned, ppc_intervals_sorted and
+    # Diagnostic.regression_plot.plot_regression. Call them from those
+    # modules with explicit y / yrep.
     diag_obj.get_yrep        = _get_yrep
     # PPC — distributions
     diag_obj.ppc_density     = _bind_ppc(_ppc.ppc_density)
@@ -1039,7 +1148,6 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.ppc_intervals   = _bind_ppc(_ppc.ppc_intervals)
     diag_obj.ppc_ribbon      = _bind_ppc(_ppc.ppc_ribbon)
     # PPC — errors
-    diag_obj.ppc_error_scatter = _bind_ppc(_ppc.ppc_error_scatter)
     diag_obj.ppc_error_hist  = _bind_ppc(_ppc.ppc_error_hist)
     # PPC — scatter
     diag_obj.ppc_scatter     = _bind_ppc(_ppc.ppc_scatter)
@@ -1047,9 +1155,7 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.ppc_rootogram   = _bind_ppc(_ppc.ppc_rootogram)
     diag_obj.ppc_bars        = _bind_ppc(_ppc.ppc_bars)
     # PPC — LOO
-    diag_obj.ppc_loo_pit     = _bind_ppc(_ppc.ppc_loo_pit)
     diag_obj.ppc_loo_intervals = _bind_ppc(_ppc.ppc_loo_intervals)
-    diag_obj.ppc_intervals_sorted = _bind_ppc(_ppc.ppc_intervals_sorted)
     # sensitivity
     diag_obj.influence       = _influence
     diag_obj.calibration     = _bind_ppc(_sens.calibration_plot)
@@ -1057,4 +1163,4 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.multimodality   = _multimodality
     # A staticmethod object stored on an INSTANCE is not unwrapped by the
     # descriptor protocol; it is only callable at all on Python >= 3.10.
-    diag_obj.prior_sensitivity = _sens.prior_sensitivity_plot
+    diag_obj.prior_sensitivity = _sens.prior_sensitivity

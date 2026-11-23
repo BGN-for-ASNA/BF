@@ -4,62 +4,7 @@ Execution Log - 12 models
 [SUCCESS] 2.Categorical variable.py
 [SUCCESS] 3.Continuous interactions.py
 [SUCCESS] 4.Binomial.py
-[FAILURE] 5.Binomial with indices.py
-Error:
-13:00:19 - cmdstanpy - INFO - compiling stan file /tmp/tmpqgfnfe1d/model.stan to exe file /tmp/tmpqgfnfe1d/model
-13:00:31 - cmdstanpy - INFO - compiled model executable: /tmp/tmpqgfnfe1d/model
-13:00:31 - cmdstanpy - INFO - CmdStan start processing
-13:00:31 - cmdstanpy - INFO - Chain [1] start processing
-13:00:31 - cmdstanpy - INFO - Chain [2] start processing
-13:00:31 - cmdstanpy - INFO - Chain [3] start processing
-13:00:31 - cmdstanpy - INFO - Chain [4] start processing
-13:00:32 - cmdstanpy - INFO - Chain [1] done processing
-13:00:32 - cmdstanpy - INFO - Chain [4] done processing
-13:00:32 - cmdstanpy - INFO - Chain [3] done processing
-13:00:32 - cmdstanpy - INFO - Chain [2] done processing
-13:00:32 - cmdstanpy - WARNING - Some chains may have failed to converge.
-	Chain 1 had 1 divergent transitions (0.1%)
-	Use the "diagnose()" method on the CmdStanMCMC object to see further information.
-Traceback (most recent call last):
-  File "/home/sebastian_sosa/BF/Test/Rethinking/TFP backend/5.Binomial with indices.py", line 140, in <module>
-    waic_report(m, model_name, ref_model=waic_ref, ref_kwargs={'actor': m.data_on_model['actor'], 'prosoc_left': m.data_on_model['prosoc_left'], 'condition': m.data_on_model['condition'], 'pulled_left': m.data_on_model['pulled_left']})
-  File "/home/sebastian_sosa/BF/Test/Rethinking/TFP backend/Utils.py", line 292, in waic_report
-    ll_a = _pointwise_loglik_from_tfp(smp)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/BF/BayesForge/Diagnostic/Diag2.py", line 175, in _pointwise_loglik_from_tfp
-    ll = jax.vmap(one_draw)(tuple(flat))
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/BF/BayesForge/Diagnostic/Diag2.py", line 172, in one_draw
-    outs = [_pointwise(od, ob) for od, ob in zip(obs_dists, obs_tuple)]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/BF/BayesForge/Diagnostic/Diag2.py", line 161, in _pointwise
-    lp = d.log_prob(ob)
-         ^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py", line 1287, in log_prob
-    return self._call_log_prob(value, name, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/distributions/distribution.py", line 1269, in _call_log_prob
-    return self._log_prob(value, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/internal/distribution_util.py", line 1351, in _fn
-    return fn(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/distributions/binomial.py", line 424, in _log_prob
-    norm = _log_normalization(counts, total_count)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/distributions/binomial.py", line 580, in _log_normalization
-    return (special.lbeta(1. + counts, 1. + total_count - counts) +
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/math/special.py", line 2125, in lbeta
-    dtype = dtype_util.common_dtype([x, y], tf.float32)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/sebastian_sosa/venv/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/internal/dtype_util.py", line 219, in common_dtype
-    raise TypeError(
-TypeError: Found incompatible dtypes, <class 'numpy.float64'> and <class 'numpy.float32'>. Seen so far: [<class 'numpy.float64'>, <class 'numpy.float32'>]
---------------------
-For simplicity, JAX has removed its internal frames from the traceback of the following exception. Set JAX_TRACEBACK_FILTERING=off to include these.
-
-------------------------------
+[SUCCESS] 5.Binomial with indices.py
 [SUCCESS] 6.Poisson.py
 [SUCCESS] 7.Negative binomial.py
 [SUCCESS] 8.Multinomial.py

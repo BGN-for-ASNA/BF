@@ -84,9 +84,8 @@ x1 = jnp.linspace(X[:, 1].min() - 0.5, X[:, 1].max() + 0.5, n_grid)
 xx0, xx1 = jnp.meshgrid(x0, x1)
 X_grid = jnp.c_[xx0.ravel(), xx1.ravel()]
 
-# Swap data on model temporarily to predict on the grid
-m.data_on_model = dict(X=X_grid, Y=jnp.zeros(X_grid.shape[0], dtype=jnp.int32))
-pred = m.sample(data = m.data_on_model)['Y']
+# Predict on the grid (the model data stay unchanged)
+pred = m.sample(data=dict(X=X_grid, Y=jnp.zeros(X_grid.shape[0], dtype=jnp.int32)))['Y']
 p_mean = jnp.mean(pred, axis=0)
 
 # Plotting the posterior predictive mean (categorical blending)
@@ -95,6 +94,52 @@ contour = ax.contourf(xx0, xx1, p_mean.reshape(n_grid, n_grid), cmap="viridis", 
 scatter = ax.scatter(X[:, 0], X[:, 1], c=Y, cmap="viridis", edgecolors='k')
 ax.set(title="Posterior Predictive Mean", xlabel="Feature 1", ylabel="Feature 2")
 fig.colorbar(contour, ax=ax)
+```
+
+## R
+
+```r
+library(BayesForge)
+m <- importBF(platform = "cpu")
+jax <- reticulate::import("jax")
+jnp <- reticulate::import("jax.numpy")
+
+# Generate Synthetic Data ------------------------------------
+# 3 classes based on a random normal distribution split
+key <- jax$random$PRNGKey(42L)
+X <- jax$random$normal(key, reticulate::tuple(300L, 2L))
+# Rule: Q1=Class 0, Q2/Q3=Class 1, Q4=Class 2
+Y <- jnp$asarray(jnp$where(X[, 0] > 0, jnp$where(X[, 1] > 0, 0, 1), 2), dtype = jnp$int32)
+
+m$data_on_model <- list(X = X, Y = Y)
+
+# Define model ------------------------------------------------
+model <- function(X, Y, D_H1 = 5L, K = 3L) {
+  D_X <- X$shape[[2]] # X is a JAX array here, so read its shape
+
+  # First hidden layer: 2 input features -> 5 hidden units
+  w1 <- m$bnn$layer_linear(
+    X,
+    dist = m$dist$normal(0, 1, name = "w1_weight", shape = reticulate::tuple(D_X, D_H1)),
+    activation = "tanh"
+  )
+
+  # Final output layer: 5 hidden units -> K output units
+  # Note: No activation is applied automatically inside the layer function here
+  w2 <- m$bnn$layer_linear(
+    w1,
+    dist = m$dist$normal(0, 1, name = "w2_weight", shape = reticulate::tuple(D_H1, K))
+  )
+
+  # Apply Softmax across the K dimension (axis=-1) to yield probabilities
+  p <- jax$nn$softmax(w2, axis = -1L)
+
+  # Categorical Likelihood matching indices in Y
+  m$dist$categorical(probs = p, obs = Y)
+}
+
+# Run mcmc ------------------------------------------------
+m$fit(model, num_samples = 500L, progress_bar = FALSE) # Approximate posterior distributions
 ```
 
 ## Julia
@@ -115,14 +160,14 @@ key = jax_random.PRNGKey(42)
 X = jax_random.normal(key, (300, 2))
 
 # Simple rule to partition into K=3 classes
-Y = jnp.where(X[:, 0] > 0, jnp.where(X[:, 1] > 0, 0, 1), 2)
+Y = jnp.where(X[pybuiltins.slice(nothing), 0] > 0, jnp.where(X[pybuiltins.slice(nothing), 1] > 0, 0, 1), 2)
 
-m.data_on_model["X"] = X
-m.data_on_model["Y"] = Y
+m.data_on_model = pydict(X = X, Y = Y)
 
 # Define model ------------------------------------------------
 @BF function model(X, Y)
-    N, D_X = size(X)
+    N = pyconvert(Int, X.shape[0])
+    D_X = pyconvert(Int, X.shape[1])
     D_H1 = 5
     K = 3
     
@@ -181,6 +226,12 @@ where:
 * $\Theta_2$ is the final layer weight matrix mapping the hidden features to the logits for the $K=3$ classes ($5 \times 3$).
 * All elements within the weight matrices $\Theta_1$ and $\Theta_2$ are assigned independent standard Normal priors.
 
+
+## Model validation tests
+
+- [BNN tests](https://github.com/BGN-for-ASNA/BF/tree/main/Test/10.BNN): Bayesian neural network tests (regression, covariance estimation).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Notes
 
