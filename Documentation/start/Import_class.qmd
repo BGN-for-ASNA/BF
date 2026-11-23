@@ -69,7 +69,7 @@ In R and Julia, `importBF()` takes the same arguments except `float_precision` a
 ## Writing models for `backend="tfp"`
 With the TFP backend a model is a Python generator: every site is written `yield m.dist.<dist>(...)`. Sites are matched by position, so **all observed sites (`obs=`) must come after all latent parameters**. Several observed sites are allowed, as long as they are all at the end and each has its own `name=` (unnamed sites share a default name, which TFP rejects as a duplicate); a model that yields a latent after an observed site raises a `ValueError` at `fit()`.
 
-```{.python .no-test}
+```{.python .no-test .lang-only}
 m = bf(backend="tfp")
 
 def model(y1, y2):

@@ -25,7 +25,7 @@ jobs:
       - name: Install BayesForge
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[cpu]" pytest
+          python -m pip install -e ".[cpu]" pytest scikit-learn
 
       # Tests of the core functions (Test/0.Core), the three-language check of
       # the "Get started" pages and their Python examples
