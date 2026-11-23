@@ -122,6 +122,13 @@ class manip():
             # Copy so later manipulations (scale, OHE, ...) never modify the caller's table.
             self.df = pd.DataFrame(path).copy()
         self._normalize_column_names()
+        # pandas >= 3 gives text categories the "str" dtype, which reticulate
+        # cannot convert back to an R factor (m$data(df) then fails). Store the
+        # categories as object: same values, same level order.
+        for col in self.df.select_dtypes(['category']).columns:
+            cats = self.df[col].cat.categories
+            if cats.dtype != object and pd.api.types.is_string_dtype(cats.dtype):
+                self.df[col] = self.df[col].cat.set_categories(cats.astype(object))
         self.data_modification = {}
         return self.df
 
