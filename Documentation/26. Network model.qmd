@@ -319,8 +319,17 @@ $$
 
 ## Model validation tests
 
-- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/tree/main/Test/6.Network/SRM): Social Relations Model fitted with BayesForge and Stan: fitting time and posterior distributions compared.
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+- [Comparison with Stan](https://github.com/BGN-for-ASNA/BF/blob/main/Test/6.Network/SRM/fit_comparison.py): Social Relations Model fitted with BayesForge and Stan: fitting time and posterior distributions compared.
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
+
+::: {.callout-note collapse="true"}
+## Plot: comparison with Stan (`fit_comparison.py`)
+
+![](Figures/validation/SRM_comparison.png){width=100%}
+:::
+
 
 ## Note(s)
 ::: callout-note

@@ -24,13 +24,15 @@ def model_gaussian(weight, height):
 m.fit(model_gaussian, num_samples=500, num_chains=4, progress_bar=False)
 
 # %%
-# --- via m.diag (auto-detects x and y from data) ---
-fig = m.diag.plot_regression("weight", n=25)
+# plot_regression is in development and not exposed on m.diag:
+# call it from its module (auto-detects x and y from data)
+from BayesForge.Diagnostic.regression_plot import plot_regression
+
+fig = plot_regression(m, "weight", n=25)
 fig.show()
 
 # %%
-# --- standalone import ---
-from BayesForge.Diagnostic.regression_plot import plot_regression
+# --- with axis labels ---
 import numpy as np
 
 fig2 = plot_regression(
@@ -72,7 +74,7 @@ m2.fit(
 # %%
 # For logistic, posterior lines from m.sample() are 0/1 draws.
 # Mean line = P(y=1|x), which is the regression curve we want.
-fig3 = m2.diag.plot_regression("x", n=30, x_label="x", y_label="P(y=1 | x)")
+fig3 = plot_regression(m2, "x", n=30, x_label="x", y_label="P(y=1 | x)")
 fig3.show()
 
 # %%

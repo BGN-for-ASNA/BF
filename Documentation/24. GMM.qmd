@@ -275,7 +275,8 @@ Where :
 ## Model validation tests
 
 - [Comparison with scikit-learn](https://github.com/BGN-for-ASNA/BF/tree/main/Test/11.MGM%20and%20DPMM): `7.MGM_DPM_Similarity_Test.py` compares the BayesForge mixture and Dirichlet-process clusterings with reference clusterings.
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `Julia/test_julia_model_pages.py`).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Notes
 

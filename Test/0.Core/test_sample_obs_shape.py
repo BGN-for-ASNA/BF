@@ -70,9 +70,3 @@ def test_batched_likelihood_unchanged():
     assert np.asarray(m.sample(seed=3)["y"]).shape == (100, 40)
     # new-data path untouched: shape follows the new data
     assert np.asarray(m.sample(data={"x": X_NEW}, seed=0)["y"]).shape == (100, len(X_NEW))
-
-
-def test_ppc_loo_pit_builds_figure():
-    m = _fit(_poisson_model, y=Y_POIS)
-    fig = m.diag.ppc_loo_pit()
-    assert fig is not None

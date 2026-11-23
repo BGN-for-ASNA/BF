@@ -699,7 +699,7 @@ Caution
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="eb25dd78" class="cell" data-execution_count="1">
+<div id="adfb5c97" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -734,7 +734,7 @@ Caution
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 16</code></pre>
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -759,35 +759,35 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Lambda[0]</td>
 <td>1.47</td>
-<td>0.34</td>
-<td>0.97</td>
-<td>2.04</td>
-<td>5856.03</td>
-<td>2812.11</td>
+<td>0.33</td>
+<td>0.99</td>
+<td>2.05</td>
+<td>6376.33</td>
+<td>2858.03</td>
 <td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">Lambda[1]</td>
-<td>1.48</td>
-<td>0.34</td>
-<td>0.97</td>
-<td>2.04</td>
-<td>8040.07</td>
-<td>2702.48</td>
+<td>1.47</td>
+<td>0.33</td>
+<td>0.98</td>
+<td>2.03</td>
+<td>6420.51</td>
+<td>2767.91</td>
 <td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Lambda[2]</td>
-<td>1.62</td>
-<td>0.35</td>
-<td>1.11</td>
-<td>2.22</td>
-<td>6892.10</td>
-<td>2503.46</td>
+<td>1.61</td>
+<td>0.34</td>
+<td>1.10</td>
+<td>2.19</td>
+<td>5636.52</td>
+<td>3013.74</td>
 <td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -796,22 +796,22 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">Lambda[3]</td>
 <td>1.55</td>
 <td>0.35</td>
-<td>1.04</td>
+<td>1.03</td>
 <td>2.14</td>
-<td>6634.58</td>
-<td>2126.69</td>
+<td>5777.35</td>
+<td>2791.34</td>
 <td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Lambda[4]</td>
-<td>1.47</td>
-<td>0.34</td>
-<td>0.97</td>
-<td>2.02</td>
-<td>7103.54</td>
-<td>2950.92</td>
+<td>1.46</td>
+<td>0.33</td>
+<td>0.99</td>
+<td>2.01</td>
+<td>5638.98</td>
+<td>2593.89</td>
 <td>1.00</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -830,24 +830,24 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Lambda[3398]</td>
-<td>3.28</td>
-<td>0.50</td>
-<td>2.52</td>
-<td>4.07</td>
-<td>5060.32</td>
-<td>2694.15</td>
+<td>3.27</td>
+<td>0.51</td>
+<td>2.49</td>
+<td>4.14</td>
+<td>4519.28</td>
+<td>2120.45</td>
 <td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">Lambda[3399]</td>
-<td>3.20</td>
-<td>0.51</td>
-<td>2.41</td>
-<td>4.05</td>
-<td>4789.57</td>
-<td>2258.82</td>
+<td>3.19</td>
+<td>0.50</td>
+<td>2.44</td>
+<td>3.99</td>
+<td>5117.26</td>
+<td>2516.12</td>
 <td>1.00</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -855,11 +855,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a[0]</td>
 <td>0.41</td>
-<td>0.01</td>
-<td>0.39</td>
-<td>0.44</td>
-<td>427.29</td>
-<td>656.50</td>
+<td>0.02</td>
+<td>0.38</td>
+<td>0.43</td>
+<td>428.44</td>
+<td>544.65</td>
 <td>1.01</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -870,23 +870,23 @@ jax.local_device_count 16</code></pre>
 <td>0.03</td>
 <td>-1.19</td>
 <td>-1.09</td>
-<td>414.41</td>
-<td>794.85</td>
-<td>1.00</td>
+<td>428.61</td>
+<td>752.12</td>
+<td>1.01</td>
 <td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">phi[0]</td>
-<td>12.50</td>
-<td>2.34</td>
-<td>9.00</td>
-<td>16.65</td>
-<td>38.12</td>
-<td>70.26</td>
-<td>1.07</td>
-<td>0.38</td>
-<td>0.22</td>
+<td>12.45</td>
+<td>2.26</td>
+<td>9.27</td>
+<td>16.35</td>
+<td>58.39</td>
+<td>104.03</td>
+<td>1.02</td>
+<td>0.30</td>
+<td>0.14</td>
 </tr>
 </tbody>
 </table>
@@ -960,7 +960,7 @@ Does the model reproduce the spread of the counts, which a plain Poisson model u
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#5a8482ca .cell execution_count=2}
+::: {#e5d71406 .cell execution_count=2}
 ``` {.python .cell-code}
 # m.diag.ppc_rootogram()
 ```
@@ -986,14 +986,14 @@ Bars are the square roots of the observed frequencies of each count, the line th
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#d932bfd0 .cell execution_count=3}
+::: {#7670c64d .cell execution_count=3}
 ``` {.python .cell-code}
 # m.diag.ppc_stat(stat="sd")
 ```
 :::
 
 
-::: {#6a80f56a .cell execution_count=4}
+::: {#5bcb3ca2 .cell execution_count=4}
 ``` {.python .cell-code}
 # m.diag.ppc_stat(stat="n_zero")
 ```
@@ -1062,9 +1062,44 @@ Y_i \sim \text{Poisson}(\lambda_i)
 <section id="model-validation-tests" class="level2">
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>7.Negative binomial.py</code> fits the same model (negative binomial with an exposure offset) with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/7.Negative%20binomial.py">Comparison with Stan</a>: <code>7.Negative binomial.py</code> fits the same model (negative binomial with an exposure offset) with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/7.Negative%20binomial.py">Data generative model and inference model pipeline</a>: <code>7.Negative binomial.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>7.Negative binomial.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/7.Negative_binomial_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>7.Negative binomial.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/7.Negative_binomial_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>

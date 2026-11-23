@@ -41,7 +41,7 @@ NO_ARG_METHODS = [
     "summary", "rhat", "ess", "mcse", "loo", "waic",
     "plot_trace", "posterior", "autocor", "forest", "density", "pair", "rank",
     "ppc_density", "ppc_hist", "ppc_boxplot", "ppc_stat", "ppc_stat_2d", "ppc_intervals",
-    "ppc_ribbon", "ppc_error_scatter", "ppc_error_hist", "ppc_scatter", "ppc_loo_intervals",
+    "ppc_ribbon", "ppc_error_hist", "ppc_scatter", "ppc_loo_intervals",
     "calibration", "influence", "multimodality",
 ]
 
@@ -49,6 +49,18 @@ NO_ARG_METHODS = [
 @pytest.mark.parametrize("name", NO_ARG_METHODS)
 def test_diag_method_runs(m, name):
     assert getattr(m.diag, name)() is not None
+
+
+# In development: kept in Diagnostic.ppc / regression_plot, not exposed on m.diag.
+IN_DEVELOPMENT = ["ppc_loo_pit", "ppc_km_overlay", "ppc_error_scatter",
+                  "ppc_error_binned", "ppc_intervals_sorted", "plot_regression"]
+
+
+@pytest.mark.parametrize("name", IN_DEVELOPMENT)
+def test_in_development_plots_not_on_diag(m, name):
+    assert not hasattr(m.diag, name)
+    from BayesForge.Diagnostic import ppc, regression_plot
+    assert callable(getattr(ppc, name, None) or getattr(regression_plot, name))
 
 
 def test_ppc_signature_marks_y_yrep_optional(m):

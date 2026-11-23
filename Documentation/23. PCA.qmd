@@ -550,7 +550,9 @@ $$
 ## Model validation tests
 
 - [PCA test](https://github.com/BGN-for-ASNA/BF/tree/main/Test/8.PCA): `PCA.py` fits the Bayesian PCA models of this page on simulated data.
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Note 
 - To account for **[<span style="color:#0D6EFD">sign ambiguity 🛈</span>]{#signAmbiguity}** in PCA, we can set the number of latent dimensions $K$ to be equal to the number of variables $V$. Then, we can calculate the dot product between the estimated parameters and the data. If it is negative, we multiply the estimated parameters by -1 to align them with the data. Below, a code snippet highlights how to do this:

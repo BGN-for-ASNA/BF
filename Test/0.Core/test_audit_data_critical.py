@@ -29,12 +29,6 @@ def test_c1_scale_single_name():
     assert abs(m.df["y"].std() - 1) < 1e-12
     assert list(m.df["x"]) == [1, 2, 3, 5]
 
-# TEST THAT SCALE_VAR RUNS AND SCALES THE INPUT ARRAY
-def test_c2_scale_var_runs():
-    m = _m()
-    out = np.asarray(m.scale_var(np.array([1.0, 2.0, 3.0])))
-    np.testing.assert_allclose(out, (np.array([1., 2., 3.]) - 2) / np.std([1., 2., 3.], ddof=1), rtol=1e-6)
-
 # TEST THAT OHE DOES NOT DUPLICATE COLUMNS
 def test_c3_ohe_does_not_duplicate_columns():
     m = _m()

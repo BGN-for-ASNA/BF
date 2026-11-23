@@ -562,53 +562,6 @@ Evolution of the effective sample size as draws accumulate.
 - plotly.graph_objects.Figure
 
 
-## `m.diag.plot_regression` {#plot_regression}
-
-```python
-m.diag.plot_regression(
-    x_var,
-    y_obs=None,
-    n=20,
-    link_inv=None,
-    x_range=None,
-    n_points=200,
-    x_label=None,
-    y_label=None,
-    line_color='rgba(220,50,50,0.25)',
-    mean_color='blue',
-    seed=42,
-    n_smooth=200,
-)
-```
-
-Regression overlay: observed data + N smooth posterior lines + mean.
-
-The fitted model ``m`` is supplied automatically.
-
-Individual lines show E[y|x, θ_s] (parameter uncertainty only), computed
-by averaging n_smooth posterior predictive draws per selected sample so
-observation noise averages out. Works for any GLM family.
-
-| Argument | Type | Description |
-|---|---|---|
-| `m` |  | Fitted BF model instance. |
-| `x_var` |  | Name of the x predictor variable in m.data_on_model, or a 1D numpy/jax array of x values. |
-| `y_obs` |  | Observed outcome array. Auto-detected from m.obs_args if None. |
-| `n` |  | Number of posterior regression lines to overlay. |
-| `link_inv` |  | Optional inverse link function applied to predictions (e.g. jax.nn.sigmoid). If None no transform is applied. |
-| `x_range` |  | (min, max) tuple or 1D array for the x prediction grid. Defaults to range of x_var data. |
-| `n_points` |  | Number of x grid points for prediction lines. |
-| `x_label, y_label` |  | Axis labels (defaults to variable names). |
-| `line_color` |  | Plotly RGBA string for individual lines. |
-| `mean_color` |  | Color for the posterior mean line. |
-| `seed` |  | RNG seed for reproducible line selection. |
-| `n_smooth` |  | Draws per selected posterior sample averaged to eliminate observation noise from individual lines (default 200). |
-
-**Returns**
-
-- plotly.graph_objects.Figure
-
-
 ## `m.diag.plot_trace` {#plot_trace}
 
 ```python
@@ -791,38 +744,6 @@ Returns:
     plotly Figure.
 
 
-## `m.diag.ppc_error_scatter` {#ppc_error_scatter}
-
-```python
-m.diag.ppc_error_scatter(
-    y=None,
-    yrep=None,
-    title=None,
-    name='y',
-    x_label=None,
-    y_label=None,
-)
-```
-
-Scatter of observed y vs posterior predictive mean E[yrep].
-
-``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
-
-Perfect model: points fall on y = x diagonal.
-
-| Argument | Type | Description |
-|---|---|---|
-| `y` |  | Observed data. |
-| `yrep` |  | Posterior predictive matrix. |
-| `title` |  | Plot title. Defaults to one naming the outcome. |
-| `name` |  | Name of the outcome used in the labels. |
-| `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
-| `y_label` |  | Y-axis title, as x_label. |
-
-Returns:
-    plotly Figure.
-
-
 ## `m.diag.ppc_hist` {#ppc_hist}
 
 ```python
@@ -899,48 +820,6 @@ Returns:
     plotly Figure.
 
 
-## `m.diag.ppc_intervals_sorted` {#ppc_intervals_sorted}
-
-```python
-m.diag.ppc_intervals_sorted(
-    y=None,
-    yrep=None,
-    x=None,
-    prob=0.5,
-    prob_outer=0.9,
-    title=None,
-    name='y',
-    x_label=None,
-    y_label=None,
-)
-```
-
-Predictive intervals with the observations ordered by observed value.
-
-``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
-
-This is `ppc_intervals` with observation i placed at the rank of
-y_i, so the observed points rise from left to right and systematic
-over/under-prediction across the range of the outcome is easy to read.
-It performs no leave-one-out computation (``ppc_loo_intervals`` is a
-deprecated alias).
-
-| Argument | Type | Description |
-|---|---|---|
-| `y` |  | Observed data. |
-| `yrep` |  | Posterior predictive matrix. |
-| `x` |  | Optional ordering variable. Defaults to the rank of y. |
-| `prob` |  | Inner interval probability (e.g., 0.5). |
-| `prob_outer` |  | Outer interval probability (e.g., 0.9). |
-| `title` |  | Plot title. Defaults to one naming the outcome. |
-| `name` |  | Name of the outcome used in the labels. |
-| `x_label` |  | X-axis title. Defaults to the plot's own label. |
-| `y_label` |  | Y-axis title. Defaults to the outcome name. |
-
-Returns:
-    plotly Figure.
-
-
 ## `m.diag.ppc_loo_intervals` {#ppc_loo_intervals}
 
 ```python
@@ -961,53 +840,6 @@ Deprecated alias for `ppc_intervals_sorted` (it is not LOO-based).
 ``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
 
 ``prob`` is the outer interval, as before; the inner one is 50%.
-
-
-## `m.diag.ppc_loo_pit` {#ppc_loo_pit}
-
-```python
-m.diag.ppc_loo_pit(
-    y=None,
-    yrep=None,
-    log_likelihood=None,
-    reff=None,
-    n_unif=100,
-    title=None,
-    name='y',
-    x_label=None,
-    y_label=None,
-)
-```
-
-LOO probability integral transform check.
-
-``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
-
-PIT value for each observation: ``F(y_i) = P(yrep[:, i] <= y_i)``.
-Under a well-calibrated model these are Uniform(0, 1).
-
-When ``log_likelihood`` is given, the draws are reweighted by
-Pareto-smoothed importance sampling so each ``F(y_i)`` is a *leave-one-out*
-predictive CDF — this is what makes the check meaningful. Without it the
-same draws that were fitted to ``y`` are used to score ``y``, which pulls
-the PITs toward 0.5 and makes a miscalibrated model look calibrated; a
-warning is emitted in that case.
-
-| Argument | Type | Description |
-|---|---|---|
-| `y` |  | Observed data, shape (n_obs,). |
-| `yrep` |  | Posterior predictive matrix, shape (n_rep, n_obs). |
-| `log_likelihood` |  | Pointwise log-likelihood, shape (C, S, n_obs) or (S, n_obs), with S matching yrep's rows. Enables true LOO-PIT. |
-| `reff` |  | Relative MCMC efficiency for PSIS; see ``jax_diagnostics.relative_eff``. Defaults to 1.0. |
-| `n_unif` |  | Number of reference curves, each the density of n_obs Uniform(0, 1) draws, drawn in grey: how far from flat a curve from a perfectly calibrated model can be by chance. |
-| `title` |  | Plot title. Defaults to one naming the outcome and saying whether the PIT is leave-one-out. |
-| `name` |  | Name of the outcome used in the labels. |
-| `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
-| `y_label` |  | Y-axis title, as x_label. |
-
-Returns:
-    plotly Figure. Both densities are boundary-corrected (reflected at 0
-    and 1), as in bayesplot.
 
 
 ## `m.diag.ppc_ribbon` {#ppc_ribbon}

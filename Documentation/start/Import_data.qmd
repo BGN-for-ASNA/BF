@@ -124,10 +124,5 @@ m.data_on_model = pydict(
 :::
 
 ## Handle data
-For tabular data, you can use some functions to manipulate the data:
 
--   **Perform one-hot encoding** ```OHE```: One-hot encoding is a technique that converts categorical variables into binary variables. This is useful when you have a large number of categories and want to use them as features in a model.
-
--   **Create index encoding for categorical columns** ```index```: Index encoding is a technique that assigns a unique integer value to each category in a categorical variable. This is useful when you have a large number of categories and want to use them as features in a model.
-
--   **Scale** ```scale```: Standardize the data by subtracting the mean and dividing the result by the standard deviation $X_i = \frac{X_i - \mu}{\sigma}$.
+To encode categories, standardize, cast types and send columns to the model (`index`, `OHE`, `scale`, `z_score`, `to_float`, `to_int`, `data_to_model`), see [Handle data](Handle_data.qmd).

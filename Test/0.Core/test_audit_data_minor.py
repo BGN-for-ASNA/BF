@@ -122,13 +122,13 @@ def test_m6_data_to_model_duplicate_and_int64():
     else:
         assert overflow and overflow[0].category is UserWarning
 
-# Ensure NaN values in scale_var/z_score warn (UserWarning) and use nanmean/nanstd
+# Ensure NaN values in z_score warn (UserWarning) and use nanmean/nanstd
 def test_m7_nan_warns_and_scales_non_nan_rows():
-    # m7: scale_var/z_score warn (UserWarning) and use nanmean/nanstd.
+    # m7: z_score warns (UserWarning) and use nanmean/nanstd.
     m = _m()
     x = np.array([1.0, 2.0, np.nan, 4.0])
-    with pytest.warns(UserWarning, match="'q'"):
-        out = np.asarray(m.scale_var(x, name="q"))
+    with pytest.warns(UserWarning, match=r"column\(s\) \[0\]"):
+        out = np.asarray(m.z_score(x))
     assert np.isnan(out[2])
     assert np.all(np.isfinite(np.delete(out, 2)))
     assert abs(np.nanmean(out)) < 1e-5  # scaled on the non-NaN entries
@@ -143,7 +143,6 @@ def test_m7_nan_warns_and_scales_non_nan_rows():
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always")
         m.z_score(jnp.asarray([[1.0], [2.0], [3.0]]))
-        m.scale_var(jnp.asarray([1.0, 2.0, 3.0]))
     assert not [w for w in rec if "NaN" in str(w.message)]
 
 # Ensure OHE with NaN documented, all-zero dummies, and kept original column

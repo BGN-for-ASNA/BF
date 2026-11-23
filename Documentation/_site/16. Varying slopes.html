@@ -728,7 +728,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="229eb094" class="cell" data-execution_count="1">
+<div id="d9210955" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -777,7 +777,7 @@ Note
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 16</code></pre>
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -813,26 +813,26 @@ jax.local_device_count 16</code></pre>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">Rho[0, 1]</td>
-<td>-0.56</td>
-<td>0.21</td>
-<td>-0.85</td>
-<td>-0.18</td>
-<td>2027.77</td>
-<td>1881.50</td>
+<td>-0.55</td>
+<td>0.22</td>
+<td>-0.84</td>
+<td>-0.15</td>
+<td>1447.68</td>
+<td>1240.32</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">Rho[1, 0]</td>
-<td>-0.56</td>
-<td>0.21</td>
-<td>-0.85</td>
-<td>-0.18</td>
-<td>2027.77</td>
-<td>1881.50</td>
+<td>-0.55</td>
+<td>0.22</td>
+<td>-0.84</td>
+<td>-0.15</td>
+<td>1447.68</td>
+<td>1240.32</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
@@ -841,8 +841,8 @@ jax.local_device_count 16</code></pre>
 <td>0.00</td>
 <td>1.00</td>
 <td>1.00</td>
-<td>4117.26</td>
-<td>3519.25</td>
+<td>4022.06</td>
+<td>3956.42</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -850,11 +850,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a</td>
 <td>3.86</td>
-<td>0.27</td>
-<td>3.44</td>
+<td>0.26</td>
+<td>3.43</td>
 <td>4.28</td>
-<td>3354.02</td>
-<td>2565.42</td>
+<td>4700.96</td>
+<td>3317.59</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -863,10 +863,10 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[0, 0]</td>
 <td>4.23</td>
 <td>0.21</td>
-<td>3.90</td>
+<td>3.89</td>
 <td>4.57</td>
-<td>3342.39</td>
-<td>3344.41</td>
+<td>4531.21</td>
+<td>3366.17</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -874,35 +874,35 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[0, 1]</td>
 <td>-1.49</td>
-<td>0.24</td>
-<td>-1.88</td>
+<td>0.23</td>
+<td>-1.86</td>
 <td>-1.13</td>
-<td>2787.68</td>
-<td>2345.12</td>
+<td>3318.42</td>
+<td>3091.49</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[1, 0]</td>
-<td>0.39</td>
+<td>0.40</td>
 <td>0.22</td>
-<td>0.04</td>
-<td>0.74</td>
-<td>2901.74</td>
-<td>2949.20</td>
+<td>0.05</td>
+<td>0.76</td>
+<td>2904.26</td>
+<td>2335.79</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[1, 1]</td>
-<td>-0.71</td>
-<td>0.28</td>
-<td>-1.16</td>
-<td>-0.25</td>
-<td>2033.51</td>
-<td>2337.18</td>
+<td>-0.72</td>
+<td>0.29</td>
+<td>-1.18</td>
+<td>-0.24</td>
+<td>1926.52</td>
+<td>2118.62</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.0</td>
@@ -910,35 +910,35 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[2, 0]</td>
 <td>4.43</td>
-<td>0.22</td>
-<td>4.09</td>
-<td>4.78</td>
-<td>3672.33</td>
-<td>2921.04</td>
+<td>0.21</td>
+<td>4.10</td>
+<td>4.77</td>
+<td>4613.45</td>
+<td>3277.91</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[2, 1]</td>
-<td>-1.40</td>
-<td>0.24</td>
+<td>-1.39</td>
+<td>0.23</td>
 <td>-1.78</td>
-<td>-1.01</td>
-<td>3078.28</td>
-<td>2670.72</td>
+<td>-1.04</td>
+<td>4144.49</td>
+<td>3266.40</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[3, 0]</td>
-<td>3.64</td>
+<td>3.65</td>
 <td>0.22</td>
 <td>3.30</td>
-<td>3.99</td>
-<td>2830.13</td>
-<td>3007.67</td>
+<td>4.00</td>
+<td>2649.75</td>
+<td>2987.76</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -946,11 +946,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[3, 1]</td>
 <td>-1.61</td>
-<td>0.26</td>
-<td>-2.06</td>
+<td>0.27</td>
+<td>-2.05</td>
 <td>-1.22</td>
-<td>1684.61</td>
-<td>2159.07</td>
+<td>1886.19</td>
+<td>2628.11</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.0</td>
@@ -958,11 +958,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[4, 0]</td>
 <td>3.20</td>
-<td>0.21</td>
-<td>2.86</td>
-<td>3.53</td>
-<td>3054.77</td>
-<td>2729.55</td>
+<td>0.22</td>
+<td>2.84</td>
+<td>3.54</td>
+<td>2605.67</td>
+<td>2772.66</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -972,21 +972,21 @@ jax.local_device_count 16</code></pre>
 <td>-1.02</td>
 <td>0.25</td>
 <td>-1.40</td>
-<td>-0.60</td>
-<td>2143.60</td>
-<td>2308.48</td>
+<td>-0.59</td>
+<td>1998.95</td>
+<td>3044.43</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[5, 0]</td>
-<td>3.01</td>
+<td>3.00</td>
 <td>0.21</td>
-<td>2.68</td>
-<td>3.36</td>
-<td>3231.44</td>
-<td>3008.01</td>
+<td>2.67</td>
+<td>3.34</td>
+<td>3676.20</td>
+<td>2681.76</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -994,23 +994,23 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[5, 1]</td>
 <td>-1.40</td>
-<td>0.24</td>
-<td>-1.83</td>
-<td>-1.04</td>
-<td>2641.78</td>
-<td>2585.79</td>
+<td>0.25</td>
+<td>-1.81</td>
+<td>-1.03</td>
+<td>2785.28</td>
+<td>2751.89</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[6, 0]</td>
-<td>2.86</td>
-<td>0.23</td>
-<td>2.49</td>
-<td>3.22</td>
-<td>2206.56</td>
-<td>2990.91</td>
+<td>2.87</td>
+<td>0.22</td>
+<td>2.50</td>
+<td>3.23</td>
+<td>2709.09</td>
+<td>2897.32</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1020,9 +1020,9 @@ jax.local_device_count 16</code></pre>
 <td>-0.85</td>
 <td>0.28</td>
 <td>-1.27</td>
-<td>-0.38</td>
-<td>1345.87</td>
-<td>2275.34</td>
+<td>-0.37</td>
+<td>1379.17</td>
+<td>1079.91</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.0</td>
@@ -1030,11 +1030,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[7, 0]</td>
 <td>3.02</td>
-<td>0.21</td>
+<td>0.22</td>
 <td>2.69</td>
-<td>3.36</td>
-<td>3294.99</td>
-<td>2848.13</td>
+<td>3.37</td>
+<td>3674.60</td>
+<td>2891.80</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1043,46 +1043,46 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[7, 1]</td>
 <td>-1.44</td>
 <td>0.25</td>
-<td>-1.85</td>
-<td>-1.06</td>
-<td>2024.64</td>
-<td>2524.78</td>
+<td>-1.86</td>
+<td>-1.07</td>
+<td>2624.31</td>
+<td>2861.83</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[8, 0]</td>
-<td>5.49</td>
+<td>5.47</td>
 <td>0.21</td>
-<td>5.15</td>
-<td>5.83</td>
-<td>3262.86</td>
-<td>2889.12</td>
+<td>5.13</td>
+<td>5.82</td>
+<td>3480.79</td>
+<td>3131.87</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[8, 1]</td>
-<td>-1.49</td>
-<td>0.24</td>
+<td>-1.48</td>
+<td>0.25</td>
 <td>-1.87</td>
-<td>-1.10</td>
-<td>3051.72</td>
-<td>2676.55</td>
+<td>-1.09</td>
+<td>3187.97</td>
+<td>3022.77</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[9, 0]</td>
-<td>3.46</td>
+<td>3.45</td>
 <td>0.21</td>
-<td>3.11</td>
+<td>3.12</td>
 <td>3.79</td>
-<td>3649.91</td>
-<td>3308.53</td>
+<td>4014.88</td>
+<td>3196.80</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1091,10 +1091,10 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[9, 1]</td>
 <td>-1.37</td>
 <td>0.23</td>
-<td>-1.74</td>
-<td>-1.02</td>
-<td>3263.81</td>
-<td>3158.11</td>
+<td>-1.75</td>
+<td>-1.01</td>
+<td>3711.84</td>
+<td>2726.82</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1104,93 +1104,93 @@ jax.local_device_count 16</code></pre>
 <td>3.96</td>
 <td>0.21</td>
 <td>3.62</td>
-<td>4.29</td>
-<td>3209.05</td>
-<td>3287.20</td>
+<td>4.30</td>
+<td>3907.35</td>
+<td>3130.64</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[10, 1]</td>
-<td>-1.11</td>
+<td>-1.12</td>
 <td>0.25</td>
-<td>-1.48</td>
-<td>-0.69</td>
-<td>2356.18</td>
-<td>2195.07</td>
+<td>-1.49</td>
+<td>-0.70</td>
+<td>2509.79</td>
+<td>2735.57</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[11, 0]</td>
 <td>4.20</td>
-<td>0.20</td>
-<td>3.87</td>
+<td>0.21</td>
+<td>3.86</td>
 <td>4.53</td>
-<td>3491.26</td>
-<td>3083.40</td>
+<td>3921.49</td>
+<td>3224.05</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[11, 1]</td>
-<td>-1.31</td>
-<td>0.23</td>
-<td>-1.68</td>
+<td>-1.30</td>
+<td>0.24</td>
+<td>-1.67</td>
 <td>-0.93</td>
-<td>3044.64</td>
-<td>2825.22</td>
+<td>3475.42</td>
+<td>3048.89</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[12, 0]</td>
-<td>5.39</td>
+<td>5.38</td>
 <td>0.22</td>
-<td>5.04</td>
-<td>5.74</td>
-<td>3362.69</td>
-<td>3011.57</td>
+<td>5.05</td>
+<td>5.73</td>
+<td>3620.20</td>
+<td>3290.75</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[12, 1]</td>
-<td>-1.66</td>
+<td>-1.65</td>
 <td>0.25</td>
 <td>-2.08</td>
-<td>-1.28</td>
-<td>2608.51</td>
-<td>2531.61</td>
+<td>-1.26</td>
+<td>2726.63</td>
+<td>3122.27</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[13, 0]</td>
-<td>3.53</td>
+<td>3.52</td>
 <td>0.21</td>
-<td>3.19</td>
-<td>3.86</td>
-<td>3629.99</td>
-<td>3044.11</td>
+<td>3.18</td>
+<td>3.87</td>
+<td>3449.83</td>
+<td>3146.39</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[13, 1]</td>
-<td>-1.21</td>
+<td>-1.20</td>
 <td>0.23</td>
 <td>-1.56</td>
-<td>-0.83</td>
-<td>3102.16</td>
-<td>2663.83</td>
+<td>-0.82</td>
+<td>2933.41</td>
+<td>2556.19</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1200,21 +1200,21 @@ jax.local_device_count 16</code></pre>
 <td>3.48</td>
 <td>0.21</td>
 <td>3.15</td>
-<td>3.83</td>
-<td>3514.15</td>
-<td>2925.56</td>
+<td>3.82</td>
+<td>3410.54</td>
+<td>2881.56</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[14, 1]</td>
-<td>-1.15</td>
-<td>0.23</td>
+<td>-1.14</td>
+<td>0.24</td>
 <td>-1.50</td>
-<td>-0.77</td>
-<td>2783.84</td>
-<td>2925.34</td>
+<td>-0.75</td>
+<td>3133.61</td>
+<td>3092.29</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1223,22 +1223,22 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[15, 0]</td>
 <td>4.30</td>
 <td>0.21</td>
-<td>3.96</td>
+<td>3.97</td>
 <td>4.64</td>
-<td>3247.62</td>
-<td>2831.46</td>
+<td>3991.05</td>
+<td>3215.63</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[15, 1]</td>
-<td>-1.40</td>
+<td>-1.39</td>
 <td>0.23</td>
-<td>-1.76</td>
-<td>-1.03</td>
-<td>3156.44</td>
-<td>2887.96</td>
+<td>-1.77</td>
+<td>-1.04</td>
+<td>4073.10</td>
+<td>2895.77</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1246,11 +1246,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[16, 0]</td>
 <td>4.56</td>
-<td>0.21</td>
+<td>0.22</td>
 <td>4.22</td>
-<td>4.90</td>
-<td>2094.92</td>
-<td>2169.67</td>
+<td>4.91</td>
+<td>3380.27</td>
+<td>3032.48</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1259,58 +1259,58 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[16, 1]</td>
 <td>-1.60</td>
 <td>0.24</td>
-<td>-2.01</td>
+<td>-2.00</td>
 <td>-1.23</td>
-<td>2234.31</td>
-<td>2638.65</td>
+<td>2525.99</td>
+<td>3137.54</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[17, 0]</td>
-<td>4.67</td>
+<td>4.66</td>
 <td>0.21</td>
-<td>4.34</td>
-<td>5.00</td>
-<td>3765.69</td>
-<td>3211.32</td>
+<td>4.32</td>
+<td>4.99</td>
+<td>4334.47</td>
+<td>3354.24</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[17, 1]</td>
-<td>-1.36</td>
+<td>-1.34</td>
 <td>0.24</td>
-<td>-1.72</td>
-<td>-0.97</td>
-<td>3096.11</td>
-<td>3082.07</td>
+<td>-1.71</td>
+<td>-0.95</td>
+<td>3855.07</td>
+<td>3000.99</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">a_b_cafe[18, 0]</td>
-<td>5.43</td>
+<td>5.42</td>
 <td>0.22</td>
-<td>5.07</td>
-<td>5.78</td>
-<td>2232.96</td>
-<td>2230.65</td>
+<td>5.08</td>
+<td>5.77</td>
+<td>3235.83</td>
+<td>2837.43</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[18, 1]</td>
-<td>-1.78</td>
-<td>0.27</td>
-<td>-2.22</td>
-<td>-1.37</td>
-<td>1728.14</td>
-<td>2407.81</td>
+<td>-1.77</td>
+<td>0.26</td>
+<td>-2.20</td>
+<td>-1.36</td>
+<td>2073.02</td>
+<td>2208.05</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.0</td>
@@ -1319,10 +1319,10 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">a_b_cafe[19, 0]</td>
 <td>3.89</td>
 <td>0.21</td>
-<td>3.56</td>
-<td>4.22</td>
-<td>3632.23</td>
-<td>2996.53</td>
+<td>3.55</td>
+<td>4.23</td>
+<td>3731.68</td>
+<td>3044.90</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1330,11 +1330,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_b_cafe[19, 1]</td>
 <td>-1.20</td>
-<td>0.24</td>
-<td>-1.57</td>
-<td>-0.81</td>
-<td>2995.17</td>
-<td>2684.35</td>
+<td>0.23</td>
+<td>-1.56</td>
+<td>-0.83</td>
+<td>2716.22</td>
+<td>2872.48</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1344,9 +1344,9 @@ jax.local_device_count 16</code></pre>
 <td>-1.32</td>
 <td>0.11</td>
 <td>-1.49</td>
-<td>-1.15</td>
-<td>2140.86</td>
-<td>2291.93</td>
+<td>-1.14</td>
+<td>2559.98</td>
+<td>2800.18</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1355,22 +1355,22 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">sigma</td>
 <td>0.54</td>
 <td>0.03</td>
-<td>0.50</td>
+<td>0.49</td>
 <td>0.59</td>
-<td>3710.89</td>
-<td>2947.87</td>
+<td>4018.33</td>
+<td>2869.39</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma_cafe[0]</td>
-<td>1.18</td>
-<td>0.20</td>
+<td>1.17</td>
+<td>0.19</td>
 <td>0.91</td>
-<td>1.52</td>
-<td>3598.24</td>
-<td>2571.10</td>
+<td>1.51</td>
+<td>3274.10</td>
+<td>2743.67</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1379,10 +1379,10 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">sigma_cafe[1]</td>
 <td>0.36</td>
 <td>0.12</td>
-<td>0.19</td>
+<td>0.17</td>
 <td>0.55</td>
-<td>661.56</td>
-<td>697.65</td>
+<td>668.03</td>
+<td>666.11</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.0</td>
@@ -1395,7 +1395,7 @@ jax.local_device_count 16</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="d2b2cffc" class="cell" data-execution_count="2">
+<div id="c6774eb1" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -1433,7 +1433,7 @@ jax.local_device_count 16</code></pre>
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>m.fit(model, progress_bar<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>jax.local_device_count 16</code></pre>
+<pre><code>jax.local_device_count(cpu) = 32</code></pre>
 </div>
 </div>
 </div>
@@ -1526,7 +1526,7 @@ Does each café get its own variability of waiting times right?
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#6f407c51 .cell execution_count=3}
+::: {#1c320161 .cell execution_count=3}
 ``` {.python .cell-code}
 # m.diag.ppc_stat(stat="sd", group="cafe")
 ```
@@ -1552,7 +1552,7 @@ One panel per café: the vertical line is the observed standard deviation of wai
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#a7e21f1c .cell execution_count=4}
+::: {#17fcaa78 .cell execution_count=4}
 ``` {.python .cell-code}
 # m.diag.ppc_intervals(x="afternoon", group="cafe")
 ```
@@ -1710,9 +1710,44 @@ L \sim \text{LKJ Cholesky}(2)
 <section id="model-validation-tests" class="level2">
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>12.Varying effects.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/12.Varying%20effects.py">Comparison with Stan</a>: <code>12.Varying effects.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/12.Varying%20effects.py">Data generative model and inference model pipeline</a>: <code>12.Varying effects.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>12.Varying effects.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/12.Varying_effects_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>12.Varying effects.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/12.Varying_effects_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>

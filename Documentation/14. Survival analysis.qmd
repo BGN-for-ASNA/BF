@@ -486,7 +486,9 @@ Where $\Delta_k$ is the width of interval $k$.
 ## Model validation tests
 
 - [Comparison with PyMC](https://github.com/BGN-for-ASNA/BF/tree/main/Test/7.Survival%20analysis): `Survival_analysis_verify.py` fits the mastectomy survival model with BayesForge and PyMC and checks that the baseline rates and the hazard ratio agree.
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Reference(s)
 https://en.wikipedia.org/wiki/Proportional_hazards_model

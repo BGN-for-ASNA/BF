@@ -298,6 +298,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../start/Handle_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Handle data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../start/Define model.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Define model</span></a>
   </div>
@@ -351,14 +357,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">🚧 BNN layers 🚧</span></a>
+  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Direct sampling &amp; plots</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../Advance/Sampling &amp; plots.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Direct sampling &amp; plots</span></a>
+  <a href="../Advance/BNN layers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">🚧 BNN layers 🚧</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -536,7 +542,7 @@ Writing models for <code>backend="tfp"</code>
 </div>
 <div class="callout-body-container callout-body">
 <p>With the TFP backend a model is a Python generator: every site is written <code>yield m.dist.&lt;dist&gt;(...)</code>. Sites are matched by position, so <strong>all observed sites (<code>obs=</code>) must come after all latent parameters</strong>. Several observed sites are allowed, as long as they are all at the end and each has its own <code>name=</code> (unnamed sites share a default name, which TFP rejects as a duplicate); a model that yields a latent after an observed site raises a <code>ValueError</code> at <code>fit()</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python no-test code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(backend<span class="op">=</span><span class="st">"tfp"</span>)</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python no-test lang-only code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> bf(backend<span class="op">=</span><span class="st">"tfp"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(y1, y2):</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    mu    <span class="op">=</span> <span class="cf">yield</span> m.dist.normal(<span class="fl">0.0</span>, <span class="fl">5.0</span>, name<span class="op">=</span><span class="st">"mu"</span>)</span>

@@ -273,41 +273,6 @@ class manip():
         
         return self.df
     
-    def scale_var(self, x, name=None):
-        """## Function to scale/standardize a single variable
-
-        ### Args:
-            - *x* (array-like): Input array to standardize.
-            - *name* (str, optional): Label used to name the variable in the NaN warning.
-
-        ### Returns:
-            - *jax.Array*: Standardized array `(x - x.mean()) / x.std(ddof=1)` using the **sample** standard deviation (`ddof=1`), the same convention as `scale` and `z_score` (RELEASE_AUDIT M2). Does not modify `m.df`.
-
-        NaN values (RELEASE_AUDIT m7): a NaN used to poison the mean and std,
-        turning the whole output NaN without a word. When the input contains
-        NaN, a `UserWarning` is raised (naming *name* when given) and the
-        centering/scaling statistics are computed over the non-NaN entries
-        (`nanmean`/`nanstd`); the NaN entries themselves stay NaN.
-        """
-        x = jnp.asarray(x)
-        if jnp.issubdtype(x.dtype, jnp.inexact) and bool(jnp.isnan(x).any()):
-            # m7: scale on the non-NaN entries instead of poisoning every row.
-            who = f"variable {name!r}" if name is not None else "the input"
-            warnings.warn(f"scale_var(): {who} contains NaN; mean and standard "
-                          "deviation are computed over the non-NaN entries "
-                          "(nanmean/nanstd) and the NaN entries stay NaN.", UserWarning)
-            mean = jnp.nanmean(x)
-            std = jnp.nanstd(x)
-            n = int(jnp.sum(~jnp.isnan(x)))
-        else:
-            mean = x.mean()
-            std = x.std()
-            n = x.size
-        if n > 1:
-            # sample standard deviation (ddof=1), matching pandas Series.std in scale
-            std = std * jnp.sqrt(n / (n - 1))
-        return (x - mean) / std
-
     def scale(self, data = 'all'):
         """## Standardize specified columns.
         
@@ -316,7 +281,7 @@ class manip():
             
         ### Returns:
             - *pd.DataFrame*: Standardized dataframe `m.df`.
-            - **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit **sample** standard deviation, `ddof=1` — the module-wide convention shared by `z_score` and `scale_var`, RELEASE_AUDIT M2) and records `m.data_modification['scale'] = data`. Raises `ValueError` when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN (RELEASE_AUDIT M1).
+            - **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit **sample** standard deviation, `ddof=1` — the module-wide convention shared by `z_score`, RELEASE_AUDIT M2) and records `m.data_modification['scale'] = data`. Raises `ValueError` when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN (RELEASE_AUDIT M1).
         """        
         if isinstance(data, str) and data == 'all':
             data = [c for c in self.df.select_dtypes('number').columns
@@ -327,7 +292,7 @@ class manip():
         # Check every column before writing anything, so a constant column
         # cannot leave the other columns half-scaled (RELEASE_AUDIT M1).
         # ddof=1 (pandas Series.std default) is the convention the reference
-        # documents for scale; z_score and scale_var match it (RELEASE_AUDIT M2).
+        # documents for scale; z_score matches it (RELEASE_AUDIT M2).
         stats = {}
         bad = []
         for col in data:
@@ -351,7 +316,7 @@ class manip():
         """
         Performs Z-score scaling (standardization) on a JAX array.
         (X - mean) / std_dev, with the sample standard deviation (ddof=1),
-        the same convention as scale and scale_var (RELEASE_AUDIT M2).
+        the same convention as scale (RELEASE_AUDIT M2).
 
         Args:
             X (jnp.ndarray): The input JAX array (e.g., shape (n_samples, n_features)).
@@ -372,7 +337,7 @@ class manip():
         if nan_mask is not None and bool(nan_mask.any()):
             # m7: nanmean/nanstd per slice so non-NaN rows are still scaled;
             # the ddof=1 correction uses the non-NaN count of each slice.
-            affected = jnp.nonzero(nan_mask.any(axis=axis))[0].tolist()
+            affected = jnp.nonzero(jnp.atleast_1d(nan_mask.any(axis=axis)))[0].tolist()
             label = "column(s)" if axis == 0 else "row(s)"
             warnings.warn(f"z_score(): {label} {affected} contain NaN; mean and std are "
                           "computed over the non-NaN entries (nanmean/nanstd) and the "

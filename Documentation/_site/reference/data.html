@@ -328,7 +328,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#index" id="toc-index" class="nav-link" data-scroll-target="#index"><code>m.index</code></a></li>
   <li><a href="#pd_to_jax" id="toc-pd_to_jax" class="nav-link" data-scroll-target="#pd_to_jax"><code>m.pd_to_jax</code></a></li>
   <li><a href="#scale" id="toc-scale" class="nav-link" data-scroll-target="#scale"><code>m.scale</code></a></li>
-  <li><a href="#scale_var" id="toc-scale_var" class="nav-link" data-scroll-target="#scale_var"><code>m.scale_var</code></a></li>
   <li><a href="#to_float" id="toc-to_float" class="nav-link" data-scroll-target="#to_float"><code>m.to_float</code></a></li>
   <li><a href="#to_int" id="toc-to_int" class="nav-link" data-scroll-target="#to_int"><code>m.to_int</code></a></li>
   <li><a href="#z_score" id="toc-z_score" class="nav-link" data-scroll-target="#z_score"><code>m.z_score</code></a></li>
@@ -579,34 +578,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul></li>
 </ul>
 </section>
-<section id="scale_var" class="level2">
-<h2 class="anchored" data-anchor-id="scale_var"><code>m.scale_var</code></h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.scale_var(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>JAX-jitted function to scale/standardize a single variable</strong></p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td><code>array-like</code></td>
-<td>Input array to standardize.</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>jax.Array</code>: Standardized array <code>(x - x.mean()) / x.std()</code>. Does not modify <code>m.df</code>.</li>
-</ul>
-</section>
 <section id="to_float" class="level2">
 <h2 class="anchored" data-anchor-id="to_float"><code>m.to_float</code></h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.to_float(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.to_float(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Convert specified columns to float type</strong></p>
 <table class="caption-top table">
 <colgroup>
@@ -646,7 +620,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="to_int" class="level2">
 <h2 class="anchored" data-anchor-id="to_int"><code>m.to_int</code></h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.to_int(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'int32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.to_int(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'int32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Convert specified columns to integer type</strong></p>
 <table class="caption-top table">
 <colgroup>
@@ -686,7 +660,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="z_score" class="level2">
 <h2 class="anchored" data-anchor-id="z_score"><code>m.z_score</code></h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.z_score(X, axis<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.z_score(X, axis<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Performs Z-score scaling (standardization) on a JAX array: <code>(X - mean) / std_dev</code>.</p>
 <table class="caption-top table">
 <colgroup>

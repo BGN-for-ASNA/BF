@@ -5,10 +5,10 @@ Covers all ppc_* functions in BF.Diagnostic.ppc:
   Distributions : ppc_density, ppc_hist, ppc_boxplot
   Statistics    : ppc_stat, ppc_stat_2d
   Intervals     : ppc_intervals, ppc_ribbon
-  Errors        : ppc_error_scatter, ppc_error_hist
+  Errors        : ppc_error_hist
   Scatter       : ppc_scatter
   Discrete      : ppc_rootogram, ppc_bars
-  LOO           : ppc_loo_pit, ppc_loo_intervals
+  LOO           : ppc_loo_intervals
 """
 import plotly.io as pio
 pio.renderers.default = "json"
@@ -90,10 +90,6 @@ m.diag.ppc_ribbon(x=weight_obs).show()
 # PPC — Errors
 # =============================================================================
 # %%
-# y vs E[yrep] scatter — should fall on diagonal
-m.diag.ppc_error_scatter().show()
-
-# %%
 # Distribution of residuals y - E[yrep]
 m.diag.ppc_error_hist().show()
 
@@ -106,10 +102,6 @@ m.diag.ppc_scatter(n_reps=9).show()
 # =============================================================================
 # PPC — LOO
 # =============================================================================
-# %%
-# PIT uniformity check
-m.diag.ppc_loo_pit().show()
-
 # %%
 # LOO-style intervals sorted by observed y
 m.diag.ppc_loo_intervals().show()

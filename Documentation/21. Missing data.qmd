@@ -715,7 +715,9 @@ $$
 ## Model validation tests
 
 - [Imputation example](https://github.com/BGN-for-ASNA/BF/tree/main/Test/Imputation): `0.Code.py` discrete imputation reproduced from the NumPyro tutorial.
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python, R and Julia examples of this page are run by the documentation tests (`Python/test_model_pages.py`, `R/test_r_model_pages.py`, `Julia/test_julia_model_pages.py`).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
+- [Documentation examples (R)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R): the R examples of this page are run by `test_r_model_pages.py`.
+- [Documentation examples (Julia)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia): the Julia examples of this page are run by `test_julia_model_pages.py`.
 
 ## Notes{#notes}
 

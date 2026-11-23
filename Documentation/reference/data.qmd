@@ -126,22 +126,6 @@ m.scale(data='all')
   - `m.df`: standardizes the specified columns in-place to zero mean and unit standard deviation (`(col - col.mean()) / col.std()`).
   - `m.data_modification['scale']`: records `data`.
 
-## `m.scale_var` {#scale_var}
-
-```python
-m.scale_var(x)
-```
-
-**JAX-jitted function to scale/standardize a single variable**
-
-| Argument | Type | Description |
-|---|---|---|
-| `x` | `array-like` | Input array to standardize. |
-
-**Returns**
-
-- `jax.Array`: Standardized array `(x - x.mean()) / x.std()`. Does not modify `m.df`.
-
 ## `m.to_float` {#to_float}
 
 ```python

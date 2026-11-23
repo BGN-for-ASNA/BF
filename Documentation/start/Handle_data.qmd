@@ -1,0 +1,270 @@
+---
+title: "Handle data"
+sidebar: start
+---
+
+Once a table is loaded with `m.data()` (see [Import data](Import_data.qmd)), it lives in `m.df`, a copy of your data. The functions below prepare it for the model: encode categories, standardize, cast types, and send the columns to the model. They all modify `m.df` in place and record what they did in `m.data_modification`.
+
+> **Column names:** `.` and spaces in column names are replaced by `_` at load (`applicant.gender` becomes `applicant_gender`), so every column can be a model argument. The functions below also accept the original names.
+
+The examples use the bundled `ucbadmit` data (columns `dept`, `applicant_gender`, `admit`, `reject`, `applications`).
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+from BayesForge import bf
+
+m = bf(platform="cpu")
+m.data(m.load.ucbadmit(only_path=True), sep=";")
+```
+
+## R
+```r
+library(BayesForge)
+
+m <- importBF(platform = "cpu")
+m$data(m$load$ucbadmit(only_path = TRUE), sep = ";")
+```
+
+## Julia
+```julia
+using PyBayesForge
+
+m = importBF(platform = "cpu")
+m.data(m.load.ucbadmit(only_path = true), sep = ";")
+```
+:::
+
+## Index encoding: `index`
+
+Gives each category of a column an integer code (0-based), stored in a new column `index_<col>`. Use it for varying intercepts: `alpha[index_dept]`. `m.index_map[col]` maps each code back to its level.
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+m.index(
+    cols="dept",       # a name, a list of names, or "all" (text and categorical columns)
+    missing="raise",   # "raise" or "category" (missing values get their own code)
+)
+m.index_map["dept"]    # {0: 'A', 1: 'B', ...}
+```
+
+## R
+```r
+m$index(
+    cols = "dept",       # a name, a list of names, or "all"
+    missing = "raise"    # "raise" or "category"
+)
+m$index_map[["dept"]]
+```
+
+## Julia
+```julia
+m.index(
+    cols = "dept",       # a name, a vector of names, or "all"
+    missing = "raise",   # "raise" or "category"
+)
+m.index_map["dept"]
+```
+:::
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `cols` | str or list | `"all"` | Columns to encode. `"all"` selects every text (object) and categorical column, e.g. R factors |
+| `missing` | str | `"raise"` | Missing values (NaN/None): `"raise"` raises a `ValueError`; `"category"` gives them their own code `K` (after the `K` observed levels), with `m.index_map[col][K] == "missing"` |
+
+Codes follow the category order: the level order of a pandas Categorical or R factor, alphabetical for text columns.
+
+## One-hot encoding: `OHE`
+
+Converts a categorical column into one binary (0/1) column per category, appended to `m.df`. Use it when each category gets its own coefficient in a linear predictor.
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+m.OHE(
+    cols="applicant_gender",  # a name, a list of names, or "all"
+    missing="zero",           # "zero" or "category"
+)
+```
+
+## R
+```r
+m$OHE(
+    cols = "applicant_gender",  # a name, a list of names, or "all"
+    missing = "zero"            # "zero" or "category"
+)
+```
+
+## Julia
+```julia
+m.OHE(
+    cols = "applicant_gender",  # a name, a vector of names, or "all"
+    missing = "zero",           # "zero" or "category"
+)
+```
+:::
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `cols` | str or list | `"all"` | Columns to encode. `"all"` selects every text (object) and categorical column |
+| `missing` | str | `"zero"` | `"zero"`: a row with a missing category gets all-zero dummies; `"category"`: adds a `<col>_nan` indicator column (1 where the value is missing), only for columns that contain missing values |
+
+Returns the new dummy columns; `m.df` gets them appended.
+
+## Standardize columns: `scale`
+
+Standardizes columns of `m.df` in place: $X_i = \frac{X_i - \mu}{\sigma}$, with the sample standard deviation (`ddof=1`).
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+m.scale(["applications"])   # or "all", or a single name
+```
+
+## R
+```r
+m$scale(list("applications"))   # or "all", or a single name
+```
+
+## Julia
+```julia
+m.scale(["applications"])   # or "all", or a single name
+```
+:::
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `data` | str or list | `"all"` | Columns to standardize. `"all"` = every numeric column except the `index_*` codes |
+
+A column with zero or undefined standard deviation (constant, single row, or containing NaN) raises a `ValueError` instead of silently producing NaN.
+
+## Standardize an array: `z_score`
+
+Same standardization as `scale`, applied to an array instead of a column of `m.df`; `m.df` is not modified.
+
+For a matrix $X$ with $n$ rows, `z_score(X, axis=0)` standardizes each column $j$:
+
+$$
+z_{ij} = \frac{x_{ij} - \bar{x}_j}{s_j},
+\qquad \bar{x}_j = \frac{1}{n}\sum_{i=1}^{n} x_{ij},
+\qquad s_j = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n} \left(x_{ij} - \bar{x}_j\right)^2}
+$$
+
+With `axis=1` the same formula applies to each row, and a vector is treated as a single column. The denominator $n-1$ (sample standard deviation, `ddof=1`) is the same convention as `scale`. A constant column ($s_j = 0$) gives $z_{ij} = 0$.
+
+When a column contains missing values, $\bar{x}_j$ and $s_j$ are computed over its $n_j$ observed entries only, a warning names the column, and the missing entries stay missing:
+
+$$
+z_{ij} = \frac{x_{ij} - \bar{x}_j}{s_j},
+\qquad \bar{x}_j = \frac{1}{n_j}\sum_{i \in \text{obs}_j} x_{ij},
+\qquad s_j = \sqrt{\frac{1}{n_j-1}\sum_{i \in \text{obs}_j} \left(x_{ij} - \bar{x}_j\right)^2}
+$$
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+import jax.numpy as jnp
+
+x = jnp.array(m.df["admit"].values)
+z = m.z_score(x, axis=0)          # (x - mean) / sd along axis 0
+```
+
+## R
+```r
+jnp <- reticulate::import("jax.numpy")
+
+x <- jnp$array(m$df[["admit"]])
+z <- m$z_score(x, axis = 0L)
+```
+
+## Julia
+```julia
+x = jnp.array(m.df["admit"].values)
+z = m.z_score(x, axis = 0)
+```
+:::
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `X` | array | (required) | Array to standardize, e.g. shape `(n_samples, n_features)` |
+| `axis` | int | `0` | Axis along which mean and sd are computed (`0` scales each column, `1` each row) |
+
+## Cast types: `to_float` and `to_int`
+
+Cast columns of `m.df` in place. Useful before sending data to the model: counts as integers for a Poisson or binomial likelihood, predictors as floats.
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+m.to_int(["admit", "applications"], type="int32")
+m.to_float(["applications"], type="float32")
+```
+
+## R
+```r
+m$to_int(list("admit", "applications"), type = "int32")
+m$to_float(list("applications"), type = "float32")
+```
+
+## Julia
+```julia
+m.to_int(["admit", "applications"], type = "int32")
+m.to_float(["applications"], type = "float32")
+```
+:::
+
+### Arguments
+
+| Function | Argument | Type | Default | Description |
+|----------|----------|------|---------|-------------|
+| `to_float` | `cols` | str or list | `"all"` | Columns to convert. `"all"` = every column |
+| `to_float` | `type` | str | `"float32"` | Float type, e.g. `"float32"` or `"float64"` |
+| `to_int` | `cols` | str or list | `"all"` | Columns to convert. `"all"` = every column |
+| `to_int` | `type` | str | `"int32"` | Integer type, e.g. `"int32"` or `"int64"` |
+
+64-bit types reach the model only when JAX runs in 64-bit mode (`float_precision=64` in `bf()`); otherwise they are converted to 32-bit.
+
+## Send columns to the model: `data_to_model`
+
+Selects the columns used by the model and stores them as JAX arrays in `m.data_on_model`, a dictionary passed to the model function by argument name.
+
+::: {.panel-tabset group="language"}
+## Python
+```python
+m.data_to_model(["index_dept", "admit", "applications"])
+m.data_on_model.keys()
+```
+
+## R
+```r
+m$data_to_model(list("index_dept", "admit", "applications"))
+names(m$data_on_model)
+```
+
+## Julia
+```julia
+m.data_to_model(["index_dept", "admit", "applications"])
+m.data_on_model.keys()
+```
+:::
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `cols` | str or list | (required) | Columns of `m.df` to send to the model; each becomes `m.data_on_model[col]` |
+
+A name present twice in `m.df` (e.g. re-created by `OHE`) raises a `ValueError`.
+
+::: callout-tip
+`data_to_model` is optional: when `m.data_on_model` is empty, `m.fit()` fills it from `m.df`, matching each model argument with the column of the same name. Data that are not columns of a table (matrices, networks) are added by hand: `m.data_on_model["D"] = matrix`.
+:::

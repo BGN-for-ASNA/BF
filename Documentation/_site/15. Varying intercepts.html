@@ -716,7 +716,7 @@ Note
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python (Raw)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">Python (Build in function)</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="72e13d74" class="cell" data-execution_count="1">
+<div id="2feffa01" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -752,7 +752,7 @@ Note
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 16</code></pre>
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -776,12 +776,12 @@ jax.local_device_count 16</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">a_bar</td>
-<td>1.35</td>
-<td>0.26</td>
-<td>0.94</td>
-<td>1.76</td>
-<td>3642.04</td>
-<td>3037.26</td>
+<td>1.34</td>
+<td>0.25</td>
+<td>0.95</td>
+<td>1.75</td>
+<td>4010.08</td>
+<td>2589.08</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -789,35 +789,35 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[0]</td>
 <td>2.14</td>
-<td>0.88</td>
-<td>0.83</td>
-<td>3.62</td>
-<td>4030.61</td>
-<td>2533.55</td>
+<td>0.87</td>
+<td>0.85</td>
+<td>3.61</td>
+<td>5208.21</td>
+<td>2287.79</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[1]</td>
-<td>3.12</td>
-<td>1.14</td>
-<td>1.48</td>
-<td>5.07</td>
-<td>3546.37</td>
-<td>2228.75</td>
+<td>3.08</td>
+<td>1.11</td>
+<td>1.51</td>
+<td>5.02</td>
+<td>5427.12</td>
+<td>2767.81</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[2]</td>
-<td>1.00</td>
-<td>0.65</td>
-<td>-0.01</td>
-<td>2.06</td>
-<td>4911.48</td>
-<td>2951.91</td>
+<td>0.99</td>
+<td>0.66</td>
+<td>-0.04</td>
+<td>2.11</td>
+<td>5735.98</td>
+<td>2889.39</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -825,107 +825,107 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[3]</td>
 <td>3.09</td>
-<td>1.12</td>
+<td>1.13</td>
 <td>1.49</td>
-<td>4.98</td>
-<td>4399.05</td>
-<td>2704.51</td>
+<td>5.05</td>
+<td>4119.56</td>
+<td>1996.32</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[4]</td>
-<td>2.14</td>
-<td>0.88</td>
-<td>0.82</td>
-<td>3.66</td>
-<td>5103.02</td>
-<td>2704.96</td>
+<td>2.12</td>
+<td>0.87</td>
+<td>0.85</td>
+<td>3.63</td>
+<td>5446.93</td>
+<td>2798.27</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[5]</td>
-<td>2.17</td>
-<td>0.89</td>
-<td>0.87</td>
-<td>3.67</td>
-<td>4959.91</td>
-<td>2471.29</td>
+<td>2.11</td>
+<td>0.84</td>
+<td>0.83</td>
+<td>3.52</td>
+<td>5498.20</td>
+<td>3212.47</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[6]</td>
-<td>3.08</td>
-<td>1.14</td>
-<td>1.46</td>
-<td>5.10</td>
-<td>4605.35</td>
-<td>2313.33</td>
+<td>3.07</td>
+<td>1.12</td>
+<td>1.47</td>
+<td>5.02</td>
+<td>5309.61</td>
+<td>2556.65</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[7]</td>
-<td>2.13</td>
-<td>0.87</td>
-<td>0.84</td>
-<td>3.52</td>
-<td>4885.46</td>
-<td>2759.74</td>
+<td>2.14</td>
+<td>0.86</td>
+<td>0.88</td>
+<td>3.60</td>
+<td>4835.32</td>
+<td>2675.86</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[8]</td>
-<td>-0.18</td>
-<td>0.59</td>
-<td>-1.14</td>
+<td>-0.19</td>
+<td>0.61</td>
+<td>-1.16</td>
 <td>0.76</td>
-<td>4877.81</td>
-<td>3105.19</td>
+<td>5466.88</td>
+<td>3035.74</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[9]</td>
-<td>2.16</td>
-<td>0.91</td>
-<td>0.82</td>
-<td>3.69</td>
-<td>3886.68</td>
-<td>2433.61</td>
+<td>2.14</td>
+<td>0.87</td>
+<td>0.86</td>
+<td>3.58</td>
+<td>5300.20</td>
+<td>2719.39</td>
 <td>1.0</td>
-<td>0.02</td>
+<td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[10]</td>
 <td>1.01</td>
-<td>0.66</td>
-<td>-0.01</td>
-<td>2.08</td>
-<td>5152.03</td>
-<td>2776.47</td>
+<td>0.67</td>
+<td>-0.03</td>
+<td>2.11</td>
+<td>5677.76</td>
+<td>2674.78</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[11]</td>
-<td>0.58</td>
-<td>0.63</td>
-<td>-0.38</td>
-<td>1.62</td>
-<td>4603.47</td>
-<td>3165.66</td>
+<td>0.59</td>
+<td>0.65</td>
+<td>-0.42</td>
+<td>1.66</td>
+<td>5227.47</td>
+<td>2811.42</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -933,11 +933,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[12]</td>
 <td>1.01</td>
-<td>0.68</td>
-<td>-0.02</td>
-<td>2.15</td>
-<td>4625.17</td>
-<td>2603.79</td>
+<td>0.67</td>
+<td>0.00</td>
+<td>2.12</td>
+<td>6045.95</td>
+<td>3052.42</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -945,83 +945,83 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[13]</td>
 <td>0.21</td>
-<td>0.63</td>
-<td>-0.78</td>
-<td>1.23</td>
-<td>4660.35</td>
-<td>2986.75</td>
+<td>0.62</td>
+<td>-0.80</td>
+<td>1.18</td>
+<td>5809.25</td>
+<td>3295.08</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[14]</td>
-<td>2.13</td>
-<td>0.85</td>
+<td>2.14</td>
+<td>0.87</td>
 <td>0.88</td>
-<td>3.55</td>
-<td>4690.18</td>
-<td>2335.27</td>
+<td>3.60</td>
+<td>4312.11</td>
+<td>2656.31</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[15]</td>
-<td>2.14</td>
-<td>0.87</td>
-<td>0.88</td>
-<td>3.61</td>
-<td>3897.07</td>
-<td>2436.37</td>
+<td>2.13</td>
+<td>0.89</td>
+<td>0.85</td>
+<td>3.67</td>
+<td>4925.54</td>
+<td>2973.91</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[16]</td>
-<td>2.89</td>
-<td>0.76</td>
-<td>1.77</td>
-<td>4.19</td>
-<td>4467.42</td>
-<td>2679.70</td>
+<td>2.90</td>
+<td>0.79</td>
+<td>1.76</td>
+<td>4.24</td>
+<td>5069.12</td>
+<td>2391.32</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[17]</td>
 <td>2.39</td>
-<td>0.66</td>
-<td>1.41</td>
+<td>0.65</td>
+<td>1.44</td>
 <td>3.50</td>
-<td>4990.03</td>
-<td>2811.79</td>
+<td>5498.49</td>
+<td>2686.59</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[18]</td>
-<td>2.00</td>
-<td>0.57</td>
-<td>1.16</td>
-<td>2.96</td>
-<td>4767.86</td>
-<td>2622.98</td>
+<td>2.02</td>
+<td>0.59</td>
+<td>1.13</td>
+<td>3.01</td>
+<td>4044.71</td>
+<td>2165.69</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[19]</td>
-<td>3.69</td>
-<td>1.03</td>
-<td>2.22</td>
-<td>5.51</td>
-<td>3912.91</td>
-<td>2459.18</td>
+<td>3.67</td>
+<td>0.99</td>
+<td>2.25</td>
+<td>5.41</td>
+<td>3869.20</td>
+<td>2551.48</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1030,10 +1030,10 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">alpha[20]</td>
 <td>2.40</td>
 <td>0.66</td>
-<td>1.43</td>
-<td>3.55</td>
-<td>4871.73</td>
-<td>2822.09</td>
+<td>1.44</td>
+<td>3.50</td>
+<td>4654.71</td>
+<td>2275.22</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1043,9 +1043,9 @@ jax.local_device_count 16</code></pre>
 <td>2.39</td>
 <td>0.66</td>
 <td>1.40</td>
-<td>3.53</td>
-<td>4844.64</td>
-<td>2695.27</td>
+<td>3.54</td>
+<td>5173.35</td>
+<td>2736.55</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1053,35 +1053,35 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[22]</td>
 <td>2.41</td>
-<td>0.67</td>
+<td>0.66</td>
 <td>1.43</td>
-<td>3.57</td>
-<td>4087.10</td>
-<td>2408.45</td>
+<td>3.55</td>
+<td>4646.96</td>
+<td>2560.12</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[23]</td>
-<td>1.69</td>
-<td>0.52</td>
-<td>0.89</td>
-<td>2.55</td>
-<td>5487.24</td>
-<td>2992.48</td>
+<td>1.71</td>
+<td>0.53</td>
+<td>0.92</td>
+<td>2.59</td>
+<td>5462.29</td>
+<td>2630.25</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[24]</td>
-<td>-1.00</td>
+<td>-0.99</td>
 <td>0.44</td>
-<td>-1.75</td>
-<td>-0.33</td>
-<td>4821.61</td>
-<td>3101.02</td>
+<td>-1.72</td>
+<td>-0.29</td>
+<td>5285.06</td>
+<td>2951.43</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1089,11 +1089,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[25]</td>
 <td>0.16</td>
-<td>0.39</td>
-<td>-0.44</td>
-<td>0.77</td>
-<td>4928.95</td>
-<td>3080.15</td>
+<td>0.40</td>
+<td>-0.50</td>
+<td>0.82</td>
+<td>4948.52</td>
+<td>2958.90</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1101,11 +1101,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[26]</td>
 <td>-1.43</td>
-<td>0.49</td>
-<td>-2.26</td>
-<td>-0.68</td>
-<td>4446.50</td>
-<td>2503.74</td>
+<td>0.50</td>
+<td>-2.28</td>
+<td>-0.67</td>
+<td>5500.84</td>
+<td>2657.37</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1113,11 +1113,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[27]</td>
 <td>-0.47</td>
-<td>0.41</td>
-<td>-1.14</td>
+<td>0.40</td>
+<td>-1.12</td>
 <td>0.15</td>
-<td>5170.31</td>
-<td>3036.45</td>
+<td>6068.78</td>
+<td>3322.51</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1126,22 +1126,22 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">alpha[28]</td>
 <td>0.16</td>
 <td>0.39</td>
-<td>-0.45</td>
-<td>0.79</td>
-<td>4670.02</td>
-<td>2923.76</td>
+<td>-0.46</td>
+<td>0.78</td>
+<td>4919.46</td>
+<td>3074.38</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[29]</td>
-<td>1.44</td>
-<td>0.50</td>
+<td>1.45</td>
+<td>0.49</td>
 <td>0.69</td>
 <td>2.27</td>
-<td>5453.04</td>
-<td>3042.77</td>
+<td>5489.60</td>
+<td>3100.29</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1149,23 +1149,23 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[30]</td>
 <td>-0.63</td>
-<td>0.42</td>
-<td>-1.32</td>
+<td>0.41</td>
+<td>-1.28</td>
 <td>0.01</td>
-<td>4914.42</td>
-<td>2936.40</td>
+<td>4301.34</td>
+<td>3076.82</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[31]</td>
-<td>-0.30</td>
-<td>0.39</td>
-<td>-0.92</td>
+<td>-0.32</td>
+<td>0.41</td>
+<td>-0.97</td>
 <td>0.33</td>
-<td>4727.35</td>
-<td>3091.54</td>
+<td>5502.38</td>
+<td>3020.06</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1173,35 +1173,35 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[32]</td>
 <td>3.19</td>
-<td>0.79</td>
-<td>2.04</td>
-<td>4.51</td>
-<td>4311.40</td>
-<td>2329.04</td>
+<td>0.76</td>
+<td>2.08</td>
+<td>4.47</td>
+<td>5070.22</td>
+<td>2856.12</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[33]</td>
-<td>2.73</td>
-<td>0.64</td>
-<td>1.78</td>
-<td>3.80</td>
-<td>4420.62</td>
-<td>2559.17</td>
+<td>2.71</td>
+<td>0.65</td>
+<td>1.76</td>
+<td>3.83</td>
+<td>5565.60</td>
+<td>2687.46</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[34]</td>
-<td>2.70</td>
+<td>2.69</td>
 <td>0.62</td>
 <td>1.76</td>
-<td>3.74</td>
-<td>4912.38</td>
-<td>2821.99</td>
+<td>3.71</td>
+<td>4537.37</td>
+<td>2664.78</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1209,35 +1209,35 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[35]</td>
 <td>2.06</td>
-<td>0.51</td>
-<td>1.28</td>
+<td>0.50</td>
+<td>1.30</td>
 <td>2.90</td>
-<td>4785.07</td>
-<td>2674.86</td>
+<td>5235.35</td>
+<td>2722.72</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[36]</td>
-<td>2.08</td>
-<td>0.52</td>
-<td>1.30</td>
-<td>2.92</td>
-<td>5165.23</td>
-<td>2755.21</td>
+<td>2.06</td>
+<td>0.50</td>
+<td>1.32</td>
+<td>2.91</td>
+<td>6128.81</td>
+<td>2729.55</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[37]</td>
-<td>3.92</td>
-<td>1.00</td>
-<td>2.51</td>
-<td>5.67</td>
-<td>4090.41</td>
-<td>2369.99</td>
+<td>3.89</td>
+<td>0.97</td>
+<td>2.52</td>
+<td>5.54</td>
+<td>4117.31</td>
+<td>1970.45</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
@@ -1245,11 +1245,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[38]</td>
 <td>2.71</td>
-<td>0.65</td>
+<td>0.64</td>
 <td>1.77</td>
-<td>3.83</td>
-<td>3780.82</td>
-<td>2354.59</td>
+<td>3.78</td>
+<td>4944.30</td>
+<td>2671.49</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1257,59 +1257,59 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[39]</td>
 <td>2.36</td>
-<td>0.58</td>
-<td>1.50</td>
-<td>3.32</td>
-<td>4415.39</td>
-<td>2610.21</td>
+<td>0.57</td>
+<td>1.51</td>
+<td>3.33</td>
+<td>5222.30</td>
+<td>2600.98</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[40]</td>
-<td>-1.82</td>
-<td>0.48</td>
-<td>-2.63</td>
-<td>-1.11</td>
-<td>4913.95</td>
-<td>2995.22</td>
+<td>-1.80</td>
+<td>0.47</td>
+<td>-2.56</td>
+<td>-1.10</td>
+<td>5000.88</td>
+<td>2652.28</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[41]</td>
-<td>-0.58</td>
-<td>0.35</td>
-<td>-1.15</td>
-<td>-0.03</td>
-<td>5097.51</td>
-<td>2881.10</td>
-<td>1.0</td>
+<td>-0.56</td>
+<td>0.36</td>
+<td>-1.16</td>
 <td>0.01</td>
+<td>5791.42</td>
+<td>2780.71</td>
+<td>1.0</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[42]</td>
-<td>-0.46</td>
+<td>-0.47</td>
 <td>0.34</td>
-<td>-1.01</td>
+<td>-1.02</td>
 <td>0.09</td>
-<td>4680.07</td>
-<td>3080.63</td>
+<td>5416.32</td>
+<td>2832.71</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[43]</td>
-<td>-0.33</td>
-<td>0.33</td>
-<td>-0.86</td>
-<td>0.19</td>
-<td>5096.02</td>
-<td>3131.19</td>
+<td>-0.34</td>
+<td>0.35</td>
+<td>-0.89</td>
+<td>0.23</td>
+<td>5865.32</td>
+<td>2874.13</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -1319,33 +1319,33 @@ jax.local_device_count 16</code></pre>
 <td>0.58</td>
 <td>0.34</td>
 <td>0.04</td>
-<td>1.13</td>
-<td>4492.78</td>
-<td>2631.00</td>
+<td>1.14</td>
+<td>5267.28</td>
+<td>2754.55</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[45]</td>
 <td>-0.58</td>
-<td>0.34</td>
-<td>-1.13</td>
-<td>-0.04</td>
-<td>5030.74</td>
-<td>3283.65</td>
+<td>0.36</td>
+<td>-1.16</td>
+<td>-0.01</td>
+<td>5285.77</td>
+<td>2713.84</td>
 <td>1.0</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">alpha[46]</td>
-<td>2.07</td>
-<td>0.51</td>
+<td>2.06</td>
+<td>0.52</td>
 <td>1.29</td>
-<td>2.92</td>
-<td>5138.68</td>
-<td>2870.83</td>
+<td>2.91</td>
+<td>5496.29</td>
+<td>2674.39</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1353,23 +1353,23 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">alpha[47]</td>
 <td>0.00</td>
-<td>0.33</td>
-<td>-0.52</td>
-<td>0.54</td>
-<td>4448.54</td>
-<td>3016.91</td>
+<td>0.32</td>
+<td>-0.51</td>
+<td>0.52</td>
+<td>5817.47</td>
+<td>3017.11</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma</td>
-<td>1.62</td>
+<td>1.61</td>
 <td>0.21</td>
-<td>1.32</td>
-<td>1.99</td>
-<td>2263.31</td>
-<td>2718.63</td>
+<td>1.31</td>
+<td>1.98</td>
+<td>2496.50</td>
+<td>2663.93</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -1382,7 +1382,7 @@ jax.local_device_count 16</code></pre>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<div id="3d524db9" class="cell" data-execution_count="2">
+<div id="4ca5c773" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -1412,7 +1412,7 @@ jax.local_device_count 16</code></pre>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>m.summary()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>jax.local_device_count 16</code></pre>
+<pre><code>jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="2">
 <div>
@@ -1436,72 +1436,72 @@ jax.local_device_count 16</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">global_intercept_tank</td>
-<td>1.37</td>
+<td>1.36</td>
 <td>0.26</td>
-<td>0.96</td>
-<td>1.80</td>
-<td>3001.76</td>
-<td>2952.27</td>
+<td>0.94</td>
+<td>1.78</td>
+<td>4064.25</td>
+<td>3075.09</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[0]</td>
-<td>2.15</td>
-<td>0.89</td>
-<td>0.87</td>
-<td>3.63</td>
-<td>4838.53</td>
-<td>2445.57</td>
+<td>2.14</td>
+<td>0.85</td>
+<td>0.86</td>
+<td>3.61</td>
+<td>5115.09</td>
+<td>2985.82</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[1]</td>
-<td>3.15</td>
-<td>1.21</td>
+<td>3.06</td>
+<td>1.12</td>
 <td>1.46</td>
-<td>5.21</td>
-<td>3260.95</td>
-<td>2062.04</td>
+<td>5.00</td>
+<td>4684.23</td>
+<td>2653.30</td>
 <td>1.0</td>
 <td>0.02</td>
-<td>0.03</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[2]</td>
-<td>1.01</td>
-<td>0.68</td>
-<td>-0.02</td>
-<td>2.15</td>
-<td>5696.34</td>
-<td>2998.09</td>
+<td>1.02</td>
+<td>0.67</td>
+<td>0.00</td>
+<td>2.11</td>
+<td>5799.30</td>
+<td>3063.85</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[3]</td>
-<td>3.12</td>
-<td>1.16</td>
-<td>1.47</td>
-<td>5.14</td>
-<td>4238.89</td>
-<td>2384.62</td>
+<td>3.08</td>
+<td>1.11</td>
+<td>1.46</td>
+<td>4.97</td>
+<td>4286.75</td>
+<td>2450.62</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[4]</td>
-<td>2.14</td>
-<td>0.87</td>
+<td>2.16</td>
 <td>0.90</td>
-<td>3.63</td>
-<td>4807.48</td>
-<td>2481.85</td>
+<td>0.87</td>
+<td>3.72</td>
+<td>5335.50</td>
+<td>2662.82</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
@@ -1509,167 +1509,167 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[5]</td>
 <td>2.15</td>
-<td>0.88</td>
-<td>0.83</td>
-<td>3.64</td>
-<td>4977.17</td>
-<td>2862.88</td>
+<td>0.89</td>
+<td>0.84</td>
+<td>3.66</td>
+<td>4694.12</td>
+<td>2274.02</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[6]</td>
-<td>3.11</td>
-<td>1.12</td>
-<td>1.53</td>
-<td>5.07</td>
-<td>4472.06</td>
-<td>2479.04</td>
+<td>3.09</td>
+<td>1.15</td>
+<td>1.43</td>
+<td>5.06</td>
+<td>4301.78</td>
+<td>2135.88</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[7]</td>
-<td>2.18</td>
-<td>0.88</td>
-<td>0.88</td>
-<td>3.68</td>
-<td>4241.15</td>
-<td>2604.43</td>
+<td>2.15</td>
+<td>0.86</td>
+<td>0.86</td>
+<td>3.63</td>
+<td>5103.12</td>
+<td>2772.26</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.01</td>
+<td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[8]</td>
 <td>-0.17</td>
-<td>0.62</td>
-<td>-1.18</td>
-<td>0.79</td>
-<td>4286.68</td>
-<td>2688.87</td>
+<td>0.63</td>
+<td>-1.16</td>
+<td>0.82</td>
+<td>5652.13</td>
+<td>2581.50</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[9]</td>
-<td>2.14</td>
-<td>0.88</td>
-<td>0.80</td>
-<td>3.60</td>
-<td>5414.76</td>
-<td>2701.72</td>
+<td>2.13</td>
+<td>0.87</td>
+<td>0.83</td>
+<td>3.63</td>
+<td>5144.05</td>
+<td>2919.17</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[10]</td>
-<td>0.99</td>
-<td>0.67</td>
-<td>-0.04</td>
-<td>2.14</td>
-<td>4725.83</td>
-<td>2969.61</td>
+<td>1.00</td>
+<td>0.68</td>
+<td>-0.02</td>
+<td>2.12</td>
+<td>6161.49</td>
+<td>2542.77</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[11]</td>
-<td>0.57</td>
-<td>0.62</td>
-<td>-0.38</td>
-<td>1.59</td>
-<td>4747.47</td>
-<td>2568.55</td>
+<td>0.58</td>
+<td>0.64</td>
+<td>-0.41</td>
+<td>1.61</td>
+<td>5720.64</td>
+<td>3183.37</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[12]</td>
-<td>1.00</td>
+<td>1.01</td>
 <td>0.67</td>
-<td>-0.01</td>
-<td>2.08</td>
-<td>4598.02</td>
-<td>3051.20</td>
+<td>0.00</td>
+<td>2.09</td>
+<td>6073.66</td>
+<td>2811.46</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[13]</td>
-<td>0.21</td>
-<td>0.63</td>
-<td>-0.80</td>
-<td>1.26</td>
-<td>4412.74</td>
-<td>2747.06</td>
+<td>0.19</td>
+<td>0.61</td>
+<td>-0.79</td>
+<td>1.19</td>
+<td>5630.95</td>
+<td>3012.95</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[14]</td>
-<td>2.15</td>
-<td>0.88</td>
-<td>0.87</td>
-<td>3.64</td>
-<td>4482.89</td>
-<td>2306.51</td>
+<td>2.13</td>
+<td>0.86</td>
+<td>0.84</td>
+<td>3.58</td>
+<td>5505.94</td>
+<td>2622.64</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[15]</td>
-<td>2.16</td>
-<td>0.90</td>
+<td>2.14</td>
+<td>0.86</td>
 <td>0.83</td>
-<td>3.70</td>
-<td>4692.82</td>
-<td>2499.07</td>
+<td>3.59</td>
+<td>6145.71</td>
+<td>2960.16</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[16]</td>
-<td>2.91</td>
-<td>0.80</td>
-<td>1.74</td>
-<td>4.24</td>
-<td>4653.87</td>
-<td>2658.25</td>
+<td>2.92</td>
+<td>0.81</td>
+<td>1.75</td>
+<td>4.31</td>
+<td>4678.60</td>
+<td>2632.66</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.02</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[17]</td>
-<td>2.40</td>
-<td>0.68</td>
-<td>1.39</td>
-<td>3.55</td>
-<td>4938.93</td>
-<td>2517.81</td>
+<td>2.41</td>
+<td>0.67</td>
+<td>1.42</td>
+<td>3.53</td>
+<td>4928.00</td>
+<td>3056.23</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[18]</td>
-<td>2.01</td>
+<td>2.00</td>
 <td>0.58</td>
-<td>1.15</td>
-<td>3.02</td>
-<td>5041.51</td>
-<td>2657.92</td>
+<td>1.16</td>
+<td>2.96</td>
+<td>5927.19</td>
+<td>2844.18</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1677,23 +1677,23 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[19]</td>
 <td>3.67</td>
-<td>0.99</td>
-<td>2.27</td>
-<td>5.35</td>
-<td>3830.53</td>
-<td>2423.09</td>
+<td>1.01</td>
+<td>2.24</td>
+<td>5.41</td>
+<td>4579.11</td>
+<td>2572.12</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[20]</td>
-<td>2.39</td>
-<td>0.66</td>
+<td>2.40</td>
+<td>0.65</td>
 <td>1.43</td>
-<td>3.49</td>
-<td>4594.02</td>
-<td>2438.30</td>
+<td>3.50</td>
+<td>5477.44</td>
+<td>2582.43</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1701,35 +1701,35 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[21]</td>
 <td>2.40</td>
-<td>0.67</td>
-<td>1.40</td>
+<td>0.65</td>
+<td>1.44</td>
 <td>3.52</td>
-<td>4940.79</td>
-<td>2342.75</td>
+<td>4925.81</td>
+<td>2621.66</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[22]</td>
-<td>2.39</td>
-<td>0.64</td>
-<td>1.42</td>
-<td>3.45</td>
-<td>4669.45</td>
-<td>2879.57</td>
+<td>2.41</td>
+<td>0.67</td>
+<td>1.41</td>
+<td>3.54</td>
+<td>4839.13</td>
+<td>2580.81</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[23]</td>
-<td>1.70</td>
-<td>0.52</td>
-<td>0.91</td>
+<td>1.71</td>
+<td>0.54</td>
+<td>0.90</td>
 <td>2.58</td>
-<td>4657.47</td>
-<td>3017.46</td>
+<td>4895.73</td>
+<td>2940.08</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1737,11 +1737,11 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[24]</td>
 <td>-1.00</td>
-<td>0.45</td>
-<td>-1.74</td>
-<td>-0.32</td>
-<td>4726.91</td>
-<td>3285.21</td>
+<td>0.46</td>
+<td>-1.77</td>
+<td>-0.30</td>
+<td>5125.53</td>
+<td>2847.18</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1749,35 +1749,35 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[25]</td>
 <td>0.16</td>
-<td>0.39</td>
-<td>-0.45</td>
-<td>0.78</td>
-<td>4624.14</td>
-<td>2692.03</td>
+<td>0.42</td>
+<td>-0.50</td>
+<td>0.84</td>
+<td>6002.24</td>
+<td>2965.77</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[26]</td>
-<td>-1.42</td>
-<td>0.50</td>
-<td>-2.25</td>
-<td>-0.66</td>
-<td>4673.02</td>
-<td>2795.43</td>
+<td>-1.43</td>
+<td>0.48</td>
+<td>-2.24</td>
+<td>-0.69</td>
+<td>5445.70</td>
+<td>2980.02</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[27]</td>
-<td>-0.48</td>
+<td>-0.47</td>
 <td>0.41</td>
-<td>-1.15</td>
+<td>-1.14</td>
 <td>0.18</td>
-<td>3772.37</td>
-<td>2625.51</td>
+<td>5127.80</td>
+<td>3223.23</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1785,83 +1785,83 @@ jax.local_device_count 16</code></pre>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[28]</td>
 <td>0.16</td>
-<td>0.39</td>
-<td>-0.46</td>
-<td>0.80</td>
-<td>5634.89</td>
-<td>3449.00</td>
+<td>0.41</td>
+<td>-0.47</td>
+<td>0.82</td>
+<td>5857.59</td>
+<td>2970.07</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[29]</td>
-<td>1.44</td>
+<td>1.45</td>
 <td>0.49</td>
-<td>0.72</td>
+<td>0.70</td>
 <td>2.24</td>
-<td>4727.23</td>
-<td>2902.78</td>
+<td>6039.46</td>
+<td>3064.00</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[30]</td>
-<td>-0.64</td>
+<td>-0.63</td>
 <td>0.42</td>
-<td>-1.33</td>
-<td>0.03</td>
-<td>5367.28</td>
-<td>2947.42</td>
+<td>-1.32</td>
+<td>0.01</td>
+<td>4969.33</td>
+<td>2865.25</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[31]</td>
-<td>-0.30</td>
-<td>0.39</td>
-<td>-0.93</td>
-<td>0.32</td>
-<td>5225.23</td>
-<td>3347.86</td>
+<td>-0.31</td>
+<td>0.41</td>
+<td>-0.95</td>
+<td>0.33</td>
+<td>6211.75</td>
+<td>3130.70</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[32]</td>
-<td>3.21</td>
-<td>0.76</td>
-<td>2.12</td>
-<td>4.55</td>
-<td>4203.03</td>
-<td>2408.38</td>
+<td>3.19</td>
+<td>0.77</td>
+<td>2.09</td>
+<td>4.51</td>
+<td>4337.65</td>
+<td>2677.57</td>
 <td>1.0</td>
 <td>0.01</td>
-<td>0.02</td>
+<td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[33]</td>
-<td>2.72</td>
-<td>0.67</td>
-<td>1.75</td>
-<td>3.88</td>
-<td>4713.53</td>
-<td>2535.59</td>
+<td>2.71</td>
+<td>0.63</td>
+<td>1.76</td>
+<td>3.82</td>
+<td>4505.59</td>
+<td>2591.38</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[34]</td>
-<td>2.71</td>
-<td>0.64</td>
-<td>1.75</td>
-<td>3.77</td>
-<td>4421.26</td>
-<td>2699.65</td>
+<td>2.72</td>
+<td>0.66</td>
+<td>1.77</td>
+<td>3.85</td>
+<td>4745.60</td>
+<td>2561.29</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1869,71 +1869,71 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[35]</td>
 <td>2.06</td>
-<td>0.50</td>
-<td>1.31</td>
-<td>2.92</td>
-<td>4755.00</td>
-<td>2752.33</td>
+<td>0.51</td>
+<td>1.29</td>
+<td>2.91</td>
+<td>4887.78</td>
+<td>2945.75</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[36]</td>
-<td>2.07</td>
-<td>0.52</td>
-<td>1.30</td>
-<td>2.96</td>
-<td>5105.69</td>
-<td>2689.78</td>
+<td>2.06</td>
+<td>0.51</td>
+<td>1.28</td>
+<td>2.93</td>
+<td>5542.07</td>
+<td>2586.96</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[37]</td>
-<td>3.93</td>
-<td>1.00</td>
-<td>2.52</td>
-<td>5.65</td>
-<td>3739.24</td>
-<td>2669.58</td>
+<td>3.92</td>
+<td>0.97</td>
+<td>2.55</td>
+<td>5.56</td>
+<td>4693.84</td>
+<td>2728.10</td>
 <td>1.0</td>
 <td>0.02</td>
 <td>0.02</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[38]</td>
-<td>2.72</td>
+<td>2.73</td>
 <td>0.66</td>
-<td>1.74</td>
-<td>3.86</td>
-<td>5138.60</td>
-<td>2528.81</td>
+<td>1.78</td>
+<td>3.87</td>
+<td>4343.67</td>
+<td>2473.52</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[39]</td>
-<td>2.36</td>
+<td>2.34</td>
 <td>0.57</td>
 <td>1.50</td>
 <td>3.33</td>
-<td>4640.52</td>
-<td>2323.09</td>
+<td>5543.44</td>
+<td>2659.39</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[40]</td>
-<td>-1.82</td>
-<td>0.48</td>
-<td>-2.64</td>
+<td>-1.81</td>
+<td>0.47</td>
+<td>-2.60</td>
 <td>-1.10</td>
-<td>4467.76</td>
-<td>2622.00</td>
+<td>4692.33</td>
+<td>2721.63</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -1941,11 +1941,11 @@ jax.local_device_count 16</code></pre>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[41]</td>
 <td>-0.57</td>
-<td>0.35</td>
-<td>-1.12</td>
-<td>-0.04</td>
-<td>4959.32</td>
-<td>3005.56</td>
+<td>0.36</td>
+<td>-1.14</td>
+<td>-0.02</td>
+<td>5839.89</td>
+<td>2950.68</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -1956,20 +1956,20 @@ jax.local_device_count 16</code></pre>
 <td>0.34</td>
 <td>-1.00</td>
 <td>0.09</td>
-<td>5597.31</td>
-<td>2989.53</td>
+<td>4960.79</td>
+<td>3178.95</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[43]</td>
-<td>-0.34</td>
-<td>0.34</td>
-<td>-0.86</td>
-<td>0.19</td>
-<td>5940.16</td>
-<td>3287.90</td>
+<td>-0.33</td>
+<td>0.33</td>
+<td>-0.87</td>
+<td>0.21</td>
+<td>4683.65</td>
+<td>3046.84</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
@@ -1978,58 +1978,58 @@ jax.local_device_count 16</code></pre>
 <td data-quarto-table-cell-role="th">intercept_tank[44]</td>
 <td>0.58</td>
 <td>0.35</td>
-<td>0.04</td>
-<td>1.16</td>
-<td>4850.07</td>
-<td>2792.03</td>
+<td>0.02</td>
+<td>1.13</td>
+<td>5172.21</td>
+<td>3004.93</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[45]</td>
-<td>-0.57</td>
-<td>0.34</td>
-<td>-1.13</td>
+<td>-0.58</td>
+<td>0.35</td>
+<td>-1.15</td>
 <td>-0.03</td>
-<td>4619.70</td>
-<td>3104.38</td>
+<td>5909.60</td>
+<td>2591.86</td>
 <td>1.0</td>
-<td>0.01</td>
+<td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">intercept_tank[46]</td>
 <td>2.06</td>
 <td>0.51</td>
-<td>1.31</td>
-<td>2.92</td>
-<td>4088.43</td>
-<td>2582.67</td>
+<td>1.29</td>
+<td>2.91</td>
+<td>5379.67</td>
+<td>3285.35</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">intercept_tank[47]</td>
-<td>0.00</td>
+<td>0.01</td>
 <td>0.33</td>
-<td>-0.51</td>
-<td>0.55</td>
-<td>5007.93</td>
-<td>2776.65</td>
+<td>-0.52</td>
+<td>0.53</td>
+<td>5668.13</td>
+<td>2697.20</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sd_tank</td>
-<td>1.63</td>
+<td>1.62</td>
 <td>0.22</td>
 <td>1.31</td>
-<td>2.00</td>
-<td>2206.19</td>
-<td>2513.05</td>
+<td>1.98</td>
+<td>2400.37</td>
+<td>2536.86</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
@@ -2108,7 +2108,7 @@ Does the model reproduce the number of survivors in every tank?
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#0455caed .cell execution_count=3}
+::: {#6b33f571 .cell execution_count=3}
 ``` {.python .cell-code}
 # m.diag.ppc_intervals()
 ```
@@ -2134,7 +2134,7 @@ One point per tank (observed survivors) with the 50 % and 90 % predictive interv
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#068eba79 .cell execution_count=4}
+::: {#515723d4 .cell execution_count=4}
 ``` {.python .cell-code}
 # m.diag.ppc_stat(stat="sd")
 ```
@@ -2191,9 +2191,44 @@ Y_{i} \sim \text{Normal}(\mu_{i}, \sigma)
 <section id="model-validation-tests" class="level2">
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>11.Varying intercepts.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/11.Varying%20intercepts.py">Comparison with Stan</a>: <code>11.Varying intercepts.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/11.Varying%20intercepts.py">Data generative model and inference model pipeline</a>: <code>11.Varying intercepts.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>11.Varying intercepts.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/11.Varying_intercepts_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>11.Varying intercepts.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/11.Varying_intercepts_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>

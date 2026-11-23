@@ -121,7 +121,6 @@ Ce fichier teste les régressions critiques (C1-C8) du module Data (manipulation
 - `_m` — Crée une instance de `manip` avec un DataFrame de test standard.
 - `test_c1_scale_all_default` — Vérifie que la mise à l'échelle par défaut normalise les colonnes numériques et ignore les catégorielles.
 - `test_c1_scale_single_name` — Vérifie que la mise à l'échelle d'une seule colonne ne modifie pas les autres.
-- `test_c2_scale_var_runs` — Vérifie que `scale_var` fonctionne correctement sur un tableau NumPy.
 - `test_c3_ohe_does_not_duplicate_columns` — Vérifie que l'encodage One-Hot n'ajoute pas de colonnes en double.
 - `test_c4_to_int` — Vérifie que la conversion en entier fonctionne correctement.
 - `test_c5_to_float_really_casts` — Vérifie que la conversion en flottant change réellement le dtype.
@@ -1134,7 +1133,6 @@ Ce fichier teste que `m.sample(remove_obs=True)` simule les sites observés à l
 - `test_scalar_rate_poisson_expands_to_obs_shape` — Vérifie que le taux scalaire de Poisson s'étend à la forme des obs.
 - `test_categorical_probs_vector_expands_to_obs_shape` — Vérifie que les probabilités catégorielles s'étendent à la forme des obs.
 - `test_batched_likelihood_unchanged` — Vérifie que la vraisemblance batchée est inchangée.
-- `test_ppc_loo_pit_builds_figure` — Vérifie que le PPC LOO PIT construit une figure.
 - `model` — Définit le modèle de Poisson.
 - `model` — Définit le modèle catégoriel.
 - `model` — Définit le modèle linéaire.

@@ -684,7 +684,7 @@ Y = f(X, Z) + \epsilon
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="abf82f17" class="cell" data-execution_count="1">
+<div id="9fc82ca5" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -750,7 +750,7 @@ Y = f(X, Z) + \epsilon
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 16</code></pre>
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -774,193 +774,193 @@ jax.local_device_count 16</code></pre>
 <tbody>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">means[0]</td>
-<td>-1.20</td>
-<td>0.36</td>
-<td>-1.74</td>
-<td>-0.59</td>
-<td>392.30</td>
-<td>704.67</td>
+<td>-1.17</td>
+<td>0.37</td>
+<td>-1.76</td>
+<td>-0.58</td>
+<td>532.98</td>
+<td>820.51</td>
 <td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">means[1]</td>
-<td>-0.53</td>
-<td>0.30</td>
-<td>-0.98</td>
-<td>-0.04</td>
-<td>238.62</td>
-<td>453.98</td>
-<td>1.02</td>
+<td>-0.50</td>
+<td>0.32</td>
+<td>-1.01</td>
+<td>0.02</td>
+<td>374.85</td>
+<td>587.82</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">means[2]</td>
-<td>1.38</td>
-<td>0.31</td>
+<td>1.42</td>
+<td>0.33</td>
 <td>0.89</td>
-<td>1.90</td>
-<td>186.61</td>
-<td>104.06</td>
-<td>1.02</td>
+<td>1.96</td>
+<td>432.54</td>
+<td>477.51</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">means[3]</td>
-<td>-0.53</td>
-<td>0.32</td>
-<td>-1.00</td>
-<td>-0.00</td>
-<td>209.74</td>
-<td>403.67</td>
-<td>1.02</td>
+<td>-0.50</td>
+<td>0.35</td>
+<td>-1.06</td>
+<td>0.05</td>
+<td>389.32</td>
+<td>486.56</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[0, 0]</td>
-<td>-0.61</td>
-<td>0.33</td>
-<td>-1.16</td>
-<td>-0.13</td>
-<td>202.63</td>
-<td>562.21</td>
-<td>1.02</td>
+<td>-0.65</td>
+<td>0.35</td>
+<td>-1.22</td>
+<td>-0.09</td>
+<td>458.46</td>
+<td>590.19</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[1, 0]</td>
-<td>0.82</td>
-<td>0.32</td>
-<td>0.29</td>
-<td>1.31</td>
-<td>267.65</td>
-<td>468.63</td>
-<td>1.02</td>
+<td>0.80</td>
+<td>0.34</td>
+<td>0.24</td>
+<td>1.37</td>
+<td>472.85</td>
+<td>620.76</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[2, 0]</td>
-<td>-0.80</td>
-<td>0.34</td>
-<td>-1.35</td>
-<td>-0.28</td>
-<td>250.99</td>
-<td>794.89</td>
-<td>1.02</td>
+<td>-0.84</td>
+<td>0.36</td>
+<td>-1.42</td>
+<td>-0.22</td>
+<td>440.95</td>
+<td>583.23</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[3, 0]</td>
-<td>0.35</td>
-<td>0.36</td>
-<td>-0.21</td>
-<td>0.93</td>
-<td>378.37</td>
-<td>494.44</td>
+<td>0.33</td>
+<td>0.38</td>
+<td>-0.25</td>
+<td>0.95</td>
+<td>284.30</td>
+<td>245.27</td>
 <td>1.02</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[4, 0]</td>
-<td>-0.62</td>
-<td>0.33</td>
-<td>-1.16</td>
-<td>-0.09</td>
-<td>368.73</td>
-<td>478.55</td>
+<td>-0.65</td>
+<td>0.35</td>
+<td>-1.19</td>
+<td>-0.07</td>
+<td>451.99</td>
+<td>640.11</td>
 <td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[5, 0]</td>
-<td>-0.28</td>
-<td>0.35</td>
-<td>-0.86</td>
-<td>0.24</td>
-<td>169.72</td>
-<td>108.71</td>
-<td>1.03</td>
-<td>0.03</td>
+<td>-0.32</td>
+<td>0.37</td>
+<td>-0.91</td>
+<td>0.29</td>
+<td>449.22</td>
+<td>632.54</td>
+<td>1.01</td>
+<td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">offset[6, 0]</td>
-<td>0.10</td>
-<td>0.33</td>
-<td>-0.45</td>
-<td>0.61</td>
-<td>284.09</td>
-<td>620.49</td>
-<td>1.02</td>
+<td>0.06</td>
+<td>0.36</td>
+<td>-0.53</td>
+<td>0.63</td>
+<td>380.28</td>
+<td>650.50</td>
+<td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">offset[7, 0]</td>
-<td>0.46</td>
-<td>0.33</td>
-<td>-0.07</td>
-<td>0.99</td>
-<td>321.86</td>
-<td>453.21</td>
+<td>0.44</td>
+<td>0.35</td>
+<td>-0.11</td>
+<td>0.98</td>
+<td>405.32</td>
+<td>581.76</td>
 <td>1.01</td>
 <td>0.02</td>
 <td>0.01</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma[0]</td>
-<td>0.68</td>
-<td>0.22</td>
-<td>0.41</td>
-<td>1.07</td>
-<td>1103.10</td>
-<td>1113.05</td>
-<td>1.00</td>
+<td>0.67</td>
+<td>0.21</td>
+<td>0.40</td>
+<td>1.04</td>
+<td>533.19</td>
+<td>801.55</td>
+<td>1.01</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma[1]</td>
 <td>0.27</td>
-<td>0.15</td>
-<td>0.07</td>
-<td>0.55</td>
-<td>198.06</td>
-<td>114.09</td>
+<td>0.16</td>
+<td>0.06</td>
+<td>0.56</td>
+<td>143.07</td>
+<td>90.91</td>
 <td>1.02</td>
 <td>0.01</td>
 <td>0.00</td>
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">sigma[2]</td>
-<td>0.37</td>
-<td>0.17</td>
-<td>0.13</td>
+<td>0.36</td>
+<td>0.18</td>
+<td>0.08</td>
 <td>0.67</td>
-<td>304.87</td>
-<td>98.30</td>
+<td>262.91</td>
+<td>132.91</td>
 <td>1.02</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">sigma[3]</td>
-<td>0.47</td>
-<td>0.17</td>
-<td>0.25</td>
-<td>0.75</td>
-<td>712.50</td>
-<td>1008.26</td>
-<td>1.00</td>
+<td>0.46</td>
+<td>0.18</td>
+<td>0.24</td>
+<td>0.78</td>
+<td>737.56</td>
+<td>862.68</td>
+<td>1.01</td>
 <td>0.01</td>
 <td>0.01</td>
 </tr>
@@ -1067,7 +1067,7 @@ Does the model reproduce the distribution of the observed values?
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#d041b3f0 .cell execution_count=2}
+::: {#e6dd5a7b .cell execution_count=2}
 ``` {.python .cell-code}
 # m.diag.ppc_density()
 ```

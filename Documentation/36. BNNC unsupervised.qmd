@@ -370,7 +370,7 @@ where:
 
 ## Model validation tests
 
-- [Documentation examples](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation): the Python examples of this page are run by the documentation tests (`Python/test_model_pages.py`).
+- [Documentation examples (Python)](https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python): the Python examples of this page are run by `test_model_pages.py`.
 
 ## Reference(s)
 1. Murphy, K. P. (2012). *Machine Learning: A Probabilistic Perspective*. MIT Press.

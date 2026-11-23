@@ -149,6 +149,7 @@ website:
             - start/Import_class.qmd
             - start/Random and fixed seeds.qmd
             - start/Import_data.qmd
+            - start/Handle_data.qmd
             - start/Define model.qmd
             - start/Fit model.qmd
             - start/Diagnostics.qmd
@@ -158,8 +159,8 @@ website:
           contents:
             - Advance/build in functions.qmd
             - Advance/Build in models.qmd
-            - Advance/BNN layers.qmd
             - Advance/Sampling & plots.qmd
+            - Advance/BNN layers.qmd
             - Advance/Data sharding.qmd
 
   page-navigation: true

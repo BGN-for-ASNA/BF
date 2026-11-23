@@ -1,8 +1,8 @@
 """Tests for survival.ppc_km_by_cov(): grouped KM PPCs from sample_times().
 
 No model fit needed: the object is built directly, the posteriors dict is
-filled with hand-made draws, and the parent's ``diag`` namespace is a stub
-exposing the real ``ppc.ppc_km_overlay``.
+filled with hand-made draws; ppc_km_by_cov calls ``ppc.ppc_km_overlay``
+directly (it is not on ``m.diag``).
 """
 
 from types import SimpleNamespace
@@ -21,7 +21,6 @@ def _object():
     s.import_time_even(time, event, interval_length=1)
     s.import_covF(np.r_[np.zeros(10), np.ones(10)], ["x"])   # binary
     s.import_covF(np.linspace(0.0, 1.0, 20), ["z"])          # continuous
-    s.parent.diag = SimpleNamespace(ppc_km_overlay=ppc.ppc_km_overlay)
     return s
 
 

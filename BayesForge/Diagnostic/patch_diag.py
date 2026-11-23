@@ -1131,8 +1131,11 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.waic           = _waic
     diag_obj.WAIC           = _waic  # backward-compatible alias
     diag_obj.model_checks   = _model_checks
-    # regression
-    diag_obj.plot_regression = _plot_regression_bound
+    # In development, not exposed on m.diag (code kept for development):
+    # Diagnostic.ppc.ppc_loo_pit, ppc_km_overlay, ppc_error_scatter,
+    # ppc_error_binned, ppc_intervals_sorted and
+    # Diagnostic.regression_plot.plot_regression. Call them from those
+    # modules with explicit y / yrep.
     diag_obj.get_yrep        = _get_yrep
     # PPC — distributions
     diag_obj.ppc_density     = _bind_ppc(_ppc.ppc_density)
@@ -1145,20 +1148,14 @@ def bind_diag_to_model(diag_obj, m, backend=ARVIZ):
     diag_obj.ppc_intervals   = _bind_ppc(_ppc.ppc_intervals)
     diag_obj.ppc_ribbon      = _bind_ppc(_ppc.ppc_ribbon)
     # PPC — errors
-    diag_obj.ppc_error_scatter = _bind_ppc(_ppc.ppc_error_scatter)
     diag_obj.ppc_error_hist  = _bind_ppc(_ppc.ppc_error_hist)
-    diag_obj.ppc_error_binned = _bind_ppc(_ppc.ppc_error_binned)
-    # PPC — survival
-    diag_obj.ppc_km_overlay  = _bind_ppc(_ppc.ppc_km_overlay)
     # PPC — scatter
     diag_obj.ppc_scatter     = _bind_ppc(_ppc.ppc_scatter)
     # PPC — discrete
     diag_obj.ppc_rootogram   = _bind_ppc(_ppc.ppc_rootogram)
     diag_obj.ppc_bars        = _bind_ppc(_ppc.ppc_bars)
     # PPC — LOO
-    diag_obj.ppc_loo_pit     = _bind_ppc(_ppc.ppc_loo_pit)
     diag_obj.ppc_loo_intervals = _bind_ppc(_ppc.ppc_loo_intervals)
-    diag_obj.ppc_intervals_sorted = _bind_ppc(_ppc.ppc_intervals_sorted)
     # sensitivity
     diag_obj.influence       = _influence
     diag_obj.calibration     = _bind_ppc(_sens.calibration_plot)

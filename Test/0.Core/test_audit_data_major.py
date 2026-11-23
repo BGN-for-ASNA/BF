@@ -51,7 +51,6 @@ def test_m2_pandas_and_jax_std_equal():
     scaled_pandas = np.asarray(m.df["y"])
     scaled_jax = np.asarray(m.z_score(np.asarray(y)))
     np.testing.assert_allclose(scaled_pandas, scaled_jax, rtol=1e-6)
-    np.testing.assert_allclose(np.asarray(m.scale_var(np.asarray(y))), scaled_jax, rtol=1e-6)
     # the shared convention is the sample standard deviation (ddof=1):
     # pandas Series.std() of the scaled column is exactly 1
     assert abs(m.df["y"].std() - 1) < 1e-9

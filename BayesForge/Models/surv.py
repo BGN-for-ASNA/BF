@@ -1074,7 +1074,8 @@ class survival():
         time is the exponential draw inverted through its cumulative hazard.
 
         The interval indicators in ``yrep`` are not durations, so this is what
-        a bayesplot-style KM overlay needs: ``m.diag.ppc_km_overlay(y=s.time,
+        a bayesplot-style KM overlay needs (in development, not on ``m.diag``):
+        ``BayesForge.Diagnostic.ppc.ppc_km_overlay(y=s.time,
         yrep=s.sample_times(), status_y=s.event)``. Like bayesplot's predicted
         curves these times carry no censoring: a draw beyond the last interval
         bound is extrapolated with the last interval's rate, and a zero rate
@@ -1136,7 +1137,7 @@ class survival():
         """Grouped KM-overlay PPCs of the replicated times, one figure per
         covariate.
 
-        Builds on ``sample_times()`` and ``m.diag.ppc_km_overlay(group=...)``:
+        Builds on ``sample_times()`` and ``BayesForge.Diagnostic.ppc.ppc_km_overlay(group=...)``:
         each covariate groups the patients -- at most ``n_groups`` distinct
         values are grouped as-is, anything more is binned into ``n_groups``
         quantile bins (Q1..Qn) -- so a multivariate model gets one
@@ -1183,7 +1184,7 @@ class survival():
 
         yrep = self.sample_times(lambda0=lambda0, beta=beta,
                                  n_draws=n_draws, seed=seed)
-        overlay = self.parent.diag.ppc_km_overlay
+        from BayesForge.Diagnostic.ppc import ppc_km_overlay as overlay
         figs = {}
         for c in covs:
             figs[c] = overlay(y=self.time, yrep=yrep, status_y=self.event,

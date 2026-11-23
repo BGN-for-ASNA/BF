@@ -697,7 +697,7 @@ window.Quarto = {
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false">R</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false">Julia</a></li></ul>
 <div class="tab-content" data-group="language">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<div id="c0d972b2" class="cell" data-execution_count="1">
+<div id="e88c9ada" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> BayesForge <span class="im">import</span> bf</span>
@@ -739,7 +739,7 @@ window.Quarto = {
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>bf v 0.0.60 package loaded
-jax.local_device_count 16</code></pre>
+jax.local_device_count(cpu) = 32</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
@@ -767,20 +767,20 @@ jax.local_device_count 16</code></pre>
 <td>0.08</td>
 <td>-0.07</td>
 <td>0.19</td>
-<td>1145.56</td>
-<td>1581.46</td>
+<td>1460.95</td>
+<td>1688.81</td>
 <td>1.0</td>
 <td>0.00</td>
 <td>0.00</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">ap</td>
-<td>-1.59</td>
-<td>0.42</td>
-<td>-2.34</td>
+<td>-1.58</td>
+<td>0.40</td>
+<td>-2.27</td>
 <td>-1.06</td>
-<td>1195.52</td>
-<td>1166.42</td>
+<td>1692.69</td>
+<td>1497.83</td>
 <td>1.0</td>
 <td>0.01</td>
 <td>0.01</td>
@@ -875,7 +875,7 @@ Does the model reproduce the excess of zeros (days without production because th
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#13dd2063 .cell execution_count=2}
+::: {#acabc305 .cell execution_count=2}
 ``` {.python .cell-code}
 # m.diag.ppc_stat(stat="n_zero")
 ```
@@ -901,7 +901,7 @@ The vertical line is the observed number of zeros, the curve the number of zeros
 ::: {.panel-tabset group="language"}
 #### Python
 
-::: {#e944d069 .cell execution_count=3}
+::: {#cb766f92 .cell execution_count=3}
 ``` {.python .cell-code}
 # m.diag.ppc_rootogram()
 ```
@@ -966,9 +966,44 @@ P(Y_i | \pi_i, \lambda_i) =
 <section id="model-validation-tests" class="level2">
 <h2 class="anchored" data-anchor-id="model-validation-tests">Model validation tests</h2>
 <ul>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/4.%20Rethinking/Numpyro%20backend">Comparison with Stan</a>: <code>10.Zero inflated.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
-<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation">Documentation examples</a>: the Python, R and Julia examples of this page are run by the documentation tests (<code>Python/test_model_pages.py</code>, <code>R/test_r_model_pages.py</code>, <code>Julia/test_julia_model_pages.py</code>).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/10.Zero%20inflated.py">Comparison with Stan</a>: <code>10.Zero inflated.py</code> fits the same model with BayesForge and Stan and compares the posterior distributions (KL divergence).</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/blob/main/Test/4.%20Rethinking/Numpyro%20backend/10.Zero%20inflated.py">Data generative model and inference model pipeline</a>: <code>10.Zero inflated.py</code> simulates data from the model with known parameters (data generative model), fits the inference model to each simulated dataset and checks that the parameters are recovered.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Python">Documentation examples (Python)</a>: the Python examples of this page are run by <code>test_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/R">Documentation examples (R)</a>: the R examples of this page are run by <code>test_r_model_pages.py</code>.</li>
+<li><a href="https://github.com/BGN-for-ASNA/BF/tree/main/Test/3.Documentation/Julia">Documentation examples (Julia)</a>: the Julia examples of this page are run by <code>test_julia_model_pages.py</code>.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: comparison with Stan (<code>10.Zero inflated.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/10.Zero_inflated_comparison.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Plot: data generative model and inference model pipeline (<code>10.Zero inflated.py</code>)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="Figures/validation/10.Zero_inflated_recovery.png" class="img-fluid" style="width:100.0%"></p>
+</div>
+</div>
+</div>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">Reference(s)</h2>
