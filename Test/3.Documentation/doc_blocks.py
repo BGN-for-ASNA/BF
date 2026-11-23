@@ -165,3 +165,55 @@ def language_tabs(page):
                 if level == tabset[3]:
                     tabset[2] = line.lstrip("#").strip().lower()
     return out
+
+
+def doc_model(page, index=0, name="model"):
+    """The ``index``-th function ``name`` defined in the python blocks of a doc page.
+
+    The page is run the way a reader runs it: every python block up to and
+    including the target one is executed in ONE shared namespace, each block
+    truncated before (not including) its first top-level line starting with
+    ``m.fit(``, so nothing is sampled. Blocks before the target may fail (they
+    plot, call ``m.summary()`` on an unfitted model, ...): their errors are
+    collected and the run continues. An error in the target block itself is
+    re-raised with those collected errors appended, because it is usually a
+    ``NameError`` for something an earlier block was meant to define.
+
+    The returned function closes over that shared namespace, so it sees the
+    ``m`` (and the data) the page itself built. Deep tests fit it with their own
+    bf object: the model as published is the model tested.
+    """
+    path = pathlib.Path(page)
+    if not path.exists():
+        path = DOCS / page
+    all_blocks = blocks(path, "python")
+    candidates = [n for n, b in enumerate(all_blocks) if f"def {name}(" in b]
+    if not -len(candidates) <= index < len(candidates):
+        raise LookupError(f"no python block #{index} defining {name} in "
+                          f"{pathlib.Path(page).name}")
+    target = candidates[index]
+    ns = {"__name__": "doc_page"}
+    earlier_errors = []
+    for n, block in enumerate(all_blocks[:target + 1]):
+        lines = block.splitlines()
+        for k, line in enumerate(lines):
+            if line.startswith("m.fit("):
+                lines = lines[:k]
+                break
+        code = "\n".join(lines)
+        if n < target:
+            try:
+                exec(code, ns)
+            except Exception as exc:
+                earlier_errors.append(f"block {n}: {type(exc).__name__}: {exc}")
+        else:
+            try:
+                exec(code, ns)
+            except Exception as exc:
+                note = ("; ".join(earlier_errors) if earlier_errors
+                        else "no earlier-block error")
+                raise RuntimeError(
+                    f"{pathlib.Path(page).name}: python block #{index} defining "
+                    f"{name} failed: {type(exc).__name__}: {exc} "
+                    f"(errors of the earlier blocks run before it: {note})") from exc
+    return ns[name]

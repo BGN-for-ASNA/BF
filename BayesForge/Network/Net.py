@@ -2,7 +2,6 @@ from BayesForge.Network.metrics import met
 from BayesForge.Network.util import array_manip
 from BayesForge.Network.model_effects import Neteffect
 from BayesForge.Network.model_effects2 import NeteffectMatrix
-import jax.numpy as jnp
 
 
 class _LazyViz:

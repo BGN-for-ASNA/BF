@@ -82,7 +82,7 @@ draw_density <- function(label, brms_s, BF_s) {
          col = c("red", "blue"), lwd = 2, lty = c(1, 2), cex = 0.8)
 }
 
-png("density_comparison.png", width = 1800, height = 800, res = 120)
+png("density_comparison.png", width = 1800, height = 800, res = 120, type = "cairo")
 par(mfrow = c(2, 3), mar = c(4, 4, 3, 1))
 draw_density("Intercept",    brms_intercept,              BF_post$Intercept)
 draw_density("b_x",          brms_bx,                     BF_post$b_x)

@@ -1,25 +1,27 @@
 Comparison Table for 9.Beta binomial
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
- alpha[1] -0.3626   -0.3573 -0.0052 0.0868
- alpha[0] -0.4918   -0.4892 -0.0026 0.0773
-      phi  2.1917    2.2119 -0.0202 0.0386
+ alpha[1] -0.3300   -0.3354  0.0054 0.0314
+ alpha[0] -0.4381   -0.4356 -0.0024 0.0472
+      phi  1.0171    1.0213 -0.0042 0.0550
 ============================================================
 
 ================================================================
 WAIC cross-check  -  9.Beta binomial
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -69.373111    p_waic = 2.874712
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -69.373111  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -68.780516    p_waic = 1.834650
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -68.780516    p_waic = 1.834650
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=12)
 ----------------------------------------------------------------
 LOO cross-check  -  9.Beta binomial
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -69.547168    p_loo  = 3.048768
+      elpd_loo  = -68.862455    p_loo  = 1.916589
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -69.548442    p_loo  = 3.050042
-|delta elpd_loo| = 1.274e-03      |delta p_loo| = 1.274e-03
+      elpd_loo  = -68.863224    p_loo  = 1.917358
+|delta elpd_loo| = 7.687e-04      |delta p_loo| = 7.687e-04
 RESULT: PASS
 ================================================================

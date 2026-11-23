@@ -1,15 +1,22 @@
 import ast
+import builtins
 import inspect
 import re
 import textwrap
+import warnings
+
+from BayesForge.Utils.dev_warning import warn_dev
 
 import numpy as np
 
-try:
-    from IPython.display import display, Latex
-except ImportError:
-    display = print
-    Latex = str
+
+def _in_ipython():
+    """True when running inside an IPython/Jupyter kernel."""
+    get_ipython = getattr(builtins, "get_ipython", None)
+    try:
+        return get_ipython is not None and get_ipython() is not None
+    except Exception:
+        return False
 
 # Greek symbols mapping
 greek_symbols = {
@@ -55,11 +62,13 @@ def convert_to_greek(var_name):
     lowered = var_name.lower()
     if lowered in greek_symbols and var_name[:1].isupper():
         sym = greek_symbols[lowered]
-        # Only some Greek letters have a distinct uppercase command.
+        # Only some Greek letters have a distinct uppercase command; an
+        # uppercase name without one (e.g. "Epsilon") must not silently
+        # collapse onto its lowercase letter — render it as literal text.
         if sym.lstrip("\\") in ("gamma", "delta", "theta", "lambda", "xi",
                                 "pi", "sigma", "upsilon", "phi", "psi", "omega"):
             return "\\" + sym.lstrip("\\").capitalize()
-        return sym
+        return f"\\text{{{var_name}}}"
     return greek_symbols.get(lowered, var_name)
 
 
@@ -93,8 +102,11 @@ def format_latex_var(var_name):
 
 
 def _escape_text(s):
-    """Escape underscores inside \\text{...} so KaTeX/MathJax never fail."""
-    return str(s).replace("_", r"\_")
+    """Escape LaTeX specials inside \\text{...} so KaTeX/MathJax never fail."""
+    s = str(s)
+    for ch in ("%", "&", "#", "_"):
+        s = s.replace(ch, "\\" + ch)
+    return s
 
 
 def _callee_str(func_node):
@@ -213,10 +225,12 @@ def ast_to_latex(node):
             if isinstance(node.right, ast.BinOp) and isinstance(node.right.op, (ast.Add, ast.Sub)):
                 right = f"\\left({right}\\right)"
             return f"{left} - {right}"
+        if isinstance(node.op, ast.FloorDiv):
+            # a // b is the integer part of a/b, not "a floor-div b".
+            return f"\\left\\lfloor \\frac{{{left}}}{{{right}}} \\right\\rfloor"
         op = {
             ast.Add: '+',
             ast.Mod: r'\bmod',
-            ast.FloorDiv: r'\lfloor / \rfloor',
         }.get(type(node.op))
         if op is None:
             return convert_line_names(ast.unparse(node))
@@ -234,9 +248,12 @@ def ast_to_latex(node):
             ast.GtE: r'\geq',
             ast.In: r'\in',
             ast.NotIn: r'\notin',
+            ast.Is: r'\text{is}',
+            ast.IsNot: r'\text{is not}',
         }
         for op, comp in zip(node.ops, node.comparators):
-            parts.append(op_map.get(type(op), '='))
+            # An unmapped operator must never be rendered as "=" (m17).
+            parts.append(op_map.get(type(op), r'\text{?}'))
             parts.append(ast_to_latex(comp))
         return " ".join(parts)
 
@@ -302,7 +319,11 @@ def _call_to_latex(node):
         if kw.arg not in _STRUCTURAL_KWARGS
     ]
     all_args = pos_args + kw_args
-    arg0 = pos_args[0] if pos_args else (kw_args[0] if kw_args else "")
+    # A keyword-only call must feed known single-argument functions the
+    # argument VALUE, not the "name=value" pair (sqrt(x=a) -> \sqrt{a}).
+    kw_values = [ast_to_latex(kw.value) for kw in node.keywords
+                 if kw.arg not in _STRUCTURAL_KWARGS]
+    arg0 = pos_args[0] if pos_args else (kw_values[0] if kw_values else "")
 
     # 1. Transparent reshaping / casting wrappers
     if fn in ("asarray", "array", "stack", "hstack", "vstack", "concatenate",
@@ -319,8 +340,12 @@ def _call_to_latex(node):
         return "1"
     if fn in ("eye", "identity"):
         return r"\mathbf{I}"
-    if fn == "repeat" and len(pos_args) >= 1:
-        return pos_args[0]
+    if fn == "repeat":
+        # Keep the repetition count visible: repeat(x, k) is not just x.
+        reps = _pos_or_kw_latex(node, 1, "repeats", None)
+        if reps is not None and arg0:
+            return f"\\text{{repeat}}\\left({arg0}, {reps}\\right)"
+        return arg0
 
     # 3. Elementary math & JAX functions
     if fn == "exp":
@@ -385,8 +410,12 @@ def _call_to_latex(node):
         return f"\\text{{Chol}}\\left({arg0}\\right)"
     if fn == "inv":
         return f"\\left({arg0}\\right)^{{-1}}"
-    if fn in ("det", "slogdet"):
+    if fn == "det":
         return f"\\det\\left({arg0}\\right)"
+    if fn == "slogdet":
+        # slogdet returns (sign, log|det|); the magnitude part is log|det|,
+        # not det itself.
+        return f"\\log\\left|\\det\\left({arg0}\\right)\\right|"
 
     # 6. Conditional `jnp.where(cond, a, b)`
     if fn == "where" and len(pos_args) == 3:
@@ -404,9 +433,16 @@ def _call_to_latex(node):
         return f"\\text{{softmax}}\\left({arg0}\\right)"
     if fn == "log_softmax":
         return f"\\log\\text{{softmax}}\\left({arg0}\\right)"
+    # Phi / Phi^-1 are the STANDARD NORMAL cdf and quantile function: only
+    # claim them for the normal (or the probit link), never for a generic
+    # t.ppf(...) / gamma.cdf(...) call.
     if fn in ("probit", "ppf", "ndtri"):
+        if fn == "ppf" and "norm" not in full_name.lower():
+            return f"\\text{{ppf}}\\left({arg0}\\right)"
         return f"\\Phi^{{-1}}\\left({arg0}\\right)"
     if fn in ("inv_probit", "phi", "cdf", "ndtr"):
+        if fn == "cdf" and "norm" not in full_name.lower():
+            return f"\\text{{cdf}}\\left({arg0}\\right)"
         return f"\\Phi\\left({arg0}\\right)"
     if fn == "cloglog":
         return f"\\text{{cloglog}}\\left({arg0}\\right)"
@@ -487,6 +523,16 @@ def _expand_bf_block_latex(lhs_latex, call):
             gid = _pos_or_kw_latex(call, 2 if fn == "varying_effects" else 1,
                                    "group_id" if fn == "varying_effects" else "group", "g")
             centered = _kw_bool(call, "centered", fn == "varying_intercept_slope")
+            # Only varying_effects samples the group means itself (global_intercept /
+            # global_beta, when alpha_bar / beta_bar are not passed); the
+            # varying_intercept_slope* helpers take them as user arguments.
+            kw_names = {k.arg for k in call.keywords}
+            bar_priors = []
+            if fn == "varying_effects":
+                if "alpha_bar" not in kw_names:
+                    bar_priors.append("\\bar{\\alpha} \\sim \\text{Normal}(0, 2)")
+                if "beta_bar" not in kw_names:
+                    bar_priors.append("\\bar{\\beta} \\sim \\text{Normal}(0, 1)")
             if centered:
                 return [
                     f"{lhs_latex} = \\mathbf{{V}}_{{\\text{{{gname}}}[{gid}]}}, \\quad "
@@ -494,20 +540,18 @@ def _expand_bf_block_latex(lhs_latex, call):
                     f"\\left(\\begin{{bmatrix}} \\bar{{\\alpha}} \\\\ \\bar{{\\beta}} \\end{{bmatrix}}, "
                     f"\\text{{diag}}(\\sigma_{{\\text{{{gname}}}}}) \\cdot \\mathbf{{R}}_{{\\text{{{gname}}}}} "
                     f"\\cdot \\text{{diag}}(\\sigma_{{\\text{{{gname}}}}})\\right)",
-                    f"\\bar{{\\alpha}} \\sim \\text{{Normal}}(0, 2), \\quad "
-                    f"\\bar{{\\beta}} \\sim \\text{{Normal}}(0, 1), \\quad "
-                    f"\\sigma_{{\\text{{{gname}}}}} \\sim \\text{{Exponential}}(1), \\quad "
-                    f"\\mathbf{{R}}_{{\\text{{{gname}}}}} \\sim \\text{{LKJ}}(2)",
+                    ", \\quad ".join(bar_priors + [
+                        f"\\sigma_{{\\text{{{gname}}}}} \\sim \\text{{Exponential}}(1)",
+                        f"\\mathbf{{R}}_{{\\text{{{gname}}}}} \\sim \\text{{LKJ}}(2)"]),
                 ]
             return [
                 f"{lhs_latex} = \\begin{{bmatrix}} \\bar{{\\alpha}} \\\\ \\bar{{\\beta}} \\end{{bmatrix}} "
                 f"+ \\left(\\text{{diag}}(\\sigma_{{\\text{{{gname}}}}}) \\cdot \\mathbf{{L}}_{{\\text{{{gname}}}}} "
                 f"\\cdot \\mathbf{{Z}}_{{\\text{{{gname}}}}}\\right)^{{\\top}}_{{[{gid}]}}",
-                f"\\mathbf{{Z}}_{{\\text{{{gname}}}}} \\sim \\text{{Normal}}(0, 1), \\quad "
-                f"\\mathbf{{L}}_{{\\text{{{gname}}}}} \\sim \\text{{LKJCholesky}}(2), \\quad "
-                f"\\sigma_{{\\text{{{gname}}}}} \\sim \\text{{Exponential}}(1), \\quad "
-                f"\\bar{{\\alpha}} \\sim \\text{{Normal}}(0, 2), \\quad "
-                f"\\bar{{\\beta}} \\sim \\text{{Normal}}(0, 1)",
+                ", \\quad ".join([
+                    f"\\mathbf{{Z}}_{{\\text{{{gname}}}}} \\sim \\text{{Normal}}(0, 1)",
+                    f"\\mathbf{{L}}_{{\\text{{{gname}}}}} \\sim \\text{{LKJCholesky}}(2)",
+                    f"\\sigma_{{\\text{{{gname}}}}} \\sim \\text{{Exponential}}(1)"] + bar_priors),
             ]
 
         if fn in ("varying_intercept", "varying_intercept_non_centered"):
@@ -540,6 +584,18 @@ def _expand_bf_block_latex(lhs_latex, call):
             ]
 
         if fn == "nested_varying_effects":
+            if _kw_bool(call, "centered", False):
+                # centered=True: the real sites are corr_{name} ~ LKJ and
+                # {name}_effects ~ MVN (Utils/Effects.py), not the Z/L
+                # non-centered decomposition.
+                return [
+                    f"{lhs_latex} = \\boldsymbol{{\\theta}}_{{\\text{{nested}}[g_{{1}}, \\dots, g_{{L}}]}}",
+                    r"\boldsymbol{\theta}_{\ell} \sim \text{MultivariateNormal}"
+                    r"\left(\boldsymbol{\theta}_{\ell - 1}, \text{diag}(\sigma_{\ell}) "
+                    r"\cdot \mathbf{R}_{\ell} \cdot \text{diag}(\sigma_{\ell})\right), \quad "
+                    r"\mathbf{R}_{\ell} \sim \text{LKJ}(2), \quad "
+                    r"\sigma_{\ell} \sim \text{Exponential}(1)",
+                ]
             return [
                 f"{lhs_latex} = \\boldsymbol{{\\theta}}_{{\\text{{nested}}[g_{{1}}, \\dots, g_{{L}}]}}",
                 r"\boldsymbol{\theta}_{\ell} = \boldsymbol{\theta}_{\ell - 1} + "
@@ -565,14 +621,14 @@ def _expand_bf_block_latex(lhs_latex, call):
                 r"\begin{bmatrix} s \\ r \end{bmatrix} = \mathbf{X}\beta_{sr} + "
                 r"\left(\text{diag}(\sigma_{sr}) \cdot \mathbf{L}_{sr} \cdot \mathbf{Z}_{sr}\right)^{\top}",
                 r"\mathbf{Z}_{sr} \sim \text{Normal}(0, 1), \quad "
-                r"\sigma_{sr} \sim \text{TruncatedNormal}(0, 2.5), \quad "
+                r"\sigma_{sr} \sim \text{TruncatedNormal}_{[0, \infty)}(0, 2.5), \quad "
                 r"\mathbf{L}_{sr} \sim \text{LKJCholesky}(2, 2.5)",
             ]
         if fn == "nodes_random_effects":
             return [
                 f"{lhs_latex} = \\left(\\text{{diag}}(\\sigma_{{sr}}) \\cdot \\mathbf{{L}}_{{sr}} \\cdot \\mathbf{{Z}}_{{sr}}\\right)^{{\\top}}",
                 r"\mathbf{Z}_{sr} \sim \text{Normal}(0, 1), \quad "
-                r"\sigma_{sr} \sim \text{TruncatedNormal}(0, 2.5), \quad "
+                r"\sigma_{sr} \sim \text{TruncatedNormal}_{[0, \infty)}(0, 2.5), \quad "
                 r"\mathbf{L}_{sr} \sim \text{LKJCholesky}(2, 2.5)",
             ]
         if fn == "dyadic_effect":
@@ -580,7 +636,7 @@ def _expand_bf_block_latex(lhs_latex, call):
                 f"{lhs_latex} = \\mathbf{{X}}_{{d}}\\beta_{{d}} + "
                 r"\left(\text{diag}(\sigma_{dr}) \cdot \mathbf{L}_{dr} \cdot \mathbf{Z}_{dr}\right)^{\top}",
                 r"\mathbf{Z}_{dr} \sim \text{Normal}(0, 1), \quad "
-                r"\sigma_{dr} \sim \text{TruncatedNormal}(0, 2.5), \quad "
+                r"\sigma_{dr} \sim \text{TruncatedNormal}_{[0, \infty)}(0, 2.5), \quad "
                 r"\mathbf{L}_{dr} \sim \text{LKJCholesky}(2, 2.5)",
             ]
         if fn == "block_model":
@@ -591,6 +647,13 @@ def _expand_bf_block_latex(lhs_latex, call):
             ]
         if fn == "edge_weights":
             ename = _kw_latex(call, "name", r"w")
+            if not _kw_bool(call, "partial_pooling", True):
+                # partial_pooling=False: one direct site
+                # Normal(prior_mu, prior_sigma), no sigma hyperprior and no
+                # mu + sigma*z decomposition (Network/model_effects.py).
+                mu_val = _pos_or_kw_latex(call, 1, "prior_mu", "0")
+                sd_val = _pos_or_kw_latex(call, 2, "prior_sigma", "2.5")
+                return [f"{lhs_latex} \\sim \\text{{Normal}}({mu_val}, {sd_val})"]
             return [
                 f"{lhs_latex} = \\mu_{{{ename}}} + \\sigma_{{{ename}}} \\cdot z_{{{ename}}}, \\quad "
                 f"z_{{{ename}}} \\sim \\text{{Normal}}(0, 1), \\quad "
@@ -613,8 +676,11 @@ def _expand_bf_block_latex(lhs_latex, call):
     if submod == "gaussian" and fn == "gaussian_process":
         Dmat = _pos_or_kw_latex(call, 0, "Dmat", r"\mathbf{D}")
         return [
-            f"{lhs_latex} \\sim \\text{{MultivariateNormal}}\\left(0, \\mathbf{{K}}_{{\\text{{SE}}}}({Dmat}, \\eta^{{2}}, \\rho^{{2}}, \\sigma^{{2}})\\right)",
-            r"\eta^{2} \sim \text{Exponential}(2), \quad \rho^{2} \sim \text{Exponential}(0.5)",
+            f"{lhs_latex} \\sim \\text{{MultivariateNormal}}\\left(0, \\mathbf{{K}}_{{\\text{{SE}}}}({Dmat}, \\eta^{{2}}, \\rho^{{2}}, \\sigma_{{\\text{{fix}}}}^{{2}})\\right)",
+            # sigmaq is a FIXED nugget (Utils/Gaussian.py: default 0.01),
+            # only etasq and rhosq are sampled.
+            r"\eta^{2} \sim \text{Exponential}(2), \quad \rho^{2} \sim \text{Exponential}(0.5),"
+            r"\quad \sigma_{\text{fix}}^{2} = 0.01 \text{ (fixed nugget, not sampled)}",
         ]
 
     return None
@@ -643,7 +709,11 @@ def _process_dist_call(func_call_node):
         func_name_str = func_call_node.func.attr
     else:
         func_name_str = getattr(func_call_node.func, "id", _callee_str(func_call_node.func))
-    func_name = "".join([part.capitalize() for part in func_name_str.split('_')])
+    # "lkj" is an acronym: render LKJ / LKJCholesky, matching the block
+    # tables above (plain capitalize would give "Lkj" / "LkjCholesky").
+    func_name = "".join(
+        "LKJ" if part.lower() == "lkj" else part.capitalize()
+        for part in func_name_str.split('_'))
     obs_var = None
     name_var = format_latex_var(site_name) if site_name else None
     pos_args = [ast_to_latex(a) for a in func_call_node.args]
@@ -685,14 +755,39 @@ def _format_for_header(target_node, iter_node):
 
 
 def _format_with_header(item_node):
-    """Format ``with numpyro.plate(...):`` as mathematical plate notation."""
+    """Format ``with numpyro.plate(...):`` as mathematical plate notation.
+
+    NumPyro plates index 0-based (``1, \\dots, N`` claimed otherwise), a
+    ``subsample_size=n`` plate iterates over n drawn indices — not over the
+    full size — and ``dim=`` selects the indexed axis; all three are shown
+    explicitly (m24).
+    """
     ctx = item_node.context_expr
     if isinstance(ctx, ast.Call) and "plate" in _callee_str(ctx.func):
         opt_var = ast_to_latex(item_node.optional_vars) if item_node.optional_vars else None
         if len(ctx.args) >= 2:
             pname = opt_var or ast_to_latex(ctx.args[0])
-            psize = ast_to_latex(ctx.args[1])
-            return f"\\text{{for }} {pname} \\in 1, \\dots, {psize}\\text{{:}}"
+            size_node = ctx.args[1]
+            sub = next((kw.value for kw in ctx.keywords
+                        if kw.arg == "subsample_size"), None)
+            if sub is not None and not (isinstance(sub, ast.Constant)
+                                        and sub.value is None):
+                size_node = sub
+            if (isinstance(size_node, ast.Constant)
+                    and isinstance(size_node.value, int)
+                    and not isinstance(size_node.value, bool)):
+                rng = f"0, \\dots, {size_node.value - 1}"
+            else:
+                rng = f"0, \\dots, {ast_to_latex(size_node)} - 1"
+            note = ""
+            if sub is not None and not (isinstance(sub, ast.Constant)
+                                        and sub.value is None):
+                note = (f"\\text{{ (subsample of }} {ast_to_latex(ctx.args[1])}"
+                        "\\text{)}")
+            dim = next((kw.value for kw in ctx.keywords if kw.arg == "dim"), None)
+            if dim is not None:
+                note += f"\\text{{ (dim }} {ast_to_latex(dim)}" "\\text{)}"
+            return f"\\text{{for }} {pname} \\in {rng}{note}\\text{{:}}"
         args = ", ".join(ast_to_latex(a) for a in ctx.args)
         return f"\\text{{for }} {args}\\text{{:}}"
     return f"\\text{{with }} {ast_to_latex(ctx)}\\text{{:}}"
@@ -726,11 +821,15 @@ def _stmt_to_latex_lines(stmt, loop_var=None):
     # 2. With block (e.g. `with numpyro.plate("i", N):`)
     if isinstance(stmt, ast.With):
         headers = [_format_with_header(item) for item in stmt.items]
-        body_lines = []
+        # Group lines per statement so nested block headers stay with their
+        # bodies, then reverse the statement groups so the likelihood reads
+        # above the priors.
+        groups = []
         for s in stmt.body:
-            body_lines.extend(_stmt_to_latex_lines(s, loop_var=loop_var))
-        # Reverse independent sampling statements inside a plate so likelihood is above priors
-        return headers + [f"\\quad {bl}" for bl in reversed(body_lines) if bl]
+            group = [f"\\quad {bl}" for bl in _stmt_to_latex_lines(s, loop_var=loop_var) if bl]
+            if group:
+                groups.append(group)
+        return headers + [line for group in reversed(groups) for line in group]
 
     # 3. Assignment (`lhs = rhs`)
     if isinstance(stmt, ast.Assign):
@@ -746,7 +845,15 @@ def _stmt_to_latex_lines(stmt, loop_var=None):
 
         if isinstance(val, ast.Call):
             if _is_deterministic_callee(val.func) and len(val.args) >= 2:
-                return [f"{lhs} = {ast_to_latex(val.args[1])}"]
+                # Render under the SITE name (`numpyro.deterministic("mean", e)`
+                # -> `mean = ...`), like model_graph and the bare-expression
+                # branch below; using the Python LHS made the two views of one
+                # model diverge (m14).
+                sname = (format_latex_var(val.args[0].value)
+                         if isinstance(val.args[0], ast.Constant)
+                         and isinstance(val.args[0].value, str)
+                         else lhs)
+                return [f"{sname} = {ast_to_latex(val.args[1])}"]
             if _is_dist_callee(val.func):
                 func_name, args_str, obs_var, _ = _process_dist_call(val)
                 lhs_final = obs_var if obs_var else lhs
@@ -839,7 +946,14 @@ def _body_lines(code):
         func = next(n for n in ast.walk(tree)
                     if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)))
     except Exception:
-        return [l.lstrip() for l in extract_lines(code)][1:]
+        # Degenerate path (source does not parse): the def header may span
+        # several lines, so drop everything up to the first line ending with
+        # ":" instead of blindly dropping a single line.
+        lines = [l.lstrip() for l in extract_lines(code)]
+        for i, l in enumerate(lines):
+            if l.rstrip().endswith(":"):
+                return lines[i + 1:]
+        return []
 
     src_lines = code.split("\n")
     body_stmts = list(func.body)
@@ -877,32 +991,57 @@ def _format_scalar_or_parents(param):
 
 def _latex_from_trace(model, data):
     """Build LaTeX equations directly from ``trace_model(model, data)`` when
-    Python source is unavailable (e.g., models defined in R or Julia)."""
-    from BayesForge.PostModel.model_trace import trace_model, DETERMINISTIC
+    Python source is unavailable (e.g., models defined in R or Julia).
+
+    Observed sites carry a ``^{\\text{obs}}`` marker on the left-hand side and
+    sites inside plates are preceded by plate headers in the same
+    ``for i in 1, ..., N`` style as the AST path."""
+    from BayesForge.PostModel.model_trace import (
+        trace_model, DETERMINISTIC, OBSERVED)
 
     tr = trace_model(model, data)
     lines = []
     for name, site in reversed(list(tr.sites.items())):
+        indent = ""
+        for k, plate in enumerate(site.plates or ()):
+            pname = format_latex_var(plate)
+            size = site.shape[k] if site.shape and len(site.shape) > k else None
+            if size:
+                lines.append(f"{indent}\\text{{for }} {pname} \\in 1, \\dots, {size}\\text{{:}}")
+            else:
+                lines.append(f"{indent}\\text{{for }} {pname}\\text{{:}}")
+            indent += "\\quad "
         lhs = format_latex_var(name)
+        if site.kind == OBSERVED:
+            lhs += "^{\\text{obs}}"
         if site.kind == DETERMINISTIC:
             ps = [format_latex_var(p) for p in sorted(tr.parents.get(name, ()))]
             rhs = f"f\\left({', '.join(ps)}\\right)" if ps else r"\dots"
-            lines.append(f"{lhs} = {rhs}")
+            lines.append(f"{indent}{lhs} = {rhs}")
         else:
             p_strs = [_format_scalar_or_parents(p) for p in site.params]
-            lines.append(f"{lhs} \\sim \\text{{{_escape_text(site.dist)}}}({', '.join(p_strs)})")
+            lines.append(f"{indent}{lhs} \\sim \\text{{{_escape_text(site.dist)}}}({', '.join(p_strs)})")
     return lines
 
 
-def to_latex(model, data=None):
-    """Render a BF/NumPyro model as a LaTeX ``align*`` environment.
+def to_latex(model, data=None, display=True):
+    """Render a BF/NumPyro model as a LaTeX ``gather*`` environment.
+
+    .. warning:: Experimental feature: check the generated equations against the model. Emits a one-time ``RuntimeWarning``.
 
     Uses full AST statement & block translation for Python models (preserving
     loop/plate block ordering and expanding ``jnp.*``, ``m.link.*``,
     ``m.effects.*``, and ``m.net.*`` calls into mathematical notation), and
     falls back to execution-trace introspection (``trace_model``) when Python
     source is unavailable (e.g., R or Julia models).
+
+    Args:
+        display: when True (default) and running inside IPython/Jupyter, also
+            render the result in the notebook as a side effect. Outside
+            IPython nothing is ever displayed or printed; the string is
+            always the only return value (m13).
     """
+    warn_dev("to_latex")
     latex_lines = None
     try:
         code = textwrap.dedent(inspect.getsource(model))
@@ -920,20 +1059,47 @@ def to_latex(model, data=None):
         latex_lines = []
         for group in reversed(stmt_groups):
             latex_lines.extend(group)
-    except Exception:
+    except Exception as exc:
+        warnings.warn(
+            f"to_latex: full AST rendering failed ({exc!r}); falling back to "
+            "line-by-line translation (block grouping is approximate).",
+            UserWarning)
         try:
             code = inspect.getsource(model)
             lines_clean = _body_lines(code)
-            latex_lines = list(reversed([extract_latex_line_final(line) for line in lines_clean]))
-        except Exception:
+            # Group each top-level statement with its more-indented body
+            # lines so `for`/`with` headers stay with their bodies when the
+            # groups are reversed (reversing line-by-line separated them).
+            groups = []
+            for line in lines_clean:
+                if groups and line[:1] in (" ", "\t"):
+                    groups[-1].append(line)
+                else:
+                    groups.append([line])
+            latex_lines = []
+            for group in reversed(groups):
+                latex_lines.extend(extract_latex_line_final(line) for line in group)
+        except Exception as exc2:
             if data is not None:
+                warnings.warn(
+                    f"to_latex: line-by-line rendering failed ({exc2!r}); "
+                    "falling back to execution-trace rendering.", UserWarning)
                 latex_lines = _latex_from_trace(model, data)
             else:
+                warnings.warn(
+                    f"to_latex: full AST rendering failed ({exc!r}) and "
+                    f"line-by-line rendering failed ({exc2!r}); re-raising "
+                    "the line-by-line error.", UserWarning)
                 raise
 
     latex_str = "\\begin{gather*}\n"
     latex_str += " \\\\\n".join(filter(None, latex_lines))
     latex_str += "\\\\\n"
     latex_str += "\\end{gather*}\n"
-    display(Latex(latex_str))
+    # m13: the display side effect only belongs in a notebook; outside
+    # IPython the old `display = print` fallback dumped raw LaTeX on stdout.
+    if display and _in_ipython():
+        from IPython.display import Latex as _Latex
+        from IPython.display import display as _ipy_display
+        _ipy_display(_Latex(latex_str))
     return latex_str

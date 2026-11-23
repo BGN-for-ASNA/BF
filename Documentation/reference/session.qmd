@@ -188,6 +188,10 @@ m.graph(model=None, figsize=(8, 6), title=None, draw=True)
 
 Build (and draw) the directed graph of a probabilistic model.
 
+::: {.callout-warning}
+⚠️This function is still in development. Use it with caution. ⚠️
+:::
+
 Parses the model's source to reconstruct latent, observed,
 deterministic and data nodes and the dependencies between them.
 
@@ -220,6 +224,10 @@ m.latex()
 ```
 
 Write the fitted model as LaTeX equations (one line per prior and likelihood).
+
+::: {.callout-warning}
+⚠️This function is still in development. Use it with caution. ⚠️
+:::
 
 The equations are built from the model's Python source and displayed in
 notebooks. Works for models written in Python.

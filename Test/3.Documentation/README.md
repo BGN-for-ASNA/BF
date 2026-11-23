@@ -66,3 +66,20 @@ BF_JULIA_PROJECT=/path/to/project python -m pytest Test/3.Documentation/Julia -q
 
 R and Julia tests are skipped when `Rscript` / `julia` are not found
 (`$BF_RSCRIPT`, `$BF_JULIA` to point at them).
+
+## Fast mode
+
+`BF_DOC_FAST=1` caps every `m.fit` at 50 warmup / 50 samples / 2 chains
+(Python, R and Julia all go through the same Python fit). It checks that
+every example runs, not that its estimates are good:
+
+    BF_DOC_FAST=1 pytest Test/3.Documentation -m pages
+
+## Deep tests reuse page code
+
+Deep tests in `Test/<n>.<topic>/test_doc_<page>.py` (e.g.
+`Test/4. Rethinking/test_doc_15_varying_intercepts.py`) exec the page's own
+python blocks via `doc_blocks.blocks` in one shared namespace, then add checks
+the page does not make (convergence, reference agreement). Pages must keep the
+object names their test uses: page 15 keeps `m`, two `m.fit(...)` blocks, and
+params `a_bar` / `sigma` in the first model's summary.

@@ -5,6 +5,13 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (indices version).
+# Same model and priors as the previous local copy: a ~ normal(0, 1.5) (7 actors),
+# b ~ normal(0, 0.5) (4 treatments), binomial(1, logits = a[actor] + b[treatment]).
+PAGE_MODEL = doc_model("5. Binomial model.qmd", 1)
 
 model_name = "5.Binomial with indices"
 
@@ -19,11 +26,7 @@ m.df['actor'] = m.df['actor'] - 1  # 0-indexed
 
 m.data_to_model(['actor', 'treatment', 'pulled_left'])
 
-def model_BF(actor, treatment, pulled_left):
-    a = m.dist.normal(0, 1.5, shape=(7,), name='a')
-    b = m.dist.normal(0, 0.5, shape=(4,), name='b')
-    p = a[actor] + b[treatment]
-    m.dist.binomial(total_count=1, logits=p, obs=pulled_left)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -85,11 +88,7 @@ def estimate(actor, treatment, a_true, b_true):
         'treatment': jnp.array(treatment),
         'pulled_left': jnp.array(pulled_left_sim),
     }
-    def model_rec(actor, treatment, pulled_left):
-        a = m_rec.dist.normal(0, 1.5, shape=(7,), name='a')
-        b = m_rec.dist.normal(0, 0.5, shape=(4,), name='b')
-        p = a[actor] + b[treatment]
-        m_rec.dist.binomial(total_count=1, logits=p, obs=pulled_left)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()

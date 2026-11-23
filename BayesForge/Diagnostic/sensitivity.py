@@ -417,7 +417,7 @@ def influence_plot(
         if m is None:
             raise ValueError("Pass m or log_likelihood=.")
         log_likelihood = compute_log_likelihood(
-            m.model, m.posteriors_by_chain, **m.data_on_model
+            m.model, m.posteriors_by_chain, has_chains=True, **m.data_on_model
         )
     if m is not None and getattr(m, "posteriors_by_chain", None):
         # PSIS sizes its Pareto tail as 3*sqrt(S/reff); leaving reff at 1 for
@@ -567,6 +567,8 @@ def divergence_energy_plot(m, title="HMC Diagnostics: Energy & Divergences",
     Returns:
         plotly Figure.
     """
+    # One E-BFMI implementation for the whole package (RELEASE_AUDIT bug 15).
+    from BayesForge.Diagnostic.jax_diagnostics import _ebfmi_per_chain
     # TFP / SVI samplers do not expose extra_fields; the panels below already
     # render an "unavailable" annotation, so degrade rather than raise.
     try:
@@ -590,7 +592,10 @@ def divergence_energy_plot(m, title="HMC Diagnostics: Energy & Divergences",
             subtitles.append(f"Chain {c}")
             continue
         e = energy[c].astype(float)
-        bfmi = float(np.sum(np.diff(e) ** 2) / np.sum((e - e.mean()) ** 2))
+        # This inline sum(diff^2)/sum((e-mean)^2) is algebraically the same
+        # estimator as _ebfmi_per_chain, but crashed on a constant energy
+        # chain where the shared helper returns nan (RELEASE_AUDIT bug 15).
+        bfmi = float(_ebfmi_per_chain(e[None, :])[0])
         subtitles.append(f"Chain {c}: E-BFMI = {bfmi:.2f}" + (" ⚠" if bfmi < 0.3 else ""))
     subtitles.append("Divergent transitions per chain")
     fig = make_subplots(

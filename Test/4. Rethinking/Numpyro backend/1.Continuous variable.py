@@ -5,6 +5,16 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Same likelihood and same
+# parameters as the previous local copy; priors identical for the main fit
+# (a ~ normal(178,20), b ~ log_normal(0,1), s ~ uniform(0,50)).
+# The recovery model differs: this page uses a ~ normal(178,20),
+# b ~ log_normal(0,1), s ~ uniform(0,50) where the old local recovery model used
+# a ~ normal(0,1), b ~ normal(0,1), s ~ exponential(1).
+PAGE_MODEL = doc_model("1. Linear Regression for continuous variable.qmd", 0)
 
 model_name = "1.Continuous variable"
 
@@ -18,11 +28,7 @@ m.df = m.df[m.df.age > 18]
 m.scale(['weight'])
 
 # define model ------------------------------------------------
-def model_BF(weight, height):    
-    a = m.dist.normal( 178, 20)
-    b = m.dist.log_normal( 0, 1)
-    s = m.dist.uniform( 0, 50)
-    m.dist.normal(a + b * weight , s, obs=height)
+model_BF = PAGE_MODEL
 
 # Run sampler ------------------------------------------------
 m.fit(model_BF) 
@@ -63,11 +69,9 @@ print('Posterior distributions comparison')
 plot_comparaison(m, stan_df, model_name=model_name)
 
 print('Running Parameters recovery')
-def model_rec(weight, height):    
-    a = m.dist.normal( 0, 1)
-    b = m.dist.normal(0, 1)
-    s = m.dist.exponential(1)
-    m.dist.normal(a + b * weight , s, obs=height)
+# Page priors (a ~ normal(178,20), b ~ log_normal(0,1), s ~ uniform(0,50)) replace
+# the old recovery priors (a ~ normal(0,1), b ~ normal(0,1), s ~ exponential(1)).
+model_rec = PAGE_MODEL
 
 def simulate_height(weight, a, b, s):    
     weight_scaled = (weight - weight.mean())/weight.std()
@@ -103,7 +107,7 @@ def param_recovery(weight_data, a_sims, b_sims, s_sims, nsim):
 N = 200
 nsim = int(os.environ.get("BF_NSIM", 10))
 a_sims = np.random.normal(0, 1, size=(nsim, 1))
-b_sims = np.random.normal(0, 1, size=(nsim, 1))
+b_sims = np.abs(np.random.normal(0, 1, size=(nsim, 1)))  # page prior on b is log-normal: b > 0
 s_sims = np.random.exponential(1, size=(nsim, 1))
 weight_data = np.random.normal(80, 30, size=(nsim, N))
 

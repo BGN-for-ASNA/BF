@@ -12,15 +12,10 @@ import seaborn as sns
 import numpy as np
 import jax
 
-import numpyro
-
-import jax.numpy as jnp
-
 dist = dist()
 
 # Credible-mass levels drawn as ellipses by ``dpmm.plot`` / ``plot_gmm``:
-# ten nested levels, matching the ten auto-levels of the old density
-# contour (whose lowest was the misleading ``0.00``).
+# four nested levels, 25% to 95%.
 DEFAULT_CREDIBLE = (0.25, 0.50, 0.75, 0.95)
 
 
@@ -72,12 +67,13 @@ class dpmm:
         warn_dev("dpmm")
         N, D = data.shape  # Number of features
         data_mean = jnp.mean(data, axis=0)
-        data_std = jnp.std(data, axis=0)*2
+        data_std = jnp.std(data, axis=0)
+        data_std = jnp.where(data_std > 0, data_std, 1.0)   # constant column: no singular prior
 
         # 1) stick-breaking weights
 
         if alpha is None:
-            alpha = dist.gamma(1.0, 10.0,name='alpha')
+            alpha = dist.gamma(1.0, 6.0,name='alpha')
 
         with numpyro.plate("beta_plate", T - 1):
             beta = numpyro.sample('beta', Dist.Beta(1, alpha))
@@ -87,10 +83,10 @@ class dpmm:
 
         # 2) component parameters
         with numpyro.plate("components", T):
-            mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=data_std*jnp.eye(D),name='mu')# shape (T, D)     
+            mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=jnp.diag((2.0 * data_std) ** 2),name='mu')# shape (T, D)     
 
-            sigma = dist.log_normal(0.0, 1.0,shape=(D,),event=1,name='sigma')# shape (T, D)
-            Lcorr = dist.lkj_cholesky(dimension=D, concentration=1.0,name='Lcorr')# shape (T, D, D)
+            sigma = dist.log_normal(loc=jnp.log(0.4 * data_std), scale=0.6, event=1, name='sigma')# shape (T, D)
+            Lcorr = dist.lkj_cholesky(dimension=D, concentration=2.0,name='Lcorr')# shape (T, D, D)
 
             scale_tril = sigma[..., None] * Lcorr  # shape (T, D, D)
 
@@ -114,17 +110,19 @@ class dpmm:
         D = data.shape[1]
         # 1) stick-breaking weights
         if alpha is None:
-            alpha = dist.gamma(1.0, 15.0,name='alpha')
+            alpha = dist.gamma(1.0, 6.0,name='alpha')
 
         beta = dist.beta(1, alpha,name='beta',shape=(T-1,))
         w = numpyro.deterministic("w",dpmm.mix_weights(beta))
 
         # 2) component parameters
         data_mean = jnp.mean(data, axis=0)
+        data_std = jnp.std(data, axis=0)
+        data_std = jnp.where(data_std > 0, data_std, 1.0)   # constant column: no singular prior
         with numpyro.plate("components", T):
-            mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=5.0*jnp.eye(D),name='mu')# shape (T, D)        
-            sigma = dist.half_cauchy(1,shape=(D,),event=1,name='sigma')# shape (T, D)
-            Lcorr = dist.lkj_cholesky(dimension=D, concentration=1.0,name='Lcorr')# shape (T, D, D)
+            mu = dist.multivariate_normal(loc=data_mean, covariance_matrix=jnp.diag((2.0 * data_std) ** 2),name='mu')# shape (T, D)        
+            sigma = dist.log_normal(loc=jnp.log(0.4 * data_std), scale=0.6, event=1, name='sigma')# shape (T, D)
+            Lcorr = dist.lkj_cholesky(dimension=D, concentration=2.0,name='Lcorr')# shape (T, D, D)
 
             scale_tril = sigma[..., None] * Lcorr  # shape (T, D, D)
 
@@ -139,6 +137,8 @@ class dpmm:
     def model(self,data, T=10, method='marginal', alpha = None):
         """
         Wrapper function for DPMM.
+        Both formulations use the same priors: alpha ~ Gamma(1, 6),
+        mu ~ MVN(mean, diag((2 sd)^2)), sigma ~ LogNormal(log(0.4 sd), 0.6), Lcorr ~ LKJ(2).
 
         Args:
             data: Input data array (N, D)
@@ -174,7 +174,9 @@ class dpmm:
         # Shape becomes (N_data, N_components)
         log_liks = Dist.MultivariateNormal(mu, scale_tril=scale_tril).log_prob(data[:, None, :])
         # Calculate unnormalized log posterior probabilities: log(weight) + log(Likelihood)
-        log_probs = jnp.log(w) + log_liks
+        # Clip w away from 0: it can underflow to exactly 0 in float32, and
+        # log(0) would give -inf (NaN if a whole row is 0).
+        log_probs = jnp.log(jnp.clip(w, jnp.finfo(jnp.result_type(w, jnp.float32)).tiny)) + log_liks
         # Normalize probabilities (Softmax) using LogSumExp trick for numerical stability
         # Result is P(z=k | data, parameters)
         norm_probs = jnp.exp(log_probs - jax.scipy.special.logsumexp(log_probs, axis=-1, keepdims=True))
@@ -195,12 +197,27 @@ class dpmm:
         Lcorr = posteriors['Lcorr']
 
         # 2. Flatten Chains if necessary (Robustness)
-        # If shape is (Chains, Samples, ...), flatten to (Total_Samples, ...)
-        if w.ndim == 3: 
-            w = w.reshape(-1, *w.shape[2:])
-            mu = mu.reshape(-1, *mu.shape[2:])
-            sigma = sigma.reshape(-1, *sigma.shape[2:])
-            Lcorr = Lcorr.reshape(-1, *Lcorr.shape[2:])
+        # If an array carries a leading chain axis (ndim == base_ndim + 2),
+        # flatten it to (Total_Samples, ...). Each array is flattened
+        # independently so a (Samples, ...) array is left untouched.
+        def _flatten_chains(x, base_ndim):
+            if x.ndim == base_ndim + 2:
+                return x.reshape(-1, *x.shape[2:])
+            return x
+
+        w = _flatten_chains(w, 1)
+        mu = _flatten_chains(mu, 2)
+        sigma = _flatten_chains(sigma, 2)
+        Lcorr = _flatten_chains(Lcorr, 3)
+
+        # All four posterior arrays must describe the same posterior: same
+        # number of draws, checked before any computation or plotting.
+        n_draws = {x.shape[0] for x in (w, mu, sigma, Lcorr)}
+        if len(n_draws) != 1:
+            raise ValueError(
+                "proportion_of_data_assigned_to_cluster: posterior arrays "
+                f"have inconsistent numbers of draws {sorted(n_draws)}; "
+                "w, mu, sigma and Lcorr must share the same number of draws.")
         
         # 3. Compute Proportions per Sample
         # Shape: (Total_Samples, N_data, N_components)
@@ -244,7 +261,8 @@ class dpmm:
 
         plt.show()
     
-    def predict(self, data, sampler, return_probs=False, threshold=0.5, linkage_method='average'):
+    def predict(self, data, sampler, return_probs=False, threshold=0.5,
+                linkage_method='average', verbose=False):
         """Performs Consensus Clustering from the posterior samples of the DPMM.
 
         This function extracts the posterior samples from a Dirichlet Process
@@ -289,6 +307,8 @@ class dpmm:
                 used to cut the hierarchical tree (criterion ``'distance'``).
                 A smaller threshold yields more fine-grained clusters, while a larger
                 threshold merges nearby clusters. Defaults to 0.5.
+            verbose (bool, optional): If True, print the number of clusters
+                found by the consensus cut. Defaults to False (silent).
             linkage_method (str, optional): Linkage criterion used for agglomeration.
                 Supported methods include:
                 - ``'average'``: UPGMA. Merges clusters based on the average pairwise
@@ -329,13 +349,54 @@ class dpmm:
               estimation and credible balls". Bayesian Analysis, 13(2), 559-626.
         """
         warn_dev("dpmm")
-        # 1. Flatten chains: (N_chains, N_samples) -> (Total_samples)
-        posterior_samples = sampler.get_samples(group_by_chain=False)
+        # 1. Extract samples and filter out chains trapped in a severely degraded local mode
+        try:
+            by_chain = sampler.get_samples(group_by_chain=True)
+        except TypeError:
+            by_chain = sampler.get_samples()
 
-        w_samps = posterior_samples['w']
-        mu_samps = posterior_samples['mu']
-        Lcorr_samps = posterior_samples['Lcorr']
-        sigma_samps = posterior_samples['sigma']
+        data_arr = jnp.asarray(data)
+        if np.ndim(by_chain['w']) == 3 and by_chain['w'].shape[0] > 1:
+            n_chains, n_samps = by_chain['w'].shape[:2]
+            sub_n = min(n_samps, 100)
+            sub_idx = np.linspace(0, n_samps - 1, sub_n).astype(int)
+
+            def _draw_loglik(w, mu, sigma, Lcorr):
+                scale_tril = sigma[..., None] * Lcorr
+                log_liks = Dist.MultivariateNormal(mu, scale_tril=scale_tril).log_prob(data_arr[:, None, :])
+                log_probs = jnp.log(jnp.clip(w, jnp.finfo(jnp.result_type(w, jnp.float32)).tiny)) + log_liks
+                return jnp.sum(jax.scipy.special.logsumexp(log_probs, axis=-1))
+
+            chain_lls = []
+            for c in range(n_chains):
+                lls = jax.vmap(_draw_loglik)(
+                    by_chain['w'][c][sub_idx],
+                    by_chain['mu'][c][sub_idx],
+                    by_chain['sigma'][c][sub_idx],
+                    by_chain['Lcorr'][c][sub_idx],
+                )
+                chain_lls.append(float(jnp.mean(lls)))
+            best_ll = max(chain_lls)
+            ll_tol = max(15.0, 0.05 * data_arr.shape[0])
+            kept = [c for c in range(n_chains) if best_ll - chain_lls[c] <= ll_tol]
+            if not kept:
+                kept = list(range(n_chains))
+            w_samps = jnp.concatenate([by_chain['w'][c] for c in kept], axis=0)
+            mu_samps = jnp.concatenate([by_chain['mu'][c] for c in kept], axis=0)
+            Lcorr_samps = jnp.concatenate([by_chain['Lcorr'][c] for c in kept], axis=0)
+            sigma_samps = jnp.concatenate([by_chain['sigma'][c] for c in kept], axis=0)
+        else:
+            posterior_samples = by_chain
+            if np.ndim(posterior_samples['w']) == 3:
+                w_samps = posterior_samples['w'].reshape(-1, *posterior_samples['w'].shape[2:])
+                mu_samps = posterior_samples['mu'].reshape(-1, *posterior_samples['mu'].shape[2:])
+                Lcorr_samps = posterior_samples['Lcorr'].reshape(-1, *posterior_samples['Lcorr'].shape[2:])
+                sigma_samps = posterior_samples['sigma'].reshape(-1, *posterior_samples['sigma'].shape[2:])
+            else:
+                w_samps = posterior_samples['w']
+                mu_samps = posterior_samples['mu']
+                Lcorr_samps = posterior_samples['Lcorr']
+                sigma_samps = posterior_samples['sigma']
 
         # Cap the draws fed to the vmapped consensus / density steps below:
         # they cost O(S * N_data^2) and O(S * N_grid * T) memory, which OOMs
@@ -357,8 +418,11 @@ class dpmm:
         )
 
         # 3. Consensus Matrix (Posterior Similarity)
-        # Averaging the adjacency matrix handles label switching automatically.
-        similarity_matrix = (cluster_probs @ cluster_probs.transpose(0, 2, 1)).mean(axis=0)
+        # Cosine-normalize so boundary points with split soft responsibility do not
+        # inflate self-distance above threshold.
+        raw_sim = (cluster_probs @ cluster_probs.transpose(0, 2, 1)).mean(axis=0)
+        diag = jnp.sqrt(jnp.clip(jnp.diag(raw_sim), 1e-12, None))
+        similarity_matrix = jnp.clip(raw_sim / (diag[:, None] * diag[None, :]), 0.0, 1.0)
 
         # 4. Hierarchical Clustering
         distance_matrix = 1 - similarity_matrix
@@ -369,9 +433,34 @@ class dpmm:
         condensed_dist = squareform(distance_matrix)
         Z = linkage(condensed_dist, linkage_method)
         
-        # Cut tree
+        # Cut tree and consolidate unbacked boundary fragments
         final_labels = fcluster(Z, t=threshold, criterion='distance')
-        print(f"Model found {len(np.unique(final_labels))} clusters.")
+        unique_l = np.unique(final_labels)
+        if len(unique_l) > 1:
+            probs_np = np.asarray(cluster_probs, dtype=float)  # (S, N, T)
+            sim_np = np.asarray(similarity_matrix, dtype=float)
+            # M[s, m, k] = total soft mass assigned to cluster m by component k in draw s
+            M = np.stack([probs_np[:, final_labels == l, :].sum(axis=1) for l in unique_l], axis=1)  # (S, M_clust, T)
+            k_star = M.argmax(axis=2)  # (S, M_clust): primary component generating cluster m
+            m_star = M.argmax(axis=1)  # (S, T): primary cluster owning component k
+            owns_primary = (np.take_along_axis(m_star, k_star, axis=1) == np.arange(len(unique_l))[None, :])
+            own_frac = owns_primary.mean(axis=0)
+            backed_idx = np.where(own_frac >= 0.5)[0]
+            if backed_idx.size == 0:
+                backed_idx = np.array([int(np.argmax(own_frac))])
+            if backed_idx.size < len(unique_l):
+                backed_labels = unique_l[backed_idx]
+                # Mean similarity of every data point to each backed cluster
+                mean_sim_to_backed = np.column_stack([
+                    sim_np[:, final_labels == bl].mean(axis=1) for bl in backed_labels
+                ])
+                unbacked_mask = ~np.isin(final_labels, backed_labels)
+                final_labels = final_labels.copy()
+                final_labels[unbacked_mask] = backed_labels[mean_sim_to_backed[unbacked_mask].argmax(axis=1)]
+                _, final_labels = np.unique(final_labels, return_inverse=True)
+                final_labels = final_labels + 1
+        if verbose:
+            print(f"Model found {len(np.unique(final_labels))} clusters.")
 
         # NOTE: We return the RAW samples, not the means. 
         # Averaging parameters (mu_mean) destroys information if chains swapped labels.
@@ -494,7 +583,7 @@ class dpmm:
                 ``[0.5, 0.9]`` or ``[0.25, 0.5, 0.75, 0.95]``. Values are
                 probabilities in ``(0, 1)``; one nested ellipse is drawn per
                 level (largest level solid, others dashed). Defaults to
-                :data:`DEFAULT_CREDIBLE` (ten nested levels, 5%-95%).
+                :data:`DEFAULT_CREDIBLE` (four nested levels, 25% to 95%).
             show_density: If True, overlay the posterior-predictive density
                 with explicit *relative* levels (no misleading ``0.00``).
             density_levels: Number of relative density levels when
@@ -506,6 +595,13 @@ class dpmm:
             threshold: Distance threshold for consensus clustering cut.
             linkage_method: Linkage criterion ('average', 'complete', etc.).
         """
+        data = np.asarray(data)
+        if data.ndim != 2 or data.shape[1] != 2:
+            raise ValueError("dpmm.plot: plot requires 2-D data with D=2 "
+                             f"features (got shape {data.shape}).")
+        if data.shape[0] < 2:
+            raise ValueError("dpmm.plot: plot requires at least 2 data points "
+                             f"(got {data.shape[0]}).")
         (w_samps, mu_samps, sigma_samps, Lcorr_samps,
          final_labels, cluster_probs) = self.predict(data, sampler,
                                                      return_probs=True,
@@ -522,8 +618,8 @@ class dpmm:
                                           np.asarray(Lcorr_samps, dtype=float))
         probs = np.asarray(cluster_probs, dtype=float)
         data = np.asarray(data, dtype=float)
-        # Ellipse floor for tiny clusters: a quarter of the data's scale.
-        floor_std = 0.25 * float(np.sqrt(
+        # Ellipse floor for tiny clusters: a small fraction of the data's scale.
+        floor_std = 0.05 * float(np.sqrt(
             np.trace(np.cov(data.T)) / data.shape[1]))
 
         plt.style.use('seaborn-v0_8-whitegrid')
@@ -581,11 +677,14 @@ class dpmm:
             # overlapping blobs) holds part of every neighbour's mass; letting
             # it contribute stretches each neighbour's ellipse across the
             # whole band it covers.
-            exclusive = mass >= 0.5 * mass_all
+            exclusive = (mass >= 0.5 * mass_all) & (
+                mass >= 0.2 * mass.sum(axis=-1, keepdims=True)
+            )
             if exclusive.any():
                 mass = np.where(exclusive, mass, 0.0)
-            # else: fully ambiguous cluster (e.g. a stray point) -> keep the
-            # raw mass so its region still reflects the components covering it.
+            else:
+                top = mass >= 0.5 * mass.max(axis=-1, keepdims=True)
+                mass = np.where(top, mass, 0.0)
             # Anchor the moment matching on the cluster's own centroid so the
             # ellipse measures the spread of the components around the cluster,
             # not the distance between every component the cluster's mass
@@ -595,8 +694,9 @@ class dpmm:
                                                 anchor=data[mask].mean(axis=0))
             # Never draw an ellipse much wider than the cluster's own points.
             if spread_cap is not None:
+                cap_eff = min(spread_cap, 1.25) if int(mask.sum()) < 10 else spread_cap
                 cov_c = self._cap_covariance(
-                    cov_c, data[mask], cap=spread_cap, floor_std=floor_std)
+                    cov_c, data[mask], cap=cap_eff, floor_std=floor_std)
 
             vals, vecs = np.linalg.eigh(cov_c)
             order = np.argsort(vals)[::-1]

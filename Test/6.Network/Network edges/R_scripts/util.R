@@ -212,3 +212,37 @@ print_priors <- function(BF_data) {
   cat("    prior_random_mean_sigma=", BF_data$prior_random_mean_sigma, "\n")
   cat("    prior_random_std_sigma =", BF_data$prior_random_std_sigma, "\n")
 }
+
+# Restored from ff68bb35^ (dropped in test refactor)
+center_undirected_random_effects <- function(draws, BF_data) {
+  if (as.numeric(BF_data$directed) == 1) return(draws)
+  if (as.numeric(BF_data$num_random_groups) < 2) return(draws)
+  g1_key <- "random_group_mu[1]"
+  g2_key <- "random_group_mu[2]"
+  if (!all(c(g1_key, g2_key) %in% names(draws))) return(draws)
+  offset <- (draws[[g1_key]] - draws[[g2_key]]) / 2
+  grp_idx <- BF_data$random_group_index
+  for (r in seq_along(grp_idx)) {
+    br_k <- paste0("beta_random[", r, "]")
+    if (br_k %in% names(draws)) {
+      if (grp_idx[r] == 1) draws[[br_k]] <- draws[[br_k]] - offset
+      else                  draws[[br_k]] <- draws[[br_k]] + offset
+    }
+  }
+  mu_shared <- (draws[[g1_key]] + draws[[g2_key]]) / 2
+  draws[[g1_key]] <- mu_shared
+  draws[[g2_key]] <- mu_shared
+  draws
+}
+
+# cmdstanr's $sample() sometimes fails right after all chains finish, while reading
+# the chain CSVs back ("abind ... dims=0"): one chain is read with zero draws.
+# The cause is intermittent and not reproducible in isolation, so retry the fit.
+sample_with_retry <- function(model, ..., max_tries = 3) {
+  for (k in seq_len(max_tries)) {
+    res <- tryCatch(model$sample(...), error = function(e) e)
+    if (!inherits(res, "error")) return(res)
+    cat(sprintf("  Stan sample failed (try %d/%d): %s\n", k, max_tries, conditionMessage(res)))
+  }
+  stop(res)
+}

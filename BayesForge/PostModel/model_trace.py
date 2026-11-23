@@ -124,8 +124,15 @@ def _param_leaves(d):
     """(names, leaves) of a distribution's parameters, wrappers included.
 
     The names come from the innermost distribution's ``arg_constraints``;
-    leaves that do not map onto a named argument (wrapper state) are dropped
-    from the names list but still traced for dependencies.
+    leaves that do not map onto a named argument (wrapper state, transform
+    parameters, pytree fallback) are dropped from the names list but still
+    traced for dependencies. Anonymous ``arg0``-style names used to leak into
+    the LaTeX as placeholder labels, so fallback leaves stay unnamed (m15/m19).
+
+    Parameters held by the ``transforms`` of a ``TransformedDistribution``
+    (e.g. ``AffineTransform(loc=f(sigma), ...)``) are appended to ``leaves``
+    — unnamed, because they are not arguments of the base distribution — so
+    their site dependencies are no longer lost silently (m19).
     """
     base = _base_dist(d)
     names, leaves = [], []
@@ -139,15 +146,30 @@ def _param_leaves(d):
             continue
         names.append(k)
         leaves.append(v)
+    # Transform parameters along the wrapper chain (m19).
+    obj = d
+    while (obj is not None and type(obj).__name__ in _WRAPPERS
+           and hasattr(obj, "base_dist")):
+        for t in (getattr(obj, "transforms", None) or ()):
+            for attr, val in getattr(t, "__dict__", {}).items():
+                if attr.startswith("_"):
+                    continue
+                try:
+                    a = jnp.asarray(val)
+                except Exception:
+                    continue
+                if getattr(a, "dtype", None) == object:
+                    continue
+                leaves.append(val)
+        obj = obj.base_dist
     if not leaves:
-        # Fall back to the pytree leaves of the whole distribution.
+        # Fall back to the pytree leaves of the whole distribution — traced
+        # for dependencies only, never named (m15/m19).
         try:
             flat = jax.tree_util.tree_flatten(d)[0]
         except Exception:
             flat = []
-        for i, v in enumerate(flat):
-            names.append(f"arg{i}")
-            leaves.append(v)
+        leaves.extend(flat)
     return names, leaves
 
 
@@ -164,6 +186,12 @@ def _split_data(data):
             static[k] = v
             continue
         if a.dtype == object:
+            static[k] = v
+        elif a.ndim == 0:
+            # numpy scalars (np.int64(5), np.float32(1.)) stay static like
+            # Python scalars: as traced 0-d arrays they break `range(N)` and
+            # shape expressions in the second pass, leaving the graph with no
+            # edges (m20).
             static[k] = v
         else:
             arrays[k] = a
@@ -229,6 +257,23 @@ class ModelTrace:
 
 
 def trace_model(model, data=None, seed=0):
+    """Run ``model`` (twice: forward run, then dependency tracing) and return
+    its structure; see :func:`_trace_model` for the details.
+
+    RELEASE_AUDIT X15: ``sample=True`` sites inside the model draw from the
+    shared RNG streams. This inspection must not advance them, or a script
+    with an ``m.graph()`` / ``m.latex()`` call would draw different data
+    afterwards: every live stream is snapshotted and restored.
+    """
+    from BayesForge.Utils.rng import RNG as _RNG
+    streams = _RNG.snapshot_streams()
+    try:
+        return _trace_model(model, data=data, seed=seed)
+    finally:
+        _RNG.restore_streams(streams)
+
+
+def _trace_model(model, data=None, seed=0):
     """Run ``model`` once and return its exact structure as a :class:`ModelTrace`.
 
     Args:
@@ -237,7 +282,27 @@ def trace_model(model, data=None, seed=0):
         data: dict of model arguments (typically ``m.data_on_model``).
         seed: seed for the single forward run.
     """
+    # m20: guide malformed `data` to a readable error instead of letting a
+    # raw TypeError/AttributeError surface from the tracing internals.
+    if data is not None and not isinstance(data, dict):
+        raise TypeError(
+            "model_trace: `data` must be a mapping of model argument names to "
+            f"values (typically m.data_on_model), got {type(data).__name__}.")
     data = dict(data or {})
+    try:
+        params = inspect.signature(model).parameters
+    except (TypeError, ValueError):
+        params = None  # R/Julia models exposed to Python: no Python signature
+    if (params is not None
+            and not any(p.kind is inspect.Parameter.VAR_KEYWORD
+                        for p in params.values())):
+        unexpected = sorted(k for k in data if k not in params)
+        if unexpected:
+            raise ValueError(
+                f"model_trace: `data` keys {unexpected} are not arguments of "
+                f"'{getattr(model, '__name__', 'the model')}'; its arguments "
+                f"are {sorted(params)}. Pass only model arguments "
+                "(e.g. m.data_on_model).")
     code = _model_code(model)
 
     # 1. Forward run: sites, distributions, shapes, plates, source lines,

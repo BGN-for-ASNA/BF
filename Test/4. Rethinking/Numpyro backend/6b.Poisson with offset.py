@@ -5,6 +5,13 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (offset version, defined as
+# `model_offset` on the page). Same model and priors as the script's old copy:
+# a ~ normal(3, 0.5), b ~ normal(0, 0.2), hours as exposure offset.
+PAGE_MODEL = doc_model("8. Poisson mode with offset.qmd", 0, name="model_offset")
 
 model_name = "6b.Poisson with offset"
 
@@ -31,11 +38,7 @@ m.data_on_model = dict(
     total_tools=jnp.array(total_tools, dtype=jnp.int32),
 )
 
-def model_BF(cid, population, hours, total_tools):
-    a = m.dist.normal(3, 0.5, shape=(2,), name='a')
-    b = m.dist.normal(0, 0.2, shape=(2,), name='b')
-    l = hours * jnp.exp(a[cid] + b[cid] * population)
-    m.dist.poisson(l, obs=total_tools)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -97,11 +100,7 @@ def estimate(cid, population, hours, a_true, b_true):
         'hours': jnp.array(hours),
         'total_tools': jnp.array(total_tools_sim, dtype=jnp.int32),
     }
-    def model_rec(cid, population, hours, total_tools):
-        a = m_rec.dist.normal(3, 0.5, shape=(2,), name='a')
-        b = m_rec.dist.normal(0, 0.2, shape=(2,), name='b')
-        l = hours * jnp.exp(a[cid] + b[cid] * population)
-        m_rec.dist.poisson(l, obs=total_tools)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
@@ -122,6 +121,7 @@ def param_recovery(cid, population, hours, a_sims, b_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Simulated truths drawn from the page priors: a ~ normal(3, 0.5), b ~ normal(0, 0.2)
 a_sims = np.random.normal(3, 0.5, size=(nsim_test, 2))
 b_sims = np.random.normal(0, 0.2, size=(nsim_test, 2))
 

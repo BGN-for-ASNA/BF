@@ -1,29 +1,29 @@
 Comparison Table for 2.Categorical variable
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-     a[1]  0.3494    0.3478  0.0017 0.0731
-     a[0] -0.4665   -0.4597 -0.0068 0.0888
-     s[0]  0.8016    0.8031 -0.0016 0.0470
-     a[2]  0.6430    0.6355  0.0075 0.0726
-     a[3] -0.5426   -0.5418 -0.0008 0.0730
+     a[0] -0.4642   -0.4630 -0.0011 0.0458
+     a[1]  0.3493    0.3551 -0.0058 0.0782
+     a[2]  0.6339    0.6421 -0.0082 0.0609
+     s[0]  0.8036    0.8001  0.0036 0.0423
+     a[3] -0.5447   -0.5539  0.0091 0.0489
 ============================================================
 
 ================================================================
 WAIC cross-check  -  2.Categorical variable
 ================================================================
 [A] TFP native (JointDistributionCoroutine replay)
-      elpd_waic = -36.292789    p_waic = 3.531688
+      elpd_waic = -36.273160    p_waic = 3.445454
 [B] NumPyro log_likelihood on same draws (== ArviZ machinery)
-      elpd_waic = -36.292788    p_waic = 3.531688
-|delta elpd_waic| = 8.494e-07      |delta p_waic| = 0.000e+00
+      elpd_waic = -36.273160    p_waic = 3.445454
+|delta elpd_waic| = 4.098e-08      |delta p_waic| = 0.000e+00
 RESULT: PASS   (S=4000, N=29)
 ----------------------------------------------------------------
 LOO cross-check  -  2.Categorical variable
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -36.378501    p_loo  = 3.617412
+      elpd_loo  = -36.364191    p_loo  = 3.536485
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -36.378789    p_loo  = 3.617698
-|delta elpd_loo| = 2.882e-04      |delta p_loo| = 2.867e-04
+      elpd_loo  = -36.363505    p_loo  = 3.535808
+|delta elpd_loo| = 6.865e-04      |delta p_loo| = 6.766e-04
 RESULT: PASS
 ================================================================

@@ -1,30 +1,74 @@
-#%%
-"""This script generates Python code examples from docstrings of distribution classes in the BF library.
-It uses the `ollama` model to extract code examples and save them in a Python file for testing.
-The generated code examples are designed to be compatible with JAX and the BF library's distribution methods.
-The script also handles potential errors during the execution of the generated code examples.
+"""Generate the smoke-test file for the BayesForge distribution examples.
+
+For every ``m.dist.<name>`` method this script asks the local ``ollama`` model
+to extract the code example from its docstring, then writes one pytest function
+per method to ``Test/1.Distributions/test_generated_dists.py`` (B-3: the output
+path is resolved from this script, never from the current directory).
+
+Each generated test runs its example *and* checks the structure of what the
+example produced (B-4): it must exercise the distribution it belongs to, define
+at least one variable, and bind no variable to ``None``. These are smoke tests,
+not behavioural validation — no density, quantile or sample statistic is
+compared against a reference.
+
+Importing this module has no side effects: it neither imports BayesForge nor
+reaches ollama, so the helpers can be inspected and the rendered source checked
+without a GPU or a model. Run it as a script to rebuild the test file.
 """
-import json
-import ollama
-import inspect
-import os
-import sys
-newPath = os.path.dirname(os.path.abspath(""))
-if newPath not in sys.path:
-    sys.path.append(newPath)
-from BayesForge import bf
-m = bf(platform='cpu')
-dist_classes = {}
-for name in dir(m.dist):
-    obj = getattr(m.dist, name)
-    if (
-        obj and not name.startswith("_")
-        and name not in ["Distribution", "ExpandedDistribution", "TransformedDistribution", "IndependentDistribution"]
-    ):
-        dist_classes[name] = obj
-dist_classes
-#%%
+import argparse
+import textwrap
+from pathlib import Path
+
+# Every path is resolved from this file, never from the current directory
+# (B-5): Build_test_file.py lives at <repo>/BayesForge/Build/, so parents[0]
+# is Build, parents[1] is BayesForge and parents[2] is the repo root.
+_HERE = Path(__file__).resolve()
+BUILD_DIR = _HERE.parents[0]
+REPO_ROOT = _HERE.parents[2]
+TEST_PATH = REPO_ROOT / "Test/1.Distributions/test_generated_dists.py"
+
+# Names on ``dir(m.dist)`` that are plumbing, not distributions.
+EXCLUDED = (
+    "Distribution",
+    "ExpandedDistribution",
+    "TransformedDistribution",
+    "IndependentDistribution",
+)
+
+# B-6: helpers of the ``m.dist`` facade that are callable but return no
+# distribution; the LLM would only invent an example for them.
+NON_DISTRIBUTION = frozenset({"mask", "plate", "normalize_seed"})
+
+
+def collect_dist_methods(dist):
+    """Return the ``m.dist`` methods that build distributions (B-6).
+
+    ``dir(m.dist)`` also yields plumbing (``mask``, ``plate``,
+    ``normalize_seed``), private attributes and non-callable class
+    attributes; only public callables outside the exclusion lists are kept,
+    so no example is invented for a helper.
+    """
+    methods = {}
+    for name in dir(dist):
+        obj = getattr(dist, name, None)
+        if name.startswith("_") or not callable(obj):
+            continue
+        if name in EXCLUDED or name in NON_DISTRIBUTION:
+            continue
+        methods[name] = obj
+    return methods
+
+
 def generate_code_example(docstring):
+    """Extract the code example of one docstring with the local LLM."""
+    try:
+        import ollama
+    except ImportError as exc:  # pragma: no cover - depends on the machine
+        raise ImportError(
+            "Build_test_file needs the 'ollama' package to extract the code "
+            "examples from the docstrings."
+        ) from exc
+
     prompt = f"""
     Given the following python docstring extract the code example from it.
     remove the following lines:
@@ -34,7 +78,6 @@ def generate_code_example(docstring):
     Return only the code example, do not wrap it in a code block.
     {docstring}
     """
-
 
     response = ollama.chat(
         model='gemma3:12b',
@@ -51,34 +94,118 @@ def generate_code_example(docstring):
     return response['message']['content']
 
 
-#%%
-test = {}
-for name, doc in dist_classes.items():
-    print(f"Generating code example for {name}")
-    test[name] = generate_code_example(dist_classes[name].__doc__)
+def build_examples(methods):
+    """Extract one code example per distribution method.
 
-#%%
-with open("test.py", "w") as file:
-    file.write(
+    B-6: a method whose ``__doc__`` is missing is skipped with a printed
+    notice, instead of sending the string ``"None"`` to the LLM (which would
+    answer with an invented example).
+    """
+    examples = {}
+    for name, method in methods.items():
+        doc = getattr(method, "__doc__", None)
+        if not doc:
+            print(f"Skipping {name}: no docstring to extract an example from")
+            continue
+        print(f"Generating code example for {name}")
+        examples[name] = generate_code_example(doc)
+    return examples
+
+
+HEADER = '''"""Smoke tests for the BayesForge distribution examples.
+
+One test per ``m.dist`` method: it runs the code example stored in the method
+docstring and checks that the example is structurally sound (it exercises the
+right distribution, defines a variable, binds nothing to ``None``).
+
+These are smoke tests, NOT behavioural validation: no density, quantile or
+sample statistic is compared against a reference value. See RELEASE_AUDIT.md,
+module Build, B-4.
+
+Generated by BayesForge/Build/Build_test_file.py; do not edit by hand.
 """
-import os
 import sys
-newPath = os.path.dirname(os.path.dirname(os.path.abspath("")))
-if newPath not in sys.path:
-    sys.path.append(newPath)
-from BayesForge import bf
-import jax.numpy as jnp
-m = bf(platform='cpu')
-erros = []
-"""
-)
+import textwrap
+from pathlib import Path
 
-    for name, doc in test.items():
-        file.write(f"try:\n")
-        file.write(f"    {test[name]}\n")
-        file.write(f"except Exception as e:\n")
-        file.write(f"    print(f'Error in {name}: {{e}}')\n")
-        file.write(f"    erros.append(f'Error in {name}: {{e}}')\n")
-        file.write(f"\n")
-        
-    file.write(f"print(erros):\n")
+import jax.numpy as jnp
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from BayesForge import bf
+
+_erros = []
+
+
+@pytest.fixture(scope="module")
+def m():
+    return bf(platform='cpu')
+
+
+def _run_example(name, example):
+    """Run one documented example and check what it produced."""
+    namespace = {"jnp": jnp}
+    keys = set(namespace)
+    exec(compile(textwrap.dedent(example), f"<example {name}>", "exec"), namespace)
+    defined = {
+        key: value
+        for key, value in namespace.items()
+        if key not in keys and not key.startswith("_")
+    }
+    assert defined, f"example for {name} defines no variable"
+    for key, value in defined.items():
+        assert value is not None, f"example for {name} bound {key} to None"
+    return defined
+'''
+
+
+def _literal(example):
+    """Return ``example`` as a valid Python triple-quoted string literal."""
+    return '"""' + example.replace("\\", "\\\\").replace('"""', '\\"\\"\\"') + '"""'
+
+
+def build_test_source(examples):
+    """Render the generated test file from ``{name: code example}``."""
+    lines = [HEADER]
+    for name, example in examples.items():
+        example = textwrap.dedent(str(example)).strip()
+        example = "\n".join(
+            line for line in example.split("\n") if not line.startswith("```")
+        ).strip()
+        if not example:
+            continue
+        lines.append(f"def test_{name}():\n")
+        lines.append(f'    """Example extracted from ``m.dist.{name}``."""\n')
+        lines.append(f"    example = {_literal(example)}\n")
+        lines.append(f'    assert "{name}" in example, "example does not use {name}"\n')
+        lines.append(f"    _run_example('{name}', example)\n\n")
+    return "".join(lines)
+
+
+def write_test_file(examples, out_path=TEST_PATH):
+    """Write the generated tests to ``out_path`` and verify that it compiles."""
+    out_path = Path(out_path)
+    source = build_test_source(examples)
+    compile(source, str(out_path), "exec")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(source, encoding="utf-8")
+    print(f"Successfully generated '{out_path}'")
+    return out_path
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Generate the smoke tests for the BayesForge distributions.",
+    )
+    parser.add_argument("--out", default=str(TEST_PATH), help="test file to write")
+    args = parser.parse_args(argv)
+
+    from BayesForge import bf
+
+    dist = bf(platform='cpu').dist
+    write_test_file(build_examples(collect_dist_methods(dist)), args.out)
+
+
+if __name__ == "__main__":
+    main()

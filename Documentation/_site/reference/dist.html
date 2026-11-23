@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.5.57">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -21,9 +21,8 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +33,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -67,18 +66,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <link href="../reference/diag.html" rel="next">
 <link href="../reference/data.html" rel="prev">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9f30c2c2d2429ed22c1cf9f617479b3b.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5cc8395b10573f07cfedf58f7a45f761.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-785e6f9f9cefe4638bba3361deac6afc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -225,167 +223,7 @@ window.Quarto = {
 <link rel="stylesheet" href="../MyStyles_v1.css">
 </head>
 
-<body class="nav-sidebar floating nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
-    const toggleBodyColorMode = (bsSheetEl) => {
-      const mode = bsSheetEl.getAttribute("data-mode");
-      const bodyEl = window.document.querySelector("body");
-      if (mode === "dark") {
-        bodyEl.classList.add("quarto-dark");
-        bodyEl.classList.remove("quarto-light");
-      } else {
-        bodyEl.classList.add("quarto-light");
-        bodyEl.classList.remove("quarto-dark");
-      }
-    }
-    const toggleBodyColorPrimary = () => {
-      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
-      if (bsSheetEl) {
-        toggleBodyColorMode(bsSheetEl);
-      }
-    }
-    const setColorSchemeToggle = (alternate) => {
-      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
-      for (let i=0; i < toggles.length; i++) {
-        const toggle = toggles[i];
-        if (toggle) {
-          if (alternate) {
-            toggle.classList.add("alternate");
-          } else {
-            toggle.classList.remove("alternate");
-          }
-        }
-      }
-    };
-    const toggleColorMode = (alternate) => {
-      // Switch the stylesheets
-      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
-      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
-      manageTransitions('#quarto-margin-sidebar .nav-link', false);
-      if (alternate) {
-        // note: dark is layered on light, we don't disable primary!
-        enableStylesheet(alternateStylesheets);
-        for (const sheetNode of alternateStylesheets) {
-          if (sheetNode.id === "quarto-bootstrap") {
-            toggleBodyColorMode(sheetNode);
-          }
-        }
-      } else {
-        disableStylesheet(alternateStylesheets);
-        enableStylesheet(primaryStylesheets)
-        toggleBodyColorPrimary();
-      }
-      manageTransitions('#quarto-margin-sidebar .nav-link', true);
-      // Switch the toggles
-      setColorSchemeToggle(alternate)
-      // Hack to workaround the fact that safari doesn't
-      // properly recolor the scrollbar when toggling (#1455)
-      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
-        manageTransitions("body", false);
-        window.scrollTo(0, 1);
-        setTimeout(() => {
-          window.scrollTo(0, 0);
-          manageTransitions("body", true);
-        }, 40);
-      }
-    }
-    const disableStylesheet = (stylesheets) => {
-      for (let i=0; i < stylesheets.length; i++) {
-        const stylesheet = stylesheets[i];
-        stylesheet.rel = 'disabled-stylesheet';
-      }
-    }
-    const enableStylesheet = (stylesheets) => {
-      for (let i=0; i < stylesheets.length; i++) {
-        const stylesheet = stylesheets[i];
-        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
-          stylesheet.rel = 'stylesheet';
-        }
-      }
-    }
-    const manageTransitions = (selector, allowTransitions) => {
-      const els = window.document.querySelectorAll(selector);
-      for (let i=0; i < els.length; i++) {
-        const el = els[i];
-        if (allowTransitions) {
-          el.classList.remove('notransition');
-        } else {
-          el.classList.add('notransition');
-        }
-      }
-    }
-    const isFileUrl = () => {
-      return window.location.protocol === 'file:';
-    }
-    const hasAlternateSentinel = () => {
-      let styleSentinel = getColorSchemeSentinel();
-      if (styleSentinel !== null) {
-        return styleSentinel === "alternate";
-      } else {
-        return false;
-      }
-    }
-    const setStyleSentinel = (alternate) => {
-      const value = alternate ? "alternate" : "default";
-      if (!isFileUrl()) {
-        window.localStorage.setItem("quarto-color-scheme", value);
-      } else {
-        localAlternateSentinel = value;
-      }
-    }
-    const getColorSchemeSentinel = () => {
-      if (!isFileUrl()) {
-        const storageValue = window.localStorage.getItem("quarto-color-scheme");
-        return storageValue != null ? storageValue : localAlternateSentinel;
-      } else {
-        return localAlternateSentinel;
-      }
-    }
-    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
-      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
-      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
-      let newTheme = '';
-      if(authorPrefersDark) {
-        newTheme = isAlternate ? baseTheme : alternateTheme;
-      } else {
-        newTheme = isAlternate ? alternateTheme : baseTheme;
-      }
-      const changeGiscusTheme = () => {
-        // From: https://github.com/giscus/giscus/issues/336
-        const sendMessage = (message) => {
-          const iframe = document.querySelector('iframe.giscus-frame');
-          if (!iframe) return;
-          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
-        }
-        sendMessage({
-          setConfig: {
-            theme: newTheme
-          }
-        });
-      }
-      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
-      if (isGiscussLoaded) {
-        changeGiscusTheme();
-      }
-    };
-    const authorPrefersDark = true;
-    const darkModeDefault = authorPrefersDark;
-    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
-    // Dark / light mode switch
-    window.quartoToggleColorScheme = () => {
-      // Read the current dark / light value
-      let toAlternate = !hasAlternateSentinel();
-      toggleColorMode(toAlternate);
-      setStyleSentinel(toAlternate);
-      toggleGiscusIfUsed(toAlternate, darkModeDefault);
-      window.dispatchEvent(new Event('resize'));
-    };
-    // Switch to dark mode if need be
-    if (hasAlternateSentinel()) {
-      toggleColorMode(true);
-    } else {
-      toggleColorMode(false);
-    }
-  </script>
+<body class="nav-sidebar floating nav-fixed">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -623,11 +461,10 @@ window.Quarto = {
   <li><a href="#zero_inflated_poisson" id="toc-zero_inflated_poisson" class="nav-link" data-scroll-target="#zero_inflated_poisson"><code>m.dist.zero_inflated_poisson</code></a></li>
   <li><a href="#zero_sum_normal" id="toc-zero_sum_normal" class="nav-link" data-scroll-target="#zero_sum_normal"><code>m.dist.zero_sum_normal</code></a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="dist.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
-
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -670,9 +507,11 @@ window.Quarto = {
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Asymmetric Laplace</strong> Samples from an Asymmetric Laplace distribution.</p>
 <p>The Asymmetric Laplace distribution is a generalization of the Laplace distribution, where the two sides of the distribution are scaled differently. It is defined by a location parameter (loc), a scale parameter (scale), and an asymmetry parameter (asymmetry).</p>
-<p>$$ f(x, ) &amp;= (-x),x\ &amp;= (x/),x&lt;0\</p>
-<p>for <span class="math inline">-\infty &lt; x &lt; \infty, \kappa &gt; 0`</span>.</p>
-<p>laplace_asymmetric takes ‘kappa’ as a shape parameter for <span class="math inline">\kappa</span>. For :<span class="math inline">\kappa = 1</span>, it is identical to a Laplace distribution. $$</p>
+<p><span class="math display">
+f(x, \kappa) = \begin{cases} \frac{1}{\kappa+\kappa^{-1}}\exp(-x\kappa),\quad x\ge0, \\ \frac{1}{\kappa+\kappa^{-1}}\exp(x/\kappa),\quad x&lt;0 \end{cases}
+</span></p>
+<p>for <span class="math inline">-\infty &lt; x &lt; \infty</span>, <span class="math inline">\kappa &gt; 0</span>.</p>
+<p>laplace_asymmetric takes ‘kappa’ as a shape parameter for <span class="math inline">\kappa</span>. For <span class="math inline">\kappa = 1</span>, it is identical to a Laplace distribution.</p>
 <p><strong>Args</strong> - <em>loc</em> (jnp.ndarray or float): Location parameter of the distribution.</p>
 <ul>
 <li><p><em>scale</em> (jnp.ndarray or float): Scale parameter of the distribution.</p></li>
@@ -768,8 +607,8 @@ X \sim \mathrm{Bernoulli}(p)
 <p><strong>Probability Mass Function (PMF)</strong> <span class="math display">
 P(X = x) =
 \begin{cases}
-p, &amp; \text{if } x = 1, \
-1 - p, &amp; \text{if } x = 0, \
+p, &amp; \text{if } x = 1, \\
+1 - p, &amp; \text{if } x = 0, \\
 0, &amp; \text{otherwise.}
 \end{cases}
 </span></p>
@@ -811,7 +650,9 @@ P(X = x) = p^x (1 - p)^{1 - x}, \quad x \in {0,1}.
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Bernoulli Logits</strong> Samples from a Bernoulli distribution parameterized by logits.</p>
 <p>The Bernoulli distribution models a single binary event (success or failure), parameterized by the log-odds ratio of success. The probability of success is given by the sigmoid function applied to the logit.</p>
-<p>$ p = () = $ where () is the log-odds (the <em>logit</em>).</p>
+<p><span class="math display">
+  p = \sigma(\eta) = \frac{1}{1 + e^{-\eta}}
+  </span> where () is the log-odds (the <em>logit</em>).</p>
 <p><strong>Args</strong> - <em>logits</em> (jnp.ndarray, optional): Log-odds ratio of success. Must be real-valued.</p>
 <ul>
 <li><p><em>shape</em> (tuple): A multi-purpose argument for shaping. When <code>sample=False</code> (model building), this is used with <code>shape</code> to set the distribution’s batch shape. When <code>sample=True</code> (direct sampling), this is used as <code>sample_shape</code> to draw a raw JAX array of the given shape.</p></li>
@@ -903,7 +744,7 @@ B(\alpha,\beta)=\frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha+\beta)}, \\F(x)
 <p><span class="math display">
 B(\alpha, \beta) = \int_0^1 x^{\alpha - 1} (1 - x)^{\beta - 1} , dx = \frac{\Gamma(\alpha),\Gamma (\beta)}{\Gamma(\alpha + \beta)}.
 </span></p>
-<p>where :num$` and <span class="math inline">\beta</span> are the concentration parameters, and <span class="math inline">B(x, y)</span> is the Beta function.</p>
+<p>where :num<span class="math inline">\alpha</span> and <span class="math inline">\beta</span> are the concentration parameters, and <span class="math inline">B(x, y)</span> is the Beta function.</p>
 <p><strong>Args</strong> - <em>concentration1</em> (jnp.ndarray): The first concentration parameter (shape parameter). Must be positive.</p>
 <ul>
 <li><p><em>concentration0</em> (jnp.ndarray): The second concentration parameter (shape parameter). Must be positive.</p></li>
@@ -1271,7 +1112,7 @@ y_i | \mathbf{y}*{-i} \sim \mathcal{N}\left( \frac{\sum*{j \in \mathcal{N}(i)} w
 <span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Categorical Logits</strong> Samples from a Categorical distribution with logits. This distribution represents a discrete probability distribution over a finite set of outcomes, where the probabilities are determined by the logits. The probability of each outcome is given by the softmax function applied to the logits.</p>
-<p>Given logits $ = (_1, , _K) $, the probability of each category $ i $ is:</p>
+<p>Given logits <span class="math inline">\gamma = (\gamma_1, \dots, \gamma_K)</span>, the probability of each category $ i $ is:</p>
 <p><span class="math display">
 p_i = \frac{e^{\gamma_i}}{\sum_{j=1}^{K} e^{\gamma_j}}
 </span></p>
@@ -1405,7 +1246,7 @@ P(x) = \frac{probs_i}{\sum_{k=1}^{K} probs_k}
 <p><strong>Chi-squared</strong> The Chi-squared distribution is a continuous probability distribution that arises frequently in hypothesis testing, particularly in ANOVA and chi-squared tests. It is defined by a single positive parameter, degrees of freedom (df), the number of independent standard normal variables squared and summed, which determines the shape of the distribution.</p>
 <p><span class="math display">   
 f(x; k) = \begin{cases}
-\frac{x^{\frac{k}{2} - 1} e^{-x/2}}{2^{\frac{k}{2}} \Gamma\left(\frac{k}{2}\right)}, &amp; x &gt; 0 \
+\frac{x^{\frac{k}{2} - 1} e^{-x/2}}{2^{\frac{k}{2}} \Gamma\left(\frac{k}{2}\right)}, &amp; x &gt; 0 \\
 0, &amp; \text{otherwise}
 \end{cases}
 </span></p>
@@ -1446,14 +1287,14 @@ f(x; k) = \begin{cases}
 <span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Circulant Normal Multivariate normal</strong> Circulant Normal Multivariate normal distribution with covariance matrix $<code>that is positive-definite and circulant [1], i.e., has periodic boundary conditions. The density of a sample $\mathbf{x}\in\mathbb{R}^n</code> is the standard multivariate normal density</p>
+<p><strong>Circulant Normal Multivariate normal</strong> Circulant Normal Multivariate normal distribution with covariance matrix <span class="math inline">\mathbf{C}</span> that is positive-definite and circulant <a href="https://en.wikipedia.org/wiki/Matrix_normal_distribution" title="Matrix normal distribution">1</a>, i.e., has periodic boundary conditions. The density of a sample <span class="math inline">\mathbf{x}\in\mathbb{R}^n</span> is the standard multivariate normal density</p>
 <p><span class="math display">
     p\left(\mathbf{x}\mid \mu,\mathbf{C}\right) =
     \frac{\left(\mathrm{det}\,\mathbf{C}\right)^{-1/2}}{\left(2\pi\right)^{n / 2}}
     \exp\left(-\frac{1}{2}\left(\mathbf{x}-\mu\right)^\intercal
     \mathbf{C}^{-1}\left(\mathbf{x}-\mu\right)\right),
 </span></p>
-<p>where $<code>denotes the determinant and $^\intercal$ the transpose. Circulant matrices can be diagnolized efficiently using the discrete Fourier transform [1], allowing the log likelihood to be evaluated in $n \log n</code> time for $n` observations <a href="https://statproofbook.github.io/P/matn-pdf.html" title="Probability density function of the matrix-normal distribution | The Book of Statistical Proofs">2</a>.</p>
+<p>where <span class="math inline">\mathrm{det}</span> denotes the determinant and <span class="math inline">^\intercal</span> the transpose. Circulant matrices can be diagnolized efficiently using the discrete Fourier transform <a href="https://en.wikipedia.org/wiki/Matrix_normal_distribution" title="Matrix normal distribution">1</a>, allowing the log likelihood to be evaluated in <span class="math inline">n \log n</span> time for <span class="math inline">n</span> observations <a href="https://statproofbook.github.io/P/matn-pdf.html" title="Probability density function of the matrix-normal distribution | The Book of Statistical Proofs">2</a>.</p>
 <ul>
 <li><p><em>loc:</em> Mean of the distribution <span class="math inline">\mu</span>.</p></li>
 <li><p><em>covariance_row:</em> First row of the circulant covariance matrix <span class="math inline">C</span>. Because of periodic boundary conditions, the covariance matrix is fully determined by its first row (see <code>jax.scipy.linalg.toeplitz</code> for further details).</p></li>
@@ -1465,7 +1306,7 @@ f(x; k) = \begin{cases}
 <p>References:</p>
 <ol type="1">
 <li><p>Wikipedia. (n.d.). Circulant matrix. Retrieved March 6, 2025, from https://en.wikipedia.org/wiki/Circulant_matrix</p></li>
-<li><p>Wood, A. T. A., &amp; Chan, G. (1994). Simulation of Stationary Gaussian Processes in $^d`. <em>Journal of Computational and Graphical Statistics</em>, 3(4), 409–432. https://doi.org/10.1080/10618600.1994.10474655</p></li>
+<li><p>Wood, A. T. A., &amp; Chan, G. (1994). Simulation of Stationary Gaussian Processes in <span class="math inline">\left[0, 1\right]^d</span>. <em>Journal of Computational and Graphical Statistics</em>, 3(4), 409–432. https://doi.org/10.1080/10618600.1994.10474655</p></li>
 </ol>
 <p><strong>Args</strong> - <em>loc</em> : jnp.ndarray Mean of the distribution <span class="math inline">\mu</span>.</p>
 <ul>
@@ -1502,7 +1343,7 @@ f(x; k) = \begin{cases}
 <p><span class="math display">   
 F(x) =
 \begin{cases}
-0, &amp; x &lt; a, \
+0, &amp; x &lt; a, \\
 1, &amp; x \ge a.
 \end{cases}
 </span></p>
@@ -1655,7 +1496,7 @@ def my_model(obs_data=None):
 <p><span class="math display">   
 P(X = k) = \frac{1}{high - low + 1}, \quad k \in \{low, low+1, ..., high\}
 </span></p>
-<p>Otherwise (if <span class="math inline">k</span> is outside the range), $ P(X = k) = 0 $.</p>
+<p>Otherwise (if <span class="math inline">k</span> is outside the range), <span class="math inline">P(X = k) = 0</span>.</p>
 <p><strong>Args</strong> - <em>low</em> (jnp.ndarray): The lower bound of the uniform range, inclusive.</p>
 <ul>
 <li><p><em>high</em> (jnp.ndarray): The upper bound of the uniform range, inclusive.</p></li>
@@ -1704,8 +1545,8 @@ P(X = k) = \frac{1}{high - low + 1}, \quad k \in \{low, low+1, ..., high\}
 <p>The probability density function (PDF) is defined as:</p>
 <p><span class="math display">
 f(x) = \begin{cases}
-\displaystyle \frac{(1-\alpha), x^{-\alpha}}{x_{\max}^{1-\alpha} - x_{\min}^{1-\alpha}}, &amp; \alpha \neq 1, ; x_{\min} \le x         \le x_{\max},\
-\displaystyle \frac{1}{x, \ln\left(x_{\max}/x_{\min}\right)}, &amp; \alpha = 1, ; x_{\min} \le x \le x_{\max},\
+\displaystyle \frac{(1-\alpha), x^{-\alpha}}{x_{\max}^{1-\alpha} - x_{\min}^{1-\alpha}}, &amp; \alpha \neq 1, ; x_{\min} \le x         \le x_{\max},\\
+\displaystyle \frac{1}{x, \ln\left(x_{\max}/x_{\min}\right)}, &amp; \alpha = 1, ; x_{\min} \le x \le x_{\max},\\
 0, &amp; \text{otherwise}.
 \end{cases}
 </span></p>
@@ -1759,7 +1600,7 @@ m.dist.doubly_truncated_power_law(low=0.1, high=10.0, alpha=2.0, sample=True)</p
 <p><span class="math display">
    dX_t = f(X_t, t) dt + g(X_t, t) dW_t
 </span></p>
-<p>where: - $X_t<code>is the state of the system at time $t</code>. - $f(X_t, t)<code>is the drift coefficient. - $g(X_t, t)</code> is the diffusion coefficient. - $dW_t` is a Wiener process (Brownian motion).</p>
+<p>where: - <span class="math inline">X_t</span> is the state of the system at time <span class="math inline">t</span>. - <span class="math inline">f(X_t, t)</span> is the drift coefficient. - <span class="math inline">g(X_t, t)</span> is the diffusion coefficient. - <span class="math inline">dW_t</span> is a Wiener process (Brownian motion).</p>
 <p><strong>Args</strong> - <em>t</em> (jnp.ndarray): Discretized time steps.</p>
 <ul>
 <li><p><em>sde_fn</em> (callable): A function that takes the current state and time as input and returns the drift and diffusion coefficients.</p></li>
@@ -1795,7 +1636,7 @@ m.dist.doubly_truncated_power_law(low=0.1, high=10.0, alpha=2.0, sample=True)</p
   F(x; \lambda) = 1 - e^{-\lambda x}
   </span></p>
 <p>Zhere ( &gt; 0 ) is the rate parameter (the mean is ( 1/)).</p>
-<p><strong>Args</strong> - <em>rate</em> (jnp.ndarray): The rate parameter, $`. Must be positive.</p>
+<p><strong>Args</strong> - <em>rate</em> (jnp.ndarray): The rate parameter, <span class="math inline">\lambda</span>. Must be positive.</p>
 <ul>
 <li><p><em>shape</em> (tuple): A multi-purpose argument for shaping. When <code>sample=False</code> (model building), this is used with <code>shape</code> to set the distribution’s batch shape. When <code>sample=True</code> (direct sampling), this is used as <code>sample_shape</code> to draw a raw JAX array of the given shape.</p></li>
 <li><p><em>event</em> (int): The number of batch dimensions to reinterpret as event dimensions (used in model building).</p></li>
@@ -2040,7 +1881,7 @@ Gamma: The raw BF distribution object (for advanced use cases).</code></pre>
 <span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Gaussian Random Walk</strong> Creates a distribution over a Gaussian random walk of a specified number of steps. This is a discrete-time stochastic process where the value at each step is the previous value plus a Gaussian-distributed increment. The distribution is over the entire path.</p>
-<p><strong>Args</strong> - <em>scale</em> (float, jnp.ndarray, optional): The standard deviation ($`) of the Gaussian increments. Must be positive. Defaults to 1.0.</p>
+<p><strong>Args</strong> - <em>scale</em> (float, jnp.ndarray, optional): The standard deviation (<span class="math inline">\sigma</span>) of the Gaussian increments. Must be positive. Defaults to 1.0.</p>
 <ul>
 <li><p>*num_steps (int, optional): The number of steps in the random walk, which determines the event shape of the distribution. Must be positive. Defaults to 1.</p></li>
 <li><p>*validate_args (bool, optional): Whether to enable validation of distribution parameters. Defaults to <code>None</code>.</p></li>
@@ -2638,7 +2479,7 @@ F(x; \mu, c) = \Pr(X \le x)
 <span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Lewandowski Kurowicka Joe (LKJ)</strong> The LKJ distribution is controlled by the concentration parameter <span class="math inline">\eta</span> to make the probability of the correlation matrix $M` proportional to <span class="math inline">\det(M)^{\eta - 1}</span>. When <span class="math inline">\eta = 1</span>, the distribution is uniform over correlation matrices. When <span class="math inline">\eta &gt; 1</span>, the distribution favors samples with large determinants. When <span class="math inline">\eta &lt; 1</span>, the distribution favors samples with small determinants.</p>
+<p><strong>Lewandowski Kurowicka Joe (LKJ)</strong> The LKJ distribution is controlled by the concentration parameter <span class="math inline">\eta</span> to make the probability of the correlation matrix <span class="math inline">M</span> proportional to <span class="math inline">\det(M)^{\eta - 1}</span>. When <span class="math inline">\eta = 1</span>, the distribution is uniform over correlation matrices. When <span class="math inline">\eta &gt; 1</span>, the distribution favors samples with large determinants. When <span class="math inline">\eta &lt; 1</span>, the distribution favors samples with small determinants.</p>
 <p><span class="math display">
      P(M) \propto |\det(M)|^{\eta - 1}
   </span></p>
@@ -2915,7 +2756,7 @@ cov_diag (jnp.ndarray): Diagonal elements of the covariance matrix.
 <p>For ( x x_{} &gt; 0 ): <span class="math display">
   f(x \mid \alpha, x_{\min}) = \frac{\alpha - 1}{x_{\min}} \left( \frac{x_{\min}}{x} \right)^{\alpha}
   </span></p>
-<p>where $ &gt; 1 $ is the shape (scaling) parameter.</p>
+<p>where <span class="math inline">\alpha &gt; 1</span> is the shape (scaling) parameter.</p>
 <p><strong>Args</strong> - <code>alpha</code> (jnp.ndarray): index of the power law distribution. Must be less than -1.</p>
 <ul>
 <li><p><code>low</code> (jnp.ndarray): lower bound of the distribution. Must be greater than 0.</p></li>
@@ -3039,7 +2880,9 @@ cov_diag (jnp.ndarray): Diagonal elements of the covariance matrix.
 <li>Component distributions (densities or PMFs) <span class="math inline">f_j(x \mid \theta_j)</span>, for <span class="math inline">j = 1,\dots,K</span>.</li>
 </ul>
 <p>Then the marginalised mixture distribution for an observed <span class="math inline">X</span> is:</p>
-<p>$$ p(X = x) = _{j=1}^K _j ; f_j(x _j). $</p>
+<p><span class="math display">
+  p(X = x) = \sum_{j=1}^K \pi_j ; f_j(x \mid \theta_j).
+  </span></p>
 <p>This is exactly the mixture density/PMF you get when you marginalise the latent component‑assignment variable <span class="math inline">Z \in {1,\dots,K}</span> out of the joint distribution:</p>
 <p><span class="math display">
   p(x) = \sum_{z=1}^K p(z = j); p(x \mid z = j) = \sum_{j=1}^K \pi_j ; f_j(x \mid \theta_j).
@@ -3189,7 +3032,11 @@ f_X(x) = \sum_{i=1}^K w_i ; f(x \mid \theta_i).
 </ul>
 <p>It reduces to the binomial when (k=2).</p>
 <p>PMF (Probability Mass Function):</p>
-<p>For <span class="math inline">\mathbf x = (x_1,\dots,x_k)</span> with each <span class="math inline">x_i \ge 0</span> integer and <span class="math inline">\sum_{i=1}^k x_i = n</span>, $$ (X_1 = x_1, , X_k = x_k) = ; p_1^{,x_1}; p_2^{,x_2} p_k^{,x_k}. $ If <span class="math inline">\sum_i x_i \neq n</span>, the probability is 0.</p>
+<p>For <span class="math inline">\mathbf x = (x_1,\dots,x_k)</span> with each <span class="math inline">x_i \ge 0</span> integer and <span class="math inline">\sum_{i=1}^k x_i = n</span>, <span class="math display">
+  \Pr(X_1 = x_1, \dots, X_k = x_k)
+  = \frac{n!}{x_1!,x_2!\cdots x_k!}
+  ; p_1^{,x_1}; p_2^{,x_2} \cdots p_k^{,x_k}.
+  </span> If <span class="math inline">\sum_i x_i \neq n</span>, the probability is 0.</p>
 <p><strong>Args</strong> - <em>total_count</em> (int or jnp.ndarray): The number of trials.</p>
 <ul>
 <li><p><em>probs</em> (jnp.ndarray, optional): Event probabilities. Must sum to 1.</p></li>
@@ -3369,11 +3216,11 @@ f_X(x) = \sum_{i=1}^K w_i ; f(x \mid \theta_i).
   </span></p>
 <p>where:</p>
 <ul>
-<li>$ () $ is the Gamma function.</li>
-<li>$ $ is the mean vector.</li>
-<li>$ $ is the scale (covariance) matrix.</li>
-<li>$ $ is the degrees of freedom.</li>
-<li>$ d $ is the dimensionality of $ $.</li>
+<li><span class="math inline">\Gamma(\cdot)</span> is the Gamma function.</li>
+<li><span class="math inline">\mu</span> is the mean vector.</li>
+<li><span class="math inline">\Sigma</span> is the scale (covariance) matrix.</li>
+<li><span class="math inline">\nu</span> is the degrees of freedom.</li>
+<li>$ d <span class="math inline">is the dimensionality of</span> $.</li>
 </ul>
 <p><strong>Args</strong> - <em>df</em> (jnp.ndarray): Degrees of freedom, must be positive.</p>
 <ul>
@@ -3613,15 +3460,15 @@ Negative Binomial Logits: The raw BF distribution object (for advanced use cases
 <span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb81-14"><a href="#cb81-14" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb81-15"><a href="#cb81-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Ordered Logistic</strong> The ordered logistic distribution is used for modeling <strong>ordinal</strong> outcome variables $ Y $ (i.e., categories with a natural order) via a latent continuous predictor $ $ and a set of increasing <em>cut-points</em> $ c_1 &lt; c_2 &lt; &lt; c_{K-1} $. When $ $ crosses thresholds, the observed <span class="math inline">Y</span></p>
-<p><strong>PMF (Probability Mass Function)</strong> Let $ R $ be the linear predictor (for example $ = x^$), let cutpoints $ c = (c_1, ,c_{K-1}) $ satisfy $ c_1 &lt; c_2 &lt; &lt; c_{K-1} $. Define also $ c_0 = -$, $ c_K = +$. Then for (k ), <span class="math display">
+<p><strong>Ordered Logistic</strong> The ordered logistic distribution is used for modeling <strong>ordinal</strong> outcome variables <span class="math inline">Y \in {1,2,\dots,K}</span> (i.e., categories with a natural order) via a latent continuous predictor <span class="math inline">\eta</span> and a set of increasing <em>cut-points</em> <span class="math inline">c_1 &lt; c_2 &lt; \cdots &lt; c_{K-1}</span>. When <span class="math inline">\eta</span> crosses thresholds, the observed <span class="math inline">Y</span></p>
+<p><strong>PMF (Probability Mass Function)</strong> Let <span class="math inline">\eta \in \mathbb R</span> be the linear predictor (for example <span class="math inline">\eta = x^\top \beta</span>), let cutpoints <span class="math inline">c = (c_1, \dots,c_{K-1})</span> satisfy <span class="math inline">c_1 &lt; c_2 &lt; \cdots &lt; c_{K-1}</span>. Define also <span class="math inline">c_0 = -\infty</span>, <span class="math inline">c_K = +\infty</span>. Then for (k ), <span class="math display">
   \Pr(Y = k \mid \eta, c) =
   \begin{cases}
   1 - \mathrm{logit}^{-1}(\eta - c_1), &amp; k = 1, [6pt]
   \mathrm{logit}^{-1}(\eta - c_{k-1}) - \mathrm{logit}^{-1}(\eta - c_{k}), &amp; 1 &lt; k &lt; K, [6pt]
   \mathrm{logit}^{-1}(\eta - c_{K-1}), &amp; k = K.
   \end{cases}
-  </span> Here $ ^{-1}(z) = $. (<a href="https://statproofbook.github.io/P/matn-pdf.html" title="Probability density function of the matrix-normal distribution | The Book of Statistical Proofs">Stan</a>) In other words: <span class="math display">
+  </span> Here <span class="math inline">\mathrm{logit}^{-1}(z) = \frac{1}{1 + e^{-z}}</span>. (<a href="https://statproofbook.github.io/P/matn-pdf.html" title="Probability density function of the matrix-normal distribution | The Book of Statistical Proofs">Stan</a>) In other words: <span class="math display">
   \Pr(Y \le k \mid \eta, c) = \mathrm{logit}^{-1}(\eta - c_k),
   </span> and so <span class="math display">
   \Pr(Y = k) = \Pr(Y \le k) - \Pr(Y \le k-1).
@@ -3663,14 +3510,14 @@ Negative Binomial Logits: The raw BF distribution object (for advanced use cases
 <p><strong>Pareto</strong> Samples from a Pareto distribution.</p>
 <p>The <strong>Pareto distribution</strong>, named after economist Vilfredo Pareto, is a <strong>power-law</strong> probability distribution used to describe phenomena with “rich-get-richer” or “heavy-tail” properties — for example, income distribution, city sizes, or wealth concentration. It is characterized by:</p>
 <ul>
-<li>a <strong>scale parameter</strong> $ x_m &gt; 0 $ (the minimum possible value), and</li>
-<li>a <strong>shape parameter</strong> $ &gt; 0 $ (which controls the tail heaviness).</li>
+<li>a <strong>scale parameter</strong> <span class="math inline">x_m &gt; 0</span> (the minimum possible value), and</li>
+<li>a <strong>shape parameter</strong> <span class="math inline">\alpha &gt; 0</span> (which controls the tail heaviness).</li>
 </ul>
-<p>A random variable $ X (, x_m) $ takes values $ x x_m $.</p>
+<p>A random variable <span class="math inline">X \sim \text{Pareto}(\alpha, x_m)</span> takes values <span class="math inline">x \ge x_m</span>.</p>
 <p><span class="math display">
   f(x \mid \alpha, x_m) =
   \begin{cases}
-  \dfrac{\alpha x_m^\alpha}{x^{\alpha + 1}}, &amp; x \ge x_m, \
+  \dfrac{\alpha x_m^\alpha}{x^{\alpha + 1}}, &amp; x \ge x_m, \\
   0, &amp; x &lt; x_m.
   \end{cases}
   </span></p>
@@ -3757,10 +3604,10 @@ Negative Binomial Logits: The raw BF distribution object (for advanced use cases
 <span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Poisson</strong> The <strong>Poisson distribution</strong> models the probability of observing a given number of events <span class="math inline">k</span> occurring in a fixed interval of time or space when these events happen independently and at a constant average rate $ &gt; 0 $. It is widely used for modeling <strong>count data</strong>, such as the number of emails received per hour or mutations in a DNA strand per unit length.</p>
+<p><strong>Poisson</strong> The <strong>Poisson distribution</strong> models the probability of observing a given number of events <span class="math inline">k</span> occurring in a fixed interval of time or space when these events happen independently and at a constant average rate <span class="math inline">\lambda &gt; 0</span>. It is widely used for modeling <strong>count data</strong>, such as the number of emails received per hour or mutations in a DNA strand per unit length.</p>
 <p>Formally, <span class="math display">
   K \sim \text{Poisson}(\lambda)
-  </span> where $ $ is both the <strong>mean</strong> and <strong>variance</strong> of the distribution.</p>
+  </span> where <span class="math inline">\lambda</span> is both the <strong>mean</strong> and <strong>variance</strong> of the distribution.</p>
 <p>The probability mass function (PMF) of the Poisson distribution is given by: <span class="math display">
   P(K = k \mid \lambda) =
   \frac{e^{-\lambda} \lambda^k}{k!},
@@ -3798,7 +3645,7 @@ Negative Binomial Logits: The raw BF distribution object (for advanced use cases
 <span id="cb85-12"><a href="#cb85-12" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb85-13"><a href="#cb85-13" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb85-14"><a href="#cb85-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Projected Normal</strong> The projected normal distribution arises by taking a multivariate normal vector $ X N_n (, ) $ in <span class="math inline">\mathbb R^n</span> and projecting it to the unit sphere. This distribution is commonly used in directional statistics (data on circles or spheres) and supports asymmetric and even multimodal behaviours depending on parameters.</p>
+<p><strong>Projected Normal</strong> The projected normal distribution arises by taking a multivariate normal vector <span class="math inline">\mathbf X \sim \mathcal N_n (\mu, \Sigma)</span> in <span class="math inline">\mathbb R^n</span> and projecting it to the unit sphere. This distribution is commonly used in directional statistics (data on circles or spheres) and supports asymmetric and even multimodal behaviours depending on parameters.</p>
 <p><strong>Args</strong> - <em>concentration</em> (jnp.ndarray): The concentration parameter, representing the direction towards which the samples are concentrated. Must be a JAX array with at least one dimension.</p>
 <ul>
 <li><p><em>shape</em> (tuple): A multi-purpose argument for shaping. When <code>sample=False</code> (model building), this is used with <code>shape</code> to set the distribution’s batch shape. When <code>sample=True</code> (direct sampling), this is used as <code>sample_shape</code> to draw a raw JAX array of the given shape.</p></li>
@@ -3891,7 +3738,7 @@ p_{,\alpha,;\lambda}(x) =
 u \sim \mathrm{Uniform}(0,1),\quad
 g = -\log(-\log(u)),\quad
 x = \sigma\big((\ell + g)/\tau\big)
-</span> where $ () $ is the logistic (sigmoid) function. Then <span class="math inline">x \in (0,1)</span> has the RelaxedBernoulli distribution.</p>
+</span> where <span class="math inline">\sigma(\cdot)</span> is the logistic (sigmoid) function. Then <span class="math inline">x \in (0,1)</span> has the RelaxedBernoulli distribution.</p>
 <p>The exact density formula can be derived via change of variables from logistic/Gumbel, but is somewhat involved (including Jacobian of sigmoid transform).</p>
 <p><strong>Args</strong> - <em>temperature</em> (jnp.ndarray): The temperature parameter, must be positive.</p>
 <ul>
@@ -3933,7 +3780,7 @@ x = \sigma\big((\ell + g)/\tau\big)
 <p>If the original probability density function is <code>f(x)</code> and the cumulative distribution function is <code>F(x)</code>, and the distribution is right-truncated at a value <code>b</code> (meaning <code>x ≤ b</code>), the new PDF, <code>f_T(x)</code>, is: <span class="math display">
   f_{\rm trunc}(x \mid X \le b) =
   \begin{cases}
-  \displaystyle \frac{,f(x),}{,F(b),}, &amp; x \le b, \
+  \displaystyle \frac{,f(x),}{,F(b),}, &amp; x \le b, \\
   0, &amp; x &gt; b.
   \end{cases}
   </span></p>
@@ -4117,13 +3964,13 @@ def my_model():
 <span id="cb93-14"><a href="#cb93-14" aria-hidden="true" tabindex="-1"></a>    create_obj<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb93-15"><a href="#cb93-15" aria-hidden="true" tabindex="-1"></a>    to_jax<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb93-16"><a href="#cb93-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Student’s t</strong> The Student’s t-distribution is a probability distribution that arises in hypothesis testing involving the mean of a normally distributed population when the population standard deviation is unknown. It is similar to the normal distribution, but has heavier tails, making it more robust to outliers. For large $ $, it converges to the Normal distribution. <span class="math display">
+<p><strong>Student’s t</strong> The Student’s t-distribution is a probability distribution that arises in hypothesis testing involving the mean of a normally distributed population when the population standard deviation is unknown. It is similar to the normal distribution, but has heavier tails, making it more robust to outliers. For large <span class="math inline">\nu</span>, it converges to the Normal distribution. <span class="math display">
   X \sim t_\nu(\mu, \sigma)
   </span> where:</p>
 <ul>
-<li>$ $ is the <strong>location (mean)</strong> parameter</li>
-<li>$ &gt; 0 $ is the <strong>scale</strong> parameter</li>
-<li>$ &gt; 0 $ is the <strong>degrees of freedom</strong> controlling the tail heaviness</li>
+<li><span class="math inline">\mu</span> is the <strong>location (mean)</strong> parameter</li>
+<li><span class="math inline">\sigma &gt; 0</span> is the <strong>scale</strong> parameter</li>
+<li><span class="math inline">\nu &gt; 0</span> is the <strong>degrees of freedom</strong> controlling the tail heaviness</li>
 </ul>
 <p>The probability density function (pdf) of the Student’s t distribution is: <span class="math display">
   f(x \mid \nu, \mu, \sigma) = \frac{\Gamma!\left(\frac{\nu+1}{2}\right)}
@@ -4134,7 +3981,7 @@ def my_model():
   </span></p>
 <ul>
 <li>The heavier tails (for small <span class="math inline">ν</span>) allow for larger outliers.</li>
-<li>For $ $, this approaches $ (, ^2) $.</li>
+<li>For <span class="math inline">\nu \to \infty</span>, this approaches <span class="math inline">\mathcal{N}(\mu, \sigma^2)</span>.</li>
 </ul>
 <p><strong>Args</strong> - <em>df</em> (jnp.ndarray): Degrees of freedom, must be positive.</p>
 <ul>
@@ -4306,7 +4153,7 @@ f_Y(y) = \frac{1}{\sigma} ; \frac{\varphi!\bigl(\frac{y - \mu}{\sigma}\bigr)}{\P
 <ul>
 <li><span class="math inline">\varphi(z)</span> is the standard normal PDF, <span class="math inline">\varphi(z) = \frac1{\sqrt{2\pi}} e^{-z^2/2}</span>.</li>
 <li><span class="math inline">\Phi(z)</span> is the standard normal CDF.</li>
-<li>The denominator $ () - () $ normalises the density so the total probability over ([a,b]) is 1.</li>
+<li>The denominator <span class="math inline">\Phi\bigl(\tfrac{b - \mu}{\sigma}\bigr) - \Phi\bigl(\tfrac{a - \mu}{\sigma}\bigr)</span> normalises the density so the total probability over ([a,b]) is 1.</li>
 </ul>
 <p>For values (y &lt; a) or (y &gt; b), (f_Y(y) = 0).</p>
 <p><strong>Args</strong> - <em>loc</em> (float): The location parameter of the normal distribution.</p>
@@ -4710,12 +4557,12 @@ f(x \mid \lambda, k) =
 <span id="cb108-17"><a href="#cb108-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Zero-Inflated Negative Binomial</strong> A Zero-Inflated Negative Binomial distribution is used for count data that exhibit <strong>both</strong> (a) over-dispersion relative to a Poisson (i.e., variance &gt; mean) <em>and</em> (b) an excess of zero counts beyond what a standard Negative Binomial would predict. It assumes two latent processes:</p>
 <ol type="1">
-<li>With probability $ $ (sometimes denoted <span class="math inline">\psi</span> or “zero-inflation probability”) you are in a “structural zero” state → you observe a zero.</li>
-<li>With probability <span class="math inline">1 - \pi</span>, you come from a regular Negative Binomial distribution (with parameters e.g.&nbsp;mean $ $ and dispersion parameter $ $ or size/r parameter) and then you might observe zero or a positive count.</li>
+<li>With probability <span class="math inline">\pi</span> (sometimes denoted <span class="math inline">\psi</span> or “zero-inflation probability”) you are in a “structural zero” state → you observe a zero.</li>
+<li>With probability <span class="math inline">1 - \pi</span>, you come from a regular Negative Binomial distribution (with parameters e.g.&nbsp;mean <span class="math inline">\mu</span> and dispersion parameter <span class="math inline">\alpha</span> or size/r parameter) and then you might observe zero or a positive count.</li>
 </ol>
 <p>Thus the model is a mixture of a point‐mass at zero + a Negative Binomial for counts.</p>
 <p>This distribution combines a Negative Binomial distribution with a binary gate variable. Observations are either drawn from the Negative Binomial distribution with probability (1 - gate) or are treated as zero with probability ‘gate’. This models data with excess zeros compared to what a standard Negative Binomial distribution would predict.</p>
-<p>Let <span class="math inline">X</span> denote the count random variable, support $ {0,1,2,} $. Denote:</p>
+<p>Let <span class="math inline">X</span> denote the count random variable, support <span class="math inline">{0,1,2,\dots}</span>. Denote:</p>
 <ul>
 <li><span class="math inline">\pi</span> = probability of being in the “always zero” (structural zero) process, with $ 0 $.</li>
 <li>The count process is NB with parameters: mean <span class="math inline">\mu&gt;0</span> and dispersion/shape parameter <span class="math inline">\alpha&gt;0</span> (or equivalently size parameter (r)). Then:</li>
@@ -4818,7 +4665,7 @@ P(X = k) =
   \text{where} \ ~ J_{ij} = 1 \ ~ \text{and} \\
   n = \text{number of zero-sum axes}
   </span></p>
-<p>where <span class="math inline">J</span>is the all-ones matrix and <span class="math inline">n</span> is the number of constrained elements. So the covariance is $ ^2 (I - J) $, which ensures that the sum of the components is 0 (since $ J = _i x_i $).</p>
+<p>where <span class="math inline">J</span>is the all-ones matrix and <span class="math inline">n</span> is the number of constrained elements. So the covariance is <span class="math inline">\sigma^2 (I - \tfrac{1}{n} J)</span>, which ensures that the sum of the components is 0 (since <span class="math inline">J \mathbf{x} = \mathbf{1} \sum_i x_i</span>).</p>
 <p><strong>Args</strong> - <em>scale</em> (array_like): Standard deviation of the underlying normal distribution before the zerosum constraint is enforced.</p>
 <ul>
 <li><p><em>event_shape</em> (tuple): Shape of the event dimension of the distribution.</p></li>
@@ -5598,439 +5445,8 @@ An activation function is a nonlinear transformation applied to the pre-activati
       }, 50);
     });
   })();
-</script>
-<script id="quarto-html-after-body" type="application/javascript">
-  window.document.addEventListener("DOMContentLoaded", function (event) {
-    // Ensure there is a toggle, if there isn't float one in the top right
-    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
-      const a = window.document.createElement('a');
-      a.classList.add('top-right');
-      a.classList.add('quarto-color-scheme-toggle');
-      a.href = "";
-      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
-      const i = window.document.createElement("i");
-      i.classList.add('bi');
-      a.appendChild(i);
-      window.document.body.appendChild(a);
-    }
-    setColorSchemeToggle(hasAlternateSentinel())
-    const icon = "";
-    const anchorJS = new window.AnchorJS();
-    anchorJS.options = {
-      placement: 'right',
-      icon: icon
-    };
-    anchorJS.add('.anchored');
-    const isCodeAnnotation = (el) => {
-      for (const clz of el.classList) {
-        if (clz.startsWith('code-annotation-')) {                     
-          return true;
-        }
-      }
-      return false;
-    }
-    const onCopySuccess = function(e) {
-      // button target
-      const button = e.trigger;
-      // don't keep focus
-      button.blur();
-      // flash "checked"
-      button.classList.add('code-copy-button-checked');
-      var currentTitle = button.getAttribute("title");
-      button.setAttribute("title", "Copied!");
-      let tooltip;
-      if (window.bootstrap) {
-        button.setAttribute("data-bs-toggle", "tooltip");
-        button.setAttribute("data-bs-placement", "left");
-        button.setAttribute("data-bs-title", "Copied!");
-        tooltip = new bootstrap.Tooltip(button, 
-          { trigger: "manual", 
-            customClass: "code-copy-button-tooltip",
-            offset: [0, -8]});
-        tooltip.show();    
-      }
-      setTimeout(function() {
-        if (tooltip) {
-          tooltip.hide();
-          button.removeAttribute("data-bs-title");
-          button.removeAttribute("data-bs-toggle");
-          button.removeAttribute("data-bs-placement");
-        }
-        button.setAttribute("title", currentTitle);
-        button.classList.remove('code-copy-button-checked');
-      }, 1000);
-      // clear code selection
-      e.clearSelection();
-    }
-    const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
-        }
-        return codeEl.innerText;
-    }
-    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-      text: getTextToCopy
-    });
-    clipboard.on('success', onCopySuccess);
-    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-        text: getTextToCopy,
-        container: window.document.getElementById('quarto-embedded-source-code-modal')
-      });
-      clipboardModal.on('success', onCopySuccess);
-    }
-      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-      var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
-      var isInternal = (href) => {
-          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-      }
-      // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-      for (var i=0; i<links.length; i++) {
-        const link = links[i];
-        if (!isInternal(link.href)) {
-          // undo the damage that might have been done by quarto-nav.js in the case of
-          // links that we want to consider external
-          if (link.dataset.originalHref !== undefined) {
-            link.href = link.dataset.originalHref;
-          }
-        }
-      }
-    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-      const config = {
-        allowHTML: true,
-        maxWidth: 500,
-        delay: 100,
-        arrow: false,
-        appendTo: function(el) {
-            return el.parentElement;
-        },
-        interactive: true,
-        interactiveBorder: 10,
-        theme: 'quarto',
-        placement: 'bottom-start',
-      };
-      if (contentFn) {
-        config.content = contentFn;
-      }
-      if (onTriggerFn) {
-        config.onTrigger = onTriggerFn;
-      }
-      if (onUntriggerFn) {
-        config.onUntrigger = onUntriggerFn;
-      }
-      window.tippy(el, config); 
-    }
-    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-    for (var i=0; i<noterefs.length; i++) {
-      const ref = noterefs[i];
-      tippyHover(ref, function() {
-        // use id or data attribute instead here
-        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-        try { href = new URL(href).hash; } catch {}
-        const id = href.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note) {
-          return note.innerHTML;
-        } else {
-          return "";
-        }
-      });
-    }
-    const xrefs = window.document.querySelectorAll('a.quarto-xref');
-    const processXRef = (id, note) => {
-      // Strip column container classes
-      const stripColumnClz = (el) => {
-        el.classList.remove("page-full", "page-columns");
-        if (el.children) {
-          for (const child of el.children) {
-            stripColumnClz(child);
-          }
-        }
-      }
-      stripColumnClz(note)
-      if (id === null || id.startsWith('sec-')) {
-        // Special case sections, only their first couple elements
-        const container = document.createElement("div");
-        if (note.children && note.children.length > 2) {
-          container.appendChild(note.children[0].cloneNode(true));
-          for (let i = 1; i < note.children.length; i++) {
-            const child = note.children[i];
-            if (child.tagName === "P" && child.innerText === "") {
-              continue;
-            } else {
-              container.appendChild(child.cloneNode(true));
-              break;
-            }
-          }
-          if (window.Quarto?.typesetMath) {
-            window.Quarto.typesetMath(container);
-          }
-          return container.innerHTML
-        } else {
-          if (window.Quarto?.typesetMath) {
-            window.Quarto.typesetMath(note);
-          }
-          return note.innerHTML;
-        }
-      } else {
-        // Remove any anchor links if they are present
-        const anchorLink = note.querySelector('a.anchorjs-link');
-        if (anchorLink) {
-          anchorLink.remove();
-        }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(note);
-        }
-        if (note.classList.contains("callout")) {
-          return note.outerHTML;
-        } else {
-          return note.innerHTML;
-        }
-      }
-    }
-    for (var i=0; i<xrefs.length; i++) {
-      const xref = xrefs[i];
-      tippyHover(xref, undefined, function(instance) {
-        instance.disable();
-        let url = xref.getAttribute('href');
-        let hash = undefined; 
-        if (url.startsWith('#')) {
-          hash = url;
-        } else {
-          try { hash = new URL(url).hash; } catch {}
-        }
-        if (hash) {
-          const id = hash.replace(/^#\/?/, "");
-          const note = window.document.getElementById(id);
-          if (note !== null) {
-            try {
-              const html = processXRef(id, note.cloneNode(true));
-              instance.setContent(html);
-            } finally {
-              instance.enable();
-              instance.show();
-            }
-          } else {
-            // See if we can fetch this
-            fetch(url.split('#')[0])
-            .then(res => res.text())
-            .then(html => {
-              const parser = new DOMParser();
-              const htmlDoc = parser.parseFromString(html, "text/html");
-              const note = htmlDoc.getElementById(id);
-              if (note !== null) {
-                const html = processXRef(id, note);
-                instance.setContent(html);
-              } 
-            }).finally(() => {
-              instance.enable();
-              instance.show();
-            });
-          }
-        } else {
-          // See if we can fetch a full url (with no hash to target)
-          // This is a special case and we should probably do some content thinning / targeting
-          fetch(url)
-          .then(res => res.text())
-          .then(html => {
-            const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.querySelector('main.content');
-            if (note !== null) {
-              // This should only happen for chapter cross references
-              // (since there is no id in the URL)
-              // remove the first header
-              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-                note.children[0].remove();
-              }
-              const html = processXRef(null, note);
-              instance.setContent(html);
-            } 
-          }).finally(() => {
-            instance.enable();
-            instance.show();
-          });
-        }
-      }, function(instance) {
-      });
-    }
-        let selectedAnnoteEl;
-        const selectorForAnnotation = ( cell, annotation) => {
-          let cellAttr = 'data-code-cell="' + cell + '"';
-          let lineAttr = 'data-code-annotation="' +  annotation + '"';
-          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-          return selector;
-        }
-        const selectCodeLines = (annoteEl) => {
-          const doc = window.document;
-          const targetCell = annoteEl.getAttribute("data-target-cell");
-          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-          const lineIds = lines.map((line) => {
-            return targetCell + "-" + line;
-          })
-          let top = null;
-          let height = null;
-          let parent = null;
-          if (lineIds.length > 0) {
-              //compute the position of the single el (top and bottom and make a div)
-              const el = window.document.getElementById(lineIds[0]);
-              top = el.offsetTop;
-              height = el.offsetHeight;
-              parent = el.parentElement.parentElement;
-            if (lineIds.length > 1) {
-              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-              height = bottom - top;
-            }
-            if (top !== null && height !== null && parent !== null) {
-              // cook up a div (if necessary) and position it 
-              let div = window.document.getElementById("code-annotation-line-highlight");
-              if (div === null) {
-                div = window.document.createElement("div");
-                div.setAttribute("id", "code-annotation-line-highlight");
-                div.style.position = 'absolute';
-                parent.appendChild(div);
-              }
-              div.style.top = top - 2 + "px";
-              div.style.height = height + 4 + "px";
-              div.style.left = 0;
-              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-              if (gutterDiv === null) {
-                gutterDiv = window.document.createElement("div");
-                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-                gutterDiv.style.position = 'absolute';
-                const codeCell = window.document.getElementById(targetCell);
-                const gutter = codeCell.querySelector('.code-annotation-gutter');
-                gutter.appendChild(gutterDiv);
-              }
-              gutterDiv.style.top = top - 2 + "px";
-              gutterDiv.style.height = height + 4 + "px";
-            }
-            selectedAnnoteEl = annoteEl;
-          }
-        };
-        const unselectCodeLines = () => {
-          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-          elementsIds.forEach((elId) => {
-            const div = window.document.getElementById(elId);
-            if (div) {
-              div.remove();
-            }
-          });
-          selectedAnnoteEl = undefined;
-        };
-          // Handle positioning of the toggle
-      window.addEventListener(
-        "resize",
-        throttle(() => {
-          elRect = undefined;
-          if (selectedAnnoteEl) {
-            selectCodeLines(selectedAnnoteEl);
-          }
-        }, 10)
-      );
-      function throttle(fn, ms) {
-      let throttle = false;
-      let timer;
-        return (...args) => {
-          if(!throttle) { // first call gets through
-              fn.apply(this, args);
-              throttle = true;
-          } else { // all the others get throttled
-              if(timer) clearTimeout(timer); // cancel #2
-              timer = setTimeout(() => {
-                fn.apply(this, args);
-                timer = throttle = false;
-              }, ms);
-          }
-        };
-      }
-        // Attach click handler to the DT
-        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-        for (const annoteDlNode of annoteDls) {
-          annoteDlNode.addEventListener('click', (event) => {
-            const clickedEl = event.target;
-            if (clickedEl !== selectedAnnoteEl) {
-              unselectCodeLines();
-              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-              if (activeEl) {
-                activeEl.classList.remove('code-annotation-active');
-              }
-              selectCodeLines(clickedEl);
-              clickedEl.classList.add('code-annotation-active');
-            } else {
-              // Unselect the line
-              unselectCodeLines();
-              clickedEl.classList.remove('code-annotation-active');
-            }
-          });
-        }
-    const findCites = (el) => {
-      const parentEl = el.parentElement;
-      if (parentEl) {
-        const cites = parentEl.dataset.cites;
-        if (cites) {
-          return {
-            el,
-            cites: cites.split(' ')
-          };
-        } else {
-          return findCites(el.parentElement)
-        }
-      } else {
-        return undefined;
-      }
-    };
-    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-    for (var i=0; i<bibliorefs.length; i++) {
-      const ref = bibliorefs[i];
-      const citeInfo = findCites(ref);
-      if (citeInfo) {
-        tippyHover(citeInfo.el, function() {
-          var popup = window.document.createElement('div');
-          citeInfo.cites.forEach(function(cite) {
-            var citeDiv = window.document.createElement('div');
-            citeDiv.classList.add('hanging-indent');
-            citeDiv.classList.add('csl-entry');
-            var biblioDiv = window.document.getElementById('ref-' + cite);
-            if (biblioDiv) {
-              citeDiv.innerHTML = biblioDiv.innerHTML;
-            }
-            popup.appendChild(citeDiv);
-          });
-          return popup.innerHTML;
-        });
-      }
-    }
-  });
-  </script>
-<nav class="page-navigation">
-  <div class="nav-page nav-page-previous">
-      <a href="../reference/data.html" class="pagination-link" aria-label="Data (`m.data`, `m.scale`, ...)">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span>
-      </a>          
-  </div>
-  <div class="nav-page nav-page-next">
-      <a href="../reference/diag.html" class="pagination-link" aria-label="Diagnostics (`m.diag`)">
-        <span class="nav-page-text">Diagnostics (<code>m.diag</code>)</span> <i class="bi bi-arrow-right-short"></i>
-      </a>
-  </div>
-</nav>
-</div> <!-- /content -->
 
-
-
-
-
-<script>
-// Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
+  // Robust Standalone ScrollSpy (works under file://, UNC paths, and HTTP)
   (function() {
     function initScrollspy() {
       const toc = document.querySelector('nav#TOC');
@@ -6106,4 +5522,585 @@ An activation function is a nonlinear transformation applied to the pre-activati
     }
   })();
 </script>
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = true;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/s-sosa\.com\/");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../reference/data.html" class="pagination-link" aria-label="Data (`m.data`, `m.scale`, ...)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Data (<code>m.data</code>, <code>m.scale</code>, …)</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../reference/diag.html" class="pagination-link" aria-label="Diagnostics (`m.diag`)">
+        <span class="nav-page-text">Diagnostics (<code>m.diag</code>)</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
 </body></html>

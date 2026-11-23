@@ -1,6 +1,6 @@
-# Data of the examples of "29. Network Edges Inference" (binary, count and duration edge models).
-# Writes network_edges_binary.json, network_edges_count.json and network_edges_duration.json next
-# to this script: the `data` list of BF_model_binary, BF_model_count and BF_model_duration.
+# Data of the examples of "29. Network Edges Inference" (binary and count edge models).
+# Writes network_edges_binary.json and network_edges_count.json next
+# to this script: the `data` list of BF_model_binary and BF_model_count.
 # Simulated with bisonR, as in the validation tests of Test/6.Network/Network edges (20 nodes,
 # seed 42); the model data come from bisonR's get_bison_model_data, so no Stan fit is needed.
 # Needs the R packages bisonR and jsonlite. Run from this folder: Rscript make_network_edges_data.R
@@ -52,36 +52,10 @@ edge_data <- function(model_type) {
   out
 }
 
-# Duration model: durations with the number of events of each edge (event_count),
-# as build_stan_data_duration in the duration validation tests
-duration_data <- function() {
-  df <- simulate("duration")
-  md <- get_bison_model_data(formula = formula, observations = df,
-                             directed = TRUE, model_type = "count")$model_data
-  ne <- as.integer(md$num_edges); nr <- as.integer(md$num_rows)
-  ec <- integer(ne)
-  dfc <- if (!is.null(df$event_count)) as.integer(df$event_count) else rep(1L, nrow(df))
-  for (i in seq_len(nr)) ec[as.integer(md$dyad_ids[i])] <- ec[as.integer(md$dyad_ids[i])] + dfc[i]
-  list(
-    num_rows = nr, num_edges = ne,
-    num_fixed = as.integer(md$num_fixed), num_random = as.integer(md$num_random),
-    num_random_groups = as.integer(md$num_random_groups),
-    event = as.numeric(md$event),
-    event_count = pmax(1L, ec), divisor = as.numeric(md$divisor),
-    dyad_ids = as.integer(md$dyad_ids),
-    design_fixed = data.matrix(md$design_fixed), design_random = data.matrix(md$design_random),
-    random_group_index = as.integer(md$random_group_index),
-    partial_pooling = 1L, zero_inflated = 0L, directed = 1L,
-    prior_edge_mu = 0.0, prior_edge_sigma = 2.0, prior_fixed_mu = 0.0, prior_fixed_sigma = 1.0,
-    prior_rate_sigma = 1.0, prior_random_mean_mu = 0.0, prior_random_mean_sigma = 1.0,
-    prior_random_std_sigma = 1.0, prior_zero_prob_alpha = 1.0, prior_zero_prob_beta = 1.0
-  )
-}
-
 write <- function(lst, path) {
   jsonlite::write_json(lst, path, auto_unbox = TRUE, digits = NA, matrix = "rowmajor")
   cat("wrote", path, "\n")
 }
 write(edge_data("binary"), "network_edges_binary.json")
 write(edge_data("count"), "network_edges_count.json")
-write(duration_data(), "network_edges_duration.json")
+

@@ -26,7 +26,7 @@ REPORT_DIR = os.environ.get("BF_TEST_REPORT",
                             os.path.join(os.path.dirname(__file__), "_report"))
 _ROWS = []
 
-
+# cqlss object to record test results
 class _Verify:
     def __init__(self, test):
         self.test = test
@@ -46,11 +46,11 @@ class _Verify:
 def verify(request):
     return _Verify(request.node.name)
 
-
+# function to format the values
 def _fmt(v):
     return f"{v:.3g}" if abs(v) >= 1e-3 or v == 0 else f"{v:.1e}"
 
-
+# function to create the markdown table
 def _table_md(rows):
     lines = ["| Test | Quantity | Reference | Criterion | Value | Result |",
              "|---|---|---|---|---|---|"]
@@ -60,7 +60,7 @@ def _table_md(rows):
                      f"{'✅' if r['passed'] else '❌'} |")
     return "\n".join(lines)
 
-
+# function ot create the density plots
 def _plots(rows):
     import matplotlib
     matplotlib.use("Agg")
@@ -104,7 +104,7 @@ def _plots(rows):
         fig.savefig(os.path.join(REPORT_DIR, "z_scores.png"), dpi=110)
         plt.close(fig)
 
-
+# function to print the summary table of the tests in terminal and generate plots
 def pytest_terminal_summary(terminalreporter):
     if not _ROWS:
         return
@@ -117,7 +117,7 @@ def pytest_terminal_summary(terminalreporter):
                       f"{r['criterion']:<14} {_fmt(r['value']):>9}   vs {r['reference']}")
     tr.write_line(f"report: {REPORT_DIR}/summary.md (+ comparisons.png, z_scores.png)")
 
-
+# function to write the final report
 def pytest_sessionfinish(session, exitstatus):
     if not _ROWS:
         return
@@ -139,3 +139,6 @@ def pytest_sessionfinish(session, exitstatus):
     if summary:
         with open(summary, "a") as f:
             f.write("## Verification checks\n\n" + _table_md(_ROWS) + "\n")
+    # a verify.record(passed=False) without a paired assert must not stay green
+    if any(not r["passed"] for r in _ROWS):
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED

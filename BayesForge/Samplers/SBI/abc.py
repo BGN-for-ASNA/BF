@@ -16,15 +16,40 @@ Perturbations are made in the unconstrained parameter space, so supports
 """
 
 import time
+import warnings
 
 import jax
 import jax.numpy as jnp
+import jax.scipy.linalg
 import numpy as np
 from jax.scipy.special import logsumexp
 
 from BayesForge.Samplers.SBI.simulate import Simulator, SBIPosterior, weighted_resample
 from BayesForge.Utils.dev_warning import warn_dev
 
+
+
+def _screen_distances(d):
+    """Non-finite distances (simulator returned NaN/inf summaries, RELEASE_AUDIT 15).
+
+    A few failed simulations are excluded (distance set to +inf, so they are
+    never accepted) with a warning; when more than half are non-finite the
+    run cannot be trusted and a ValueError is raised.
+    """
+    bad = ~jnp.isfinite(d)
+    n_bad = int(bad.sum())
+    if n_bad == 0:
+        return d
+    if n_bad > d.shape[0] / 2:
+        raise ValueError(
+            f"{n_bad} of {d.shape[0]} simulated summary statistics are non-finite, "
+            "so the distances are not usable; check the simulator and the "
+            "summary statistics.")
+    warnings.warn(
+        f"{n_bad} of {d.shape[0]} simulations returned non-finite summary "
+        "statistics; they are excluded from the accepted set.", UserWarning,
+        stacklevel=3)
+    return jnp.where(bad, jnp.inf, d)
 
 def _scale(s):
     """Robust per-statistic scale: MAD, falling back to sd when MAD is 0."""
@@ -38,12 +63,30 @@ def _scale(s):
 def _make_distance(distance, s_ref):
     """Return d(s, s_obs) -> (n,) given reference simulations to set scales."""
     if callable(distance):
-        return lambda s, s_obs: jax.vmap(lambda si: distance(si, s_obs))(s)
+        def dist(s, s_obs):
+            try:
+                d = jax.vmap(lambda si: distance(si, s_obs))(s)
+            except Exception as e:
+                raise ValueError(
+                    "A callable distance must be jax-compatible (jnp ops only) "
+                    "and return a scalar per row; the failure happened inside "
+                    "jax.vmap.") from e
+            if jnp.ndim(d) != 1:
+                raise ValueError(
+                    "A callable distance must return a scalar per row; got an "
+                    f"array of shape {jnp.shape(d)} for {jnp.shape(s)[0]} rows.")
+            return d
+        return dist
     if distance == "euclidean":
         sc = _scale(s_ref)
         return lambda s, s_obs: jnp.sqrt(jnp.sum(((s - s_obs) / sc) ** 2, axis=1))
     if distance == "mahalanobis":
         cov = jnp.atleast_2d(jnp.cov(s_ref, rowvar=False))
+        # jnp.cov returns NaN for a single reference row and a singular matrix
+        # for constant / duplicated statistics: sanitize, then jitter.
+        cov = jnp.where(jnp.isfinite(cov), cov, 0.0)
+        jitter = 1e-6 * (jnp.trace(cov) / cov.shape[0] + 1e-12)
+        cov = cov + jitter * jnp.eye(cov.shape[0])
         prec = jnp.linalg.pinv(cov)
         return lambda s, s_obs: jnp.sqrt(jnp.einsum("ni,ij,nj->n", s - s_obs, prec, s - s_obs))
     raise ValueError("distance must be 'euclidean', 'mahalanobis' or a callable.")
@@ -51,7 +94,8 @@ def _make_distance(distance, s_ref):
 
 def _regression_adjust(u, s, s_obs, d, eps):
     """Local-linear regression adjustment (Beaumont et al. 2002), in u-space."""
-    w = 1.0 - (d / eps) ** 2  # Epanechnikov kernel
+    # eps == 0 (deterministic simulator or exact match) would make d / eps NaN.
+    w = 1.0 - (d / max(float(eps), 1e-12)) ** 2  # Epanechnikov kernel
     w = jnp.clip(w, 0.0, None)
     X = jnp.concatenate([jnp.ones((s.shape[0], 1)), s - s_obs], axis=1)
     Xw = X * w[:, None]
@@ -90,6 +134,14 @@ class ABC_BF(SBIPosterior):
         self.min_acceptance = float(min_acceptance)
         self.proposal_batch = proposal_batch
         self.progress_bar = progress_bar
+        if quantile is not None and not (0.0 < float(quantile) <= 1.0):
+            raise ValueError(f"quantile must be in (0, 1], got {quantile}.")
+        if epsilon is not None and not float(epsilon) > 0.0:
+            raise ValueError(f"epsilon must be > 0 (or None), got {epsilon}.")
+        if not 0.0 < float(alpha) < 1.0:
+            raise ValueError(f"alpha must be in (0, 1), got {alpha}.")
+        if self.num_rounds < 1:
+            raise ValueError(f"num_rounds must be >= 1, got {num_rounds}.")
         self.history = []
 
     # -----------------------------------------------------------------------------
@@ -121,6 +173,7 @@ class ABC_BF(SBIPosterior):
         theta, _, s = sim.simulate_prior(k_sim, self.num_simulations)
         dist = _make_distance(self.distance, s)
         d = dist(s, sim.s_obs)
+        d = _screen_distances(d)
         if self.epsilon is not None:
             keep = jnp.where(d <= self.epsilon)[0]
             eps = float(self.epsilon)
@@ -149,7 +202,8 @@ class ABC_BF(SBIPosterior):
         N = self.num_particles
         budget = self.num_simulations
         n0 = max(int(np.ceil(N / self.quantile)), N) if self.quantile else 10 * N
-        n0 = min(n0, max(budget // 4, N))  # keep most of the budget for the SMC rounds
+        # keep most of the budget for the SMC rounds, and never exceed it
+        n0 = min(n0, max(budget // 4, N), max(budget - (self.num_rounds - 1), 1))
         B = int(self.proposal_batch or max(N, 1000))
 
         # Round 0: rejection from the prior.
@@ -157,6 +211,7 @@ class ABC_BF(SBIPosterior):
         theta, _, s = sim.simulate_prior(k, n0)
         dist = _make_distance(self.distance, s)
         d = dist(s, sim.s_obs)
+        d = _screen_distances(d)
         keep = jnp.argsort(d)[:N]
         u, d, w = sim.to_unconstrained({k_: v[keep] for k_, v in theta.items()}), d[keep], jnp.ones(N) / N
         eps = float(d.max())
@@ -188,9 +243,10 @@ class ABC_BF(SBIPosterior):
             # Gaussian kernel, twice the weighted covariance (Beaumont et al. 2009).
             mean = jnp.sum(w[:, None] * u, axis=0)
             cov = 2.0 * jnp.atleast_2d((w[:, None] * (u - mean)).T @ (u - mean))
-            cov = cov + 1e-9 * jnp.eye(u.shape[1])
+            jitter = 1e-6 * (jnp.trace(cov) / u.shape[1] + 1e-12)
+            cov = cov + jitter * jnp.eye(u.shape[1])
             L = jnp.linalg.cholesky(cov)
-            prec = jnp.linalg.inv(cov)
+            prec = jax.scipy.linalg.cho_solve((L, True), jnp.eye(u.shape[1]))
             logdet = 2.0 * jnp.sum(jnp.log(jnp.diag(L)))
 
             acc_u, acc_d, n_acc, n_prop = [], [], 0, 0
@@ -200,7 +256,7 @@ class ABC_BF(SBIPosterior):
                 ok = np.isfinite(np.asarray(sim.prior_log_density_u(u_prop)))
                 _, s_prop = sim.simulate_given(k_s, u_prop)
                 d_prop = np.asarray(dist(s_prop, sim.s_obs))
-                n_prop += int(ok.sum())
+                n_prop += int(ok.size)  # every proposal is simulated, not just the finite ones
                 a = ok & (d_prop <= eps_t)
                 acc_u.append(np.asarray(u_prop)[a])
                 acc_d.append(d_prop[a])

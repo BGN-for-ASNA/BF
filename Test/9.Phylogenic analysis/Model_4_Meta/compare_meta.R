@@ -62,7 +62,7 @@ draw_density <- function(label, brms_s, BF_s) {
          col = c("red", "blue"), lwd = 2, lty = c(1, 2), cex = 0.8)
 }
 
-png("density_comparison.png", width = 1800, height = 600, res = 120)
+png("density_comparison.png", width = 1800, height = 600, res = 120, type = "cairo")
 par(mfrow = c(1, 3), mar = c(4, 4, 3, 1))
 draw_density("Intercept", post_brms$b_Intercept,         BF_post$Intercept)
 draw_density("sd_phylo",  post_brms$sd_phylo__Intercept, BF_post$sd_phylo)

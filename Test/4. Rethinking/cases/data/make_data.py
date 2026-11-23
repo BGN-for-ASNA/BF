@@ -55,17 +55,27 @@ def make_multinomial():
 
 
 def make_multinomial_fixed_income():
-    """Reproduces the simulation of '8b.Multinomial fixed income.py' (np.random.seed(42))."""
-    import jax
-    import jax.numpy as jnp
+    """Simulated data of '8b.Multinomial fixed income' (np.random.seed(42)).
 
+    Single source of the data: the cross-language case and
+    'Numpyro backend/8b.Multinomial fixed income.py' both read the CSV.
+    """
     np.random.seed(42)
     N = 200
     n_trials = 20
     X = np.random.normal(0, 1, size=N)
-    phi = np.column_stack([0.5 + 1.0 * X, -0.5 + 0.5 * X, np.zeros(N)])
-    theta = np.asarray(jax.nn.softmax(jnp.array(phi), axis=1), dtype=np.float64)
-    theta = theta / theta.sum(axis=1, keepdims=True)
+
+    true_alpha = np.array([0.5, -0.5])
+    true_beta = np.array([1.0, 0.5])
+
+    phi = np.column_stack([
+        true_alpha[0] + true_beta[0] * X,
+        true_alpha[1] + true_beta[1] * X,
+        np.zeros(N),
+    ])
+    # float64 softmax in numpy: the draws do not depend on the jax version
+    e = np.exp(phi - phi.max(axis=1, keepdims=True))
+    theta = e / e.sum(axis=1, keepdims=True)
     Y = np.array([np.random.multinomial(n_trials, theta[i]) for i in range(N)])
     df = pd.DataFrame({
         'X': X,

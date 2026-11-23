@@ -8,6 +8,7 @@ parameters to an unconstrained space, and compute summary statistics.
 """
 
 import math
+import warnings
 
 import jax
 import jax.numpy as jnp
@@ -42,7 +43,17 @@ class _uncondition(Messenger):
                 msg["fn"] = fn.expand(jnp.broadcast_shapes(fn.batch_shape, batch))
             msg["value"] = None
             msg["is_observed"] = False
-            msg["infer"] = dict(msg["infer"], _sbi_observed=True)
+
+
+def _sanitize_log_density(lp):
+    """Map non-finite prior log densities to -inf, warning on +inf.
+
+    ``jnp.where(isfinite(lp), lp, -inf)`` alone would silently turn a +inf
+    density (a degenerate prior) into -inf; that inversion is reported.
+    """
+    if bool(jnp.any(lp == jnp.inf)):
+        warn_dev("+inf prior log density (degenerate prior): mapped to -inf")
+    return jnp.where(jnp.isfinite(lp), lp, -jnp.inf)
 
 
 def _summary_quantiles(x, probs=(0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875)):
@@ -162,6 +173,12 @@ class Simulator:
         self.sim_model = _uncondition(model)
         self._prior_fn = None
         self._cond_fn = None
+        # The jitted closures below capture self.data; remember which object
+        # (and contents) they were built from so mutating self.data invalidates.
+        self._data_id = id(self.data)
+        self._data_objs = dict(self.data)
+        self._data_state = repr(sorted((k, np.asarray(v).shape)
+                                       for k, v in self.data.items()))
         self.n_simulations = 0
 
         self.s_obs = self.stats(self.flatten_x(
@@ -197,6 +214,24 @@ class Simulator:
         return out
 
     # --- simulation ------------------------------------------------------------
+    def _check_data_cache(self):
+        """Drop the jitted simulation caches if self.data no longer matches them.
+
+        The cached closures freeze ``data = self.data`` at build time, so
+        replacing the dict or mutating its entries must not leave the
+        simulator running on stale data.
+        """
+        state = repr(sorted((k, np.asarray(v).shape) for k, v in self.data.items()))
+        stale = (id(self.data) != self._data_id or state != self._data_state
+                 or set(self.data) != set(self._data_objs)
+                 or any(self.data[k] is not self._data_objs[k] for k in self.data))
+        if stale:
+            self._prior_fn = None
+            self._cond_fn = None
+            self._data_id = id(self.data)
+            self._data_objs = dict(self.data)
+            self._data_state = state
+
     def _x_from(self, samples):
         return self.flatten_x({n: samples[n] for n in self.observed_names})
 
@@ -204,7 +239,10 @@ class Simulator:
         """Draw n (theta, x) pairs from the prior predictive.
 
         Returns (theta dict, x matrix (n, d), s matrix (n, k))."""
+        if int(n) < 1:
+            raise ValueError(f"simulate_prior needs n >= 1, got {n}.")
         b = min(self.batch_size, n)
+        self._check_data_cache()
         if self._prior_fn is None or self._prior_fn[0] != b:
             pred = Predictive(self.sim_model, num_samples=b,
                               return_sites=self.param_names + self.observed_names,
@@ -230,8 +268,11 @@ class Simulator:
 
         Returns (x matrix, s matrix)."""
         n = u.shape[0]
+        if int(n) < 1:
+            raise ValueError(f"simulate_given needs at least one parameter row, got {n}.")
         # Bucket the batch to a power of two so jit compiles only a few shapes.
         b = min(self.batch_size, 1 << max(int(n - 1).bit_length(), 0))
+        self._check_data_cache()
         if self._cond_fn is None:
             self._cond_fn = {}
         if b not in self._cond_fn:
@@ -262,10 +303,31 @@ class Simulator:
         """Prior log density of unconstrained parameters (includes the Jacobian).
 
         Parameter priors that depend on other *parameters* are handled (all
-        parameters are substituted); returns -inf outside the support."""
+        parameters are substituted); returns -inf outside the support.
+
+        Limitation: latent sites that are not inferred parameters (nuisance
+        latents) are drawn once from a fixed key in the trace below, so a
+        parameter prior that depends on one is evaluated at that frozen draw
+        and the ABC importance weights are biased. A UserWarning is issued
+        when such sites exist."""
         if getattr(self, "_logp_fn", None) is None:
             data = self.data
             key = jax.random.PRNGKey(0)
+
+            # Detect the nuisance-latent case eagerly, once, at build time:
+            # sites the fixed key below will draw but that are not inferred.
+            theta0 = {k: v[0] for k, v in self.to_constrained(jnp.zeros((1, self.dim))).items()}
+            tr0 = handlers.trace(
+                handlers.seed(handlers.substitute(self.model, data=theta0), key)
+            ).get_trace(**data)
+            names = [n for n, site in tr0.items()
+                     if site["type"] == "sample" and not site["is_observed"]
+                     and n not in self.param_names]
+            if names:
+                warnings.warn(f"prior_log_density_u: latent sites {names} are not "
+                              "inferred and are drawn once with a fixed key; if a "
+                              "parameter prior depends on them, the ABC importance "
+                              "weights are biased.", UserWarning)
 
             def one(ui):
                 theta = {k: v[0] for k, v in self.to_constrained(ui[None]).items()}
@@ -281,7 +343,7 @@ class Simulator:
 
             self._logp_fn = jax.jit(jax.vmap(one))
         lp = self._logp_fn(u)
-        return jnp.where(jnp.isfinite(lp), lp, -jnp.inf)
+        return _sanitize_log_density(lp)
 
     def observed_stats(self, x_obs=None):
         """Summary statistics of observed data (default: the data given at init).
@@ -299,7 +361,12 @@ class Simulator:
 
 
 def weighted_resample(rng_key, u, weights, n):
-    idx = jax.random.choice(rng_key, u.shape[0], (n,), p=weights / weights.sum())
+    total = jnp.sum(weights)
+    if not (bool(jnp.all(jnp.isfinite(weights))) and bool(total > 0)):
+        raise ValueError("weighted_resample needs finite, non-negative weights "
+                         "with a positive sum; got weights summing to "
+                         f"{float(total):.3g}.")
+    idx = jax.random.choice(rng_key, u.shape[0], (n,), p=weights / total)
     return u[idx]
 
 
@@ -326,12 +393,16 @@ class SBIPosterior:
         # Draws are independent, so they can be split into 4 pseudo-chains;
         # arviz then reports R-hat/ESS (expected ~1 and ~n) without warnings.
         n = next(iter(self.posterior.values())).shape[0] if self.posterior else 0
-        return 4 if n >= 16 and n % 4 == 0 else 1
+        # Floor division: 999 draws give 4 pseudo-chains of 249, not 1 chain.
+        return 4 if n >= 16 else 1
 
     def get_samples(self, group_by_chain=False, **kwargs):
         if group_by_chain:
             c = self.num_chains
-            return {k: v.reshape((c, -1) + v.shape[1:]) for k, v in self.posterior.items()}
+            # n need not divide by c (e.g. 999 draws): keep the largest
+            # multiple of c so the reshape is valid; at most c-1 draws drop.
+            return {k: v[:(v.shape[0] // c) * c].reshape((c, -1) + v.shape[1:])
+                    for k, v in self.posterior.items()}
         return dict(self.posterior)
 
     def get_extra_fields(self, group_by_chain=False, **kwargs):

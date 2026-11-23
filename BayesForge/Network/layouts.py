@@ -18,6 +18,8 @@ explicit group vector.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 __all__ = [
@@ -61,6 +63,18 @@ def _sym_binary(adj: np.ndarray) -> np.ndarray:
     a = ((a != 0) | (a.T != 0)).astype(float)
     np.fill_diagonal(a, 0.0)
     return a
+
+
+def _trivial_xy(n: int):
+    """Degenerate-size guard (m13). ``n == 0`` -> empty coordinates (an empty
+    ``(0, 2)`` array, split into the ``lx`` / ``ly`` pair every layout
+    returns); ``n == 1`` -> the single node at ``(0, 0)``. Returns ``None``
+    when ``n >= 2`` and the layout must run normally."""
+    if n == 0:
+        return np.zeros(0), np.zeros(0)
+    if n == 1:
+        return np.zeros(1), np.zeros(1)
+    return None
 
 
 def _bfs_all_pairs(adj_bin: np.ndarray) -> np.ndarray:
@@ -116,6 +130,9 @@ def radial(metric: np.ndarray, order: np.ndarray | None = None):
     ``order`` (default input order) around the circle."""
     metric = np.asarray(metric, dtype=float)
     n = len(metric)
+    guard = _trivial_xy(n)
+    if guard is not None:
+        return guard
     rank = np.argsort(np.argsort(metric))
     r = 0.15 + 0.85 * (rank / max(n - 1, 1))
     idx = np.arange(n) if order is None else np.argsort(np.asarray(order))
@@ -131,6 +148,9 @@ def arc(key: np.ndarray):
     the page)."""
     key = np.asarray(key)
     n = len(key)
+    guard = _trivial_xy(n)
+    if guard is not None:
+        return guard
     order = np.argsort(np.argsort(key, kind="stable"))
     lx = 0.05 + 0.9 * (order / max(n - 1, 1))
     ly = np.full(n, 0.5)
@@ -140,19 +160,45 @@ def arc(key: np.ndarray):
 def geo(x: np.ndarray, y: np.ndarray):
     """Fixed coordinates from two columns (e.g. lon / lat), min-max scaled.
     ``y`` is flipped so north is up."""
-    xy = _unit(np.column_stack([np.asarray(x, float), np.asarray(y, float)]))
+    x = np.asarray(x, float)
+    guard = _trivial_xy(len(x))
+    if guard is not None:
+        return guard
+    xy = _unit(np.column_stack([x, np.asarray(y, float)]))
     return xy[:, 0], 1.0 - xy[:, 1]
 
 
 def spectral(adj: np.ndarray):
     """Laplacian eigenmaps: the two eigenvectors of the normalised graph
-    Laplacian with smallest non-zero eigenvalue."""
+    Laplacian with smallest non-zero eigenvalue.
+
+    Degenerate sizes (m13): ``N == 0`` returns empty ``lx`` / ``ly`` (an
+    empty ``(0, 2)`` coordinate array), ``N == 1`` places the single node at
+    ``(0, 0)``. On a **disconnected** graph with k > 1 components the k first
+    eigenvalues are all zero, so ``vecs[:, 1:3]`` would mix null-space vectors
+    and the "smallest non-zero eigenvalue" doc would be false: a warning is
+    emitted and the spring layout (``_spring``, the same fallback
+    :func:`clustered` uses inside a community) is returned instead of an
+    arbitrary Fiedler subspace.
+    """
     a = _sym_binary(adj)
     n = a.shape[0]
+    guard = _trivial_xy(n)
+    if guard is not None:
+        return guard
     deg = a.sum(1)
     dinv = np.where(deg > 0, 1.0 / np.sqrt(deg), 0.0)
     L = np.eye(n) - (dinv[:, None] * a * dinv[None, :])
     vals, vecs = np.linalg.eigh(L)
+    if int(np.count_nonzero(vals < 1e-9)) > 1:  # > 1 component -> null space > 1
+        warnings.warn(
+            "spectral layout: graph is disconnected, the Fiedler vectors are "
+            "not informative; falling back to the spring layout",
+            UserWarning,
+            stacklevel=2,
+        )
+        xy = _unit(_spring(a))
+        return xy[:, 0], xy[:, 1]
     keep = vecs[:, 1:3] if n > 2 else vecs[:, :2]
     xy = _unit(keep)
     return xy[:, 0], xy[:, 1]
@@ -161,6 +207,9 @@ def spectral(adj: np.ndarray):
 def mds(adj: np.ndarray):
     """Classical MDS on shortest-path distances (2D)."""
     a = _sym_binary(adj)
+    guard = _trivial_xy(a.shape[0])
+    if guard is not None:
+        return guard
     try:
         import networkx as nx
 
@@ -185,6 +234,9 @@ def clustered(adj: np.ndarray, groups: np.ndarray | None = None, seed: int = 0):
     a spring, pack the community boxes on a grid."""
     a = _sym_binary(adj)
     n = a.shape[0]
+    guard = _trivial_xy(n)
+    if guard is not None:
+        return guard
     if groups is None:
         try:
             import networkx as nx
@@ -226,6 +278,9 @@ def layered(adj: np.ndarray, directed: bool = True, seed: int = 0):
     layer. Layers run top (layer 0) to bottom."""
     a = np.asarray(adj, dtype=float)
     n = a.shape[0]
+    guard = _trivial_xy(n)
+    if guard is not None:
+        return guard
     layer = np.zeros(n, dtype=int)
     placed = False
     if directed:
@@ -260,17 +315,23 @@ def layered(adj: np.ndarray, directed: bool = True, seed: int = 0):
 
 def chord_matrix(groups: np.ndarray, adj: np.ndarray):
     """Aggregate edge weights into a ``G x G`` matrix for the d3.chord view.
-    Returns ``(matrix, labels)`` with ``labels`` the distinct groups in order."""
+    Returns ``(matrix, labels)`` with ``labels`` the distinct groups in order.
+
+    Vectorised (m14): with the one-hot group indicator ``H`` (n x G), the
+    group-by-group weight sum over every pair (i, j) is ``H.T @ a @ H`` —
+    identical output to the old Python double loop (zero entries add nothing),
+    one BLAS call instead of O(N^2) interpreted iterations.
+    """
     codes, labels = _factorize_labels(groups)
-    G = len(labels)
-    M = np.zeros((G, G))
     a = np.asarray(adj, dtype=float)
-    n = a.shape[0]
-    for i in range(n):
-        for j in range(n):
-            if a[i, j]:
-                M[codes[i], codes[j]] += a[i, j]
-    return M, list(labels)
+    if len(codes) != a.shape[0]:
+        raise ValueError(
+            f"groups has length {len(codes)} but adj is "
+            f"{a.shape[0]}x{a.shape[1]}: one group per node is required"
+        )
+    H = np.zeros((a.shape[0], len(labels)))
+    H[np.arange(len(codes)), codes] = 1.0
+    return H.T @ a @ H, list(labels)
 
 
 # --------------------------------------------------------------------- #

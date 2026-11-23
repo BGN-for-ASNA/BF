@@ -200,7 +200,7 @@ def test_dpmm_latent_recovers_clusters(verify):
         functools.partial(m.models.dpmm, method="latent"),
         obs={"data": jnp.asarray(_X_DPMM), "T": _DPMM["T"]},
         sampler="discrete_gibbs",
-        num_warmup=300,
+        num_warmup=1000,  # 300 left one Gibbs chain in a merged-cluster mode under the data-scaled priors of 4a318ce5
         num_samples=300,
         num_chains=2,
         progress_bar=False,

@@ -262,7 +262,7 @@ def test_sourceless_model_trace_fallback():
 
     # 3. LaTeX from the same trace still prints priors and likelihood.
     tex = m.latex(r_model, data=data)
-    assert r"y \sim \text{Normal}" in tex
+    assert r"y^{\text{obs}} \sim \text{Normal}" in tex  # observed site marked (RELEASE_AUDIT PostModel M5)
     assert r"a \sim \text{Normal}(0, 1)" in tex
 
 

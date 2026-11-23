@@ -23,6 +23,7 @@ Discrete       : ppc_rootogram, ppc_bars
 LOO            : ppc_loo_pit (ppc_loo_intervals: deprecated alias of ppc_intervals_sorted)
 """
 import re
+import warnings
 
 import numpy as np
 import jax.numpy as jnp
@@ -63,7 +64,9 @@ def get_yrep(m, site=None, seed=None):
 
     The observed sites are simulated from every posterior draw (their data
     entries are set to None), so yrep holds genuine replicated data -- never the
-    observed values themselves.
+    observed values themselves. For sites with more than two dimensions (draws,
+    observations, event dimensions) the event dimensions are flattened into the
+    columns of the returned array and a UserWarning is emitted.
 
     Args:
         m (bf): Fitted BayesForge model.
@@ -103,6 +106,17 @@ def get_yrep(m, site=None, seed=None):
     for s_name in target_sites:
         arr = np.asarray(pred[s_name])
         if arr.ndim > 2:
+            # Event dimensions are pooled into one flat column set, so PPC
+            # statistics mix them; warn so per-dimension checks are not
+            # mistaken for whole-array ones.
+            warnings.warn(
+                f"PPC: site {s_name!r} has event dimensions {arr.shape[2:]}; "
+                f"they are flattened to (draws, {int(np.prod(arr.shape[1:]))}), "
+                "so PPC statistics pool the dimensions. "
+                "Select one dimension for a per-dimension check.",
+                UserWarning,
+                stacklevel=2,
+            )
             arr = arr.reshape(arr.shape[0], -1)
         yreps[s_name] = arr
 

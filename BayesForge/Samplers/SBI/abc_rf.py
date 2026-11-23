@@ -21,7 +21,9 @@ Random forests come from scikit-learn (imported lazily, optional dependency).
 """
 
 import time
+import warnings
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -39,12 +41,31 @@ def _forest(**kwargs):
     return RandomForestRegressor(**kwargs)
 
 
-def _qrf_weights(forest, S, s_obs):
-    """Quantile-regression-forest weights of the reference table for s_obs."""
-    leaves = forest.apply(S)                       # (N, T)
-    leaf_obs = forest.apply(s_obs[None, :])[0]     # (T,)
-    same = leaves == leaf_obs[None, :]
-    w = (same / same.sum(axis=0, keepdims=True)).mean(axis=1)
+def _qrf_weights(forest, S, s_obs, chunk_rows=20_000):
+    """Quantile-regression-forest weights of the reference table for s_obs.
+
+    ``forest.apply`` materialises an (chunk, T) int32 matrix and is called
+    on row blocks of ``chunk_rows`` rows, so the n x n proximity matrix is
+    never materialised. Only the leaf ids (n, T) are kept, and the per-tree
+    counts of reference rows in the s_obs leaf are accumulated over *all*
+    rows before normalising: chunking can therefore neither rescale nor
+    NaN-out the weights, and the result matches the unchunked computation.
+    """
+    S = np.asarray(S)
+    chunk = max(int(chunk_rows), 1)
+    n = S.shape[0]
+    leaf_obs = forest.apply(np.asarray(s_obs).reshape(1, -1))[0]   # (T,)
+    leaves = np.empty((n, len(forest.estimators_)), dtype=np.int64)
+    for i in range(0, n, chunk):
+        leaves[i:i + chunk] = forest.apply(S[i:i + chunk])
+    counts = np.array(
+        [np.count_nonzero(leaves[:, t] == leaf_obs[t])
+         for t in range(leaves.shape[1])], dtype=np.float64)
+    counts = np.where(counts > 0, counts, 1.0)  # empty leaf -> weight 0, not NaN
+    w = np.empty(n, dtype=np.float64)
+    for i in range(0, n, chunk):
+        same = leaves[i:i + chunk] == leaf_obs[None, :]
+        w[i:i + chunk] = (same / counts).mean(axis=1)
     return w / w.sum()
 
 
@@ -61,7 +82,7 @@ class ABCRF_BF(SBIPosterior):
 
     def __init__(self, simulator: Simulator, num_simulations=10_000, n_estimators=500,
                  min_samples_leaf=5, max_features=1 / 3, joint=False, stat_names=None,
-                 num_samples=1000, n_jobs=-1, random_state=0, progress_bar=True):
+                 num_samples=1000, n_jobs=-1, random_state=None, progress_bar=True):
         super().__init__()
         warn_dev("SBI")
         self.sim = simulator
@@ -101,6 +122,13 @@ class ABCRF_BF(SBIPosterior):
         return out
 
     def run(self, rng_key):
+        """Fit the forests on the reference table and draw the posterior.
+
+        ``num_simulations`` rows are simulated; rows with non-finite
+        parameters or statistics are dropped, so the forest is trained on
+        all simulations that are finite (``self.n_simulations`` counts
+        every simulation, dropped rows included).
+        """
         import pandas as pd
 
         t0 = time.time()
@@ -110,6 +138,10 @@ class ABCRF_BF(SBIPosterior):
         ok = np.all(np.isfinite(S), axis=1) & np.all(np.isfinite(Theta), axis=1)
         Theta, S = Theta[ok], S[ok]
         s_obs = np.asarray(self.sim.s_obs, dtype=np.float64)
+        if not np.all(np.isfinite(s_obs)):
+            raise ValueError("s_obs contains non-finite summary statistics; the "
+                             "QRF weights would be arbitrary. Check the observed "
+                             "data and the summary statistics.")
         self.reference_table = (Theta, S)
         self.columns = names
         stat_names = self.stat_names or [f"s{i + 1}" for i in range(S.shape[1])]
@@ -118,10 +150,21 @@ class ABCRF_BF(SBIPosterior):
                              f"statistics have {S.shape[1]} dimensions.")
         self.stat_names = list(stat_names)
 
-        rng = np.random.default_rng(self.random_state)
+        key_seed = int(jax.random.randint(rng_key, (), 0, 2 ** 31 - 1))
+        if self.random_state is None:
+            # One RNG source: the forest seed comes from the run() key (same
+            # derivation Main.abc_rf uses, so the macro path is unchanged).
+            seed = key_seed
+        else:
+            seed = int(self.random_state)
+            if seed != key_seed:
+                warnings.warn("ABCRF_BF: random_state=%d overrides the run() key; two "
+                              "runners with different keys but the same random_state "
+                              "produce identical forests." % seed, RuntimeWarning)
+        rng = np.random.default_rng(seed)
         kw = dict(n_estimators=self.n_estimators, min_samples_leaf=self.min_samples_leaf,
                   max_features=self.max_features, oob_score=True, n_jobs=self.n_jobs,
-                  random_state=self.random_state)
+                  random_state=seed)
         self.forests, self.weights, imp, oob = {}, {}, {}, {}
 
         if self.joint:
@@ -161,7 +204,9 @@ class ABCRF_BF(SBIPosterior):
     def _oob_row(y, pred):
         ok = np.isfinite(pred)
         y, pred = y[ok], pred[ok]
-        r2 = 1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2)
+        ss_tot = np.sum((y - y.mean()) ** 2)
+        # A constant column has zero total variance: 0/0 would poison self.oob.
+        r2 = 1.0 - np.sum((y - pred) ** 2) / ss_tot if ss_tot > 0 else 0.0
         return {"oob_r2": float(r2), "oob_mae": float(np.mean(np.abs(y - pred)))}
 
     def plot_importance(self, column=None, top=None, ax=None):

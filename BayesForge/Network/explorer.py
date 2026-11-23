@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import base64
 import html as _html
+import json
 import mimetypes
 import os
 import platform
@@ -66,6 +67,63 @@ def _categorical_hex(n: int) -> list[str]:
         return [cycle[i % len(cycle)] for i in range(n)]
 
 _ASSETS = Path(__file__).with_name("assets") / "netexplorer"
+
+
+def _minmax_norm(v, floor: float | None = None, neutral: float = 0.5) -> np.ndarray:
+    """Min-max scale to [0, 1] (m11). A constant (or all-non-finite) column
+    has no range: instead of dividing by zero and poisoning the whole vector
+    with NaN, every value maps to ``neutral`` (0.5). When ``floor`` is given,
+    the minimum is lifted to it so the smallest item stays visible (the
+    historical behaviour). Mirrors the ``hi == lo`` guard the ``col_size``
+    path already had."""
+    out = np.array(v, dtype=float, copy=True)
+    if out.size:
+        fin = out[np.isfinite(out)]
+        lo, hi = (float(fin.min()), float(fin.max())) if fin.size else (0.0, 0.0)
+        if hi > lo:
+            out = (out - lo) / (hi - lo)
+            if floor is not None:
+                out[np.nanargmin(out)] = floor
+        else:
+            out = np.full(out.shape, neutral)
+    return out
+
+
+def _check_node_table(n_rows: int, N: int) -> None:
+    """Validate the node table against the matrix size (m12).
+
+    ``vis_net`` indexes tooltip values and metrics positionally (``v[i]``)
+    and ``mat_to_edgl`` indexes ``ids[i]``, so a ``df`` whose length differs
+    from the ``N x N`` matrix either crashes deep inside those helpers or,
+    worse, silently misaligns nodes and metrics. Raise at the boundary.
+    """
+    if n_rows != N:
+        raise ValueError(
+            f"df has {n_rows} rows but the adjacency matrix is {N}x{N}: "
+            "one row per node is required"
+        )
+
+
+def _js_json(v) -> str:
+    """``json.dumps`` for values injected into the page's ``<script>`` blocks
+    (m17). On top of the JSON escapes, ``<`` becomes ``\\u003c`` so a user label containing ``</script>`` cannot terminate the
+    script block; ``ensure_ascii`` (default) already neutralises the JS-only
+    line separators U+2028 / U+2029."""
+    return json.dumps(v).replace("<", "\\u003c")
+
+
+def _js_str(v) -> str:
+    """Single-quoted JS string literal, the format the page has always used.
+
+    Backslash, quote and line breaks are escaped, and ``<`` becomes
+    ``\\u003c`` (m17) so ``</script>`` inside user data cannot close the
+    script block; the browser still shows ``<``.
+    """
+    t = (str(v).replace("\\", "\\\\").replace("'", "\\'")
+         .replace("\n", "\\n").replace("\r", "\\r")
+         .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+         .replace("<", "\\u003c"))
+    return "'" + t + "'"
 
 
 # --------------------------------------------------------------------- #
@@ -953,12 +1011,8 @@ class NetExplorer:
             if not pd.api.types.is_numeric_dtype(d[c]):
                 raise TypeError("node_opacity column must be numeric")
             ori_opacity = c
-            v = jnp.asarray(d[c].to_numpy(dtype=float))
-            v = (v - v.min()) / (v.max() - v.min())
-            v = np.array(v)  # writable copy off the JAX buffer
-            if len(v):
-                v[np.argmin(v)] = 1e-3
-            d["opacity"] = v
+            # m11: constant column -> neutral 0.5 instead of 0/0 NaN
+            d["opacity"] = _minmax_norm(d[c].to_numpy(dtype=float), floor=1e-3)
         else:
             ori_opacity = None
             d["opacity"] = 1.0
@@ -1205,6 +1259,8 @@ class NetExplorer:
             df = pd.DataFrame(np.ones((N, 1)))
             if col_id is None:
                 col_id = 0
+        else:
+            _check_node_table(len(df), N)  # m12: fail here, not deep in mat_to_edgl
 
         d, ori = self.format_att(
             df,
@@ -1253,13 +1309,12 @@ class NetExplorer:
         edgl = self.mat_to_edgl(m, ids=node_ids)
         edgl = edgl[edgl["weight"] != 0].reset_index(drop=True)
 
-        # link opacity via min-max on the JAX weight vector
+        # link opacity via min-max on the weight vector
         if link_opacity and len(edgl):
-            w = jnp.asarray(edgl["weight"].to_numpy())
-            lo = (w - w.min()) / (w.max() - w.min())
-            lo = np.array(lo)  # writable copy off the JAX buffer
-            lo[np.argmin(lo)] = 1e-4
-            edgl["lOpacity"] = lo
+            # m11: constant weights -> neutral 0.5 instead of 0/0 NaN
+            edgl["lOpacity"] = _minmax_norm(
+                edgl["weight"].to_numpy(dtype=float), floor=1e-4
+            )
         else:
             edgl["lOpacity"] = 1.0
 
@@ -1348,6 +1403,9 @@ class NetExplorer:
                 + (" (needs layout_x / layout_y)" if layout == "geo" else "")
             )
 
+        # m14: chord_matrix is now vectorised (one matrix product), so it is
+        # still built whenever layout_col is given: the layout menu keeps its
+        # "Chord" entry even when the initial layout is another one.
         chord_payload = None
         if grp_vals is not None:
             mat, labels = _lay.chord_matrix(grp_vals, adj_np)
@@ -1439,7 +1497,8 @@ class NetExplorer:
 
     @staticmethod
     def _js_val(v) -> str:
-        """Python scalar -> JS literal (numbers bare, NaN -> NaN, else quoted)."""
+        """Python scalar -> JS literal (numbers bare, NaN -> NaN, else a JSON
+        string literal escaped for ``<script>`` embedding, m17)."""
         if isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(v, bool):
             f = float(v)
             if not np.isfinite(f):        # NaN / inf / -inf -> JS has no literal
@@ -1447,22 +1506,29 @@ class NetExplorer:
             return repr(int(f)) if f.is_integer() else repr(f)
         if v is None or (isinstance(v, float) and not np.isfinite(v)):
             return "NaN"
-        return "'" + str(v).replace("'", "\\'") + "'"
+        return _js_str(v)
 
     def _tooltip_js(self, ori) -> str:
-        """The ``tooltip.html(...)`` argument list appended after patron1."""
+        """The ``tooltip.html(...)`` argument list appended after patron1.
+        Column names are interpolated as escaped JS string literals (m17):
+        a quote, newline or ``</script>`` inside a column name can no longer
+        break out of the script block."""
         names = dict(zip(("id", "size", "color", "strokeCol", "stroke", "shape", "opacity"), ori))
+
+        def _lbl(col, kind):
+            return _js_str(f"<p/>{col} ({kind}) : ")
+
         s = "\n'id : '+ d.id "
         if names["size"] is not None:
-            s += f"+ '<p/>{names['size']} (size) : '+ d.sizeValue "
+            s += f"+ {_lbl(names['size'], 'size')}+ d.sizeValue "
         if names["color"] is not None:
-            s += f"+ '<p/>{names['color']} (color) : '+ d.colorValue "
+            s += f"+ {_lbl(names['color'], 'color')}+ d.colorValue "
         if names["strokeCol"] is not None:
-            s += f"+ '<p/>{names['strokeCol']} (stroke color) : '+ d.strokeColValue "
+            s += f"+ {_lbl(names['strokeCol'], 'stroke color')}+ d.strokeColValue "
         if names["stroke"] is not None:
-            s += f"+ '<p/>{names['stroke']} (stroke width) : '+ d.strokeWValue "
+            s += f"+ {_lbl(names['stroke'], 'stroke width')}+ d.strokeWValue "
         if names["shape"] is not None:
-            s += f"+ '<p/>{names['shape']} (shape) : '+ d.shapeValue \n"
+            s += f"+ {_lbl(names['shape'], 'shape')}+ d.shapeValue \n"
         s += (
             ").style( 'left' ,(d3.event.pageX) + 'px')\n"
             ".style( 'top' ,(d3.event.pageY) + 'px');\n})\n"
@@ -1503,8 +1569,6 @@ class NetExplorer:
     def _nodes_json(self, d: pd.DataFrame, ori, all_pos: dict | None = None,
                     node_metrics: dict | None = None,
                     axis_vals: dict | None = None) -> str:
-        import json as _json
-
         has = dict(zip(("id", "size", "color", "strokeCol", "stroke", "shape", "opacity"), ori))
         all_pos = all_pos or {}
         node_metrics = node_metrics or {}
@@ -1547,7 +1611,7 @@ class NetExplorer:
                 parts.append("'cent':{" + cent + "}")
             if axis_vals:
                 av = ",".join(
-                    f"{_json.dumps(name)}:{self._js_val(vals[i])}"
+                    f"{_js_json(name)}:{self._js_val(vals[i])}"
                     for name, vals in axis_vals.items()
                 )
                 parts.append("'av':{" + av + "}")
@@ -1599,8 +1663,6 @@ class NetExplorer:
         axis_x: str = "(none)",
         axis_y: str = "(none)",
     ) -> str:
-        import json as _json
-
         p1 = (self.assets_dir / "patron1.txt").read_text(encoding="utf-8")
         p2 = (self.assets_dir / "patron2.txt").read_text(encoding="utf-8")
         p2 = self._inject_layouts(
@@ -1625,7 +1687,7 @@ class NetExplorer:
         if chord is not None:
             extra["chord"] = chord
         extra_js = "".join(
-            f"json[{_json.dumps(k)}] = {_json.dumps(v)};\n" for k, v in extra.items()
+            f"json[{_js_json(k)}] = {_js_json(v)};\n" for k, v in extra.items()
         )
         return (
             p1

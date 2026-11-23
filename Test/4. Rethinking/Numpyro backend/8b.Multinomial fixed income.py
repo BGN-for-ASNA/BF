@@ -2,43 +2,37 @@ from Utils import *
 from BayesForge import bf
 import pandas as pd
 import os
+from pathlib import Path
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page. Priors are identical to the previous local
+# copy: alpha ~ normal(0, 1) and beta ~ normal(0, 1), both shape (2,). The page hardcodes
+# total_count=20 in the multinomial likelihood, which is the trial count of this data set
+# (n_trials below), so the likelihood is the same.
+PAGE_MODEL = doc_model("11. Multinomial model.qmd", 0)
 
 model_name = "8b.Multinomial fixed income"
 
 print(f'Running BF for {model_name}')
 m = bf(platform='cpu')
 
-# 1. Data Simulation (same model as 11. Multinomial model.qmd) --------
-np.random.seed(42)
-N = 200
-n_trials = 20
-X = np.random.normal(0, 1, size=N)
-
-true_alpha = np.array([0.5, -0.5])
-true_beta = np.array([1.0, 0.5])
-
-phi_sim = np.column_stack([
-    true_alpha[0] + true_beta[0] * X,
-    true_alpha[1] + true_beta[1] * X,
-    np.zeros(N),
-])
-theta_sim = np.asarray(jax.nn.softmax(jnp.array(phi_sim), axis=1))
-Y = np.array([np.random.multinomial(n_trials, theta_sim[i]) for i in range(N)])
+# 1. Data (same model as 11. Multinomial model.qmd) -------------------
+# Simulated by make_multinomial_fixed_income() in ../cases/data/make_data.py,
+# shared with the cross-language case '../cases/8b.Multinomial fixed income.md'.
+df_data = pd.read_csv(Path(__file__).resolve().parent.parent / 'cases' / 'data' / f'{model_name}.csv')
+X = df_data['X'].to_numpy()
+Y = df_data[['Y0', 'Y1', 'Y2']].to_numpy(dtype=int)
+N = len(X)
+n_trials = int(Y[0].sum())
+np.random.seed(42)  # parameter recovery below draws from the numpy global state
 
 m.data_on_model = dict(X=jnp.array(X), Y=jnp.array(Y))
 
-def model_BF(X, Y):
-    alpha = m.dist.normal(0, 1, shape=(2,), name='alpha')
-    beta = m.dist.normal(0, 1, shape=(2,), name='beta')
-    s1 = alpha[0] + beta[0] * X
-    s2 = alpha[1] + beta[1] * X
-    s3 = jnp.zeros_like(s1)
-    phi = jnp.stack([s1, s2, s3], axis=1)
-    theta = jax.nn.softmax(phi, axis=1)
-    m.dist.multinomial(total_count=n_trials, probs=theta, obs=Y)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -104,15 +98,7 @@ def estimate(X_sim, alpha_true, beta_true):
         'X': jnp.array(X_sim),
         'Y': jnp.array(Y_sim),
     }
-    def model_rec(X, Y):
-        alpha = m_rec.dist.normal(0, 1, shape=(2,), name='alpha')
-        beta = m_rec.dist.normal(0, 1, shape=(2,), name='beta')
-        s1 = alpha[0] + beta[0] * X
-        s2 = alpha[1] + beta[1] * X
-        s3 = jnp.zeros_like(s1)
-        phi = jnp.stack([s1, s2, s3], axis=1)
-        theta = jax.nn.softmax(phi, axis=1)
-        m_rec.dist.multinomial(total_count=n_trials, probs=theta, obs=Y)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
@@ -134,6 +120,7 @@ def param_recovery(X_sim, alpha_sims, beta_sims, nsim):
 
 print("Running Parameter Recovery...")
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Drawn from the page priors: alpha ~ normal(0, 1) shape (2,), beta ~ normal(0, 1) shape (2,)
 alpha_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
 beta_sims = np.random.normal(0, 0.8, size=(nsim_test, 2))
 X_rec = np.random.normal(0, 1, size=200)

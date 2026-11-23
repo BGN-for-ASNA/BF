@@ -26,7 +26,9 @@ Usage from a BF instance::
 import ast
 import inspect
 import textwrap
+import warnings
 
+from BayesForge.Utils.dev_warning import warn_dev
 from BayesForge.PostModel.model_trace import (
     LATENT,
     OBSERVED,
@@ -35,17 +37,6 @@ from BayesForge.PostModel.model_trace import (
     dist_snake_name,
     trace_model,
 )
-
-
-_WARNED = False
-
-
-def _warn_experimental():
-    global _WARNED
-    if not _WARNED:
-        print("[WARNING] Probabilistic model-graph plotting is an experimental "
-              "feature. Use it with caution. [WARNING]")
-        _WARNED = True
 
 
 def _names_in(node):
@@ -77,8 +68,11 @@ def _callee_name(call):
 
 
 # NumPyro's own primitives; their site name is the FIRST POSITIONAL argument.
+# ``numpyro.param`` (SVI) is deliberately NOT a site here: the execution trace
+# and to_latex both ignore param messages, so treating it as a latent
+# distribution node in the AST path made the three views diverge (m21).
 _NUMPYRO_SITE_FNS = ("numpyro.sample", "sample", "numpyro.deterministic",
-                     "deterministic", "numpyro.param", "param")
+                     "deterministic")
 
 
 def _is_numpyro_site(node):
@@ -107,15 +101,26 @@ def _is_dist_call(node):
     return any(part == "dist" for part in name.split("."))
 
 
-def _dist_name(call):
-    """The distribution name, e.g. ``m.dist.normal(...)`` -> 'normal'."""
+def _dist_name(call, aliases=None):
+    """The distribution name, e.g. ``m.dist.normal(...)`` -> 'normal'.
+
+    ``aliases`` optionally maps local variable names to the AST call that
+    assigned them, so ``loi = numpyro.distributions.Normal(...);
+    numpyro.sample("x", loi)`` resolves to 'normal'. When the distribution is
+    passed as a variable that cannot be resolved, the label is ``None``
+    (unknown) rather than the misleading primitive name 'sample' (m13/m14/m24).
+    """
     if _is_numpyro_deterministic(call):
         return None
     if _is_numpyro_site(call):
         for arg in call.args[1:]:
             if isinstance(arg, ast.Call):
-                return _dist_name(arg)
-        return _callee_name(call).split(".")[-1]
+                return _dist_name(arg, aliases)
+        if aliases:
+            for arg in call.args[1:]:
+                if isinstance(arg, ast.Name) and arg.id in aliases:
+                    return _dist_name(aliases[arg.id], aliases)
+        return None
     func = call.func
     if isinstance(func, ast.Attribute):
         return dist_snake_name(func.attr)
@@ -161,6 +166,20 @@ def _kw_bool(call, key, default=False):
     return default
 
 
+def _kw_overridden(call, key):
+    """True when the call passes a non-None value for hyperparameter ``key``.
+
+    The Effects helpers only sample the auto hyperprior site when the
+    argument is None, so a caller-supplied ``corr=``, ``sd_intercept=``,
+    ``L_Rho=``, ... means that site does NOT exist and the static table must
+    not add it (m7). Overrides passed positionally are not detected.
+    """
+    for kw in call.keywords:
+        if kw.arg == key:
+            return not (isinstance(kw.value, ast.Constant) and kw.value.value is None)
+    return False
+
+
 def _expand_bf_block_static(call):
     """If ``call`` is a high-level BF building block (``m.effects.*``, ``m.net.*``,
     ``m.gaussian.*``), return ``(latent_sites, index_deps)`` where:
@@ -182,28 +201,36 @@ def _expand_bf_block_static(call):
         if fn == "varying_effects":
             gname = _kw_str(call, "group_name", "age")
             centered = _kw_bool(call, "centered", False)
-            sites = [
-                ("global_intercept", "normal", []),
-                ("global_beta", "normal", []),
-                (f"{gname}_sd_intercept", "exponential", []),
-                (f"{gname}_sd_beta", "exponential", []),
-            ]
+            # Each auto-sampled site exists only when its hyperprior argument
+            # was left None (Effects.py guards every one with `is None`, m7).
+            sites = []
+            if not _kw_overridden(call, "alpha_bar"):
+                sites.append(("global_intercept", "normal", []))
+            if not _kw_overridden(call, "beta_bar"):
+                sites.append(("global_beta", "normal", []))
+            if not _kw_overridden(call, "sd_intercept"):
+                sites.append((f"{gname}_sd_intercept", "exponential", []))
+            if not _kw_overridden(call, "sd_beta"):
+                sites.append((f"{gname}_sd_beta", "exponential", []))
             if centered:
-                sites.append((f"corr_{gname}", "lkj", []))
+                if not _kw_overridden(call, "corr"):
+                    sites.append((f"corr_{gname}", "lkj", []))
                 sites.append((f"{gname}_mvn", "multivariate_normal",
                               ["global_intercept", "global_beta",
                                f"{gname}_sd_intercept", f"{gname}_sd_beta",
                                f"corr_{gname}"]))
             else:
-                sites.append((f"{gname}_L_corr", "lkj_cholesky", []))
+                if not _kw_overridden(call, "corr"):
+                    sites.append((f"{gname}_L_corr", "lkj_cholesky", []))
                 sites.append((f"{gname}_z", "normal", []))
             return sites, all_refs
         if fn in ("varying_intercept", "varying_intercept_non_centered"):
             gname = _kw_str(call, "group_name", "group")
-            sites = [
-                (f"global_intercept_{gname}", "normal", []),
-                (f"sd_{gname}", "exponential", []),
-            ]
+            sites = []
+            if not _kw_overridden(call, "a_bar"):
+                sites.append((f"global_intercept_{gname}", "normal", []))
+            if not _kw_overridden(call, "sigma"):
+                sites.append((f"sd_{gname}", "exponential", []))
             if fn == "varying_intercept":
                 sites.append((f"intercept_{gname}", "normal",
                               [f"global_intercept_{gname}", f"sd_{gname}"]))
@@ -212,20 +239,25 @@ def _expand_bf_block_static(call):
             return sites, all_refs
         if fn in ("varying_slope", "varying_slope_non_centered"):
             gname = _kw_str(call, "group_name", "group")
-            sites = [
-                (f"L_Rho_{gname}", "lkj_cholesky", []),
-                (f"sigma_{gname}", "exponential", []),
-                (f"z_{gname}", "normal", []),
-            ]
+            sites = []
+            if not _kw_overridden(call, "L_Rho"):
+                sites.append((f"L_Rho_{gname}", "lkj_cholesky", []))
+            if not _kw_overridden(call, "sigma"):
+                sites.append((f"sigma_{gname}", "exponential", []))
+            sites.append((f"z_{gname}", "normal", []))
             return sites, all_refs
         if fn in ("varying_intercept_slope", "varying_intercept_slope_non_centered"):
             gname = _kw_str(call, "group_name", "group")
-            sites = [
-                (f"{gname}_std" if fn == "varying_intercept_slope" else f"{gname}_sigma", "exponential", []),
-                (f"L_corr_{gname}" if fn == "varying_intercept_slope" else f"L_Rho_{gname}", "lkj_cholesky", []),
-                (f"{gname}_params" if fn == "varying_intercept_slope" else f"z_{gname}",
-                 "multivariate_normal" if fn == "varying_intercept_slope" else "normal", []),
-            ]
+            centered = fn == "varying_intercept_slope"
+            sites = []
+            if not _kw_overridden(call, "group_std" if centered else "sigma"):
+                sites.append((f"{gname}_std" if centered else f"{gname}_sigma",
+                              "exponential", []))
+            if not _kw_overridden(call, "L_corr" if centered else "L_Rho"):
+                sites.append((f"L_corr_{gname}" if centered else f"L_Rho_{gname}",
+                              "lkj_cholesky", []))
+            sites.append((f"{gname}_params" if centered else f"z_{gname}",
+                          "multivariate_normal" if centered else "normal", []))
             return sites, all_refs
         if fn == "phylo_effect":
             sname = _kw_str(call, "name", "z_phylo")
@@ -235,14 +267,21 @@ def _expand_bf_block_static(call):
                 ("global_intercept", "normal", []),
                 ("global_beta", "normal", []),
             ]
-            for kw in call.keywords:
-                if kw.arg == "names" and isinstance(kw.value, (ast.List, ast.Tuple)):
-                    for elt in kw.value.elts:
-                        if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
-                            nm = elt.value
-                            sites.append((f"sigma_{nm}", "exponential", []))
-                            sites.append((f"L_corr_{nm}", "lkj_cholesky", []))
-                            sites.append((f"z_{nm}", "normal", []))
+            # `names` is the SECOND POSITIONAL parameter (Effects.py signature
+            # nested_varying_effects(N_vars, names, N_groups, group_ids, ...));
+            # scanning only call.keywords dropped every per-level site when
+            # names was passed positionally, as the docstring example does (m6).
+            names_node = next((kw.value for kw in call.keywords
+                               if kw.arg == "names"), None)
+            if names_node is None and len(call.args) >= 2:
+                names_node = call.args[1]
+            if isinstance(names_node, (ast.List, ast.Tuple)):
+                for elt in names_node.elts:
+                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                        nm = elt.value
+                        sites.append((f"sigma_{nm}", "exponential", []))
+                        sites.append((f"L_corr_{nm}", "lkj_cholesky", []))
+                        sites.append((f"z_{nm}", "normal", []))
             return sites, all_refs
 
     if submod in ("net", "net2"):
@@ -315,6 +354,9 @@ class ModelGraph:
         self.dist_of = dist_of      # name -> distribution label (or None)
         self.shapes = dict(shapes or {})
         self.plates = dict(plates or {})
+        # False when the execution trace failed and the graph was inferred
+        # from the source code alone (may miss or invent edges).
+        self.exact = True
 
     # -- layout ---------------------------------------------------------------
     def _layers(self):
@@ -337,7 +379,6 @@ class ModelGraph:
                 if indeg[c] == 0:
                     queue.append(c)
         if len(order) < len(self.nodes):
-            import warnings
             stuck = [n for n in self.nodes if n not in set(order)]
             warnings.warn(
                 f"model graph contains a cycle through {stuck}; those nodes are "
@@ -347,12 +388,27 @@ class ModelGraph:
     def draw(self, figsize=(8, 6), title=None, show=True):
         """Render the model graph with matplotlib.
 
+        Plates captured from the execution trace (``self.plates``) are drawn
+        as dashed rectangles around their member sites. ``self.shapes`` is
+        metadata for programmatic introspection only — shapes are not
+        rendered.
+
+        The figure is closed before returning (unless matplotlib is in
+        interactive mode, where the window must stay up), so repeated calls
+        do not leak open figures; the returned axes stays usable for further
+        composition and ``ax.figure.savefig(...)``.
+
         Args:
             show: call plt.show(). Set False to compose the axes yourself or to
                 render headless.
+
+        Returns:
+            The matplotlib ``Axes`` (its figure is already closed; the caller
+            owns it through ``ax.figure``).
         """
+        import matplotlib
         import matplotlib.pyplot as plt
-        from matplotlib.patches import FancyArrowPatch
+        from matplotlib.patches import FancyArrowPatch, Rectangle
 
         layer = self._layers()
         by_layer = {}
@@ -396,6 +452,24 @@ class ModelGraph:
             ax.text(px, py, label, ha="center", va="center", fontsize=9, zorder=2,
                     bbox=dict(boxstyle=boxstyle, fc=st["fc"], ec=st["ec"], lw=1.5))
 
+        # Plate nesting: one dashed rectangle per plate around its member
+        # sites (self.plates was captured from the trace but never rendered).
+        for pname in dict.fromkeys(p for ps in self.plates.values() for p in ps):
+            members = [pos[n] for n in self.nodes
+                       if pname in self.plates.get(n, ()) and n in pos]
+            if not members:
+                continue
+            mxs = [p[0] for p in members]
+            mys = [p[1] for p in members]
+            pad = 1.0
+            ax.add_patch(Rectangle((min(mxs) - pad, min(mys) - pad),
+                                   max(mxs) - min(mxs) + 2 * pad,
+                                   max(mys) - min(mys) + 2 * pad,
+                                   fill=False, ec="#aaaaaa", ls="--", lw=1.0,
+                                   zorder=0))
+            ax.text(min(mxs) - pad, max(mys) + pad, pname, fontsize=8,
+                    color="#888888", ha="left", va="bottom", zorder=0)
+
         xs = [p[0] for p in pos.values()] or [0]
         ys = [p[1] for p in pos.values()] or [0]
         ax.set_xlim(min(xs) - 1.6, max(xs) + 1.6)
@@ -415,6 +489,11 @@ class ModelGraph:
         plt.tight_layout()
         if show:
             plt.show()
+        # m12: release the figure so repeated draws (notebooks, model loops)
+        # do not accumulate open figures; keep it alive in interactive
+        # sessions where the window is what the user just asked to show.
+        if not matplotlib.is_interactive():
+            plt.close(fig)
         return ax
 
     def __repr__(self):
@@ -470,6 +549,8 @@ def _lhs_names(target):
 def model_to_graph(model, data=None):
     """Parse a model function into a :class:`ModelGraph`.
 
+    .. warning:: Experimental feature: the graph may miss or invent edges. Emits a one-time ``RuntimeWarning``.
+
     Args:
         model: A BF/NumPyro model function (Python, or an R/Julia model when
             ``data`` is provided).
@@ -478,14 +559,17 @@ def model_to_graph(model, data=None):
             dependencies, dynamic sites inside loops/building blocks, and
             R/Julia models without Python source.
     """
-    _warn_experimental()
+    warn_dev("model_graph")
 
     tr = None
+    traced = True
     if data:
         try:
             tr = trace_model(model, data)
-        except Exception:
+        except Exception as e:
             tr = None
+            traced = False
+            warnings.warn(f"model_graph: tracing the model failed ({type(e).__name__}: {e}); the graph is inferred from the source code and may miss or invent edges.", UserWarning, stacklevel=2)
 
     try:
         src = textwrap.dedent(inspect.getsource(model))
@@ -502,11 +586,15 @@ def model_to_graph(model, data=None):
                          "and no model trace data was provided.")
 
     # Map relative AST line numbers to absolute code line numbers if trace is available.
+    # The parsed source starts at the FIRST line of getsource(model), i.e. the
+    # first decorator, while func.lineno points at the `def`, so the offset is
+    # start_line - 1; using func.lineno shifted every site by the decorator
+    # count and attached them to the wrong LHS (m11).
     line_offset = 0
     if tr is not None and tr.source_lines:
         try:
             _, start_line = inspect.getsourcelines(model)
-            line_offset = start_line - func.lineno
+            line_offset = start_line - 1
         except Exception:
             line_offset = 0
 
@@ -517,6 +605,15 @@ def model_to_graph(model, data=None):
     if a.kwarg:
         all_args.append(a.kwarg)
     inputs = [x.arg for x in all_args if x.arg != "self"]
+
+    # Local `v = <call>` bindings, used to resolve a distribution passed to
+    # numpyro.sample through a variable (m13/m14/m24).
+    aliases = {}
+    for sub in ast.walk(func):
+        if (isinstance(sub, ast.Assign) and len(sub.targets) == 1
+                and isinstance(sub.targets[0], ast.Name)
+                and isinstance(sub.value, ast.Call)):
+            aliases.setdefault(sub.targets[0].id, sub.value)
 
     nodes = []
     kinds = {}
@@ -560,18 +657,57 @@ def model_to_graph(model, data=None):
             for handler in getattr(stmt, "handlers", []) or []:
                 yield from _iter_stmts(handler.body)
 
+    # m10: an input used only as a plate size (`with numpyro.plate("i", N)`)
+    # was never scanned as a dependency, so N was pruned as unreferenced and
+    # the graph hid a model input. Record N as a dependency of the sites
+    # drawn inside that plate.
+    plate_deps = {}
+
+    def _collect_plate_deps(node):
+        for sub in ast.walk(node):
+            if not isinstance(sub, (ast.With, ast.AsyncWith)):
+                continue
+            for item in sub.items:
+                ce = item.context_expr
+                if not (isinstance(ce, ast.Call)
+                        and _callee_name(ce).split(".")[-1] == "plate"):
+                    continue
+                sizes = _names_in(ce)
+                if not sizes:
+                    continue
+                for s in _iter_stmts(sub.body):
+                    call = lhs = None
+                    if (isinstance(s, ast.Assign) and len(s.targets) == 1
+                            and isinstance(s.targets[0], ast.Name)
+                            and _is_dist_call(s.value)):
+                        call, lhs = s.value, s.targets[0].id
+                    elif (isinstance(s, ast.Expr)
+                            and isinstance(s.value, ast.Call)
+                            and _is_dist_call(s.value)):
+                        call = s.value
+                    if call is not None:
+                        name_kw, obs_name, _ = _call_meta(call)
+                        site = name_kw or obs_name or lhs
+                        if site:
+                            plate_deps.setdefault(site, []).extend(sizes)
+
+    _collect_plate_deps(func)
+
     for stmt in _iter_stmts(func.body):
         abs_line = getattr(stmt, "lineno", 0) + line_offset
 
-        # 1. `lhs = <something>` (single Name, Tuple/List unpacking, or Subscript `z[t] = ...`)
-        if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
-            target = stmt.targets[0]
-            lhs_list = _lhs_names(target)
+        # 1. `lhs = <something>` (single Name, Tuple/List unpacking, Subscript
+        #    `z[t] = ...`, or multi-target `a = b = expr`, m9)
+        if isinstance(stmt, ast.Assign) and stmt.targets:
+            lhs_list = []
+            for tgt in stmt.targets:
+                lhs_list.extend(_lhs_names(tgt))
             if not lhs_list:
                 continue
             line_to_lhs[abs_line] = lhs_list
 
-            if len(lhs_list) == 1 and isinstance(target, ast.Name) and _is_dist_call(stmt.value):
+            if (all(isinstance(t, ast.Name) for t in stmt.targets)
+                    and _is_dist_call(stmt.value)):
                 lhs = lhs_list[0]
                 name_kw, obs_name, d = _call_meta(stmt.value)
                 node = name_kw or lhs
@@ -579,8 +715,9 @@ def model_to_graph(model, data=None):
                     kind = DETERMINISTIC
                 else:
                     kind = OBSERVED if obs_name else LATENT
-                add_node(node, kind, _dist_name(stmt.value), d)
-                var_to_node[lhs] = node
+                add_node(node, kind, _dist_name(stmt.value, aliases), d)
+                for l in lhs_list:
+                    var_to_node[l] = node
                 if obs_name:
                     var_to_node.setdefault(obs_name, node)
                 continue
@@ -598,10 +735,12 @@ def model_to_graph(model, data=None):
                     var_to_node[lhs] = lhs
                 continue
 
-            # Standard deterministic assignment (including tuple unpacking or subscript `z[t] = ...`)
+            # Standard deterministic assignment (including tuple unpacking,
+            # multi-target `a = b = expr` and subscript `z[t] = ...`)
             rhs_deps = _names_in(stmt.value)
-            if isinstance(target, ast.Subscript):
-                rhs_deps = rhs_deps + _names_in(target.slice)
+            for tgt in stmt.targets:
+                if isinstance(tgt, ast.Subscript):
+                    rhs_deps = rhs_deps + _names_in(tgt.slice)
             for lhs in lhs_list:
                 add_node(lhs, DETERMINISTIC, None, rhs_deps)
                 var_to_node.setdefault(lhs, lhs)
@@ -623,9 +762,13 @@ def model_to_graph(model, data=None):
                     node = name_kw or "deterministic"
                     add_node(node, DETERMINISTIC, None, d)
                 else:
-                    node = name_kw or obs_name or f"obs_{_dist_name(call)}"
+                    # A bare latent call (no name=, no obs=) is NOT observed:
+                    # labelling it `obs_<dist>` lied and merged every two bare
+                    # calls of the same distribution into one node (m8).
+                    node = (name_kw or obs_name
+                            or f"unnamed_{_dist_name(call, aliases) or 'dist'}_{stmt.lineno}")
                     add_node(node, OBSERVED if obs_name else LATENT,
-                             _dist_name(call), d)
+                             _dist_name(call, aliases), d)
                 if obs_name:
                     var_to_node.setdefault(obs_name, node)
             elif (isinstance(call.func, ast.Attribute)
@@ -654,6 +797,12 @@ def model_to_graph(model, data=None):
                     mapped = var_to_node.get(lhs, lhs)
                     if mapped != name and mapped in kinds:
                         deps[mapped] = list(dict.fromkeys(list(deps.get(mapped, [])) + [name]))
+
+    # m10: attach the plate-size inputs recorded by the pre-pass to the sites
+    # drawn inside their plate (only sites that actually became nodes).
+    for site, sizes in plate_deps.items():
+        if site in kinds:
+            deps[site] = list(dict.fromkeys(list(deps.get(site, [])) + sizes))
 
     # Resolve dependency names to actual node names and build edges
     edges = []
@@ -691,7 +840,8 @@ def model_to_graph(model, data=None):
                             stack.append(nxt)
                 return False
 
-            edges = [(u, v) for (u, v) in edges if not _reaches_via_det(u, v)]
+            edges = [(u, v) for (u, v) in edges
+                     if u in tr.parents.get(v, ()) or not _reaches_via_det(u, v)]
 
     # Drop data/input nodes (and unreferenced loop temporaries) that are never referenced
     referenced = {a for a, _ in edges} | {b for _, b in edges}
@@ -699,4 +849,6 @@ def model_to_graph(model, data=None):
               if kinds[n] != DATA or n in referenced]
     edges = [(a, b) for a, b in edges if a in pruned and b in pruned]
 
-    return ModelGraph(pruned, edges, kinds, dist_of, shapes=shapes, plates=plates)
+    graph = ModelGraph(pruned, edges, kinds, dist_of, shapes=shapes, plates=plates)
+    graph.exact = traced
+    return graph

@@ -146,8 +146,9 @@ for t in range(1, 20):
     while n_acc < n_particles and n_sims + n_prop < budget:
         parents = m.dist.categorical(probs=w, sample=True, shape=(batch,))            # resample
         prop = m.dist.multivariate_normal(theta[parents], scale_tril=L, sample=True)  # perturb
+        prop = prop[jnp.isfinite(log_prior(prop))]                                   # inside the prior (s > 0)
         dp = distance(simulate(prop))                                                  # simulate
-        accepted = jnp.isfinite(log_prior(prop)) & (dp <= eps)                         # accept
+        accepted = dp <= eps                                                           # accept
         new_theta.append(prop[accepted])
         new_d.append(dp[accepted])
         n_acc += int(accepted.sum())

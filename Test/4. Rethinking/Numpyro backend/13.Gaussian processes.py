@@ -8,6 +8,13 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import jax
 import numpyro
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page.
+# Priors identical to the previous local copy (a,b,g ~ exponential(1), etasq ~ exponential(2),
+# rhosq ~ exponential(0.5)); the page has no 'a_over_g'/'k' deterministic sites.
+PAGE_MODEL = doc_model("19. Gaussian processes.qmd", 0)
 
 model_name = "13.Gaussian processes"
 
@@ -28,29 +35,12 @@ m.data_to_model(['total_tools', 'population'])
 m.data_on_model["society"] = jnp.arange(0, 10)
 m.data_on_model["Dmat"] = islandsDistMatrix.values
 
-def model(Dmat, population, society, total_tools):
-    a = m.dist.exponential(1)
-    b = m.dist.exponential(1)
-    g = m.dist.exponential(1)
-    numpyro.deterministic('a_over_g', a / g)
-
-    etasq = m.dist.exponential(2)
-    rhosq = m.dist.exponential(0.5)
-
-    n = Dmat.shape[0]
-    SIGMA = etasq * jnp.exp(-rhosq * jnp.square(Dmat))
-    SIGMA = SIGMA.at[jnp.diag_indices(n)].add(0.01)
-    L_chol = jnp.linalg.cholesky(SIGMA)
-    z = m.dist.multivariate_normal(jnp.zeros(n), jnp.eye(n))
-    k = numpyro.deterministic('k', L_chol @ z)
-
-    lambda_ = a * population**b / g * jnp.exp(k[society])
-    m.dist.poisson(lambda_, obs=total_tools)
+model_BF = PAGE_MODEL
 
 #%%
 # Run sampler ------------------------------------------------
 print("Fitting BF model...")
-m.fit(model, num_samples=1000, num_warmup=2000, target_accept_prob=0.9, dense_mass=True)
+m.fit(model_BF, num_samples=1000, num_warmup=2000, target_accept_prob=0.9, dense_mass=True)
 print("BF Summary:")
 print(m.summary())
 
@@ -125,25 +115,9 @@ plot_comparaison(BF_df, df_stan, param_map, model_name=model_name)
 
 #%%
 # 5. Parameter Recovery Analysis
-def model_rec(Dmat, population, society, total_tools):
-    a     = m.dist.exponential(1)
-    b     = m.dist.exponential(1)
-    g     = m.dist.exponential(1)
-    etasq = m.dist.exponential(2)
-    rhosq = m.dist.exponential(0.5)
-
-    nr = Dmat.shape[0]
-    SIGMA = etasq * jnp.exp(-rhosq * jnp.square(Dmat))
-    SIGMA = SIGMA.at[jnp.diag_indices(nr)].add(0.01)
-    L_chol = jnp.linalg.cholesky(SIGMA)
-    z = m.dist.multivariate_normal(jnp.zeros(nr), jnp.eye(nr))
-    k = numpyro.deterministic('k', L_chol @ z)
-
-    lambda_ = a * population**b / g * jnp.exp(k[society])
-    m.dist.poisson(lambda_, obs=total_tools)
-
 def param_recovery(Dm, P_vals, a_sims, b_sims, g_sims, etasq_sims, rhosq_sims, society, nsim):
     results = []
+    model_rec = PAGE_MODEL
     # Keep original 10 islands
     Dm_rec = Dm
     P_rec = P_vals
@@ -199,9 +173,8 @@ def param_recovery(Dm, P_vals, a_sims, b_sims, g_sims, etasq_sims, rhosq_sims, s
 
 print("\nRunning Parameter Recovery...")
 nsim = int(os.environ.get("BF_NSIM", 5))
-# Sample true params from the same priors used in the model
-# a, g: LogNormal(0,1) — clip to avoid extreme a/g ratios
-# b: Exp(1) clipped; etasq/rhosq clipped for non-degenerate GP
+# Sample true params from the page model's priors, untruncated:
+# a, b, g ~ exponential(1); etasq ~ exponential(2); rhosq ~ exponential(0.5)
 a_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 5.0)
 g_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 5.0)
 b_sims    = jnp.clip(m.dist.exponential(1.0, sample=True, shape=(nsim,)), 0.05, 1.0)

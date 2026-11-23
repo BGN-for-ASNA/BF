@@ -1,8 +1,10 @@
+import numbers
+import warnings
+
 import numpyro
 from numpyro.infer import MCMC, NUTS, HMC, Predictive
 from numpyro.infer import MixedHMC, DiscreteHMCGibbs, HMCGibbs
 from numpyro.handlers import condition
-from BayesForge.Data.manip import manip
 import jax
 
 #: Sampler names accepted by ``m.fit(sampler=...)``.
@@ -81,12 +83,43 @@ def mcmc_numpyro(
     chain_method="parallel",
     progress_bar=True,
     jit_model_args=False,
-    seed = 0,
+    seed=None,
     sampler="nuts",
     gibbs_fn=None,
     gibbs_sites=None,
     num_discrete_updates=None,
 ):
+    """Return a numpyro MCMC object (kernel + sampling settings).
+
+    ``seed`` is unused: the PRNG key goes to the returned object's ``.run(key)``.
+
+    Raises early (before any kernel is built) when ``num_warmup < 0``,
+    ``num_samples < 1`` or ``num_chains < 1``, or when one of them is not an
+    int; warns when ``num_chains > 1`` with ``chain_method="parallel"`` on
+    fewer devices than chains (numpyro falls back to sequential chains).
+    """
+    # Minor 6: validate the run counts here instead of letting numpyro fail
+    # (or silently fall back) deep inside .run().
+    for name, value, minimum in (("num_warmup", num_warmup, 0),
+                                 ("num_samples", num_samples, 1),
+                                 ("num_chains", num_chains, 1)):
+        if isinstance(value, bool) or not isinstance(value, numbers.Integral):
+            raise TypeError(f"mcmc_numpyro: {name} must be an int >= {minimum}, "
+                            f"got {value!r}.")
+        if value < minimum:
+            raise ValueError(f"mcmc_numpyro: {name} must be >= {minimum}, "
+                             f"got {value}.")
+    if seed is not None:
+        warnings.warn("mcmc_numpyro(seed=...) has no effect: pass the PRNG key to "
+                      ".run(key) (bf.fit takes seed=).", UserWarning, stacklevel=2)
+    if num_chains > 1 and chain_method == "parallel":
+        n_devices = jax.local_device_count()
+        if n_devices < num_chains:
+            warnings.warn(
+                f"mcmc_numpyro: num_chains={num_chains} with "
+                f"chain_method='parallel' but only {n_devices} device(s) "
+                "visible; numpyro will fall back to sequential chains.",
+                UserWarning, stacklevel=2)
     nuts_kwargs = dict(
         potential_fn=potential_fn,
         kinetic_fn=kinetic_fn,

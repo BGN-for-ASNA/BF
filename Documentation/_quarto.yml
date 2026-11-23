@@ -1,11 +1,17 @@
 project:
   type: website
+  pre-render: python3 scripts/invalidate_freeze.py
   render:
     - "**/*.qmd"
     - "**/*.md"
     # R2D2: its PDF build fails in LaTeX ("missing \item") and hangs the
     # render waiting on an xelatex prompt. Excluded until that is fixed.
     - "!37. Feature extraction - R2D2.qmd"
+    # Simulation-Based Inference pages: not ready, excluded from the render.
+    - "!38. Approximate Bayesian Computation.qmd"
+    - "!39. ABC random forests.qmd"
+    - "!40. Neural Posterior Estimation.qmd"
+    - "!41. Bayesian Neural Posterior Estimation.qmd"
 
 
 execute:
@@ -109,6 +115,14 @@ website:
             - 34. BNN for classification.qmd
             - 35. BNN for multiclass classification.qmd
 
+        # Excluded from the render (see project.render); restore with them.
+        # - section: "Simulation-Based Inference"
+        #   contents:
+        #     - 38. Approximate Bayesian Computation.qmd
+        #     - 39. ABC random forests.qmd
+        #     - 40. Neural Posterior Estimation.qmd
+        #     - 41. Bayesian Neural Posterior Estimation.qmd
+
     - id: api
       title: "API Reference"
       contents:
@@ -176,6 +190,8 @@ format:
 
   pdf:
     pdf-engine: xelatex
+    include-in-header: pdf-unicode.tex
+    monofont: "DejaVu Sans Mono"
     #keep-tex: true
     header-includes:
       - \usepackage{amsmath} # amsmath is better than unicode-math for cases

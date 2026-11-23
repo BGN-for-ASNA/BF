@@ -65,6 +65,21 @@ m = importBF(
 
 In R and Julia, `importBF()` takes the same arguments except `float_precision` and `gpu_index` (Python only); `NULL` (R) and `nothing` (Julia) stand for Python's `None`.
 
+::: {.callout-note}
+## Writing models for `backend="tfp"`
+With the TFP backend a model is a Python generator: every site is written `yield m.dist.<dist>(...)`. Sites are matched by position, so **all observed sites (`obs=`) must come after all latent parameters**. Several observed sites are allowed, as long as they are all at the end and each has its own `name=` (unnamed sites share a default name, which TFP rejects as a duplicate); a model that yields a latent after an observed site raises a `ValueError` at `fit()`.
+
+```{.python .no-test .lang-only}
+m = bf(backend="tfp")
+
+def model(y1, y2):
+    mu    = yield m.dist.normal(0.0, 5.0, name="mu")
+    sigma = yield m.dist.half_normal(2.0, name="sigma")
+    yield m.dist.normal(mu, sigma, obs=y1, name="y1")   # observed site 1
+    yield m.dist.normal(mu, sigma, obs=y2, name="y2")   # observed site 2, still after the latents
+```
+:::
+
 ### Common initialization patterns
 
 ::: {.panel-tabset group="language"}

@@ -22,17 +22,28 @@ def _quiet_float_summary():
         yield
 
 # Shared ArviZ-1.x-compatible helpers (NumPy-backed idata for LOO + native,
-# ArviZ-free WAIC computed from the NumPyro log-likelihood).
+# ArviZ-free WAIC computed from the NumPyro log-likelihood), plus the shared
+# _warn_ignored helper (RELEASE_AUDIT bugs 22-23): it lives in Diag2 because
+# Diag.py imports from Diag2, so Diag2 must never import back.
 from BayesForge.Diagnostic.Diag2 import (
     _az_from_dict,
     _numpyro_idata_with_loglik,
     _pointwise_loglik,
     _waic,
+    diagWIP,
 )
+
+_warn_ignored = diagWIP._warn_ignored
 
 class diag():
     """
     The diag class serves as a comprehensive toolkit for diagnosing and visualizing the results of Bayesian models, particularly those fitted using MCMC samplers like NumPyro or TensorFlow Probability. It is built as a high-level wrapper around the arviz library, simplifying common diagnostic tasks into convenient methods. The class takes a sampler object upon initialization and provides a suite of functions for in-depth model checking, comparison, and visualization.
+
+    .. deprecated::
+        Legacy entry point (RELEASE_AUDIT bugs 18/21/26). The supported
+        diagnostic object is :class:`~BayesForge.Diagnostic.Diag2.diagWIP`
+        (``m.diag``); ``diag`` only keeps the arviz-based methods working for
+        old scripts. New code should use ``diagWIP``.
     """
 
     def __init__(self, sampler):
@@ -50,7 +61,7 @@ class diag():
         return self.trace
 
     # Diagnostic with ARVIZ ----------------------------------------------------------------------------
-    def to_az(self, backend="numpyro", sample_stats_name=['target_log_prob','log_accept_ratio','has_divergence','energy']):
+    def to_az(self, backend="numpyro", sample_stats_name=('target_log_prob','leapfrogs_taken','has_divergence','energy','log_accept_ratio')):
         """Convert the sampler output to an arviz trace object.
         
         This method prepares the trace for use with arviz diagnostic tools.
@@ -65,12 +76,12 @@ class diag():
         
         elif backend == "tfp":
             var_names= list(self.sampler.model_info.keys())
-            sample_stats = {k:jnp.transpose(v) for k, v in zip(sample_stats_name, self.sampler.sample_stats)}
+            sample_stats = {k:jnp.transpose(v) for k, v in zip(sample_stats_name, self.sampler.sample_stats, strict=True)}
             trace = {}
             #First dim is the number of chains
             #Second dim is the number of sampling
             #The rest is the shape of the object
-            for name, samp in zip(var_names, self.sampler.posterior):
+            for name, samp in zip(var_names, self.sampler.posterior, strict=True):
                 trace[name] = samp
     
             self.trace = _az_from_dict({"posterior": trace, "sample_stats": sample_stats})
@@ -102,36 +113,55 @@ class diag():
                 **{prob_kw: hdi_prob}, **kwargs)
         return self.tab_summary
 
-    def plot_trace(self, var_names= None, kind="rank_bars", *args, **kwargs):
+    def plot_trace(self, var_names= None, kind="rank_bars", compact=True, *args, **kwargs):
         """Create a trace plot for visualizing MCMC diagnostics.
+
+        Uses the ArviZ >= 1.2 API: ``az.plot_trace_dist`` (trace + density,
+        the 0.x look) replaces ``az.plot_trace`` and returns a
+        PlotCollection.
 
         Args:
             var_names (list): List of variable names to include
-            kind (str): Type of plot (default: "rank_bars")
-            *args, **kwargs: Additional arguments for arviz.plot_trace
+            kind (str): "kde" or "hist" (the valid plot_trace_dist kinds);
+                0.x-only kinds such as "rank_bars" are ignored (with a
+                warning when set to a non-default value)
+            compact (bool): Group dimensions into shared subplots (1.x option)
+            *args, **kwargs: Additional arguments for arviz.plot_trace_dist
 
         Returns:
-            plot: The trace plot object
+            plot: The PlotCollection returned by arviz.plot_trace_dist
         """
         trace = self._ensure_trace()
-        self._trace_plot = az.plot_trace(
+        if kind in ("kde", "hist"):
+            kwargs["kind"] = kind
+        elif kind != "rank_bars":
+            _warn_ignored("plot_trace", kind=kind)
+        self._trace_plot = az.plot_trace_dist(
             trace, *args, var_names=var_names or self.priors_name,
-            kind=kind, **kwargs)
+            compact=compact, **kwargs)
         return self._trace_plot
 
-    def posterior(self, figsize=(8, 4)):
+    def posterior(self, figsize=(8, 4), *args, **kwargs):
         """Create posterior distribution plots.
-        
+
+        Uses the ArviZ >= 1.2 API: ``az.plot_posterior`` was replaced by
+        ``az.plot_dist``, which returns a PlotCollection and takes no
+        ``ax``/``figsize`` (the old plt.subplots + ax= dance also broke for
+        single-parameter models).
+
         Args:
-            figsize (tuple): Size of the figure (width, height)
-            
+            figsize (tuple): ArviZ 0.x option; ignored (warns if non-default)
+            *args, **kwargs: Additional arguments for arviz.plot_dist
+
         Returns:
-            fig: Matplotlib figure containing posterior plots
-        """        
-        fig, axes = plt.subplots(1, len(self.priors_name), figsize=figsize)
-        az.plot_posterior(self._ensure_trace(), var_names=self.priors_name, ax=axes)
-        self._posterior_plot = fig
-        return fig
+            plot: The PlotCollection returned by arviz.plot_dist
+        """
+        trace = self._ensure_trace()
+        if figsize != (8, 4):
+            _warn_ignored("posterior", figsize=figsize)
+        self._posterior_plot = az.plot_dist(
+            trace, *args, var_names=self.priors_name, **kwargs)
+        return self._posterior_plot
 
     def autocor(self, *args, **kwargs):
         """Plot autocorrelation of the MCMC chains.
@@ -149,38 +179,50 @@ class diag():
     def rank(self, *args, **kwargs):
         """Create rank plots for MCMC chains.
 
+        Uses the ArviZ >= 1.2 API: ``az.plot_rank`` returns a PlotCollection
+        and takes no ``ax`` (the old plt.subplots + ax= dance also broke for
+        single-parameter models).
+
         Args:
             *args, **kwargs: Additional arguments for arviz.plot_rank
 
         Returns:
-            fig: Rank plots
+            plot: The PlotCollection returned by arviz.plot_rank
         """
-        fig, axes = plt.subplots(1, len(self.priors_name))
-        az.plot_rank(self._ensure_trace(), *args,
-                     var_names=self.priors_name, ax=axes, **kwargs)
-        self._rank_plot = fig
-        return fig
+        self._rank_plot = az.plot_rank(
+            self._ensure_trace(), *args, var_names=self.priors_name, **kwargs)
+        return self._rank_plot
 
     def forest(self, data=None, kind="ridgeplot", ess=True, var_names=None,
                *args, **kwargs):
         """Create a forest plot of estimated values.
 
+        Uses the ArviZ >= 1.2 API: ``az.plot_forest`` has no ``kind`` or
+        ``ess`` options; they are accepted for backward compatibility and
+        ignored (with a warning when set to a non-default value).
+
         Args:
             data: Data to plot (default: self.trace)
-            kind (str): Type of plot (default: "ridgeplot")
-            ess (bool): Include effective sample size
+            kind (str): ArviZ 0.x option; ignored
+            ess (bool): ArviZ 0.x option; ignored
             var_names (list): Variables to include
             *args, **kwargs: Additional arguments for arviz.plot_forest
 
         Returns:
-            fig: Forest plot
+            plot: The PlotCollection returned by arviz.plot_forest
         """
         if var_names is None:
             var_names = self.priors_name
         if data is None:
             data = self._ensure_trace()
+        ignored = {}
+        if kind != "ridgeplot":
+            ignored["kind"] = kind
+        if ess is not True:
+            ignored["ess"] = ess
+        _warn_ignored("forest", **ignored)
         self._forest_plot = az.plot_forest(
-            data, *args, var_names=var_names, kind=kind, ess=ess, **kwargs)
+            data, *args, var_names=var_names, **kwargs)
         return self._forest_plot
 
     def rhat(self, *args, **kwargs):
@@ -219,74 +261,109 @@ class diag():
                   figsize=(11.5, 5),
                   *args, **kwargs):
         """Create pairwise plots of the posterior distribution.
-        
+
+        Uses the ArviZ >= 1.2 API: ``marginals`` maps to ``marginal``;
+        ``kde_kwargs``, ``point_estimate`` and ``figsize`` have no 1.x
+        equivalent, are accepted for backward compatibility and ignored
+        (with a warning when set to a non-default value).
+
         Args:
             var_names (list): Variables to include
-            kind (list): Type of plots ("scatter" and/or "kde")
-            kde_kwargs (dict): Additional arguments for KDE plots
-            marginals (bool): Include marginal distributions
-            point_estimate (str): Point estimate to plot
-            figsize (tuple): Size of the figure
+            kind (list): ArviZ 0.x plot types; ignored (with a warning) on ArviZ >= 1.2
+            kde_kwargs (dict): ArviZ 0.x option; ignored
+            marginals (bool): Include marginal distributions (-> marginal=)
+            point_estimate (str): ArviZ 0.x option; ignored
+            figsize (tuple): ArviZ 0.x option; ignored
             *args, **kwargs: Additional arguments for arviz.plot_pair
-            
+
         Returns:
-            fig: Pair plot
+            plot: The PlotCollection returned by arviz.plot_pair
         """                  
         if var_names is None:
             var_names = self.priors_name
-        self.pair_plot = az.plot_pair(self._ensure_trace(), var_names = var_names,
-                                      kind=kind,
-                                      kde_kwargs=kde_kwargs,
-                                      marginals=marginals,
-                                      point_estimate=point_estimate,
-                                      figsize=figsize,
-                                      *args, **kwargs)
-        return self.pair_plot   
+        ignored = {}
+        if kde_kwargs != {"fill_last": False}:
+            ignored["kde_kwargs"] = kde_kwargs
+        if point_estimate != "median":
+            ignored["point_estimate"] = point_estimate
+        if figsize != (11.5, 5):
+            ignored["figsize"] = figsize
+        if list(kind) != ["scatter", "kde"]:
+            # ArviZ >= 1.2 plot_pair has no kind: it always draws scatter
+            # plus contours.
+            ignored["kind"] = kind
+        _warn_ignored("pair", **ignored)
+        self.pair_plot = az.plot_pair(
+            self._ensure_trace(), *args, var_names=var_names,
+            marginal=marginals, **kwargs)
+        return self.pair_plot
     
     def density(self, var_names=None, shade=0.2, *args, **kwargs):
         """Plot density plots of the posterior distribution.
-        
+
+        Uses the ArviZ >= 1.2 API: ``az.plot_density`` was replaced by
+        ``az.plot_dist``; ``shade`` has no equivalent, is accepted for
+        backward compatibility and ignored (with a warning when non-default).
+
         Args:
             var_names (list): Variables to include
-            shade (float): Transparency of the filled area
-            *args, **kwargs: Additional arguments for arviz.plot_density
-            
+            shade (float): ArviZ 0.x option; ignored
+            *args, **kwargs: Additional arguments for arviz.plot_dist
+
         Returns:
-            fig: Density plots
+            plot: The PlotCollection returned by arviz.plot_dist
         """        
         if var_names is None:
             var_names = self.priors_name
-
-        self._density_plot = az.plot_density(
-                            self._ensure_trace(), *args,
-                            var_names=var_names,
-                            shade=shade,
-                            **kwargs
-                        )
+        if shade != 0.2:
+            _warn_ignored("density", shade=shade)
+        self._density_plot = az.plot_dist(
+            self._ensure_trace(), *args, var_names=var_names, **kwargs)
         return self._density_plot
 
     def plot_ess(self, kind="evolution", **kwargs):
         """Plot effective sample size.
 
+        ArviZ >= 1.2 keeps kind="local" and kind="quantile" in az.plot_ess;
+        the 0.x kind="evolution" moved to az.plot_ess_evolution when that
+        exists, otherwise it falls back to kind="local" with a warning.
+
         Args:
-            kind (str): "evolution" (arviz 0.x), "local" or "quantile".
+            kind (str): "evolution", "local" or "quantile".
 
         Returns:
-            fig: ESS plot
+            plot: The PlotCollection returned by arviz
         """
-        self.ess_plot = az.plot_ess(
-            self._ensure_trace(), var_names=self.priors_name, kind=kind, **kwargs)
+        trace = self._ensure_trace()
+        if kind == "evolution":
+            evolution = getattr(az, "plot_ess_evolution", None)
+            if evolution is not None:
+                self.ess_plot = evolution(
+                    trace, var_names=self.priors_name, **kwargs)
+            else:
+                warnings.warn(
+                    "plot_ess: az.plot_ess_evolution is unavailable in this "
+                    "ArviZ release; falling back to kind='local'.",
+                    UserWarning, stacklevel=2)
+                self.ess_plot = az.plot_ess(
+                    trace, var_names=self.priors_name, kind="local", **kwargs)
+        else:
+            self.ess_plot = az.plot_ess(
+                trace, var_names=self.priors_name, kind=kind, **kwargs)
         return self.ess_plot
 
     def model_checks(self):
         """Perform comprehensive model diagnostics.
         
         Creates various diagnostic plots including:
-        - Posterior distributions
-        - Autocorrelation plots
-        - Trace plots
-        - Rank plots
-        - Forest plots
+        - Posterior distributions (az.plot_dist)
+        - Autocorrelation plots (az.plot_autocorr)
+        - Trace plots (az.plot_trace_dist, compact=False)
+        - Rank plots (az.plot_rank)
+        - Forest plots (az.plot_forest)
+
+        All calls use the ArviZ >= 1.2 API: no plt.subplots/ax= (which also
+        broke for single-parameter models); each returns a PlotCollection.
         
         Stores plots under self._posterior_plot, self._autocor_plot,
         self._traces_plot, self._rank_plot, self._forest_plot.
@@ -294,24 +371,12 @@ class diag():
         params = self.priors_name
         trace = self._ensure_trace()
 
-        fig_post, axes = plt.subplots(1, len(params), figsize=(8, 4))
-        az.plot_posterior(trace, var_names=params, ax=axes)
-
-        autocor = az.plot_autocorr(trace, var_names=params)
-        traces = az.plot_trace(trace, compact=False)
-
-        fig_rank, axes = plt.subplots(1, len(params))
-        az.plot_rank(trace, var_names=params, ax=axes)
-
-        forest = az.plot_forest(trace, var_names=params)
-
-        # NOTE: these must not be named after the methods above -- assigning to
-        # self.autocor / self.rank / self.forest replaced those bound methods.
-        self._posterior_plot = fig_post
-        self._autocor_plot = autocor
-        self._traces_plot = traces
-        self._rank_plot = fig_rank
-        self._forest_plot = forest
+        self._posterior_plot = az.plot_dist(trace, var_names=params)
+        self._autocor_plot = az.plot_autocorr(trace, var_names=params)
+        self._traces_plot = az.plot_trace_dist(
+            trace, var_names=params, compact=False)
+        self._rank_plot = az.plot_rank(trace, var_names=params)
+        self._forest_plot = az.plot_forest(trace, var_names=params)
 
     def loo(self, pointwise=None, var_name=None, reff=None, scale=None):
         """Compute Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO-CV).
@@ -540,80 +605,51 @@ class diag():
         backend=None,
         backend_kwargs=None,
         show=None,
+        relative_scale=True,
+        rotated=False,
+        hide_top_model=False,
     ):
-        r"""Summary plot for model comparison.
+        r"""Summary plot for model comparison (ArviZ >= 1.2 API).
 
-        Models are compared based on their expected log pointwise predictive density (ELPD).
-        This plot is in the style of the one used in [2]_. Chapter 6 in the first edition
-        or 7 in the second.
+        Models are compared on their expected log pointwise predictive
+        density (ELPD), estimated by PSIS-LOO or WAIC (see ``compare``).
 
-        Notes
-        -----
-        The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
-        cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-        We recommend LOO in line with the work presented by [1]_.
+        Effective parameters: ``comp_df`` (the table returned by
+        ``compare``), ``backend``, and the ArviZ 1.x options
+        ``relative_scale``, ``rotated`` and ``hide_top_model``. The ArviZ
+        0.x display options -- ``insample_dev``, ``plot_standard_error``,
+        ``plot_ic_diff``, ``order_by_rank``, ``legend``, ``title``,
+        ``figsize``, ``textsize``, ``plot_kwargs``, ``ax``,
+        ``backend_kwargs``, ``show`` -- are kept for backward
+        compatibility, ignored, and trigger one warning when set to a
+        non-default value. ``labeller`` is kept for signature
+        compatibility only.
 
-        Parameters
-        ----------
-        comp_df : pandas.DataFrame
-            Result of the :func:`arviz.compare` method.
-        insample_dev : bool, default False
-            Plot in-sample ELPD, that is the value of the information criteria without the
-            penalization given by the effective number of parameters (p_loo or p_waic).
-        plot_standard_error : bool, default True
-            Plot the standard error of the ELPD.
-        plot_ic_diff : bool, default False
-            Plot standard error of the difference in ELPD between each model
-            and the top-ranked model.
-        order_by_rank : bool, default True
-            If True ensure the best model is used as reference.
-        legend : bool, default False
-            Add legend to figure.
-        figsize : (float, float), optional
-            If `None`, size is (6, num of models) inches.
-        title : bool, default True
-            Show a tittle with a description of how to interpret the plot.
-        textsize : float, optional
-            Text size scaling factor for labels, titles and lines. If `None` it will be autoscaled based
-            on `figsize`.
-        labeller : Labeller, optional
-            Class providing the method ``make_label_vert`` to generate the labels in the plot titles.
-            Read the :ref:`label_guide` for more details and usage examples.
-        plot_kwargs : dict, optional
-            Optional arguments for plot elements. Currently accepts 'color_ic',
-            'marker_ic', 'color_insample_dev', 'marker_insample_dev', 'color_dse',
-            'marker_dse', 'ls_min_ic' 'color_ls_min_ic',  'fontsize'
-        ax : matplotlib_axes or bokeh_figure, optional
-            Matplotlib axes or bokeh figure.
-        backend : {"matplotlib", "bokeh"}, default "matplotlib"
-            Select plotting backend.
-        backend_kwargs : bool, optional
-            These are kwargs specific to the backend being used, passed to
-            :func:`matplotlib.pyplot.subplots` or :class:`bokeh.plotting.figure`.
-            For additional documentation check the plotting method of the backend.
-        show : bool, optional
-            Call backend show function.
-
-        Returns
-        -------
-        axes : matplotlib_axes or bokeh_figure
-
-        See Also
-        --------
-        plot_elpd : Plot pointwise elpd differences between two or more models.
-        compare : Compare models based on PSIS-LOO loo or WAIC waic cross-validation.
-        loo : Compute Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO-CV).
-        waic : Compute the widely applicable information criterion.
-
-        References
-        ----------
-        .. [1] Vehtari et al. (2016). Practical Bayesian model evaluation using leave-one-out
-           cross-validation and WAIC https://arxiv.org/abs/1507.04544
-
-        .. [2] McElreath R. (2022). Statistical Rethinking A Bayesian Course with Examples in
-           R and Stan, Second edition, CRC Press.
-
-
-
+        Returns:
+            The PlotCollection returned by ``az.plot_compare``.
         """
-        return az.plot_compare(comp_df, insample_dev=insample_dev, plot_standard_error=plot_standard_error, plot_ic_diff=plot_ic_diff, order_by_rank=order_by_rank, legend=legend, title=title, figsize=figsize, textsize=textsize, labeller=labeller, plot_kwargs=plot_kwargs, ax=ax, backend=backend, backend_kwargs=backend_kwargs, show=show)
+        ignored = {}
+        for name, value, default in (
+            ("insample_dev", insample_dev, False),
+            ("plot_standard_error", plot_standard_error, True),
+            ("plot_ic_diff", plot_ic_diff, False),
+            ("order_by_rank", order_by_rank, True),
+            ("legend", legend, False),
+            ("title", title, True),
+            ("figsize", figsize, None),
+            ("textsize", textsize, None),
+            ("plot_kwargs", plot_kwargs, None),
+            ("ax", ax, None),
+            ("backend_kwargs", backend_kwargs, None),
+            ("show", show, None),
+        ):
+            if value != default:
+                ignored[name] = value
+        _warn_ignored("plot_compare", **ignored)
+        kw = {
+            "backend": backend,
+            "relative_scale": relative_scale,
+            "rotated": rotated,
+            "hide_top_model": hide_top_model,
+        }
+        return az.plot_compare(comp_df, **kw)

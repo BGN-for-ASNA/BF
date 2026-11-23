@@ -180,6 +180,12 @@ class NPE_BF(SBIPosterior):
         self.num_weight_samples = int(num_weight_samples)
         self.num_samples = int(num_samples)
         self.progress_bar = progress_bar
+        if not float(lr) > 0.0:
+            raise ValueError(f"lr must be > 0, got {lr}.")
+        if int(batch_size) < 1:
+            raise ValueError(f"batch_size must be >= 1, got {batch_size}.")
+        if not float(prior_scale) > 0.0:
+            raise ValueError(f"prior_scale must be > 0, got {prior_scale}.")
 
     def _log(self, msg):
         if self.progress_bar:
@@ -187,13 +193,25 @@ class NPE_BF(SBIPosterior):
 
     # --- training ---------------------------------------------------------------------
     def run(self, rng_key):
+        if not (0.0 < self.val_frac < 1.0):
+            raise ValueError(f"val_frac must be in (0, 1), got {self.val_frac}.")
+        if int(self.eval_every) < 1:
+            raise ValueError("eval_every must be >= 1.")
+        if int(self.num_simulations) < 2:
+            raise ValueError("num_simulations must be >= 2.")
         t0 = time.time()
-        k_sim, k_init, k_train, k_svi, k_post = jax.random.split(rng_key, 5)
+        k_sim, k_init, k_perm, k_train, k_svi, k_post = jax.random.split(rng_key, 6)
         sim = self.sim
         theta, _, s = sim.simulate_prior(k_sim, self.num_simulations)
         u = sim.to_unconstrained(theta)
         ok = jnp.all(jnp.isfinite(u), axis=1) & jnp.all(jnp.isfinite(s), axis=1)
         u, s = u[ok], s[ok]
+        n_ok = int(u.shape[0])
+        if n_ok < 2:
+            raise RuntimeError(f"NPE: only {n_ok} of {int(ok.size)} simulations are "
+                               "finite; check the simulator and the prior.")
+        if ok.sum() < ok.size:
+            self._log(f"NPE: dropped {int(ok.size - ok.sum())} non-finite simulations.")
 
         self.u_mean, self.u_std = u.mean(0), u.std(0) + 1e-8
         self.s_mean, self.s_std = s.mean(0), s.std(0) + 1e-8
@@ -209,8 +227,11 @@ class NPE_BF(SBIPosterior):
             raise ValueError("estimator must be 'mdn' or 'flow'.")
 
         n_val = max(int(self.val_frac * un.shape[0]), 1)
-        perm = jax.random.permutation(k_init, un.shape[0])
+        perm = jax.random.permutation(k_perm, un.shape[0])
         val, tr = perm[:n_val], perm[n_val:]
+        if tr.shape[0] == 0:
+            raise RuntimeError(f"NPE: no training simulations left ({n_ok} finite, "
+                               f"val_frac={self.val_frac}).")
         self.params = self._train(k_train, self.est.init(k_init), un[tr], sn[tr], un[val], sn[val])
         self._log(f"NPE ({self.estimator_name}): {un.shape[0]} simulations, "
                   f"best validation NLL = {min(self.val_losses):.3f}")
@@ -293,7 +314,19 @@ class NPE_BF(SBIPosterior):
     def log_q_u(self, u, s):
         """log q(u | s) for raw unconstrained parameters u (n, D) and stats s (n, S) or (S,)."""
         un = (u - self.u_mean) / self.u_std
-        c = jnp.broadcast_to(self._ctx(s), (un.shape[0],) + self.s_mean.shape)
+        cs = jnp.asarray(self._ctx(s))
+        if cs.ndim == 1:
+            if cs.shape[0] != self.s_mean.shape[0]:
+                raise ValueError(f"s has shape {tuple(cs.shape)} but the summary "
+                                 f"statistics have {int(self.s_mean.shape[0])} dimensions.")
+        elif cs.ndim == 2:
+            if cs.shape != (un.shape[0], self.s_mean.shape[0]):
+                raise ValueError(
+                    f"s has shape {tuple(cs.shape)}; expected ({un.shape[0]}, "
+                    f"{int(self.s_mean.shape[0])}) to match u, or ({int(self.s_mean.shape[0])},).")
+        else:
+            raise ValueError(f"s must have shape (S,) or (n, S), got {tuple(cs.shape)}.")
+        c = jnp.broadcast_to(cs, (un.shape[0],) + self.s_mean.shape)
         jac = -jnp.sum(jnp.log(self.u_std))
         if self.bayesian:
             lp = jax.vmap(lambda p: self.est.log_prob(p, un, c))(self.params_bayes)
@@ -301,7 +334,15 @@ class NPE_BF(SBIPosterior):
         return self.est.log_prob(self.params, un, c) + jac
 
     def sample_u(self, key, s, n):
-        """n draws of raw unconstrained parameters given stats s (S,)."""
+        """n draws of raw unconstrained parameters given stats s (S,).
+
+        In the Bayesian variant the mixture draws and the permutation that
+        subsamples them both derive from ``key`` (``fold_in(key, 7)``); the
+        sub-sample is therefore correlated with the per-weight draw order.
+        The decorrelation is weak but acceptable: each weight draw is already
+        an exchangeable mixture component, so the subsample stays a valid
+        approximate posterior draw.
+        """
         c = self._ctx(s)
         if self.bayesian:
             M = self.num_weight_samples

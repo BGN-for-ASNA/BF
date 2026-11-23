@@ -366,21 +366,6 @@ group_id  : int   — group index 0..19
 region_id : int   — region index 0..4
 
 
-## `m.load.trolley` {#trolley}
-
-```python
-m.load.trolley(frame=True, only_path=False)
-```
-
-Load the Trolley dataset.
-
-Trolley problem moral judgment experiment data.
-
-**Returns**
-bunch : Bunch
-    Dataset with moral judgment responses
-
-
 ## `m.load.tulips` {#tulips}
 
 ```python

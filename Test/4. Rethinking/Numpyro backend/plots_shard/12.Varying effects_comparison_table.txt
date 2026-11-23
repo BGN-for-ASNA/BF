@@ -1,28 +1,30 @@
 Comparison Table for 12.Varying effects
 ============================================================
    Parameter BF Mean Stan Mean    Diff KL Div
-sigma_cafe_1  0.3529    0.3629 -0.0101 0.0647
-           b -1.3035   -1.2987 -0.0048 0.0601
-           a  3.7706    3.7664  0.0042 0.0713
-       sigma  0.5402    0.5411 -0.0009 0.0436
-   Rho[0][1] -0.5559   -0.5574  0.0014 0.0422
-sigma_cafe_0  1.1796    1.1832 -0.0036 0.0420
+       sigma  0.5421    0.5400  0.0021 0.0650
+sigma_cafe_1  0.3417    0.3603 -0.0185 0.0715
+sigma_cafe_0  1.1723    1.1832 -0.0109 0.0658
+   Rho[0][1] -0.5556   -0.5571  0.0015 0.0844
+           a  3.8713    3.8635  0.0078 0.0598
+           b -1.3255   -1.3233 -0.0021 0.0782
 ============================================================
 
 ================================================================
 WAIC cross-check  -  12.Varying effects
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -176.556623    p_waic = 28.690760
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -176.556623  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -176.657428    p_waic = 28.258417
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -176.657428    p_waic = 28.258417
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=200)
 ----------------------------------------------------------------
 LOO cross-check  -  12.Varying effects
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -177.349338    p_loo  = 29.483476
+      elpd_loo  = -177.340121    p_loo  = 28.941111
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -177.345886    p_loo  = 29.480023
-|delta elpd_loo| = 3.452e-03      |delta p_loo| = 3.452e-03
+      elpd_loo  = -177.337483    p_loo  = 28.938472
+|delta elpd_loo| = 2.638e-03      |delta p_loo| = 2.638e-03
 RESULT: PASS
 ================================================================

@@ -144,10 +144,12 @@ def test_plot_draws_one_ellipse_per_cluster_and_level():
 
     # each cluster's 90% ellipse is centred on its own point cloud and is
     # strictly wider than its 50% ellipse
+    centers = np.stack([np.asarray(p.center) for p in ellipses])
     for c in np.unique(labels):
         pts = data[labels == c]
-        assert any(np.allclose(np.asarray(p.center), pts.mean(0), atol=0.6)
-                   for p in ellipses)
+        nearest = centers[np.argmin(
+            np.linalg.norm(centers - pts.mean(0), axis=1))]
+        assert np.allclose(nearest, pts.mean(0), atol=0.15)
 
     inner = ellipses[0::2][:n_clusters]
     outer = ellipses[1::2][:n_clusters]

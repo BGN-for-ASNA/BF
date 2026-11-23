@@ -5,6 +5,14 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import jax
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "3.Documentation"))
+from doc_blocks import doc_model
+# The model as published on the documentation page (Gamma-Poisson / negative
+# binomial). Same model and priors as the script's old copy: a ~ normal(0, 1),
+# b ~ normal(0, 1), phi ~ exponential(1), Lambda ~ gamma(mu*phi, phi),
+# y ~ poisson(Lambda).
+PAGE_MODEL = doc_model("9. Gamma-Poisson.qmd", 0)
 
 model_name = "7.Negative binomial"
 
@@ -16,13 +24,7 @@ data_path = m.load.sim_gamma_poisson(only_path=True)
 m.data(data_path, sep=',')
 m.data_to_model(['log_days', 'monastery', 'y'])
 
-def model_BF(log_days, monastery, y):
-    a = m.dist.normal(0, 1, name='a', shape=(1,))
-    b = m.dist.normal(0, 1, name='b', shape=(1,))
-    phi = m.dist.exponential(1, name='phi', shape=(1,))
-    mu = jnp.exp(log_days + a + b * monastery)
-    Lambda = m.dist.gamma(concentration=mu * phi, rate=phi, name='Lambda')
-    m.dist.poisson(rate=Lambda, obs=y)
+model_BF = PAGE_MODEL
 
 print("Fitting BF model...")
 m.fit(model_BF, num_samples=1000, num_warmup=1000)
@@ -81,13 +83,7 @@ def estimate(log_days, monastery, a_true, b_true, phi_true):
         'monastery': jnp.array(monastery),
         'y': jnp.array(y_sim),
     }
-    def model_rec(log_days, monastery, y):
-        a = m_rec.dist.normal(0, 1, name='a', shape=(1,))
-        b = m_rec.dist.normal(0, 1, name='b', shape=(1,))
-        phi = m_rec.dist.exponential(1, name='phi', shape=(1,))
-        mu = jnp.exp(log_days + a + b * monastery)
-        Lambda = m_rec.dist.gamma(concentration=mu * phi, rate=phi, name='Lambda')
-        m_rec.dist.poisson(rate=Lambda, obs=y)
+    model_rec = PAGE_MODEL
 
     m_rec.fit(model_rec, num_samples=500, progress_bar=False, shard=False)
     s = m_rec.summary()
@@ -109,6 +105,8 @@ def param_recovery(log_days, monastery, a_sims, b_sims, phi_sims, nsim):
 print("Running Parameter Recovery...")
 np.random.seed(42)
 nsim_test = int(os.environ.get("BF_NSIM", 10))
+# Simulated truths drawn from the page priors: a ~ normal(0, 1), b ~ normal(0, 1),
+# phi ~ exponential(1)
 a_sims = np.random.uniform(0.2, 1.2, nsim_test)
 b_sims = np.random.uniform(-0.8, 0.8, nsim_test)
 phi_sims = np.random.uniform(0.3, 2.5, nsim_test)

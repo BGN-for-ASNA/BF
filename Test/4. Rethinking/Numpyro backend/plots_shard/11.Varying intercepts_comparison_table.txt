@@ -1,24 +1,26 @@
 Comparison Table for 11.Varying intercepts
 ============================================================
 Parameter BF Mean Stan Mean    Diff KL Div
-    sigma  1.6275    1.6192  0.0083 0.0846
-    a_bar  1.3615    1.3636 -0.0021 0.0501
+    sigma  1.6185    1.6229 -0.0044 0.0777
+    a_bar  1.3407    1.3525 -0.0117 0.0412
 ============================================================
 
 ================================================================
 WAIC cross-check  -  11.Varying intercepts
 ================================================================
 [A] NumPyro direct (numpyro.infer.log_likelihood)
-      elpd_waic = -100.174400    p_waic = 21.083879
-[B] ArviZ round-trip (az.from_numpyro log_likelihood group)  [UNAVAILABLE: TypeError]
-      elpd_waic = -100.174400  (WAIC[A] shown; ArviZ reference unavailable)
+      elpd_waic = -99.611219    p_waic = 20.639525
+[B] ArviZ round-trip (az.from_numpyro log_likelihood group)
+      elpd_waic = -99.611219    p_waic = 20.639525
+|delta elpd_waic| = 0.000e+00      |delta p_waic| = 0.000e+00
+RESULT: PASS   (S=4000, N=48)
 ----------------------------------------------------------------
 LOO cross-check  -  11.Varying intercepts
 ----------------------------------------------------------------
 [A'] BF native JAX PSIS-LOO (jax_diagnostics.loo)
-      elpd_loo  = -110.388209    p_loo  = 31.297688
+      elpd_loo  = -109.649330    p_loo  = 30.677636
 [B'] ArviZ az.loo (PSIS-LOO) on the same log-likelihood
-      elpd_loo  = -110.532662    p_loo  = 31.442141
-|delta elpd_loo| = 1.445e-01      |delta p_loo| = 1.445e-01
+      elpd_loo  = -109.718540    p_loo  = 30.746845
+|delta elpd_loo| = 6.921e-02      |delta p_loo| = 6.921e-02
 RESULT: PASS
 ================================================================

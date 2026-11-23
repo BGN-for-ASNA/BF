@@ -1,4 +1,6 @@
 from BayesForge import bf
+import os
+import sys
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
@@ -7,11 +9,22 @@ import seaborn as sns
 from sklearn.decomposition import PCA as sklearn_PCA
 from sklearn.datasets import load_iris
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "3.Documentation"))
+from doc_blocks import doc_model
+
+# The model as published on the documentation page ('Explicit model' tab of
+# 23. PCA.qmd): w ~ normal(0, 1) of shape (data_dim, latent_dim),
+# z ~ normal(0, 1) of shape (latent_dim, num_datapoints), epsilon ~ exponential(1)
+# and x_train ~ normal(w @ z, epsilon), with x_train the transposed data. It is the
+# same generative model as the built-in m.models.pca(type="classic"), written out by
+# hand, and it keeps the same site names, so the posterior can be post-processed by
+# the library helpers unchanged.
+PAGE_MODEL = doc_model("23. PCA.qmd", 0)
+
 # Initialize BF model
 m = bf()
 
 # Logging setup to capture results in log.txt
-import sys
 
 
 class Tee(object):
@@ -52,12 +65,21 @@ def scale_data(X):
 X_scaled, data_mean, data_std = scale_data(X_raw)
 
 print("Fitting model with BF...")
-m.data_on_model = dict(X=X_scaled)
-# Using classic PCA for direct comparison with sklearn
-m.fit(m.models.pca(type="classic"), num_samples=500, num_warmup=500)
+# The page's explicit model takes the data transposed (features x observations).
+m.data_on_model = dict(
+    x_train=X_scaled.T,
+    data_dim=X_scaled.shape[1],
+    latent_dim=X_scaled.shape[1],
+    num_datapoints=X_scaled.shape[0],
+)
+m.fit(PAGE_MODEL, num_samples=500, num_warmup=500)
 
-# Extract results from BayesForge
-BF_pca_results = m.models.pca.get_attributes(X=X_scaled)
+# Extract results from BayesForge: the page model's posterior carries the loadings
+# under the same name ('w') and shape (data_dim, latent_dim) as the built-in model,
+# so the usual alignment / SVD post-processing is applied to it as is.
+BF_pca_results = m.models.pca(type="classic").get_attributes(
+    X=X_scaled, posteriors=m.posteriors
+)
 BF_components = BF_pca_results["components"]
 BF_variance_ratio = BF_pca_results["explained_variance_ratio"]
 

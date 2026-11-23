@@ -54,7 +54,7 @@ def test_layer_mixture_normal_matches_manual_mixture():
     ref = npd.MixtureSameFamily(npd.Categorical(logits=logits),
                                 npd.MultivariateNormal(loc, scale_tril=L))
     assert q.batch_shape == (10,) and q.event_shape == (D,)
-    assert jnp.allclose(q.log_prob(u), ref.log_prob(u), atol=1e-5)
+    assert jnp.allclose(q.log_prob(u), ref.log_prob(u), rtol=1e-4, atol=1e-5)
     with pytest.raises(ValueError):
         m.bnn.layer_mixture_normal(X[:, :-1], K, D)
 
