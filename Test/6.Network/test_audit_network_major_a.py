@@ -78,11 +78,13 @@ def test_m3_clustering_ignores_self_loop_and_stays_in_unit_interval():
     np.testing.assert_allclose(got, want, atol=1e-6)
 
 
-def test_m3_asymmetric_matrix_warns_and_stays_in_unit_interval():
+def test_m3_asymmetric_matrix_uses_directed_clustering():
+    # A directed 3-cycle: the directed (Fagiolo) coefficient, as nx.clustering on a DiGraph.
     A = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]], dtype=np.float32)
-    with pytest.warns(UserWarning, match="not symmetric"):
-        got = np.asarray(met.cc(jnp.asarray(A)))
+    got = np.asarray(met.cc(jnp.asarray(A)))
     assert np.all((got >= 0.0) & (got <= 1.0))
+    G = nx.from_numpy_array(A, create_using=nx.DiGraph)
+    np.testing.assert_allclose(got, [nx.clustering(G)[i] for i in range(3)], atol=1e-6)
 
 
 # --------------------------------------------------------------------------- #
@@ -169,8 +171,9 @@ def test_m6_diameter_connected_path_still_works():
     assert float(met.diameter(jnp.asarray(A))) == pytest.approx(2.0)
 
 
-def test_m3_clustering_asymmetric_warns():
+def test_m3_clustering_asymmetric_matches_networkx_digraph():
     A = np.array([[0.0, 1.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]], dtype=np.float32)
-    with pytest.warns(UserWarning, match="not symmetric"):
-        got = np.asarray(met.cc(jnp.asarray(A)))
+    got = np.asarray(met.cc(jnp.asarray(A)))
     assert np.all((got >= 0.0) & (got <= 1.0))
+    G = nx.from_numpy_array(A, create_using=nx.DiGraph)
+    np.testing.assert_allclose(got, [nx.clustering(G)[i] for i in range(3)], atol=1e-6)
