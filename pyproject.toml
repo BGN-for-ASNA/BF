@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,7 +13,7 @@ readme = "README.md"
 # arviz >= 1.2 requires Python >= 3.12; jax >= 0.10 / numpyro >= 0.21 also
 # dropped 3.10/3.11. Python 3.12+ is required.
 requires-python = ">=3.12"
-license = {text = "GPL-3.0-or-later"} # Using the standard identifier is slightly cleaner
+license = "GPL-3.0-or-later"
 keywords = ["python", "Bayesian inferences"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -45,6 +45,7 @@ dependencies = [
     "funsor >= 0.4.8",
     "plotly >= 6.0.0",
     "IPython >= 7.34.0",
+    "nbformat >= 4.2.0",  # plotly needs it to show m.diag figures in Jupyter / VS Code notebooks
     "scipy",
 ]
 

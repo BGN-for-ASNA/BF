@@ -34,8 +34,11 @@ def test_page_python_examples_run(page, tmp_path):
     body = textwrap.indent("\n\n".join(code), "    ")
     script.write_text("import matplotlib\nmatplotlib.use('Agg')\n"
                       'if __name__ == "__main__":\n' + body)
-    env = dict(os.environ, JAX_PLATFORMS="cpu",
-               PYTHONPATH=os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")])))
+    env = dict(os.environ, JAX_PLATFORMS="cpu")
+    # BF_DOCS_INSTALLED=1: test the installed BayesForge (e.g. a built wheel) instead
+    # of this checkout.
+    if os.environ.get("BF_DOCS_INSTALLED") != "1":
+        env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")]))
     proc = subprocess.run(
         [sys.executable, str(script)], cwd=tmp_path, env=env,
         capture_output=True, text=True, timeout=1200,

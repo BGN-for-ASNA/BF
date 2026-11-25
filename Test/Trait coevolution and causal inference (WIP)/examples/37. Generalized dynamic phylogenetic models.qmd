@@ -121,7 +121,7 @@ m$summary()
 ## Julia
 
 ```julia
-using BayesForge
+using PyBayesForge
 m = importBF(platform="cpu")
 
 @BF function model(y, node_seq, parent, ts, tip, tip_id, off_rows, off_cols, K, S)

@@ -76,6 +76,7 @@ CondaPkg.add_pip("bayesforge"; extras = ["gpu"])
 
 ::: callout-note
 * GPU support is only available on Linux and WSL2 systems with an NVIDIA GPU.
+* Some examples simulate data with [scikit-learn](https://scikit-learn.org) (`make_blobs`, `make_moons`, random forests), which is not installed with BayesForge. Install it once if you run them: Python `pip install scikit-learn`; R `reticulate::py_install("scikit-learn", envname = "BFR")`; Julia `using CondaPkg; CondaPkg.add_pip("scikit-learn")`.
 * If the R or Julia environment ends up in a broken state, delete it (R: `reticulate::virtualenv_remove("BFR")`; Julia: `PyBayesForge.delete_env()`) and run the setup step again.
 :::
 

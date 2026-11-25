@@ -192,7 +192,7 @@ m$fit(model, num_samples = 500L, num_warmup = 500L)
 ## Julia
 
 ``` julia
-using BayesForge
+using PyBayesForge
 using LinearAlgebra
 
 m = importBF(platform = "cpu")
@@ -401,7 +401,7 @@ m$fit(model, num_samples = 500L, num_warmup = 500L)
 ## Julia
 
 ``` julia
-using BayesForge
+using PyBayesForge
 m = importBF(platform = "cpu")
 
 @BF function model(left, right, bl, leaf_liks)

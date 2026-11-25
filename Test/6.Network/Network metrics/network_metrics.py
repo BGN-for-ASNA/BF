@@ -137,11 +137,32 @@ def nx_geodesic(G_undirected, weighted  = True):
     return dist_matrix
 
 
+def nx_geodesic_any(G, weighted=True):
+    """Shortest-path length matrix for any (di)graph, inf for unreachable pairs."""
+    if weighted:
+        lengths = dict(nx.all_pairs_dijkstra_path_length(G))
+    else:
+        lengths = dict(nx.all_pairs_shortest_path_length(G))
+    nodes = list(G.nodes)
+    n = len(nodes)
+    dist_matrix = np.full((n, n), np.inf)
+    for i, source in enumerate(nodes):
+        for target, length in lengths[source].items():
+            j = nodes.index(target)
+            dist_matrix[i, j] = length
+    np.fill_diagonal(dist_matrix, 0)
+    return dist_matrix
+
+
+_test_stats = {"passed": 0, "total": 0}
+
 def run_test(name, test_fn):
     """Utility to run a test function and log the result."""
     print(f"Testing {name}------------------------")
+    _test_stats["total"] += 1
     try:
         test_fn()
+        _test_stats["passed"] += 1
         print(f"✅ PASS: {name}")
     except Exception as e:
         print(f"❌ FAIL: {name}")
@@ -219,10 +240,10 @@ run_test("weighted cc / Onnela (continuous matrix)", lambda: np.testing.assert_a
     nx_weighted_cc(_cc_cont_np)
 ))
 
-# 3. The opt-in flag on cc() must route to the same weighted result.
-run_test("cc(weighted=True) matches weighted_cc", lambda: np.testing.assert_array_almost_equal(
+# 3. The opt-in flag on cc() must route to the NetworkX weighted (Onnela) result.
+run_test("cc(weighted=True) / Onnela vs NetworkX", lambda: np.testing.assert_array_almost_equal(
     m.net.cc(_cc_cont_jax, weighted=True),
-    m.net.weighted_cc(_cc_cont_jax)
+    nx_weighted_cc(_cc_cont_np)
 ))
 
 run_test("eigenvector centrality weighted", lambda: np.testing.assert_array_almost_equal(
@@ -250,17 +271,143 @@ run_test("diameter", lambda: np.testing.assert_array_almost_equal(
     np.array(nx.diameter(G_undirected))
 ))
 
-run_test("geodesic_distance weighted", lambda: np.testing.assert_array_almost_equal(
-    m.net.geodesic_distance(m.net.to_binary_matrix(adj_matrix_jax)), 
+run_test("geodesic_distance binary", lambda: np.testing.assert_array_almost_equal(
+    m.net.geodesic_distance(m.net.to_binary_matrix(adj_matrix_jax)),
     np.array(nx_geodesic(G_undirected, weighted=False))
 ))
 
-run_test("geodesic_distance binary", lambda: np.testing.assert_array_almost_equal(
-    m.net.geodesic_distance(adj_matrix_jax), 
+run_test("geodesic_distance weighted", lambda: np.testing.assert_array_almost_equal(
+    m.net.geodesic_distance(adj_matrix_jax),
     np.array(nx_geodesic(G_undirected, weighted=True))
 ))
 
+# ---------------------------------------------------------------------------
+# Directed, asymmetric network
+# ---------------------------------------------------------------------------
+print("\n=== Directed, asymmetric network ===")
+rng = np.random.default_rng(7)
+_n_dir = 30
+W = rng.random((_n_dir, _n_dir)) * (rng.random((_n_dir, _n_dir)) < 0.15)
+np.fill_diagonal(W, 0)
+G_dir = nx.from_numpy_array(W, create_using=nx.DiGraph)
+W_jax = jnp.array(W)
+W_bin_jax = m.net.to_binary_matrix(W_jax)
+
+run_test("directed: indegree", lambda: np.testing.assert_array_almost_equal(
+    m.net.indegree(W_jax, normalize=True),
+    np.array([nx.in_degree_centrality(G_dir)[i] for i in range(_n_dir)])
+))
+
+run_test("directed: outdegree", lambda: np.testing.assert_array_almost_equal(
+    m.net.outdegree(W_jax, normalize=True),
+    np.array([nx.out_degree_centrality(G_dir)[i] for i in range(_n_dir)])
+))
+
+run_test("directed: instrength", lambda: np.testing.assert_array_almost_equal(
+    m.net.instrength(W_jax),
+    np.array([G_dir.in_degree(i, weight="weight") for i in range(_n_dir)])
+))
+
+run_test("directed: outstrength", lambda: np.testing.assert_array_almost_equal(
+    m.net.outstrength(W_jax),
+    np.array([G_dir.out_degree(i, weight="weight") for i in range(_n_dir)])
+))
+
+run_test("directed: degree (asymmetric)", lambda: np.testing.assert_array_almost_equal(
+    m.net.degree(W_jax, sym=False),
+    np.array([dict(G_dir.degree())[i] for i in range(_n_dir)])
+))
+
+run_test("directed: cc", lambda: np.testing.assert_array_almost_equal(
+    m.net.cc(W_bin_jax),
+    np.array([nx.clustering(G_dir)[i] for i in range(_n_dir)])
+))
+
+run_test("directed: density", lambda: np.testing.assert_array_almost_equal(
+    m.net.density(W_jax),
+    np.array(nx.density(G_dir))
+))
+
+run_test("directed: geodesic_distance weighted", lambda: np.testing.assert_array_almost_equal(
+    np.asarray(m.net.geodesic_distance(W_jax)),
+    nx_geodesic_any(G_dir, weighted=True)
+))
+
+run_test("directed: geodesic_distance binary", lambda: np.testing.assert_array_almost_equal(
+    np.asarray(m.net.geodesic_distance(W_bin_jax)),
+    nx_geodesic_any(G_dir, weighted=False)
+))
+
+# ---------------------------------------------------------------------------
+# Disconnected network
+# ---------------------------------------------------------------------------
+print("\n=== Disconnected network ===")
+G_disc = nx.disjoint_union(nx.complete_graph(5), nx.path_graph(6))
+G_disc.add_nodes_from([11, 12])
+A_disc_np = nx.to_numpy_array(G_disc, nodelist=range(13))
+A_disc_jax = jnp.array(A_disc_np)
+
+run_test("disconnected: degree", lambda: np.testing.assert_array_almost_equal(
+    m.net.degree(A_disc_jax, sym=True),
+    np.array([dict(nx.degree(G_disc))[i] for i in range(13)])
+))
+
+run_test("disconnected: density", lambda: np.testing.assert_array_almost_equal(
+    m.net.density(A_disc_jax),
+    np.array(nx.density(G_disc))
+))
+
+run_test("disconnected: cc", lambda: np.testing.assert_array_almost_equal(
+    m.net.cc(A_disc_jax),
+    np.array([nx.clustering(G_disc)[i] for i in range(13)])
+))
+
+def check_geodesic_disconnected():
+    got = np.asarray(m.net.geodesic_distance(A_disc_jax))
+    exp = nx_geodesic_any(G_disc, weighted=False)
+    np.testing.assert_array_equal(np.isinf(got), np.isinf(exp))
+    np.testing.assert_array_almost_equal(got[np.isfinite(got)], exp[np.isfinite(exp)])
+
+run_test("disconnected: geodesic_distance", check_geodesic_disconnected)
+
+run_test("disconnected: eigenvector", lambda: np.testing.assert_array_almost_equal(
+    m.net.eigenvector(A_disc_jax),
+    np.array([nx.eigenvector_centrality(G_disc, max_iter=1000)[i] for i in range(13)]),
+    decimal=5
+))
+
+
+# component_aware=True: NetworkX run on each connected component separately
+# (each component normalised on its own; an isolated node gets 1.0).
+def nx_eigenvector_per_component(G, n):
+    ref = np.zeros(n)
+    for comp in nx.connected_components(G):
+        H = G.subgraph(comp)
+        ec = {next(iter(comp)): 1.0} if len(H) == 1 else nx.eigenvector_centrality(H, max_iter=1000)
+        for k, v in ec.items():
+            ref[k] = v
+    return ref
+
+
+run_test("disconnected: eigenvector (component_aware)", lambda: np.testing.assert_array_almost_equal(
+    m.net.eigenvector(A_disc_jax, component_aware=True),
+    nx_eigenvector_per_component(G_disc, 13),
+    decimal=5
+))
+
+try:
+    nx_diam_disc = nx.diameter(G_disc)
+except Exception as e:
+    nx_diam_disc = f"raised {type(e).__name__}: {e}"
+try:
+    bf_diam_disc = np.asarray(m.net.diameter(m.net.to_binary_matrix(A_disc_jax)))
+except Exception as e:
+    bf_diam_disc = f"raised {type(e).__name__}: {e}"
+print(f"disconnected: diameter — NetworkX: {nx_diam_disc}, BayesForge: {bf_diam_disc}")
+
 beteeweness_run_all_tests()
 
+print(f"\nSUMMARY metrics: {_test_stats['passed']}/{_test_stats['total']} passed")
 print("\nAll tests completed.")
+sys.stdout = sys.stdout.files[0]   # restore the terminal before closing the log
 log_file.close()

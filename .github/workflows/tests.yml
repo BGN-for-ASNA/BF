@@ -47,6 +47,41 @@ jobs:
           path: Test/0.Core/_report/
           if-no-files-found: ignore
 
+  # What a pip user gets: the built wheel in a fresh venv with only its declared
+  # dependencies (no editable install, no extra packages). Catches a dependency
+  # missing from pyproject.toml, e.g. nbformat for plotly figures in notebooks.
+  wheel-install:
+    runs-on: ubuntu-latest
+    env:
+      JAX_PLATFORMS: cpu
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build the wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --wheel
+
+      - name: Install the wheel in a fresh venv
+        run: |
+          python -m venv /tmp/bfwheel
+          WHEEL=$(ls dist/*.whl)
+          /tmp/bfwheel/bin/pip install "${WHEEL}[cpu]" pytest
+
+      - name: Plotly figures render in a notebook
+        run: |
+          cd /tmp
+          /tmp/bfwheel/bin/python -c "import BayesForge, plotly.io as pio, plotly.graph_objects as go; pio.show(go.Figure(), renderer='notebook')" > /dev/null
+
+      - name: Get started pages run with the installed wheel
+        env:
+          BF_DOCS_INSTALLED: "1"
+        run: /tmp/bfwheel/bin/python -m pytest Test/3.Documentation/Python/test_python_start_pages.py -q -rA
+
   # R examples of the "Get started" pages (Test/3.Documentation/R), run with the
   # dev branch of the R package against this checkout of BayesForge.
   docs-r:

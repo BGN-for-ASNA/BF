@@ -108,20 +108,40 @@ class met:
         """
         Computes the clustering coefficient for each node in the graph.
 
-        Self-loops are ignored. If the matrix is not symmetric, a UserWarning
-        is raised and the undirected formula is applied to ``(A + A.T) > 0``.
-        The result is in [0, 1]. The core computation is JIT-compatible
-        (``met._clustering_coefficient_jit``).
+        Self-loops are ignored and the matrix is binarized (``A > 0``). A
+        symmetric matrix gets the undirected coefficient; a non-symmetric one
+        gets the directed coefficient of Fagiolo (2007), as
+        ``nx.clustering`` on a ``DiGraph``. Both agree on a symmetric matrix.
+        The result is in [0, 1]. The core computations are JIT-compatible
+        (``met._clustering_coefficient_jit``,
+        ``met._directed_clustering_coefficient_jit``).
         """
         a = jnp.asarray(adj_matrix)
         if a.ndim == 2 and a.shape[0] == a.shape[1] and not bool(jnp.all(a == a.T)):
-            warnings.warn(
-                "clustering: the matrix is not symmetric; the undirected "
-                "clustering formula is applied to A + A.T > 0.",
-                UserWarning,
-                stacklevel=2,
-            )
+            return met._directed_clustering_coefficient_jit(a)
         return met._clustering_coefficient_jit(adj_matrix)
+
+    @staticmethod
+    @jax.jit
+    def _directed_clustering_coefficient_jit(adj_matrix):
+        """
+        Directed (binary) clustering coefficient, Fagiolo (2007).
+
+        c_i = (S^3)_ii / (2 * (d_tot_i * (d_tot_i - 1) - 2 * d_bi_i)), with
+        B = (A > 0) without self-loops, S = B + B.T, d_tot = in + out degree
+        and d_bi = (B @ B)_ii the number of reciprocated ties. It equals
+        ``nx.clustering(G)`` for a ``nx.DiGraph`` G, and the undirected
+        coefficient when B is symmetric.
+        """
+        a = jnp.asarray(adj_matrix)
+        b = (a > 0).astype(jnp.result_type(a.dtype, float))
+        b = b * (1 - jnp.eye(b.shape[0], dtype=b.dtype))
+        s = b + b.T
+        triangles = jnp.diagonal(s @ s @ s)
+        d_tot = b.sum(axis=0) + b.sum(axis=1)
+        d_bi = jnp.diagonal(b @ b)
+        denominator = 2 * (d_tot * (d_tot - 1) - 2 * d_bi)
+        return jnp.where(denominator > 0, triangles / jnp.where(denominator > 0, denominator, 1), 0)
 
     @staticmethod
     @jax.jit
