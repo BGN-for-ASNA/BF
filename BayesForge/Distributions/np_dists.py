@@ -5445,7 +5445,7 @@ class UnifiedDist:
 
         #### Reference:
 
-        * [Multivariate Student-t distribution – Wikipedia](https://en.wikipedia.org/wiki/Multivariate_Student%27s_t-distribution)
+        * [Multivariate Student-t distribution – Wikipedia](https://en.wikipedia.org/wiki/Multivariate_t-distribution)
         """
 
            
