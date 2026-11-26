@@ -7,7 +7,7 @@
 # registry in that order (each package's minimum bayesforge must exist on PyPI).
 
 [python]                  # bayesforge on PyPI -- BGN-for-ASNA/BF (this repository)
-version = "0.0.60"        # pyproject.toml [project] version
+version = "0.0.61"        # pyproject.toml [project] version
 python = ">=3.12"         # pyproject.toml requires-python
 numpyro = ">=0.21.0"      # pyproject.toml dependencies
 arviz = ">=1.3.0,<2"
@@ -21,4 +21,4 @@ bayesforge = ">=0.0.59"   # R/BF_management.R .bf_bayesforge_version
 [julia]                   # PyBayesForge.jl -- BGN-for-ASNA/PyBayesForge.jl
 version = "0.1.2"         # Project.toml version
 python = ">=3.12,<3.15"   # CondaPkg.toml [deps] python
-bayesforge = ">=0.0.59"   # CondaPkg.toml [pip.deps] bayesforge
+bayesforge = ">=0.0.61"   # CondaPkg.toml [pip.deps] bayesforge
