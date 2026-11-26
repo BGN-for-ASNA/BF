@@ -367,341 +367,95 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>m.link.LKJcor(corr_matrix, eta)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the LKJ correlation density.</p>
 <p>The LKJ prior is used for modeling correlation matrices. It is controlled by a single parameter, <code>eta</code>. Higher values of <code>eta</code> imply stronger shrinkage towards the identity matrix.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>corr_matrix</code></td>
-<td>array-like</td>
-<td>A square, symmetric correlation matrix.</td>
-</tr>
-<tr class="even">
-<td><code>eta</code></td>
-<td>float</td>
-<td>The shape parameter of the LKJ distribution.</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float</code>: The LKJ density of the input correlation matrix.</li>
-</ul>
+<p><strong>Parameters</strong> corr_matrix : array-like A square, symmetric correlation matrix. eta : float The shape parameter of the LKJ distribution.</p>
+<p><strong>Returns</strong> float The LKJ density of the input correlation matrix.</p>
 </section>
 <section id="cloglog" class="level2">
 <h2 class="anchored" data-anchor-id="cloglog"><code>m.link.cloglog</code></h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>m.link.cloglog(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>m.link.cloglog(p, eps<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the complementary log-log transformation.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>p</code></td>
-<td>float or array-like</td>
-<td>Input probability value(s) in the range (0, 1).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The complementary log-log transformed value(s): log(-log(1 - p)).</li>
-</ul>
+<p>0 and 1 map to -inf/+inf unless eps is given (e.g.&nbsp;eps=1e-6 clips to [eps, 1 - eps]).</p>
+<p><strong>Parameters</strong> p : float or array-like Input probability value(s) in the range (0, 1). eps : float, optional If not None, p is clipped to [eps, 1 - eps] before the transform.</p>
+<p><strong>Returns</strong> float or array-like The complementary log-log transformed value(s): log(-log(1 - p)), computed as log(-log1p(-p)) for accuracy near 0.</p>
 </section>
 <section id="exp" class="level2">
 <h2 class="anchored" data-anchor-id="exp"><code>m.link.exp</code></h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.link.exp(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the exponential function.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The exponential of the input value(s).</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The exponential of the input value(s).</p>
 </section>
 <section id="inv_cloglog" class="level2">
 <h2 class="anchored" data-anchor-id="inv_cloglog"><code>m.link.inv_cloglog</code></h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.link.inv_cloglog(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the inverse complementary log-log transformation.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The inverse complementary log-log transformed probability value(s): 1 - exp(-exp(x)).</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The inverse complementary log-log transformed probability value(s): 1 - exp(-exp(x)).</p>
 </section>
 <section id="inv_logit" class="level2">
 <h2 class="anchored" data-anchor-id="inv_logit"><code>m.link.inv_logit</code></h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.link.inv_logit(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the inverse logit transformation.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The inverse logit-transformed value(s): 1 / (1 + exp(-x)).</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The inverse logit-transformed value(s): 1 / (1 + exp(-x)).</p>
 </section>
 <section id="inv_logit_scale" class="level2">
 <h2 class="anchored" data-anchor-id="inv_logit_scale"><code>m.link.inv_logit_scale</code></h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.link.inv_logit_scale(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Modified inverse logit function scaling between 0 and 1. From https://www.science.org/action/downloadSupplement?doi=10.1126%2Fsciadv.aax9070&amp;file=aax9070_sm.pdf</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The inverse logit-transformed value(s): 1 / (1 + exp(-x)).</li>
-</ul>
+<p>Modified inverse logit function scaling between -1 and 1. From https://www.science.org/action/downloadSupplement?doi=10.1126%2Fsciadv.aax9070&amp;file=aax9070_sm.pdf</p>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like 2 * sigmoid(x) - 1, i.e.&nbsp;tanh(x / 2), in the range (-1, 1).</p>
 </section>
 <section id="inv_probit" class="level2">
 <h2 class="anchored" data-anchor-id="inv_probit"><code>m.link.inv_probit</code></h2>
 <div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.link.inv_probit(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the inverse probit transformation.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The probability value(s) from the cumulative distribution function of the standard normal distribution.</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The probability value(s) from the cumulative distribution function of the standard normal distribution.</p>
 </section>
 <section id="log" class="level2">
 <h2 class="anchored" data-anchor-id="log"><code>m.link.log</code></h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.link.log(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the natural logarithm.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>p</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The natural logarithm of the input value(s).</li>
-</ul>
+<p><strong>Parameters</strong> p : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The natural logarithm of the input value(s).</p>
 </section>
 <section id="logit" class="level2">
 <h2 class="anchored" data-anchor-id="logit"><code>m.link.logit</code></h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.link.logit(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.link.logit(x, eps<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the logit transformation.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s) in the range (0, 1).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The logit-transformed value(s): log(x / (1 - x)).</li>
-</ul>
+<p>0 and 1 map to -inf/+inf unless eps is given (e.g.&nbsp;eps=1e-6 clips to [eps, 1 - eps]).</p>
+<p><strong>Parameters</strong> x : float or array-like Input value(s) in the range (0, 1). eps : float, optional If not None, x is clipped to [eps, 1 - eps] before the transform.</p>
+<p><strong>Returns</strong> float or array-like The logit-transformed value(s): log(x) - log(1 - x), computed as log(x) - log1p(-x) to avoid overflow near 1.</p>
 </section>
 <section id="probit" class="level2">
 <h2 class="anchored" data-anchor-id="probit"><code>m.link.probit</code></h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.link.probit(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.link.probit(p, eps<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the probit transformation.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>p</code></td>
-<td>float or array-like</td>
-<td>Input probability value(s) in the range (0, 1).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The probit-transformed value(s), corresponding to the quantile of the standard normal distribution.</li>
-</ul>
+<p>0 and 1 map to -inf/+inf unless eps is given (e.g.&nbsp;eps=1e-6 clips to [eps, 1 - eps]).</p>
+<p><strong>Parameters</strong> p : float or array-like Input probability value(s) in the range (0, 1). eps : float, optional If not None, p is clipped to [eps, 1 - eps] before the transform.</p>
+<p><strong>Returns</strong> float or array-like The probit-transformed value(s), corresponding to the quantile of the standard normal distribution.</p>
 </section>
 <section id="reciprocal" class="level2">
 <h2 class="anchored" data-anchor-id="reciprocal"><code>m.link.reciprocal</code></h2>
 <div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.link.reciprocal(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the reciprocal of the input.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The reciprocal of the input value(s): 1 / x.</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The reciprocal of the input value(s): 1 / x. <code>reciprocal(0)</code> returns <code>inf</code> (JAX semantics); it does not raise.</p>
 </section>
 <section id="sqrt" class="level2">
 <h2 class="anchored" data-anchor-id="sqrt"><code>m.link.sqrt</code></h2>
 <div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.link.sqrt(p)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the square root.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>p</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The square root of the input value(s).</li>
-</ul>
+<p><strong>Parameters</strong> p : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The square root of the input value(s).</p>
 </section>
 <section id="square" class="level2">
 <h2 class="anchored" data-anchor-id="square"><code>m.link.square</code></h2>
 <div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.link.square(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the square of the input.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The square of the input value(s): x ** 2.</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s).</p>
+<p><strong>Returns</strong> float or array-like The square of the input value(s): x ** 2.</p>
 
 
 </section>

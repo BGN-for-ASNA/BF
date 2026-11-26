@@ -578,91 +578,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compare models based on their expected log pointwise predictive density (ELPD).</p>
 <p>The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out cross-validation (LOO) or using the widely applicable information criterion (WAIC). We recommend loo. Read more theory here - in a paper by some of the leading authorities on model comparison dx.doi.org/10.1111/1467-9868.00353</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>compare_dict</code></td>
-<td></td>
-<td>A dictionary of model names and <code>arviz.InferenceData</code> or <code>ELPDData</code>.</td>
-</tr>
-<tr class="even">
-<td><code>ic</code></td>
-<td></td>
-<td>Method to estimate the ELPD, available options are “loo” or “waic”. Defaults to <code>rcParams["stats.information_criterion"]</code>.</td>
-</tr>
-<tr class="odd">
-<td><code>method</code></td>
-<td></td>
-<td>Method used to estimate the weights for each model. Available options are: - ‘stacking’ : stacking of predictive distributions. - ‘BB-pseudo-BMA’ : pseudo-Bayesian Model averaging using Akaike-type weighting. The weights are stabilized using the Bayesian bootstrap. - ‘pseudo-BMA’: pseudo-Bayesian Model averaging using Akaike-type weighting, without Bootstrap stabilization (not recommended). For more information read https://arxiv.org/abs/1704.02030</td>
-</tr>
-<tr class="even">
-<td><code>b_samples</code></td>
-<td></td>
-<td>Number of samples taken by the Bayesian bootstrap estimation. Only useful when method = ‘BB-pseudo-BMA’. Defaults to <code>rcParams["stats.ic_compare_method"]</code>.</td>
-</tr>
-<tr class="odd">
-<td><code>alpha</code></td>
-<td></td>
-<td>The shape parameter in the Dirichlet distribution used for the Bayesian bootstrap. Only useful when method = ‘BB-pseudo-BMA’. When alpha=1 (default), the distribution is uniform on the simplex. A smaller alpha will keeps the final weights more away from 0 and 1.</td>
-</tr>
-<tr class="even">
-<td><code>seed</code></td>
-<td></td>
-<td>If int or RandomState, use it for seeding Bayesian bootstrap. Only useful when method = ‘BB-pseudo-BMA’. Default None the global <code>numpy.random</code> state is used.</td>
-</tr>
-<tr class="odd">
-<td><code>scale</code></td>
-<td></td>
-<td>Output scale for IC. Available options are: - <code>log</code> : (default) log-score (after Vehtari et al.&nbsp;(2017)) - <code>negative_log</code> : -1 * (log-score) - <code>deviance</code> : -2 * (log-score) A higher log-score (or a lower deviance) indicates a model with better predictive accuracy.</td>
-</tr>
-<tr class="even">
-<td><code>var_name</code></td>
-<td></td>
-<td>If there is more than a single observed variable in the <code>InferenceData</code>, which should be used as the basis for comparison.</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>A DataFrame, ordered from best to worst model (measured by the ELPD).</code>:</li>
-<li><code>The index reflects the key with which the models are passed to this function. The columns are:</code>:</li>
-<li><code>The rank-order of the models. 0 is the best.</code>:</li>
-<li><code>ELPD estimated either using (PSIS-LOO-CV</code>elpd_loo<code>or WAIC</code>elpd_waic<code>).</code>: Higher ELPD indicates higher out-of-sample predictive fit (“better” model). If <code>scale</code> is <code>deviance</code> or <code>negative_log</code> smaller values indicates higher out-of-sample predictive fit (“better” model).</li>
-<li><code>Estimated effective number of parameters.</code>:</li>
-<li><code>The difference in ELPD between two models.</code>: If more than two models are compared, the difference is computed relative to the top-ranked model, that always has a elpd_diff of 0.</li>
-<li><code>Relative weight for each model.</code>: This can be loosely interpreted as the probability of each model (among the compared model) given the data. By default the uncertainty in the weights estimation is considered using Bayesian bootstrap.</li>
-<li><code>Standard error of the ELPD estimate.</code>: If method = BB-pseudo-BMA these values are estimated using Bayesian bootstrap.</li>
-<li><code>Standard error of the difference in ELPD between each model and the top-ranked model.</code>: It’s always 0 for the top-ranked model.</li>
-<li><code>A value of 1 indicates that the computation of the ELPD may not be reliable.</code>: This could be indication of WAIC/LOO starting to fail see http://arxiv.org/abs/1507.04544 for details.</li>
-<li><code>Scale used for the ELPD.</code>:</li>
-</ul>
-<p><strong>References</strong></p>
-<ol type="1">
-<li>Vehtari, A., Gelman, A. &amp; Gabry, J. Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. Stat Comput 27, 1413–1432 (2017) see https://doi.org/10.1007/s11222-016-9696-4</li>
-</ol>
+<p><strong>Parameters</strong> compare_dict: dict of {str: InferenceData or ELPDData} A dictionary of model names and <code>arviz.InferenceData</code> or <code>ELPDData</code>. ic: str, optional Method to estimate the ELPD, available options are “loo” or “waic”. Defaults to <code>rcParams["stats.information_criterion"]</code>. method: str, optional Method used to estimate the weights for each model. Available options are:</p>
+<pre><code>- 'stacking' : stacking of predictive distributions.
+- 'BB-pseudo-BMA' : pseudo-Bayesian Model averaging using Akaike-type
+  weighting. The weights are stabilized using the Bayesian bootstrap.
+- 'pseudo-BMA': pseudo-Bayesian Model averaging using Akaike-type
+  weighting, without Bootstrap stabilization (not recommended).
+
+For more information read https://arxiv.org/abs/1704.02030</code></pre>
+<p>b_samples: int, optional default = 1000 Number of samples taken by the Bayesian bootstrap estimation. Only useful when method = ‘BB-pseudo-BMA’. Defaults to <code>rcParams["stats.ic_compare_method"]</code>. alpha: float, optional The shape parameter in the Dirichlet distribution used for the Bayesian bootstrap. Only useful when method = ‘BB-pseudo-BMA’. When alpha=1 (default), the distribution is uniform on the simplex. A smaller alpha will keeps the final weights more away from 0 and 1. seed: int or np.random.RandomState instance, optional If int or RandomState, use it for seeding Bayesian bootstrap. Only useful when method = ‘BB-pseudo-BMA’. Default None the global <code>numpy.random</code> state is used. scale: str, optional Output scale for IC. Available options are:</p>
+<pre><code>- `log` : (default) log-score (after Vehtari et al. (2017))
+- `negative_log` : -1 * (log-score)
+- `deviance` : -2 * (log-score)
+
+A higher log-score (or a lower deviance) indicates a model with better predictive
+accuracy.</code></pre>
+<p>var_name: str, optional If there is more than a single observed variable in the <code>InferenceData</code>, which should be used as the basis for comparison.</p>
+<p><strong>Returns</strong> A DataFrame, ordered from best to worst model (measured by the ELPD). The index reflects the key with which the models are passed to this function. The columns are: rank: The rank-order of the models. 0 is the best. elpd: ELPD estimated either using (PSIS-LOO-CV <code>elpd_loo</code> or WAIC <code>elpd_waic</code>). Higher ELPD indicates higher out-of-sample predictive fit (“better” model). If <code>scale</code> is <code>deviance</code> or <code>negative_log</code> smaller values indicates higher out-of-sample predictive fit (“better” model). pIC: Estimated effective number of parameters. elpd_diff: The difference in ELPD between two models. If more than two models are compared, the difference is computed relative to the top-ranked model, that always has a elpd_diff of 0. weight: Relative weight for each model. This can be loosely interpreted as the probability of each model (among the compared model) given the data. By default the uncertainty in the weights estimation is considered using Bayesian bootstrap. SE: Standard error of the ELPD estimate. If method = BB-pseudo-BMA these values are estimated using Bayesian bootstrap. dSE: Standard error of the difference in ELPD between each model and the top-ranked model. It’s always 0 for the top-ranked model. warning: A value of 1 indicates that the computation of the ELPD may not be reliable. This could be indication of WAIC/LOO starting to fail see http://arxiv.org/abs/1507.04544 for details. scale: Scale used for the ELPD.</p>
+<p><strong>References</strong> 1. Vehtari, A., Gelman, A. &amp; Gabry, J. Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. Stat Comput 27, 1413–1432 (2017) see https://doi.org/10.1007/s11222-016-9696-4</p>
 </section>
 <section id="density" class="level2">
 <h2 class="anchored" data-anchor-id="density"><code>m.diag.density</code></h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.diag.density(</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.diag.density(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Posterior density of each parameter, one curve per chain.</p>
 <table class="caption-top table">
 <colgroup>
@@ -717,61 +661,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="diagnose" class="level2">
 <h2 class="anchored" data-anchor-id="diagnose"><code>m.diag.diagnose</code></h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.diag.diagnose(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    max_treedepth: <span class="bu">int</span> <span class="op">=</span> <span class="dv">10</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    ebfmi_threshold: <span class="bu">float</span> <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    rhat_threshold: <span class="bu">float</span> <span class="op">=</span> <span class="fl">1.01</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ess_threshold: <span class="bu">float</span> <span class="op">=</span> <span class="fl">400.0</span>,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Run MCMC convergence diagnostics on a fitted BF model.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>max_treedepth</code></td>
-<td>int</td>
-<td>Maximum tree depth used during sampling (default 10, matching BF default).</td>
-</tr>
-<tr class="even">
-<td><code>ebfmi_threshold</code></td>
-<td>float</td>
-<td>E-BFMI values below this trigger a warning (default 0.3).</td>
-</tr>
-<tr class="odd">
-<td><code>rhat_threshold</code></td>
-<td>float</td>
-<td>R-hat values above this trigger a warning (default 1.01).</td>
-</tr>
-<tr class="even">
-<td><code>ess_threshold</code></td>
-<td>float</td>
-<td>ESS values below this trigger a warning (default 400).</td>
-</tr>
-</tbody>
-</table>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.diagnose(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    max_treedepth<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    ebfmi_threshold<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    rhat_threshold<span class="op">=</span><span class="fl">1.01</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    ess_threshold<span class="op">=</span><span class="fl">400.0</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    var_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>MCMC convergence report (treedepth, divergences, E-BFMI, ESS, R-hat).</p>
+<p>Reads m’s CURRENT fit: the snapshot attributes diagnose() uses (sampler, posterior_samples, priors_name, num_chains, is_variational) are refreshed from m.sampler before running, so a diag object kept across a refit cannot mix old and new draws.</p>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>str</code>: Human-readable diagnostic report.</li>
+<li>Human-readable diagnostic report.</li>
 </ul>
 </section>
 <section id="divergence_energy" class="level2">
 <h2 class="anchored" data-anchor-id="divergence_energy"><code>m.diag.divergence_energy</code></h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.diag.divergence_energy(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'HMC Diagnostics: Energy &amp; Divergences'</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.diag.divergence_energy(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'HMC Diagnostics: Energy &amp; Divergences'</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Plot the HMC energy diagnostic and the divergent transitions per chain.</p>
 <p>The fitted model <code>m</code> is supplied automatically.</p>
 <p>Top row, one panel per chain (as bayesplot’s <code>mcmc_nuts_energy</code>): the distribution of the energy E around its mean (marginal energy) and of its change between successive iterations, Delta E (energy transition). When the Delta E histogram is about as wide as the E histogram the sampler can move across the whole posterior; a much narrower Delta E histogram means it explores the tails badly. The panel title gives E-BFMI = sum(Delta E^2) / sum((E - mean E)^2); values below 0.3 are flagged.</p>
@@ -819,7 +729,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ess" class="level2">
 <h2 class="anchored" data-anchor-id="ess"><code>m.diag.ess</code></h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.diag.ess(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, kind<span class="op">=</span><span class="st">'bulk'</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.diag.ess(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, kind<span class="op">=</span><span class="st">'bulk'</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Effective sample size of each parameter.</p>
 <table class="caption-top table">
 <colgroup>
@@ -864,14 +774,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="forest" class="level2">
 <h2 class="anchored" data-anchor-id="forest"><code>m.diag.forest</code></h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.diag.forest(</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.forest(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Forest plot: posterior mean and credible interval of each parameter.</p>
 <table class="caption-top table">
 <colgroup>
@@ -926,7 +836,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="get_yrep" class="level2">
 <h2 class="anchored" data-anchor-id="get_yrep"><code>m.diag.get_yrep</code></h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.diag.get_yrep(site<span class="op">=</span><span class="va">None</span>, seed<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.diag.get_yrep(site<span class="op">=</span><span class="va">None</span>, seed<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Posterior predictive draws of the observed outcome(s).</p>
 <table class="caption-top table">
 <colgroup>
@@ -961,15 +871,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="influence" class="level2">
 <h2 class="anchored" data-anchor-id="influence"><code>m.diag.influence</code></h2>
-<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.diag.influence(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    log_likelihood<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    good_k<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'LOO Influence: Pareto-k Diagnostics'</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.diag.influence(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    log_likelihood<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    good_k<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'LOO Influence: Pareto-k Diagnostics'</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Scatter of Pareto-k values per observation.</p>
 <p>The fitted model <code>m</code> is supplied automatically.</p>
 <p>High k values (k &gt; 0.7) indicate influential observations where the model is sensitive — potential outliers or model misspecification.</p>
@@ -1036,7 +946,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="loo" class="level2">
 <h2 class="anchored" data-anchor-id="loo"><code>m.diag.loo</code></h2>
-<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.diag.loo(log_likelihood<span class="op">=</span><span class="va">None</span>, pointwise<span class="op">=</span><span class="va">False</span>, scale<span class="op">=</span><span class="st">'log'</span>, reff<span class="op">=</span><span class="va">None</span>, var_name<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m.diag.loo(log_likelihood<span class="op">=</span><span class="va">None</span>, pointwise<span class="op">=</span><span class="va">False</span>, scale<span class="op">=</span><span class="st">'log'</span>, reff<span class="op">=</span><span class="va">None</span>, var_name<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Pareto-smoothed importance-sampling leave-one-out cross-validation (PSIS-LOO).</p>
 <p>Estimates the expected log pointwise predictive density (ELPD) of the fitted model. Use <code>m.diag.compare({"m1": m1, "m2": m2})</code> to rank models.</p>
 <table class="caption-top table">
@@ -1087,7 +997,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="mcse" class="level2">
 <h2 class="anchored" data-anchor-id="mcse"><code>m.diag.mcse</code></h2>
-<div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.diag.mcse(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, kind<span class="op">=</span><span class="st">'mean'</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>m.diag.mcse(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, kind<span class="op">=</span><span class="st">'mean'</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Monte Carlo standard error of each parameter’s posterior summary.</p>
 <table class="caption-top table">
 <colgroup>
@@ -1132,7 +1042,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="model_checks" class="level2">
 <h2 class="anchored" data-anchor-id="model_checks"><code>m.diag.model_checks</code></h2>
-<div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m.diag.model_checks(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filter_regex<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m.diag.model_checks(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filter_regex<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Show the standard convergence plots in one call.</p>
 <p>Displays posterior densities, autocorrelation, trace, forest and pair plots.</p>
 <table class="caption-top table">
@@ -1174,14 +1084,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="multimodality" class="level2">
 <h2 class="anchored" data-anchor-id="multimodality"><code>m.diag.multimodality</code></h2>
-<div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>m.diag.multimodality(</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    posteriors<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    param_names<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    n_modes<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'Multimodality Check'</span>,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m.diag.multimodality(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    posteriors<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    param_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    n_modes<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'Multimodality Check'</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Detect multiple modes in posterior marginals using KDE + local maxima.</p>
 <p>The fitted model <code>m</code> is supplied automatically.</p>
 <p>Flags parameters whose KDE has more than one local maximum (potential multimodality). Also overlays chain-separated density to show if chains explore different regions.</p>
@@ -1243,7 +1153,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="pair" class="level2">
 <h2 class="anchored" data-anchor-id="pair"><code>m.diag.pair</code></h2>
-<div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m.diag.pair(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m.diag.pair(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Pairwise scatter plots of the draws (correlations, funnels, multimodality).</p>
 <table class="caption-top table">
 <colgroup>
@@ -1298,140 +1208,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="plot_compare" class="level2">
 <h2 class="anchored" data-anchor-id="plot_compare"><code>m.diag.plot_compare</code></h2>
-<div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_compare(</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    comp_df,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    insample_dev<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    plot_standard_error<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    plot_ic_diff<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    order_by_rank<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    legend<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    textsize<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    labeller<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    plot_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    backend<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    backend_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    show<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Summary plot for model comparison.</p>
-<p>Models are compared based on their expected log pointwise predictive density (ELPD). This plot is in the style of the one used in [2]_. Chapter 6 in the first edition or 7 in the second.</p>
-<p><strong>Notes</strong></p>
-<p>The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out cross-validation (LOO) or using the widely applicable information criterion (WAIC). We recommend LOO in line with the work presented by [1]_.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>comp_df</code></td>
-<td>pandas.DataFrame</td>
-<td>Result of the <code>arviz.compare</code> method.</td>
-</tr>
-<tr class="even">
-<td><code>insample_dev</code></td>
-<td>bool</td>
-<td>Plot in-sample ELPD, that is the value of the information criteria without the penalization given by the effective number of parameters (p_loo or p_waic).</td>
-</tr>
-<tr class="odd">
-<td><code>plot_standard_error</code></td>
-<td>bool</td>
-<td>Plot the standard error of the ELPD.</td>
-</tr>
-<tr class="even">
-<td><code>plot_ic_diff</code></td>
-<td>bool</td>
-<td>Plot standard error of the difference in ELPD between each model and the top-ranked model.</td>
-</tr>
-<tr class="odd">
-<td><code>order_by_rank</code></td>
-<td>bool</td>
-<td>If True ensure the best model is used as reference.</td>
-</tr>
-<tr class="even">
-<td><code>legend</code></td>
-<td>bool</td>
-<td>Add legend to figure.</td>
-</tr>
-<tr class="odd">
-<td><code>figsize</code></td>
-<td>(float, float)</td>
-<td>If <code>None</code>, size is (6, num of models) inches.</td>
-</tr>
-<tr class="even">
-<td><code>title</code></td>
-<td>bool</td>
-<td>Show a tittle with a description of how to interpret the plot.</td>
-</tr>
-<tr class="odd">
-<td><code>textsize</code></td>
-<td>float</td>
-<td>Text size scaling factor for labels, titles and lines. If <code>None</code> it will be autoscaled based on <code>figsize</code>.</td>
-</tr>
-<tr class="even">
-<td><code>labeller</code></td>
-<td>Labeller</td>
-<td>Class providing the method <code>make_label_vert</code> to generate the labels in the plot titles. Read the :ref:<code>label_guide</code> for more details and usage examples.</td>
-</tr>
-<tr class="odd">
-<td><code>plot_kwargs</code></td>
-<td>dict</td>
-<td>Optional arguments for plot elements. Currently accepts ‘color_ic’, ‘marker_ic’, ‘color_insample_dev’, ‘marker_insample_dev’, ‘color_dse’, ‘marker_dse’, ‘ls_min_ic’ ‘color_ls_min_ic’, ‘fontsize’</td>
-</tr>
-<tr class="even">
-<td><code>ax</code></td>
-<td>matplotlib_axes or bokeh_figure</td>
-<td>Matplotlib axes or bokeh figure.</td>
-</tr>
-<tr class="odd">
-<td><code>backend</code></td>
-<td>“matplotlib”, “bokeh”</td>
-<td>Select plotting backend.</td>
-</tr>
-<tr class="even">
-<td><code>backend_kwargs</code></td>
-<td>bool</td>
-<td>These are kwargs specific to the backend being used, passed to <code>matplotlib.pyplot.subplots</code> or <code>bokeh.plotting.figure</code>. For additional documentation check the plotting method of the backend.</td>
-</tr>
-<tr class="odd">
-<td><code>show</code></td>
-<td>bool</td>
-<td>Call backend show function.</td>
-</tr>
-</tbody>
-</table>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_compare(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    comp_df,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    insample_dev<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    plot_standard_error<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    plot_ic_diff<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    order_by_rank<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    legend<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    figsize<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    textsize<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    labeller<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    plot_kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    backend<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    backend_kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    show<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    relative_scale<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    rotated<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    hide_top_model<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Summary plot for model comparison (ArviZ &gt;= 1.2 API).</p>
+<p>Models are compared on their expected log pointwise predictive density (ELPD), estimated by PSIS-LOO or WAIC (see <code>compare</code>).</p>
+<p>Effective parameters: <code>comp_df</code> (the table returned by <code>compare</code>), <code>backend</code>, and the ArviZ 1.x options <code>relative_scale</code>, <code>rotated</code> and <code>hide_top_model</code>. The ArviZ 0.x display options – <code>insample_dev</code>, <code>plot_standard_error</code>, <code>plot_ic_diff</code>, <code>order_by_rank</code>, <code>legend</code>, <code>title</code>, <code>figsize</code>, <code>textsize</code>, <code>plot_kwargs</code>, <code>ax</code>, <code>backend_kwargs</code>, <code>show</code> – are kept for backward compatibility, ignored, and trigger one warning when set to a non-default value. <code>labeller</code> is kept for signature compatibility only.</p>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>matplotlib_axes or bokeh_figure</code>:</li>
+<li>The PlotCollection returned by <code>az.plot_compare</code>.</li>
 </ul>
-<p><strong>See Also</strong></p>
-<p>plot_elpd : Plot pointwise elpd differences between two or more models. compare : Compare models based on PSIS-LOO loo or WAIC waic cross-validation. loo : Compute Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO-CV). waic : Compute the widely applicable information criterion.</p>
-<p><strong>References</strong></p>
-<ol type="1">
-<li><p>Vehtari et al.&nbsp;(2016). Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC https://arxiv.org/abs/1507.04544</p></li>
-<li><p>McElreath R. (2022). Statistical Rethinking A Bayesian Course with Examples in R and Stan, Second edition, CRC Press.</p></li>
-</ol>
 </section>
 <section id="plot_ess" class="level2">
 <h2 class="anchored" data-anchor-id="plot_ess"><code>m.diag.plot_ess</code></h2>
-<div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_ess(</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_ess(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Evolution of the effective sample size as draws accumulate.</p>
 <table class="caption-top table">
 <colgroup>
@@ -1486,14 +1300,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="plot_trace" class="level2">
 <h2 class="anchored" data-anchor-id="plot_trace"><code>m.diag.plot_trace</code></h2>
-<div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_trace(</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m.diag.plot_trace(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Trace plot of each chain (mixing and stationarity).</p>
 <table class="caption-top table">
 <colgroup>
@@ -1548,14 +1362,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="posterior" class="level2">
 <h2 class="anchored" data-anchor-id="posterior"><code>m.diag.posterior</code></h2>
-<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m.diag.posterior(</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>m.diag.posterior(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kw,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Posterior density of each parameter with its credible interval.</p>
 <table class="caption-top table">
 <colgroup>
@@ -1610,7 +1424,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_bars" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_bars"><code>m.diag.ppc_bars</code></h2>
-<div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_bars(y<span class="op">=</span><span class="va">None</span>, yrep<span class="op">=</span><span class="va">None</span>, title<span class="op">=</span><span class="va">None</span>, name<span class="op">=</span><span class="st">'y'</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_bars(y<span class="op">=</span><span class="va">None</span>, yrep<span class="op">=</span><span class="va">None</span>, title<span class="op">=</span><span class="va">None</span>, name<span class="op">=</span><span class="st">'y'</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Bar chart comparing observed y to posterior predictive yrep.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <p>For ordinal, categorical, or discrete outcomes. Shows observed counts and, per category, the median predicted count with a 90% interval, as in bayesplot’s ppc_bars.</p>
@@ -1664,15 +1478,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_boxplot" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_boxplot"><code>m.diag.ppc_boxplot</code></h2>
-<div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_boxplot(</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_boxplot(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Box-and-whisker: y (black) vs n yrep draws.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -1730,16 +1544,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_density" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_density"><code>m.diag.ppc_density</code></h2>
-<div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_density(</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    bw_adjust<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_density(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    bw_adjust<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    group<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>KDE of y (black) vs n random draws from yrep rows (blue).</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -1796,23 +1612,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 <td>Y-axis title, as x_label.</td>
 </tr>
+<tr class="odd">
+<td><code>group</code></td>
+<td></td>
+<td>Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one density-overlay panel per level (bayesplot’s <code>ppc_dens_overlay_grouped</code>); observed and predicted curves within a panel share its x range.</td>
+</tr>
+<tr class="even">
+<td><code>group_name</code></td>
+<td></td>
+<td>Name of the grouping variable, used in panel titles (“{group_name} = {level}”).</td>
+</tr>
 </tbody>
 </table>
 <p>Returns: plotly Figure.</p>
 </section>
 <section id="ppc_error_hist" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_error_hist"><code>m.diag.ppc_error_hist</code></h2>
-<div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_error_hist(</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_error_hist(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Distribution of mean residuals r_i = y_i - E[yrep_i].</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
+<p>Plots the mean residual per observation; bayesplot’s ppc_error_hist instead shows the per-draw errors y - yrep[s, i] faceted by draw.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -1868,16 +1695,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_hist" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_hist"><code>m.diag.ppc_hist</code></h2>
-<div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_hist(</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">8</span>,</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="dv">30</span>,</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_hist(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">8</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    bins<span class="op">=</span><span class="dv">30</span>,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Histograms: observed y plus n random yrep draws.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -1940,17 +1767,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_intervals" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_intervals"><code>m.diag.ppc_intervals</code></h2>
-<div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals(</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    prob_outer<span class="op">=</span><span class="fl">0.9</span>,</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_intervals(</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    prob_outer<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    group<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Predictive interval of each observation, with the observed value.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <p>One vertical bar per observation, as bayesplot’s <code>ppc_intervals</code>: a thin line for the outer (prob_outer) interval, a thick line for the inner (prob) interval, a light point for the median prediction and a dark point for the observed value. About prob of the observed points should fall on the thick bars and prob_outer on the thin ones.</p>
@@ -1981,7 +1810,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>x</code></td>
 <td></td>
-<td>Optional x-axis variable, shape (n_obs,) (e.g.&nbsp;a predictor). Defaults to the observation index.</td>
+<td>Optional x-axis variable, shape (n_obs,) (e.g.&nbsp;a predictor). Defaults to the observation index. A discrete x (up to <code>_MAX_DISCRETE_X</code> distinct values) gets one tick per level, labelled with the fewest decimals that tells the levels apart.</td>
 </tr>
 <tr class="even">
 <td><code>prob</code></td>
@@ -2013,39 +1842,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 <td>Y-axis title, as x_label.</td>
 </tr>
+<tr class="even">
+<td><code>group</code></td>
+<td></td>
+<td>Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one panel per level holding that group’s observations (bayesplot’s <code>ppc_intervals_grouped</code>); x within a panel is x[g] when x is given, else 0..n_g-1, and the y axis is shared across panels.</td>
+</tr>
+<tr class="odd">
+<td><code>group_name</code></td>
+<td></td>
+<td>Name of the grouping variable, used in panel titles (“{group_name} = {level}”).</td>
+</tr>
 </tbody>
 </table>
 <p>Returns: plotly Figure.</p>
 </section>
 <section id="ppc_loo_intervals" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_loo_intervals"><code>m.diag.ppc_loo_intervals</code></h2>
-<div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_loo_intervals(</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.9</span>,</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_loo_intervals(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Deprecated alias for <code>ppc_intervals_sorted</code> (it is not LOO-based).</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <p><code>prob</code> is the outer interval, as before; the inner one is 50%.</p>
 </section>
 <section id="ppc_ribbon" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_ribbon"><code>m.diag.ppc_ribbon</code></h2>
-<div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_ribbon(</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    prob_outer<span class="op">=</span><span class="fl">0.9</span>,</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_ribbon(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    prob<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    prob_outer<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Predictive intervals drawn as continuous ribbons along x.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <p>Same intervals as <code>ppc_intervals</code>, as bayesplot’s <code>ppc_ribbon</code>: a light outer ribbon, a darker inner ribbon, a thin line for the median prediction and the observed values as points. Easier to read than the bars when x is continuous (time, dose, a predictor).</p>
@@ -2076,7 +1915,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>x</code></td>
 <td></td>
-<td>Optional x-axis variable, shape (n_obs,). Defaults to the observation index.</td>
+<td>Optional x-axis variable, shape (n_obs,). Defaults to the observation index. A discrete x gets one tick per level, as in <code>ppc_intervals</code>.</td>
 </tr>
 <tr class="even">
 <td><code>prob</code></td>
@@ -2114,14 +1953,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_rootogram" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_rootogram"><code>m.diag.ppc_rootogram</code></h2>
-<div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_rootogram(</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_rootogram(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Hanging rootogram for count outcomes.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <p>Compares sqrt of observed counts (bars) to expected sqrt counts (curve). Bars hanging below zero indicate over-prediction; above zero: under-prediction.</p>
@@ -2175,15 +2014,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_scatter" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_scatter"><code>m.diag.ppc_scatter</code></h2>
-<div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_scatter(</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    n_reps<span class="op">=</span><span class="dv">9</span>,</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_scatter(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    n_reps<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Small-multiple scatterplots of y vs n_reps random rows of yrep.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -2241,15 +2080,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="ppc_stat" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_stat"><code>m.diag.ppc_stat</code></h2>
-<div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat(</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    stat<span class="op">=</span><span class="st">'mean'</span>,</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    stat<span class="op">=</span><span class="st">'mean'</span>,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    group<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Distribution of test statistic over yrep vs observed value.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -2301,22 +2142,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 <td>Y-axis title, as x_label.</td>
 </tr>
+<tr class="even">
+<td><code>group</code></td>
+<td></td>
+<td>Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one panel per level showing T(y[g]) and T(yrep[:, g]) (bayesplot’s <code>ppc_stat_grouped</code>); each panel has its own x range and its two-sided p-value in the subplot title.</td>
+</tr>
+<tr class="odd">
+<td><code>group_name</code></td>
+<td></td>
+<td>Name of the grouping variable, used in the titles (“{group_name} = {level}”).</td>
+</tr>
 </tbody>
 </table>
 <p>Returns: plotly Figure with Bayesian p-value annotation.</p>
 </section>
 <section id="ppc_stat_2d" class="level2">
 <h2 class="anchored" data-anchor-id="ppc_stat_2d"><code>m.diag.ppc_stat_2d</code></h2>
-<div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat_2d(</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    stat1<span class="op">=</span><span class="st">'mean'</span>,</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    stat2<span class="op">=</span><span class="st">'sd'</span>,</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>m.diag.ppc_stat_2d(</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    yrep<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    stat1<span class="op">=</span><span class="st">'mean'</span>,</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    stat2<span class="op">=</span><span class="st">'sd'</span>,</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">'y'</span>,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Scatter of two test statistics over yrep vs observed point.</p>
 <p><code>y</code> and <code>yrep</code> default to the model’s observed outcome and its posterior predictive draws (<code>m.diag.get_yrep()</code>); <code>name</code> defaults to the observed site name. For <code>ppc_loo_pit</code>, <code>log_likelihood</code> is computed from the model when <code>yrep</code> is not given.</p>
 <table class="caption-top table">
@@ -2374,17 +2225,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="prior_sensitivity" class="level2">
 <h2 class="anchored" data-anchor-id="prior_sensitivity"><code>m.diag.prior_sensitivity</code></h2>
-<div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>m.diag.prior_sensitivity(</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    posteriors_list,</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    labels,</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    param_names<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    hdi_prob<span class="op">=</span><span class="fl">0.89</span>,</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'Prior Sensitivity Analysis'</span>,</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Overlay posteriors from models fitted with different priors/assumptions.</p>
-<p>Compares posterior distributions across multiple model fits to assess how much conclusions change when priors (or likelihood assumptions) vary.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m.diag.prior_sensitivity(</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    model_or_posteriors,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    priors<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    obs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    mode<span class="op">=</span><span class="st">'one_at_a_time'</span>,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    baseline<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    joint<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    fit_kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    workers<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    param_names<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    hdi_prob<span class="op">=</span><span class="fl">0.89</span>,</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">'Prior Sensitivity Analysis'</span>,</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>    x_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>    y_label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>    return_results<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>    plot<span class="op">=</span><span class="st">'by_prior'</span>,</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>run_kwargs,</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Prior sensitivity: from already-fitted posteriors, or by refitting in parallel.</p>
+<p>Two ways to call it:</p>
+<ol type="1">
+<li><p><strong>Posteriors you already have</strong> (unchanged behaviour)::</p>
+<pre><code>m.diag.prior_sensitivity([post_weak, post_strong],
+                         labels=["weak", "strong"])</code></pre></li>
+<li><p><strong>Declare the prior variations and let BF run the fits in parallel</strong> (through <code>BayesForge.run_simulations</code>)::</p>
+<pre><code>def model(m, weight, height, a_sd=20.0, b_sd=1.0):
+    a = m.dist.normal(178, a_sd, name="a")
+    b = m.dist.log_normal(0, b_sd, name="b")
+    s = m.dist.uniform(0, 50, name="s")
+    m.dist.normal(a + b * weight, s, obs=height,
+                  shape=(weight.shape[0],))
+
+m.diag.prior_sensitivity(
+    model,
+    priors={"b_sd": [0.1, 0.5, 2.0], "a_sd": [5, 50]},
+    obs=dict(weight=w, height=h),
+)</code></pre>
+<p>The model takes the bf instance <code>m</code> first, then the data, then the prior hyper-parameters (with their baseline values as defaults). Each fit is a separate worker with its own bf instance and seed.</p></li>
+</ol>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -2400,52 +2281,70 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>posteriors_list</code></td>
+<td><code>model_or_posteriors</code></td>
 <td></td>
-<td>List of posterior dicts, each {param: array(S,)}. Typically [m1.posteriors, m2.posteriors, …].</td>
+<td>list of posterior dicts (mode 1) or a model function <code>model(m, &lt;obs names&gt;, &lt;prior args&gt;)</code> (mode 2).</td>
 </tr>
 <tr class="even">
 <td><code>labels</code></td>
 <td></td>
-<td>List of labels for each fit (e.g.&nbsp;[‘weakly informative’, ‘strong prior’, ‘alternative likelihood’]).</td>
+<td>labels for mode 1; ignored in mode 2 (generated).</td>
 </tr>
 <tr class="odd">
-<td><code>param_names</code></td>
+<td><code>priors</code></td>
 <td></td>
-<td>Subset of parameters to compare. Defaults to all parameters present in all fits.</td>
+<td>{prior arg: [values]}; each value is one variation.</td>
 </tr>
 <tr class="even">
-<td><code>hdi_prob</code></td>
+<td><code>obs</code></td>
 <td></td>
-<td>HDI probability for interval markers.</td>
+<td>dict of data passed to <code>m.fit(obs=...)</code>.</td>
 </tr>
 <tr class="odd">
-<td><code>title</code></td>
+<td><code>mode</code></td>
 <td></td>
-<td>Plot title.</td>
+<td><code>'one_at_a_time'</code> (default; baseline + each prior varied alone, 1 + sum(len) fits) or <code>'grid'</code> (Cartesian product).</td>
 </tr>
 <tr class="even">
-<td><code>x_label</code></td>
+<td><code>baseline</code></td>
 <td></td>
-<td>X-axis title (a list gives one per subplot, in order). Defaults to the plot’s own label.</td>
+<td>{prior arg: value} used when an arg is not varied. Defaults to the model’s own defaults.</td>
 </tr>
 <tr class="odd">
-<td><code>y_label</code></td>
+<td><code>joint</code></td>
 <td></td>
-<td>Y-axis title, as x_label.</td>
+<td>{label: {arg: value}} extra scenarios where several priors move together.</td>
+</tr>
+<tr class="even">
+<td><code>fit_kwargs</code></td>
+<td></td>
+<td>extra <code>m.fit</code> arguments (num_samples, num_chains…).</td>
+</tr>
+<tr class="odd">
+<td><code>workers, seed, **run_kwargs</code></td>
+<td></td>
+<td>forwarded to <code>run_simulations</code>.</td>
+</tr>
+<tr class="even">
+<td><code>plot</code></td>
+<td></td>
+<td><code>'by_prior'</code> (default for one_at_a_time: one row per varied prior, baseline in grey dashed + that prior’s variations), <code>'overlay'</code> (every fit in one panel per parameter) or <code>'shift'</code> (dot plot of the posterior-mean shift vs baseline).</td>
+</tr>
+<tr class="odd">
+<td><code>return_results</code></td>
+<td></td>
+<td>also return the summary table (posterior mean/sd/HDI per scenario and shift from the baseline in posterior sd).</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li>plotly Figure with one subplot per parameter.</li>
+<li>plotly Figure (or <code>(Figure, DataFrame)</code> with <code>return_results</code>).</li>
 </ul>
-<p><strong>Example</strong></p>
-<p><strong>Refit with a tighter prior on b and compare</strong> m1.fit(model_weak, …); m2.fit(model_strong, …) fig = prior_sensitivity_plot( [m1.posteriors, m2.posteriors], labels=[‘weak prior’, ‘strong prior’], )</p>
 </section>
 <section id="rank" class="level2">
 <h2 class="anchored" data-anchor-id="rank"><code>m.diag.rank</code></h2>
-<div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>m.diag.rank(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>m.diag.rank(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, x_label<span class="op">=</span><span class="va">None</span>, y_label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Rank plots: histograms of draw ranks per chain (uniform when chains agree).</p>
 <table class="caption-top table">
 <colgroup>
@@ -2500,7 +2399,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="rhat" class="level2">
 <h2 class="anchored" data-anchor-id="rhat"><code>m.diag.rhat</code></h2>
-<div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m.diag.rhat(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, method<span class="op">=</span><span class="st">'rank'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>m.diag.rhat(include<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">None</span>, filtered<span class="op">=</span><span class="va">True</span>, method<span class="op">=</span><span class="st">'rank'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Potential scale reduction factor (R-hat) of each parameter.</p>
 <p>Values close to 1 (below 1.01) indicate that the chains have mixed. Requires more than one chain.</p>
 <table class="caption-top table">
@@ -2546,15 +2445,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary"><code>m.diag.summary</code></h2>
-<div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>m.diag.summary(</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    round_to<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    hdi_prob<span class="op">=</span><span class="fl">0.89</span>,</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    filter_regex<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    kind<span class="op">=</span><span class="st">'all'</span>,</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>m.diag.summary(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    round_to<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    hdi_prob<span class="op">=</span><span class="fl">0.89</span>,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    filter_regex<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    filtered<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>    kind<span class="op">=</span><span class="st">'all'</span>,</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Posterior summary table (mean, sd, credible interval, ESS, R-hat, MCSE).</p>
 <table class="caption-top table">
 <colgroup>
@@ -2609,34 +2508,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>pandas.DataFrame</code>: One row per parameter element (<code>mean</code>, <code>sd</code>, credible interval, <code>mcse_mean</code>, <code>mcse_sd</code>, <code>ess_bulk</code>, <code>ess_tail</code>, <code>r_hat</code>).</li>
-<li><strong>Updates on <code>m</code> / <code>m.diag</code></strong>:
-<ul>
-<li>When using the <code>'arviz'</code> backend (default), initializes and caches <code>m._az_diag</code> (including <code>m._az_diag.trace</code> and <code>m._az_diag.tab_summary</code>) if not yet built. Does not overwrite <code>m.posteriors</code> when <code>include</code>/<code>exclude</code> is passed.</li>
-</ul></li>
+<li>pandas.DataFrame: One row per parameter element.</li>
+<li>Updates on m: when using the <code>"arviz"</code> backend, initializes and caches <code>m._az_diag</code> (including <code>m._az_diag.trace</code> and <code>m._az_diag.tab_summary</code>) if not already built.</li>
 </ul>
 </section>
 <section id="to_az" class="level2">
 <h2 class="anchored" data-anchor-id="to_az"><code>m.diag.to_az</code></h2>
-<div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>m.diag.to_az(</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    backend<span class="op">=</span><span class="st">'numpyro'</span>,</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    sample_stats_name<span class="op">=</span>[<span class="st">'target_log_prob'</span>, <span class="st">'log_accept_ratio'</span>, <span class="st">'has_divergence'</span>, <span class="st">'energy'</span>],</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>m.diag.to_az(</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    backend<span class="op">=</span><span class="st">'numpyro'</span>,</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    sample_stats_name<span class="op">=</span>(<span class="st">'target_log_prob'</span>, <span class="st">'leapfrogs_taken'</span>, <span class="st">'has_divergence'</span>, <span class="st">'energy'</span>, <span class="st">'log_accept_ratio'</span>),</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Convert the sampler output to an ArviZ <code>InferenceData</code> trace object.</p>
 <p>This method prepares the trace for use with ArviZ diagnostic tools.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>backend</code></td>
+<td>str</td>
+<td>Backend used to fit the model (<code>"numpyro"</code> or <code>"tfp"</code>).</td>
+</tr>
+<tr class="even">
+<td><code>sample_stats_name</code></td>
+<td>list[str]</td>
+<td>Sample statistics keys for the TFP backend.</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>arviz.InferenceData</code>: The ArviZ <code>InferenceData</code> object stored in <code>m.diag.trace</code>.</li>
-<li><strong>Updates on <code>m.diag</code></strong>:
-<ul>
-<li><code>m.diag.trace</code>: stores the converted <code>arviz.InferenceData</code> object (<code>posterior</code> and <code>sample_stats</code> groups).</li>
-<li><code>m.diag.priors_name</code>: list of posterior variable names present in <code>m.diag.trace</code>.</li>
-</ul></li>
+<li>arviz.InferenceData: The ArviZ <code>InferenceData</code> object stored in <code>m.diag.trace</code>.</li>
+<li>Updates on m.diag: sets <code>m.diag.trace</code> (<code>arviz.InferenceData</code>) and <code>m.diag.priors_name</code> (list of posterior variable names).</li>
 </ul>
 </section>
 <section id="waic" class="level2">
 <h2 class="anchored" data-anchor-id="waic"><code>m.diag.waic</code></h2>
-<div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>m.diag.waic(log_likelihood<span class="op">=</span><span class="va">None</span>, pointwise<span class="op">=</span><span class="va">False</span>, scale<span class="op">=</span><span class="st">'log'</span>, var_name<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>m.diag.waic(log_likelihood<span class="op">=</span><span class="va">None</span>, pointwise<span class="op">=</span><span class="va">False</span>, scale<span class="op">=</span><span class="st">'log'</span>, var_name<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Widely applicable information criterion (WAIC).</p>
 <table class="caption-top table">
 <colgroup>

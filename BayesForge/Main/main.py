@@ -75,7 +75,7 @@ from BayesForge.BNN.bnn import bnn
 def _as_count(value, name, minimum=0):
     """Return a whole-number float (e.g. 1000.0 passed from R) as an int.
 
-    Rejects non-numeric values (RELEASE_AUDIT M-20: num_chains="4" used to
+    Rejects non-numeric values (num_chains="4" used to
     pass through and fail deep inside NumPyro) and counts below ``minimum``
     (num_samples=0, thinning=0), with a message naming the argument.
     """
@@ -364,7 +364,7 @@ class bf(manip):
         ``rand_seed`` (reproducible for False/int, entropy-based for True).
         Accepts ints (and whole-number floats) and jax PRNGKeys, old-style
         (uint32 pairs) and new-style typed keys; rejects bools and fractional
-        floats instead of silently mangling them (RELEASE_AUDIT M-14).
+        floats instead of silently mangling them.
         """
         if seed is None:
             return self._rng.key(label)
@@ -388,7 +388,7 @@ class bf(manip):
         """Validate a seed that must stay an int (e.g. get_samples(seed=)).
 
         Same bool/float rules as :meth:`_resolve_key`, but returns an int
-        instead of a PRNGKey (RELEASE_AUDIT M-14).
+        instead of a PRNGKey.
         """
         if isinstance(seed, bool):
             raise TypeError(
@@ -408,7 +408,7 @@ class bf(manip):
         ``**data`` next to an explicit ``kw=...`` of the same name is a raw
         Python "multiple values for keyword argument" TypeError (or, worse, a
         silent rebinding); raise a message naming the offending model
-        arguments instead (RELEASE_AUDIT M-13).
+        arguments instead.
         """
         clash = set(data) & set(keywords)
         if clash:
@@ -421,7 +421,7 @@ class bf(manip):
 
         ``model.__name__`` is user-controlled, so name-based dispatch let a
         plain function named "pca"/"gmm" fall into the built-in branches and
-        crash on ``get_model`` (RELEASE_AUDIT M-11). The built-in PCA is
+        crash on ``get_model``. The built-in PCA is
         passed as an *instance* of BayesForge.Models.PCA.pca
         (``m.fit(m.models.pca(type=...))``); the built-in GMM is the ``gmm``
         function of BayesForge.Models.GMM (``m.fit(m.models.gmm, ...)``).
@@ -509,7 +509,7 @@ class bf(manip):
         model_effects2, DPMM, GMM, surv, PCA) draw through a module-level
         ``dist`` singleton shared by
         every bf instance, so without rebinding the last constructed instance
-        would own the RNG for the whole process (RELEASE_AUDIT M-08). Bind
+        would own the RNG for the whole process. Bind
         those singletons to this instance's seed/RNG; called at construction
         and at the start of every inference call (fit, svi, the SBI entry
         points, sample) so the instance that runs owns the RNG.
@@ -518,7 +518,7 @@ class bf(manip):
         _draw_key is a @staticmethod reading the literal ``UnifiedDist._rng``
         (BayesForge/Distributions/tfp_dists.py), so a per-instance subclass
         would be ignored; rebind the class attribute at these same call sites
-        instead (RELEASE_AUDIT M-08).
+        instead.
         """
         if self.backend == "tfp":
             from BayesForge.Distributions.tfp_dists import UnifiedDist as tfp_dists
@@ -749,8 +749,7 @@ class bf(manip):
                   (its keys are checked against the new model's signature and
                   a mismatch raises ``ValueError``); it is rebuilt from
                   ``m.df`` via ``m.pd_to_jax`` only when no data is set yet
-                  or the stored data was itself built that way (RELEASE_AUDIT
-                  M-36).
+                  or the stored data was itself built that way.
                 - ``m.num_chains``: number of chains used for the fit.
                 - ``m.sampler`` and ``m.sampler_name``: fitted MCMC sampler
                   instance and kernel name.
@@ -1736,8 +1735,7 @@ class bf(manip):
                 ``mcse_mean``, ``mcse_sd``, ``ess_bulk``, ``ess_tail``, ``r_hat``).
             Updates on m: stores the returned table in ``m.tab_summary``;
                 does not call ``m.filter_posteriors()`` and never modifies
-                ``m.posteriors`` / ``m.posteriors_by_chain`` (RELEASE_AUDIT
-                M-16) — call ``m.filter_posteriors(include=..., exclude=...)``
+                ``m.posteriors`` / ``m.posteriors_by_chain`` — call ``m.filter_posteriors(include=..., exclude=...)``
                 explicitly to shrink them in-place; when using the ``"arviz"``
                 backend, initializes ``m.diag.trace`` and ``m.diag.priors_name``
                 if not yet built.
@@ -1844,7 +1842,7 @@ class bf(manip):
         """ArviZ-based posterior summary (the default backend for summary()).
 
         ``filter_vars="regex"`` makes ``var_names`` a regex applied by
-        az.summary itself (RELEASE_AUDIT M-16: summary(filter_regex=...)).
+        az.summary itself (summary(filter_regex=...)).
         """
         if az is None:
             raise ImportError(
@@ -2535,7 +2533,7 @@ class bf(manip):
         embedded in the file. Only load ``.pkl`` files you created yourself
         or fully trust — never a file received from an untrusted source.
 
-        Note (RELEASE_AUDIT M-40): on an instance, ``m.load`` is the BF
+        Note: on an instance, ``m.load`` is the BF
         dataset loader (``BayesForge.Resources.datasets.load``), a different
         object that shadows this method; it delegates a path argument back
         here, so ``m.load("x.pkl")`` and ``bf.load("x.pkl")`` both load a

@@ -115,33 +115,73 @@ cross-validation (LOO) or using the widely applicable information criterion (WAI
 We recommend loo. Read more theory here - in a paper by some of the
 leading authorities on model comparison dx.doi.org/10.1111/1467-9868.00353
 
-| Argument | Type | Description |
-|---|---|---|
-| `compare_dict` |  | A dictionary of model names and `arviz.InferenceData` or ``ELPDData``. |
-| `ic` |  | Method to estimate the ELPD, available options are "loo" or "waic". Defaults to ``rcParams["stats.information_criterion"]``. |
-| `method` |  | Method used to estimate the weights for each model. Available options are: - 'stacking' : stacking of predictive distributions. - 'BB-pseudo-BMA' : pseudo-Bayesian Model averaging using Akaike-type weighting. The weights are stabilized using the Bayesian bootstrap. - 'pseudo-BMA': pseudo-Bayesian Model averaging using Akaike-type weighting, without Bootstrap stabilization (not recommended). For more information read https://arxiv.org/abs/1704.02030 |
-| `b_samples` |  | Number of samples taken by the Bayesian bootstrap estimation. Only useful when method = 'BB-pseudo-BMA'. Defaults to ``rcParams["stats.ic_compare_method"]``. |
-| `alpha` |  | The shape parameter in the Dirichlet distribution used for the Bayesian bootstrap. Only useful when method = 'BB-pseudo-BMA'. When alpha=1 (default), the distribution is uniform on the simplex. A smaller alpha will keeps the final weights more away from 0 and 1. |
-| `seed` |  | If int or RandomState, use it for seeding Bayesian bootstrap. Only useful when method = 'BB-pseudo-BMA'. Default None the global `numpy.random` state is used. |
-| `scale` |  | Output scale for IC. Available options are: - `log` : (default) log-score (after Vehtari et al. (2017)) - `negative_log` : -1 * (log-score) - `deviance` : -2 * (log-score) A higher log-score (or a lower deviance) indicates a model with better predictive accuracy. |
-| `var_name` |  | If there is more than a single observed variable in the ``InferenceData``, which should be used as the basis for comparison. |
+**Parameters**
+compare_dict: dict of {str: InferenceData or ELPDData}
+    A dictionary of model names and `arviz.InferenceData` or ``ELPDData``.
+ic: str, optional
+    Method to estimate the ELPD, available options are "loo" or "waic". Defaults to
+    ``rcParams["stats.information_criterion"]``.
+method: str, optional
+    Method used to estimate the weights for each model. Available options are:
+
+    - 'stacking' : stacking of predictive distributions.
+    - 'BB-pseudo-BMA' : pseudo-Bayesian Model averaging using Akaike-type
+      weighting. The weights are stabilized using the Bayesian bootstrap.
+    - 'pseudo-BMA': pseudo-Bayesian Model averaging using Akaike-type
+      weighting, without Bootstrap stabilization (not recommended).
+
+    For more information read https://arxiv.org/abs/1704.02030
+b_samples: int, optional default = 1000
+    Number of samples taken by the Bayesian bootstrap estimation.
+    Only useful when method = 'BB-pseudo-BMA'.
+    Defaults to ``rcParams["stats.ic_compare_method"]``.
+alpha: float, optional
+    The shape parameter in the Dirichlet distribution used for the Bayesian bootstrap. Only
+    useful when method = 'BB-pseudo-BMA'. When alpha=1 (default), the distribution is uniform
+    on the simplex. A smaller alpha will keeps the final weights more away from 0 and 1.
+seed: int or np.random.RandomState instance, optional
+    If int or RandomState, use it for seeding Bayesian bootstrap. Only
+    useful when method = 'BB-pseudo-BMA'. Default None the global
+    `numpy.random` state is used.
+scale: str, optional
+    Output scale for IC. Available options are:
+
+    - `log` : (default) log-score (after Vehtari et al. (2017))
+    - `negative_log` : -1 * (log-score)
+    - `deviance` : -2 * (log-score)
+
+    A higher log-score (or a lower deviance) indicates a model with better predictive
+    accuracy.
+var_name: str, optional
+    If there is more than a single observed variable in the ``InferenceData``, which
+    should be used as the basis for comparison.
 
 **Returns**
-
-- `A DataFrame, ordered from best to worst model (measured by the ELPD).`: 
-- `The index reflects the key with which the models are passed to this function. The columns are:`: 
-- `The rank-order of the models. 0 is the best.`: 
-- `ELPD estimated either using (PSIS-LOO-CV `elpd_loo` or WAIC `elpd_waic`).`: Higher ELPD indicates higher out-of-sample predictive fit ("better" model). If `scale` is `deviance` or `negative_log` smaller values indicates higher out-of-sample predictive fit ("better" model).
-- `Estimated effective number of parameters.`: 
-- `The difference in ELPD between two models.`: If more than two models are compared, the difference is computed relative to the top-ranked model, that always has a elpd_diff of 0.
-- `Relative weight for each model.`: This can be loosely interpreted as the probability of each model (among the compared model) given the data. By default the uncertainty in the weights estimation is considered using Bayesian bootstrap.
-- `Standard error of the ELPD estimate.`: If method = BB-pseudo-BMA these values are estimated using Bayesian bootstrap.
-- `Standard error of the difference in ELPD between each model and the top-ranked model.`: It's always 0 for the top-ranked model.
-- `A value of 1 indicates that the computation of the ELPD may not be reliable.`: This could be indication of WAIC/LOO starting to fail see http://arxiv.org/abs/1507.04544 for details.
-- `Scale used for the ELPD.`: 
+A DataFrame, ordered from best to worst model (measured by the ELPD).
+The index reflects the key with which the models are passed to this function. The columns are:
+rank: The rank-order of the models. 0 is the best.
+elpd: ELPD estimated either using (PSIS-LOO-CV `elpd_loo` or WAIC `elpd_waic`).
+    Higher ELPD indicates higher out-of-sample predictive fit ("better" model).
+    If `scale` is `deviance` or `negative_log` smaller values indicates
+    higher out-of-sample predictive fit ("better" model).
+pIC: Estimated effective number of parameters.
+elpd_diff: The difference in ELPD between two models.
+    If more than two models are compared, the difference is computed relative to the
+    top-ranked model, that always has a elpd_diff of 0.
+weight: Relative weight for each model.
+    This can be loosely interpreted as the probability of each model (among the compared model)
+    given the data. By default the uncertainty in the weights estimation is considered using
+    Bayesian bootstrap.
+SE: Standard error of the ELPD estimate.
+    If method = BB-pseudo-BMA these values are estimated using Bayesian bootstrap.
+dSE: Standard error of the difference in ELPD between each model and the top-ranked model.
+    It's always 0 for the top-ranked model.
+warning: A value of 1 indicates that the computation of the ELPD may not be reliable.
+    This could be indication of WAIC/LOO starting to fail see
+    http://arxiv.org/abs/1507.04544 for details.
+scale: Scale used for the ELPD.
 
 **References**
-
 1. Vehtari, A., Gelman, A. & Gabry, J. Practical Bayesian model evaluation using
     leave-one-out cross-validation and WAIC. Stat Comput 27, 1413–1432 (2017)
     see https://doi.org/10.1007/s11222-016-9696-4
@@ -180,25 +220,24 @@ Posterior density of each parameter, one curve per chain.
 
 ```python
 m.diag.diagnose(
-    max_treedepth: int = 10,
-    ebfmi_threshold: float = 0.3,
-    rhat_threshold: float = 1.01,
-    ess_threshold: float = 400.0,
+    max_treedepth=10,
+    ebfmi_threshold=0.3,
+    rhat_threshold=1.01,
+    ess_threshold=400.0,
+    var_names=None,
 )
 ```
 
-Run MCMC convergence diagnostics on a fitted BF model.
+MCMC convergence report (treedepth, divergences, E-BFMI, ESS, R-hat).
 
-| Argument | Type | Description |
-|---|---|---|
-| `max_treedepth` | int | Maximum tree depth used during sampling (default 10, matching BF default). |
-| `ebfmi_threshold` | float | E-BFMI values below this trigger a warning (default 0.3). |
-| `rhat_threshold` | float | R-hat values above this trigger a warning (default 1.01). |
-| `ess_threshold` | float | ESS values below this trigger a warning (default 400). |
+Reads m's CURRENT fit: the snapshot attributes diagnose() uses
+(sampler, posterior_samples, priors_name, num_chains,
+is_variational) are refreshed from m.sampler before running, so a
+diag object kept across a refit cannot mix old and new draws.
 
 **Returns**
 
-- `str`: Human-readable diagnostic report.
+- Human-readable diagnostic report.
 
 
 ## `m.diag.divergence_energy` {#divergence_energy}
@@ -480,57 +519,31 @@ m.diag.plot_compare(
     backend=None,
     backend_kwargs=None,
     show=None,
+    relative_scale=True,
+    rotated=False,
+    hide_top_model=False,
 )
 ```
 
-Summary plot for model comparison.
+Summary plot for model comparison (ArviZ >= 1.2 API).
 
-Models are compared based on their expected log pointwise predictive density (ELPD).
-This plot is in the style of the one used in [2]_. Chapter 6 in the first edition
-or 7 in the second.
+Models are compared on their expected log pointwise predictive
+density (ELPD), estimated by PSIS-LOO or WAIC (see ``compare``).
 
-**Notes**
-
-The ELPD is estimated either by Pareto smoothed importance sampling leave-one-out
-cross-validation (LOO) or using the widely applicable information criterion (WAIC).
-We recommend LOO in line with the work presented by [1]_.
-
-| Argument | Type | Description |
-|---|---|---|
-| `comp_df` | pandas.DataFrame | Result of the `arviz.compare` method. |
-| `insample_dev` | bool | Plot in-sample ELPD, that is the value of the information criteria without the penalization given by the effective number of parameters (p_loo or p_waic). |
-| `plot_standard_error` | bool | Plot the standard error of the ELPD. |
-| `plot_ic_diff` | bool | Plot standard error of the difference in ELPD between each model and the top-ranked model. |
-| `order_by_rank` | bool | If True ensure the best model is used as reference. |
-| `legend` | bool | Add legend to figure. |
-| `figsize` | (float, float) | If `None`, size is (6, num of models) inches. |
-| `title` | bool | Show a tittle with a description of how to interpret the plot. |
-| `textsize` | float | Text size scaling factor for labels, titles and lines. If `None` it will be autoscaled based on `figsize`. |
-| `labeller` | Labeller | Class providing the method ``make_label_vert`` to generate the labels in the plot titles. Read the :ref:`label_guide` for more details and usage examples. |
-| `plot_kwargs` | dict | Optional arguments for plot elements. Currently accepts 'color_ic', 'marker_ic', 'color_insample_dev', 'marker_insample_dev', 'color_dse', 'marker_dse', 'ls_min_ic' 'color_ls_min_ic', 'fontsize' |
-| `ax` | matplotlib_axes or bokeh_figure | Matplotlib axes or bokeh figure. |
-| `backend` | "matplotlib", "bokeh" | Select plotting backend. |
-| `backend_kwargs` | bool | These are kwargs specific to the backend being used, passed to `matplotlib.pyplot.subplots` or `bokeh.plotting.figure`. For additional documentation check the plotting method of the backend. |
-| `show` | bool | Call backend show function. |
+Effective parameters: ``comp_df`` (the table returned by
+``compare``), ``backend``, and the ArviZ 1.x options
+``relative_scale``, ``rotated`` and ``hide_top_model``. The ArviZ
+0.x display options -- ``insample_dev``, ``plot_standard_error``,
+``plot_ic_diff``, ``order_by_rank``, ``legend``, ``title``,
+``figsize``, ``textsize``, ``plot_kwargs``, ``ax``,
+``backend_kwargs``, ``show`` -- are kept for backward
+compatibility, ignored, and trigger one warning when set to a
+non-default value. ``labeller`` is kept for signature
+compatibility only.
 
 **Returns**
 
-- `matplotlib_axes or bokeh_figure`: 
-
-**See Also**
-
-plot_elpd : Plot pointwise elpd differences between two or more models.
-compare : Compare models based on PSIS-LOO loo or WAIC waic cross-validation.
-loo : Compute Pareto-smoothed importance sampling leave-one-out cross-validation (PSIS-LOO-CV).
-waic : Compute the widely applicable information criterion.
-
-**References**
-
-1. Vehtari et al. (2016). Practical Bayesian model evaluation using leave-one-out
-   cross-validation and WAIC https://arxiv.org/abs/1507.04544
-
-2. McElreath R. (2022). Statistical Rethinking A Bayesian Course with Examples in
-   R and Stan, Second edition, CRC Press.
+- The PlotCollection returned by ``az.plot_compare``.
 
 
 ## `m.diag.plot_ess` {#plot_ess}
@@ -631,7 +644,8 @@ Bar chart comparing observed y to posterior predictive yrep.
 ``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
 
 For ordinal, categorical, or discrete outcomes.
-Shows observed counts and, per category, the median predicted count with a 90% interval, as in bayesplot's ppc_bars.
+Shows observed counts and, per category, the median predicted count with
+a 90% interval, as in bayesplot's ppc_bars.
 
 | Argument | Type | Description |
 |---|---|---|
@@ -690,6 +704,8 @@ m.diag.ppc_density(
     name='y',
     x_label=None,
     y_label=None,
+    group=None,
+    group_name='group',
 )
 ```
 
@@ -707,6 +723,8 @@ KDE of y (black) vs n random draws from yrep rows (blue).
 | `name` |  | Name of the outcome used in the labels ("Predictions of <name>"); m.diag passes the observed site name. |
 | `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
 | `y_label` |  | Y-axis title, as x_label. |
+| `group` |  | Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one density-overlay panel per level (bayesplot's ``ppc_dens_overlay_grouped``); observed and predicted curves within a panel share its x range. |
+| `group_name` |  | Name of the grouping variable, used in panel titles ("{group_name} = {level}"). |
 
 Returns:
     plotly Figure.
@@ -729,6 +747,9 @@ m.diag.ppc_error_hist(
 Distribution of mean residuals r_i = y_i - E[yrep_i].
 
 ``y`` and ``yrep`` default to the model's observed outcome and its posterior predictive draws (``m.diag.get_yrep()``); ``name`` defaults to the observed site name. For ``ppc_loo_pit``, ``log_likelihood`` is computed from the model when ``yrep`` is not given.
+
+Plots the mean residual per observation; bayesplot's ppc_error_hist
+instead shows the per-draw errors y - yrep[s, i] faceted by draw.
 
 | Argument | Type | Description |
 |---|---|---|
@@ -791,6 +812,8 @@ m.diag.ppc_intervals(
     name='y',
     x_label=None,
     y_label=None,
+    group=None,
+    group_name='group',
 )
 ```
 
@@ -808,13 +831,15 @@ fall on the thick bars and prob_outer on the thin ones.
 |---|---|---|
 | `y` |  | Observed data, shape (n_obs,). |
 | `yrep` |  | Posterior predictive matrix, shape (n_rep, n_obs). |
-| `x` |  | Optional x-axis variable, shape (n_obs,) (e.g. a predictor). Defaults to the observation index. |
+| `x` |  | Optional x-axis variable, shape (n_obs,) (e.g. a predictor). Defaults to the observation index. A discrete x (up to ``_MAX_DISCRETE_X`` distinct values) gets one tick per level, labelled with the fewest decimals that tells the levels apart. |
 | `prob` |  | Inner interval probability (e.g., 0.5). |
 | `prob_outer` |  | Outer interval probability (e.g., 0.9). |
 | `title` |  | Plot title. Defaults to one naming the outcome. |
 | `name` |  | Name of the outcome used in the labels. |
 | `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
 | `y_label` |  | Y-axis title, as x_label. |
+| `group` |  | Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one panel per level holding that group's observations (bayesplot's ``ppc_intervals_grouped``); x within a panel is x[g] when x is given, else 0..n_g-1, and the y axis is shared across panels. |
+| `group_name` |  | Name of the grouping variable, used in panel titles ("{group_name} = {level}"). |
 
 Returns:
     plotly Figure.
@@ -871,7 +896,7 @@ bars when x is continuous (time, dose, a predictor).
 |---|---|---|
 | `y` |  | Observed data, shape (n_obs,). |
 | `yrep` |  | Posterior predictive matrix, shape (n_rep, n_obs). |
-| `x` |  | Optional x-axis variable, shape (n_obs,). Defaults to the observation index. |
+| `x` |  | Optional x-axis variable, shape (n_obs,). Defaults to the observation index. A discrete x gets one tick per level, as in `ppc_intervals`. |
 | `prob` |  | Inner interval probability (e.g., 0.5). |
 | `prob_outer` |  | Outer interval probability (e.g., 0.9). |
 | `title` |  | Plot title. Defaults to one naming the outcome. |
@@ -959,6 +984,8 @@ m.diag.ppc_stat(
     name='y',
     x_label=None,
     y_label=None,
+    group=None,
+    group_name='group',
 )
 ```
 
@@ -975,6 +1002,8 @@ Distribution of test statistic over yrep vs observed value.
 | `name` |  | Name of the outcome used in the labels. |
 | `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
 | `y_label` |  | Y-axis title, as x_label. |
+| `group` |  | Optional grouping vector, shape (n_obs,) (any hashable values). With a group, one panel per level showing T(y[g]) and T(yrep[:, g]) (bayesplot's ``ppc_stat_grouped``); each panel has its own x range and its two-sided p-value in the subplot title. |
+| `group_name` |  | Name of the grouping variable, used in the titles ("{group_name} = {level}"). |
 
 Returns:
     plotly Figure with Bayesian p-value annotation.
@@ -1017,43 +1046,73 @@ Returns:
 
 ```python
 m.diag.prior_sensitivity(
-    posteriors_list,
-    labels,
+    model_or_posteriors,
+    labels=None,
+    priors=None,
+    obs=None,
+    mode='one_at_a_time',
+    baseline=None,
+    joint=None,
+    fit_kwargs=None,
+    workers=None,
+    seed=0,
     param_names=None,
     hdi_prob=0.89,
     title='Prior Sensitivity Analysis',
     x_label=None,
     y_label=None,
+    return_results=False,
+    plot='by_prior',
+    **run_kwargs,
 )
 ```
 
-Overlay posteriors from models fitted with different priors/assumptions.
+Prior sensitivity: from already-fitted posteriors, or by refitting in parallel.
 
-Compares posterior distributions across multiple model fits to assess
-how much conclusions change when priors (or likelihood assumptions) vary.
+Two ways to call it:
+
+1. **Posteriors you already have** (unchanged behaviour)::
+
+       m.diag.prior_sensitivity([post_weak, post_strong],
+                                labels=["weak", "strong"])
+
+2. **Declare the prior variations and let BF run the fits in parallel**
+   (through `BayesForge.run_simulations`)::
+
+       def model(m, weight, height, a_sd=20.0, b_sd=1.0):
+           a = m.dist.normal(178, a_sd, name="a")
+           b = m.dist.log_normal(0, b_sd, name="b")
+           s = m.dist.uniform(0, 50, name="s")
+           m.dist.normal(a + b * weight, s, obs=height,
+                         shape=(weight.shape[0],))
+
+       m.diag.prior_sensitivity(
+           model,
+           priors={"b_sd": [0.1, 0.5, 2.0], "a_sd": [5, 50]},
+           obs=dict(weight=w, height=h),
+       )
+
+   The model takes the bf instance ``m`` first, then the data, then the
+   prior hyper-parameters (with their baseline values as defaults). Each
+   fit is a separate worker with its own bf instance and seed.
 
 | Argument | Type | Description |
 |---|---|---|
-| `posteriors_list` |  | List of posterior dicts, each {param: array(S,)}. Typically [m1.posteriors, m2.posteriors, ...]. |
-| `labels` |  | List of labels for each fit (e.g. ['weakly informative', 'strong prior', 'alternative likelihood']). |
-| `param_names` |  | Subset of parameters to compare. Defaults to all parameters present in all fits. |
-| `hdi_prob` |  | HDI probability for interval markers. |
-| `title` |  | Plot title. |
-| `x_label` |  | X-axis title (a list gives one per subplot, in order). Defaults to the plot's own label. |
-| `y_label` |  | Y-axis title, as x_label. |
+| `model_or_posteriors` |  | list of posterior dicts (mode 1) or a model function ``model(m, <obs names>, <prior args>)`` (mode 2). |
+| `labels` |  | labels for mode 1; ignored in mode 2 (generated). |
+| `priors` |  | {prior arg: [values]}; each value is one variation. |
+| `obs` |  | dict of data passed to ``m.fit(obs=...)``. |
+| `mode` |  | ``'one_at_a_time'`` (default; baseline + each prior varied alone, 1 + sum(len) fits) or ``'grid'`` (Cartesian product). |
+| `baseline` |  | {prior arg: value} used when an arg is not varied. Defaults to the model's own defaults. |
+| `joint` |  | {label: {arg: value}} extra scenarios where several priors move together. |
+| `fit_kwargs` |  | extra ``m.fit`` arguments (num_samples, num_chains...). |
+| `workers, seed, **run_kwargs` |  | forwarded to ``run_simulations``. |
+| `plot` |  | ``'by_prior'`` (default for one_at_a_time: one row per varied prior, baseline in grey dashed + that prior's variations), ``'overlay'`` (every fit in one panel per parameter) or ``'shift'`` (dot plot of the posterior-mean shift vs baseline). |
+| `return_results` |  | also return the summary table (posterior mean/sd/HDI per scenario and shift from the baseline in posterior sd). |
 
 **Returns**
 
-- plotly Figure with one subplot per parameter.
-
-**Example**
-
-**Refit with a tighter prior on b and compare**
-m1.fit(model_weak, ...); m2.fit(model_strong, ...)
-fig = prior_sensitivity_plot(
-    [m1.posteriors, m2.posteriors],
-    labels=['weak prior', 'strong prior'],
-)
+- plotly Figure (or ``(Figure, DataFrame)`` with ``return_results``).
 
 
 ## `m.diag.rank` {#rank}
@@ -1129,9 +1188,8 @@ Posterior summary table (mean, sd, credible interval, ESS, R-hat, MCSE).
 
 **Returns**
 
-- `pandas.DataFrame`: One row per parameter element (`mean`, `sd`, credible interval, `mcse_mean`, `mcse_sd`, `ess_bulk`, `ess_tail`, `r_hat`).
-- **Updates on `m` / `m.diag`**:
-  - When using the `'arviz'` backend (default), initializes and caches `m._az_diag` (including `m._az_diag.trace` and `m._az_diag.tab_summary`) if not yet built. Does not overwrite `m.posteriors` when `include`/`exclude` is passed.
+- pandas.DataFrame: One row per parameter element.
+- Updates on m: when using the ``"arviz"`` backend, initializes and caches ``m._az_diag`` (including ``m._az_diag.trace`` and ``m._az_diag.tab_summary``) if not already built.
 
 
 ## `m.diag.to_az` {#to_az}
@@ -1139,20 +1197,23 @@ Posterior summary table (mean, sd, credible interval, ESS, R-hat, MCSE).
 ```python
 m.diag.to_az(
     backend='numpyro',
-    sample_stats_name=['target_log_prob', 'log_accept_ratio', 'has_divergence', 'energy'],
+    sample_stats_name=('target_log_prob', 'leapfrogs_taken', 'has_divergence', 'energy', 'log_accept_ratio'),
 )
 ```
 
-Convert the sampler output to an ArviZ `InferenceData` trace object.
+Convert the sampler output to an ArviZ ``InferenceData`` trace object.
 
 This method prepares the trace for use with ArviZ diagnostic tools.
 
+| Argument | Type | Description |
+|---|---|---|
+| `backend` | str | Backend used to fit the model (``"numpyro"`` or ``"tfp"``). |
+| `sample_stats_name` | list[str] | Sample statistics keys for the TFP backend. |
+
 **Returns**
 
-- `arviz.InferenceData`: The ArviZ `InferenceData` object stored in `m.diag.trace`.
-- **Updates on `m.diag`**:
-  - `m.diag.trace`: stores the converted `arviz.InferenceData` object (`posterior` and `sample_stats` groups).
-  - `m.diag.priors_name`: list of posterior variable names present in `m.diag.trace`.
+- arviz.InferenceData: The ArviZ ``InferenceData`` object stored in ``m.diag.trace``.
+- Updates on m.diag: sets ``m.diag.trace`` (``arviz.InferenceData``) and ``m.diag.priors_name`` (list of posterior variable names).
 
 
 ## `m.diag.waic` {#waic}

@@ -471,7 +471,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Raises</strong></p>
 <ul>
 <li><code>NotImplementedError</code>: If <code>k</code> is given.</li>
+<li><code>ValueError</code>: If <code>adjacency_matrix</code> is not a square 2-D matrix, if <code>n_nodes</code> disagrees with its shape, or if it is asymmetric while <code>directed=False</code>. The checks run on concrete input only; inside a JIT trace they are skipped.</li>
 </ul>
+<p><strong>Note</strong></p>
+<p>Path counting: <code>sigma</code> and <code>delta</code> count shortest paths and grow combinatorially, so on dense graphs they exceed float32’s range (3.4e38, around N ~ 30-40 in the worst case) and the result silently becomes inf/NaN. The accumulators therefore follow <code>jax_enable_x64</code>: enable it (<code>jax.config.update("jax_enable_x64", True)</code>) for dense or large networks. With x64 off, the default, the counts stay float32 and the overflow risk remains.</p>
 </section>
 <section id="bfs" class="level2">
 <h2 class="anchored" data-anchor-id="bfs"><code>m.net.bfs</code></h2>
@@ -485,6 +488,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This function programmatically replicates the formula in STRAND’s <code>block_set_to_dyadic_block_set.R</code>.</p>
 <p><strong>Formula</strong></p>
 <p>Base = 0.1 (diagonal/ingroup) or 0.01 (off-diagonal/outgroup) SS = sqrt(N_i * 0.5 + N_j * 0.5) Mu = Base / SS</p>
+<p><strong>Raises</strong> ValueError When a concrete (non-traced) <code>N_by_group</code> contains a 0: an empty group divides the base rate by zero, which would silently produce <code>inf</code> probabilities and <code>NaN</code> prior means downstream.</p>
 </section>
 <section id="block_model" class="level2">
 <h2 class="anchored" data-anchor-id="block_model"><code>m.net.block_model</code></h2>
@@ -626,8 +630,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="clustering_coefficient" class="level2">
 <h2 class="anchored" data-anchor-id="clustering_coefficient"><code>m.net.clustering_coefficient</code></h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.net.clustering_coefficient()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Computes the clustering coefficient for each node in the graph. This function is optimized for JAX and is JIT-compatible.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.net.clustering_coefficient(adj_matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Computes the clustering coefficient for each node in the graph.</p>
+<p>Self-loops are ignored and the matrix is binarized (<code>A &gt; 0</code>). A symmetric matrix gets the undirected coefficient; a non-symmetric one gets the directed coefficient of Fagiolo (2007), as <code>nx.clustering</code> on a <code>DiGraph</code>. Both agree on a symmetric matrix. The result is in [0, 1]. The core computations are JIT-compatible (<code>met._clustering_coefficient_jit</code>, <code>met._directed_clustering_coefficient_jit</code>).</p>
 </section>
 <section id="degree" class="level2">
 <h2 class="anchored" data-anchor-id="degree"><code>m.net.degree</code></h2>
@@ -655,12 +660,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td><code>sym</code></td>
 <td>bool</td>
-<td>The network is symmetric (undirected): count each tie once. Defaults to False (in-degree + out-degree).</td>
+<td>The network is symmetric (undirected): count each tie once. Defaults to False (in-degree + out-degree). A UserWarning is raised when <code>sym=False</code> but the matrix is symmetric, since the in+out total then double-counts every tie.</td>
 </tr>
 <tr class="odd">
 <td><code>normalize</code></td>
 <td>bool</td>
-<td>Divide by the maximum possible degree, N - 1. Defaults to False.</td>
+<td>Divide by the maximum possible degree: N - 1, or 2 (N - 1) for the directed total (in + out) degree. Zeros for N &lt;= 1. Defaults to False.</td>
 </tr>
 </tbody>
 </table>
@@ -677,13 +682,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="density" class="level2">
 <h2 class="anchored" data-anchor-id="density"><code>m.net.density</code></h2>
 <div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.net.density(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the network density from the weighted adjacency matrix.</p>
+<p>Compute the binary network density: the fraction of possible edges that are present (a non-zero entry counts as an edge; weights are ignored). Self-loops (the diagonal) are ignored, as in NetworkX.</p>
+<p>For a directed matrix the density is <code>nnz / (n (n - 1))</code>; for a symmetric (undirected) matrix the same formula equals <code>nnz_upper / (n (n - 1) / 2)</code>. Returns 0.0 for <code>n &lt;= 1</code> (NetworkX returns 0).</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Argument</th>
@@ -693,9 +694,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>adj_matrix</code></td>
+<td><code>m</code></td>
 <td></td>
-<td>JAX array representing the weighted adjacency matrix of a graph.</td>
+<td>JAX array representing the adjacency matrix of a graph.</td>
 </tr>
 </tbody>
 </table>
@@ -707,26 +708,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="diameter" class="level2">
 <h2 class="anchored" data-anchor-id="diameter"><code>m.net.diameter</code></h2>
 <div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.net.diameter(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the diameter of a graph using the geodesic distance. Args: adj_matrix: 2D JAX array representing the weighted adjacency matrix of a graph.</p>
+<p>Compute the diameter of a graph using the geodesic distance. Args: m: 2D JAX array representing the weighted adjacency matrix of a graph.</p>
 <p><strong>Returns</strong></p>
 <ul>
 <li>The diameter of the graph.</li>
 </ul>
+<p><strong>Raises</strong></p>
+<ul>
+<li><code>ValueError</code>: If the graph is disconnected (some infinite distances), matching NetworkX’s <code>diameter</code>.</li>
+</ul>
 </section>
 <section id="dijkstra" class="level2">
 <h2 class="anchored" data-anchor-id="dijkstra"><code>m.net.dijkstra</code></h2>
-<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.net.dijkstra(</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    adjacency_matrix: jax.Array,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    weight_matrix: jax.Array,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    source: <span class="bu">int</span>,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    n_nodes: <span class="bu">int</span>,</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Breadth-First Search (BFS)</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.net.dijkstra(m, source)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><em>Not documented yet.</em></p>
 </section>
 <section id="dijkstra_jax" class="level2">
 <h2 class="anchored" data-anchor-id="dijkstra_jax"><code>m.net.dijkstra_jax</code></h2>
 <div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.net.dijkstra_jax(adjacency_matrix, source)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute the shortest path from a source node to all other nodes using Dijkstra’s algorithm.</p>
+<p>Semantics: entries are edge <em>lengths</em> (distances, larger = farther), not strengths; a neighbour is any entry <code>&gt; 0</code>, so zero and negative entries both mean “no edge”; rows are read as out-edges, hence an asymmetric matrix is a directed graph. Siblings with different semantics: <code>met.single_source_dijkstra</code> (same length reading, masks <code>&gt; 0</code> to inf up front and is the driver behind <code>met.geodesic_distance</code>/<code>met.diameter</code>) and <code>met._dijkstra_betweenness</code> (presence from the adjacency matrix, lengths from a separate weight matrix, plus the path counts). See <code>met.dijkstra</code> for the public wrapper.</p>
 <p>Dijkstra’s algorithm finds the shortest paths between nodes in a graph, particularly useful for graphs with non-negative edge weights. This function uses JAX for efficient computation.</p>
 <p><strong>Parameters</strong> adjacency_matrix : jax.numpy.ndarray A square (n x n) adjacency matrix representing the graph. The element at (i, j) represents the weight of the edge from node i to node j. Non-zero values indicate a connection, and higher values indicate longer paths.</p>
 <p><strong>int</strong></p>
@@ -774,6 +775,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>(N, N) JAX array</li>
 </ul>
+<p><strong>Raises</strong></p>
+<ul>
+<li><code>ValueError</code>: If the vector length does not match the convention chosen by the flags for any integer N (previously an opaque JAX broadcast error).</li>
+</ul>
 </section>
 <section id="dyadic_effect" class="level2">
 <h2 class="anchored" data-anchor-id="dyadic_effect"><code>m.net.dyadic_effect</code></h2>
@@ -806,12 +811,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>dyadic_predictors</code></td>
 <td>jax array</td>
-<td>Predictors for dyadic effects.</td>
+<td>Edge-list predictors of shape (N_dyads, 2, K) — column 0 is direction i-&gt;j, column 1 j-&gt;i, one slab per predictor k. A 2-D array is read as an (N_dyads, K) edge list with one coefficient shared by the K columns. Warning: m.net2.dyadic_effect reads a 2-D input as an (N, N) predictor matrix instead, so the same 2-D array means different things in m.net and m.net2.</td>
 </tr>
 <tr class="even">
 <td><code>shape</code></td>
 <td>int</td>
-<td>Shape parameter if predictors are not provided.</td>
+<td>Number of dyads, N*(N-1)/2 — used only when dyadic_predictors is None (random effects only).</td>
 </tr>
 <tr class="odd">
 <td><code>d_m</code></td>
@@ -1043,10 +1048,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="eigenvector" class="level2">
 <h2 class="anchored" data-anchor-id="eigenvector"><code>m.net.eigenvector</code></h2>
-<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m.net.eigenvector(A, max_iter<span class="op">=</span><span class="dv">100</span>, tol<span class="op">=</span><span class="fl">1e-06</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>JAX implementation of eigenvector centrality matching NetworkX behavior.</p>
-<p>Computes eigenvector centrality using power iteration with (A + I). For weighted graphs, edge weights are used in the computation.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m.net.eigenvector(A, max_iter<span class="op">=</span><span class="dv">100</span>, tol<span class="op">=</span><span class="fl">1e-06</span>, component_aware<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Eigenvector centrality by power iteration, matching NetworkX behavior.</p>
+<p>Computes eigenvector centrality using power iteration on (A.T + I). The transpose matches NetworkX’s eigenvector_centrality for directed graphs, where a node’s centrality comes from its in-edges; for symmetric (undirected) matrices A.T and A are identical. For weighted graphs, edge weights are used in the computation.</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Argument</th>
@@ -1068,19 +1078,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>tol</code></td>
 <td></td>
-<td>Convergence tolerance (not used in this JIT version)</td>
+<td>Convergence tolerance; the iteration stops when the L1 change of the vector falls below n * tol (or max_iter is reached)</td>
+</tr>
+<tr class="even">
+<td><code>component_aware</code></td>
+<td></td>
+<td>If True, run the power iteration per connected component (weakly connected components for directed matrices) and normalise each component’s vector to unit L2 norm within the component, so every component keeps a non-zero ranking. Default False matches NetworkX standard behavior (a single iteration on the full graph; on disconnected graphs the dominant component wins).</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li>Eigenvector centrality values (L2 normalized)</li>
+<li>Eigenvector centrality values (L2 normalized over the whole</li>
+<li>graph, or per component when component_aware=True)</li>
 </ul>
 </section>
 <section id="geodesic_distance" class="level2">
 <h2 class="anchored" data-anchor-id="geodesic_distance"><code>m.net.geodesic_distance</code></h2>
 <div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m.net.geodesic_distance(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the geodesic distance in a weighted graph using Dijkstra’s algorithm in JAX. Args: m: 2D JAX array representing the weighted adjacency matrix of a graph.</p>
+<p>Compute the geodesic distance in a weighted graph using Dijkstra’s algorithm in JAX.</p>
+<p>Here only zero entries are turned into “no edge” up front, but the inner <code>met.single_source_dijkstra</code> re-masks with <code>&gt; 0</code>, so a negative entry also ends up as “no edge”, never as a length: the invalid-for-Dijkstra case (negative lengths) cannot reach the relaxation. See the semantics notes of the three Dijkstra variants in <code>met.dijkstra_jax</code>. Args: m: 2D JAX array representing the weighted adjacency matrix of a graph.</p>
 <p><strong>Returns</strong></p>
 <ul>
 <li>A 2D JAX array containing the shortest path distances between all pairs of nodes.</li>
@@ -1124,7 +1141,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Returns</strong></p>
 <ul>
 <li>If argument type is ‘upper’, ‘lower’, it return a 1D JAX array containing the requested triangle elements.</li>
-<li>If argument type is ‘both’, it return a 2D JAX array containing the the first column the lower triangle and in the second ecolumn the upper triangle</li>
+<li>If argument type is ‘both’, it returns a 2D JAX array whose first column holds the upper triangle and whose second column holds the lower triangle (the docstring used to state the reverse of the code).</li>
 </ul>
 </section>
 <section id="indegree" class="level2">
@@ -1213,26 +1230,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="logit"><code>m.net.logit</code></h2>
 <div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>m.net.logit(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the logit transformation.</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>x</code></td>
-<td>float or array-like</td>
-<td>Input value(s) in the range (0, 1).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
-<ul>
-<li><code>float or array-like</code>: The logit-transformed value(s): log(x / (1 - x)).</li>
-</ul>
+<p><strong>Parameters</strong> x : float or array-like Input value(s) in the range (0, 1).</p>
+<p><strong>Returns</strong> float or array-like The logit-transformed value(s): log(x) - log(1 - x), computed with <code>log1p</code> so values close to 1 do not overflow the ratio.</p>
 </section>
 <section id="mat_to_edgl" class="level2">
 <h2 class="anchored" data-anchor-id="mat_to_edgl"><code>m.net.mat_to_edgl</code></h2>
@@ -1250,7 +1249,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>mat</code></td>
 <td>2D array</td>
-<td>A JAX 2D array.</td>
+<td>A JAX 2D array; must be square (N, N).</td>
 </tr>
 </tbody>
 </table>
@@ -1258,6 +1257,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><code>2D array</code>: return and edgelist of all dyads combination (excluding diagonal).</li>
 <li>First column represent the value fo individual i in the first column of argument sr, the second column the value of j in the second column of argument sr</li>
+</ul>
+<p><strong>Raises</strong></p>
+<ul>
+<li><code>ValueError</code>: If <code>mat</code> is not a square (N, N) matrix. A non-square input would otherwise be silently truncated to <code>shape[0]</code> rows.</li>
 </ul>
 </section>
 <section id="nodal_fixed_effects" class="level2">
@@ -1570,9 +1573,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="normalize" class="level2">
 <h2 class="anchored" data-anchor-id="normalize"><code>m.net.normalize</code></h2>
-<div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m.net.normalize(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Divide a node-level measure by the maximum possible degree, N - 1.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m.net.normalize(x, m, total<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Divide a node-level measure by the maximum possible degree.</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Argument</th>
@@ -1591,11 +1599,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>jax.Array</td>
 <td>The network’s adjacency matrix, shape (N, N).</td>
 </tr>
+<tr class="odd">
+<td><code>total</code></td>
+<td>bool</td>
+<td><code>x</code> is a directed total (in + out) degree, whose maximum is <code>2 (N - 1)</code>; otherwise the maximum is <code>N - 1</code>.</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li>jax.Array: <code>x / (N - 1)</code>.</li>
+<li>jax.Array: <code>x / (N - 1)</code>, or <code>x / (2 (N - 1))</code> when</li>
+<li><code>total=True</code>; zeros when <code>N &lt;= 1</code> (never NaN).</li>
 </ul>
 </section>
 <section id="onnela_clustering_coefficient" class="level2">
@@ -1603,11 +1617,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>m.net.onnela_clustering_coefficient(mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Weighted clustering coefficient (Onnela et al., 2005).</p>
 <p>This is the definition NetworkX computes via <code>nx.clustering(G, weight=...)</code>. Unlike <code>clustering_coefficient</code> (which binarizes the input), it uses the geometric mean of each triangle’s edge weights, so weak edges contribute weakly:</p>
-<pre><code>w_hat = mat / max(mat)                        # scale by max weight
+<pre><code>w_hat = w / max(w)                            # scale by max weight
 tri_i = sum_{j,k} (w_hat_ij w_hat_jk w_hat_ki) ** (1/3)
       = diag( cbrt(w_hat) @ cbrt(w_hat) @ cbrt(w_hat) )_i
 cc_i  = tri_i / (deg_i * (deg_i - 1))         # deg = unweighted degree</code></pre>
-<p>The result is bounded in [0, 1] and reduces to the unweighted clustering coefficient when all edge weights are equal. Assumes a zero diagonal (no self-loops), matching NetworkX. JIT-compatible.</p>
+<p><code>w</code> is <code>mat</code> with its diagonal zeroed: a self-loop is not part of any triangle, so it is dropped before the maximum weight, the geometric mean and the degree are taken (it used to inflate <code>max_w</code> and the einsum, which pulled a hub of a complete triangle down to 0.46 instead of 1.0). The result is bounded in [0, 1] and reduces to the unweighted clustering coefficient when all edge weights are equal, matching NetworkX.</p>
+<p>The degree is a row sum, so an asymmetric matrix is read as directed (out-edges) and the undirected formula is applied to it as given.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>mat</code></td>
+<td>jax.Array</td>
+<td>Weight matrix, shape (N, N); entry [i, j] is the weight of the tie from i to j. The diagonal is ignored.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li>jax.Array: Weighted clustering coefficient per node, in [0, 1].</li>
+</ul>
+<p><strong>Raises</strong></p>
+<ul>
+<li><code>ValueError</code>: If a concrete (non-traced) matrix contains negative weights: the cube root of a negative weight is not a real triangle intensity, and the coefficient would silently come out as 0.</li>
+</ul>
 </section>
 <section id="outdegree" class="level2">
 <h2 class="anchored" data-anchor-id="outdegree"><code>m.net.outdegree</code></h2>
@@ -1815,6 +1859,8 @@ cc_i  = tri_i / (deg_i * (deg_i - 1))         # deg = unweighted degree</code></
 <h2 class="anchored" data-anchor-id="single_source_dijkstra"><code>m.net.single_source_dijkstra</code></h2>
 <div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>m.net.single_source_dijkstra(m, src)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Computes the shortest path from a source node to all other nodes in a weighted graph using Dijkstra’s algorithm.</p>
+<p><code>m</code> is an adjacency/weight matrix: a 0 entry means “no edge” (as in <code>geodesic_distance</code>), positive entries are edge lengths.</p>
+<p>Semantics: entries are edge <em>lengths</em> (distances, larger = farther), not strengths; the <code>&gt; 0</code> mask is applied here (0 becomes inf), so no pre-masking is needed; rows are out-edges, so an asymmetric matrix is a directed graph. Negative entries are treated as “no edge” too, never as lengths. Siblings with different semantics: <code>met.dijkstra_jax</code> (same length reading, tests the mask per relaxation) and <code>met._dijkstra_betweenness</code> (presence from the adjacency matrix, lengths from a separate weight matrix).</p>
 </section>
 <section id="strength" class="level2">
 <h2 class="anchored" data-anchor-id="strength"><code>m.net.strength</code></h2>
@@ -1842,7 +1888,7 @@ cc_i  = tri_i / (deg_i * (deg_i - 1))         # deg = unweighted degree</code></
 <tr class="even">
 <td><code>sym</code></td>
 <td>bool</td>
-<td>The network is symmetric (undirected): count each tie once, i.e.&nbsp;return the out-strength. Defaults to False (out-strength + in-strength).</td>
+<td>The network is symmetric (undirected): count each tie once, i.e.&nbsp;return the out-strength. Defaults to False (out-strength + in-strength). A UserWarning is raised when <code>sym=False</code> but the matrix is symmetric, since the in+out total then double-counts every tie.</td>
 </tr>
 </tbody>
 </table>
@@ -1884,7 +1930,7 @@ cc_i  = tri_i / (deg_i * (deg_i - 1))         # deg = unweighted degree</code></
 <section id="triangles_and_degree" class="level2">
 <h2 class="anchored" data-anchor-id="triangles_and_degree"><code>m.net.triangles_and_degree</code></h2>
 <div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>m.net.triangles_and_degree(adj_matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Computes the number of triangles and the degree for each node in a graph. This function is optimized for JAX and is JIT-compatible.</p>
+<p>Computes the number of triangles and the degree for each node in a graph. Self-loops (the diagonal) are ignored and an asymmetric matrix is symmetrised as <code>(A + A.T) &gt; 0</code>, matching NetworkX’s undirected clustering semantics. This function is optimized for JAX and is JIT-compatible.</p>
 </section>
 <section id="vec_node_to_edgle" class="level2">
 <h2 class="anchored" data-anchor-id="vec_node_to_edgle"><code>m.net.vec_node_to_edgle</code></h2>

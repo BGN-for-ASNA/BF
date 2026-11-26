@@ -1,7 +1,7 @@
 """
 Machine-learning handlers on top of the JAX estimators in this package.
 
-Naming note (RELEASE_AUDIT m8): the handler class is named ``ml``, the same
+Naming note: the handler class is named ``ml``, the same
 lowercase name as its module, so ``from BayesForge.ML.ml import ml`` (the
 import main.py uses) reads oddly and shadows the module name. The class name
 is kept for backward compatibility; ``ML = ml`` is provided as an alias for
@@ -80,7 +80,7 @@ class ml():
         -------
         Array
             The predicted cluster labels. Also stored on self.predictions
-            (RELEASE_AUDIT m6).
+.
         """
         if self.model is None:
             raise RuntimeError("No model has been fitted. Call fit() first.")
@@ -113,13 +113,13 @@ class ml():
         random_state : int, optional
             Random seed for reproducibility.
         init : {"k-means++", "random"}, default="k-means++"
-            Initialisation strategy (RELEASE_AUDIT M1); "random" keeps the
+            Initialisation strategy; "random" keeps the
             legacy uniform draw.
         n_init : int, default=10
             Number of runs with different initialisations; the lowest
-            inertia is kept (RELEASE_AUDIT M1).
+            inertia is kept.
         tol : float, default=1e-4
-            Convergence tolerance passed to JAXKMeans (RELEASE_AUDIT m1);
+            Convergence tolerance passed to JAXKMeans;
             0 runs the full n_iterations.
 
         Returns

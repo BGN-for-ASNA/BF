@@ -19,31 +19,38 @@ The LKJ prior is used for modeling correlation matrices. It is controlled by
 a single parameter, `eta`. Higher values of `eta` imply stronger shrinkage
 towards the identity matrix.
 
-| Argument | Type | Description |
-|---|---|---|
-| `corr_matrix` | array-like | A square, symmetric correlation matrix. |
-| `eta` | float | The shape parameter of the LKJ distribution. |
+**Parameters**
+corr_matrix : array-like
+    A square, symmetric correlation matrix.
+eta : float
+    The shape parameter of the LKJ distribution.
 
 **Returns**
-
-- `float`: The LKJ density of the input correlation matrix.
+float
+    The LKJ density of the input correlation matrix.
 
 
 ## `m.link.cloglog` {#cloglog}
 
 ```python
-m.link.cloglog(p)
+m.link.cloglog(p, eps=None)
 ```
 
 Computes the complementary log-log transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `p` | float or array-like | Input probability value(s) in the range (0, 1). |
+0 and 1 map to -inf/+inf unless eps is given (e.g. eps=1e-6 clips
+to [eps, 1 - eps]).
+
+**Parameters**
+p : float or array-like
+    Input probability value(s) in the range (0, 1).
+eps : float, optional
+    If not None, p is clipped to [eps, 1 - eps] before the transform.
 
 **Returns**
-
-- `float or array-like`: The complementary log-log transformed value(s): log(-log(1 - p)).
+float or array-like
+    The complementary log-log transformed value(s): log(-log(1 - p)),
+    computed as log(-log1p(-p)) for accuracy near 0.
 
 
 ## `m.link.exp` {#exp}
@@ -54,13 +61,13 @@ m.link.exp(x)
 
 Computes the exponential function.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The exponential of the input value(s).
+float or array-like
+    The exponential of the input value(s).
 
 
 ## `m.link.inv_cloglog` {#inv_cloglog}
@@ -71,13 +78,14 @@ m.link.inv_cloglog(x)
 
 Computes the inverse complementary log-log transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The inverse complementary log-log transformed probability value(s): 1 - exp(-exp(x)).
+float or array-like
+    The inverse complementary log-log transformed probability value(s): 
+    1 - exp(-exp(x)).
 
 
 ## `m.link.inv_logit` {#inv_logit}
@@ -88,13 +96,13 @@ m.link.inv_logit(x)
 
 Computes the inverse logit transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The inverse logit-transformed value(s): 1 / (1 + exp(-x)).
+float or array-like
+    The inverse logit-transformed value(s): 1 / (1 + exp(-x)).
 
 
 ## `m.link.inv_logit_scale` {#inv_logit_scale}
@@ -103,16 +111,16 @@ Computes the inverse logit transformation.
 m.link.inv_logit_scale(x)
 ```
 
-Modified inverse logit function scaling between 0 and 1.
+Modified inverse logit function scaling between -1 and 1.
 From https://www.science.org/action/downloadSupplement?doi=10.1126%2Fsciadv.aax9070&file=aax9070_sm.pdf
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s). 
 
 **Returns**
-
-- `float or array-like`: The inverse logit-transformed value(s): 1 / (1 + exp(-x)).
+float or array-like
+    2 * sigmoid(x) - 1, i.e. tanh(x / 2), in the range (-1, 1).
 
 
 ## `m.link.inv_probit` {#inv_probit}
@@ -123,13 +131,14 @@ m.link.inv_probit(x)
 
 Computes the inverse probit transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The probability value(s) from the cumulative distribution function of the standard normal distribution.
+float or array-like
+    The probability value(s) from the cumulative distribution function 
+    of the standard normal distribution.
 
 
 ## `m.link.log` {#log}
@@ -140,47 +149,59 @@ m.link.log(p)
 
 Computes the natural logarithm.
 
-| Argument | Type | Description |
-|---|---|---|
-| `p` | float or array-like | Input value(s). |
+**Parameters**
+p : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The natural logarithm of the input value(s).
+float or array-like
+    The natural logarithm of the input value(s).
 
 
 ## `m.link.logit` {#logit}
 
 ```python
-m.link.logit(x)
+m.link.logit(x, eps=None)
 ```
 
 Computes the logit transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s) in the range (0, 1). |
+0 and 1 map to -inf/+inf unless eps is given (e.g. eps=1e-6 clips
+to [eps, 1 - eps]).
+
+**Parameters**
+x : float or array-like
+    Input value(s) in the range (0, 1).
+eps : float, optional
+    If not None, x is clipped to [eps, 1 - eps] before the transform.
 
 **Returns**
-
-- `float or array-like`: The logit-transformed value(s): log(x / (1 - x)).
+float or array-like
+    The logit-transformed value(s): log(x) - log(1 - x), computed as
+    log(x) - log1p(-x) to avoid overflow near 1.
 
 
 ## `m.link.probit` {#probit}
 
 ```python
-m.link.probit(p)
+m.link.probit(p, eps=None)
 ```
 
 Computes the probit transformation.
 
-| Argument | Type | Description |
-|---|---|---|
-| `p` | float or array-like | Input probability value(s) in the range (0, 1). |
+0 and 1 map to -inf/+inf unless eps is given (e.g. eps=1e-6 clips
+to [eps, 1 - eps]).
+
+**Parameters**
+p : float or array-like
+    Input probability value(s) in the range (0, 1).
+eps : float, optional
+    If not None, p is clipped to [eps, 1 - eps] before the transform.
 
 **Returns**
-
-- `float or array-like`: The probit-transformed value(s), corresponding to the quantile of the standard normal distribution.
+float or array-like
+    The probit-transformed value(s), corresponding to the quantile of the 
+    standard normal distribution.
 
 
 ## `m.link.reciprocal` {#reciprocal}
@@ -191,13 +212,14 @@ m.link.reciprocal(x)
 
 Computes the reciprocal of the input.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The reciprocal of the input value(s): 1 / x.
+float or array-like
+    The reciprocal of the input value(s): 1 / x. ``reciprocal(0)``
+    returns ``inf`` (JAX semantics); it does not raise.
 
 
 ## `m.link.sqrt` {#sqrt}
@@ -208,13 +230,13 @@ m.link.sqrt(p)
 
 Computes the square root.
 
-| Argument | Type | Description |
-|---|---|---|
-| `p` | float or array-like | Input value(s). |
+**Parameters**
+p : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The square root of the input value(s).
+float or array-like
+    The square root of the input value(s).
 
 
 ## `m.link.square` {#square}
@@ -225,11 +247,11 @@ m.link.square(x)
 
 Computes the square of the input.
 
-| Argument | Type | Description |
-|---|---|---|
-| `x` | float or array-like | Input value(s). |
+**Parameters**
+x : float or array-like
+    Input value(s).
 
 **Returns**
-
-- `float or array-like`: The square of the input value(s): x ** 2.
+float or array-like
+    The square of the input value(s): x ** 2.
 

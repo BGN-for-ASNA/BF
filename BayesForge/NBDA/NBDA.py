@@ -1,7 +1,7 @@
 """
 Network-Based Diffusion Analysis (NBDA) models.
 
-Backend note (RELEASE_AUDIT m15): this module uses numpyro directly —
+Backend note: this module uses numpyro directly —
 ``numpyro.handlers.mask`` and ``numpyro.distributions.Binomial`` in
 ``NBDA.model`` — instead of the BayesForge backend proxy used by the rest
 of the library (``dist`` / ``bf.dist``). NBDA therefore runs on the numpyro
@@ -34,7 +34,7 @@ class NBDA:
         - ``self.status`` is stored internally as a 3-dimensional array of
           shape ``(n, t, 1)`` (the last axis is the single supported process),
           even though the constructor accepts ``(n, t)`` or ``(n, t, 1)``
-          input (RELEASE_AUDIT m5).
+          input.
     """
     def __init__(self,network=None,status=None,names_network=None,names_status=None): 
         """
@@ -254,7 +254,7 @@ class NBDA:
 
         Returns:
             self.status (Array): The same values as status, shaped (n, t, 1)
-            (last axis = the single supported process, RELEASE_AUDIT m5).
+            (last axis = the single supported process).
 
         RELEASE_AUDIT m6/m7: the lagged (n, n, t) status_i/status_j arrays
         were removed — no code read them (O(n^2 t) memory for nothing). The
@@ -481,14 +481,14 @@ class NBDA:
             covDV (Array): A 3-dimensional array of shape (n, n, t) or a
                 4-dimensional array of shape (num_variables, n, n, t): the
                 code iterates covDV[i, :, :] over shape[0], so in 4-D the
-                first axis is the variable axis (RELEASE_AUDIT m12: the
+                first axis is the variable axis (the
                 docstring now matches the code's axis order; the code is
                 unchanged).
 
         Returns:
             Array: A 4-dimensional array of shape (n, n, t, num_variables).
 
-        Memory (RELEASE_AUDIT m7): the 4-D path builds one full (n, n, t)
+        Memory: the 4-D path builds one full (n, n, t)
         copy per variable in a Python loop, i.e. an
         O(num_variables * n^2 * t) materialisation.
         """
@@ -716,14 +716,14 @@ class NBDA:
         - CES: If True, combines the social and asocial transmission rates
           through the linear mixture Q = alpha * K + (1 - alpha) * L of the
           two attention-weighted networks (perfect substitutes; not a CES
-          with curvature parameter rho, see NBDA.ces, RELEASE_AUDIT m13).
+          with curvature parameter rho, see NBDA.ces).
 
         Returns:
         - Probabilistic model sampling diffusion events conditional on network structure and status.
 
         The likelihood conditions on the initial state status[:, 0] (t = 0 is not an event).
 
-        NaN sentinel (RELEASE_AUDIT m14): NaN in the likelihood matrix ``lk``
+        NaN sentinel: NaN in the likelihood matrix ``lk``
         is the mask for "already informed" entries (t = 0 and status[:, t-1]
         == 1). A NaN produced accidentally by theta or the social weights for
         an individual that is still naive would therefore be masked out of

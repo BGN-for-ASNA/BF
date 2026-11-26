@@ -35,7 +35,7 @@ Load the WaffleDivorce dataset.
 
 **Returns**
 bunch : Bunch
-    Dataset with waffle divorce data
+    Observational dataset with 50 rows (one per US state) and 13 columns
 
 
 ## `m.load.chimpanzees` {#chimpanzees}
@@ -47,6 +47,10 @@ m.load.chimpanzees(frame=True, only_path=False)
 Load the chimpanzees dataset.
 
 Chimpanzee behavioral experiment data.
+
+Missing values: the ``recipient`` column is NA in 252 of 504 rows
+(the other half holds the recipient index); drop or encode it before
+modelling.
 
 **Returns**
 bunch : Bunch
@@ -63,7 +67,7 @@ Load the elephants dataset.
 
 **Returns**
 bunch : Bunch
-    Dataset with elephant data
+    Dataset with 41 records and 2 columns: AGE, MATINGS
 
 
 ## `m.load.howell1` {#howell1}
@@ -170,10 +174,15 @@ Load the milk dataset.
 
 Primate milk composition data.
 
+Missing values: ``neocortex.perc`` is NA in 12 of 29 rows; ``clade``
+and ``species`` are text columns (``frame=False`` then yields
+dtype-object data, and modelling ``neocortex.perc`` needs dropna or
+imputation first).
+
 **Returns**
 bunch : Bunch
     Dataset with milk composition data for various primate species
-    Features: clade, species, kcal.per.g, perc.fat, perc.protein, 
+    Features: clade, species, kcal.per.g, perc.fat, perc.protein,
              perc.lactose, mass, neocortex.perc
 
 
@@ -190,6 +199,8 @@ Columns include technique choice, payoffs, social cues (payoff bias,
 kin, prestige, cohort, age-of-acquisition), bout index, individual id,
 and centered age.
 
+Missing values: the ``RCI`` column is NA in 792 of 1441 rows.
+
 
 ## `m.load.phylo_L_meta` {#phylo_L_meta}
 
@@ -198,6 +209,9 @@ m.load.phylo_L_meta(frame=True, only_path=False)
 ```
 
 Load the Cholesky factor of the kinship matrix for Meta-analysis.
+
+The four phylogenetic models share the same tree, so this loader reads
+the single shared file ``phylo_L_simple.csv``.
 
 
 ## `m.load.phylo_L_poisson` {#phylo_L_poisson}
@@ -208,6 +222,9 @@ m.load.phylo_L_poisson(frame=True, only_path=False)
 
 Load the Cholesky factor of the kinship matrix for the Poisson model.
 
+The four phylogenetic models share the same tree, so this loader reads
+the single shared file ``phylo_L_simple.csv``.
+
 
 ## `m.load.phylo_L_repeated` {#phylo_L_repeated}
 
@@ -216,6 +233,9 @@ m.load.phylo_L_repeated(frame=True, only_path=False)
 ```
 
 Load the Cholesky factor of the kinship matrix for the Repeated measurements model.
+
+The four phylogenetic models share the same tree, so this loader reads
+the single shared file ``phylo_L_simple.csv``.
 
 
 ## `m.load.phylo_L_simple` {#phylo_L_simple}

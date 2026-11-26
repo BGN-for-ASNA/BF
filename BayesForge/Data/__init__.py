@@ -8,7 +8,7 @@ class of the public ``bf`` model class (``class bf(manip)`` in
 (``to_float``, ``to_int``) and conversion to JAX arrays (``pd_to_jax``,
 ``data_to_model``).
 
-This ``__init__`` is intentionally a docstring only (RELEASE_AUDIT m10): it
+This ``__init__`` is intentionally a docstring only: it
 makes ``Data`` a regular package for packaging tools (``find_packages()``)
 without importing anything, so importing the subpackage stays side-effect
 free and cannot create import cycles with ``BayesForge.Main``.
