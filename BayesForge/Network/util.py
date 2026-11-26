@@ -125,7 +125,7 @@ class array_manip:
 
         Returns:
             If argument type is 'upper', 'lower', it return a 1D JAX array containing the requested triangle elements.
-            If argument type is 'both', it returns a 2D JAX array whose first column holds the upper triangle and whose second column holds the lower triangle (RELEASE_AUDIT m16: the docstring used to state the reverse of the code).
+            If argument type is 'both', it returns a 2D JAX array whose first column holds the upper triangle and whose second column holds the lower triangle (the docstring used to state the reverse of the code).
         """
         if diag != 0 and diag != 1:
             raise ValueError("diag must be 0 or 1")
@@ -301,7 +301,7 @@ def dyad_vec_to_mat(vec, include_diagonal=False, symmetric=False):
     Raises:
         ValueError: If the vector length does not match the convention chosen
             by the flags for any integer N (previously an opaque JAX
-            broadcast error, RELEASE_AUDIT m10).
+            broadcast error).
     """
     n = vec.shape[0]
     if not include_diagonal and symmetric:

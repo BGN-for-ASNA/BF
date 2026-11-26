@@ -191,7 +191,7 @@ class JAXKMeans:
         Determines random number generation for centroid initialization. Use an
         int to make the randomness deterministic.
     init : {"k-means++", "random"}, default="k-means++"
-        Initialisation strategy (RELEASE_AUDIT M1). "k-means++" samples
+        Initialisation strategy. "k-means++" samples
         successive centres with probability proportional to the squared
         distance to the nearest chosen centre; "random" keeps the legacy
         behaviour of drawing k points uniformly without replacement.
@@ -266,7 +266,7 @@ class JAXKMeans:
             already holds (constructor or previous fit) — RELEASE_AUDIT M4.
         n_clusters : int, optional
             Overrides self.n_clusters for this call. The resolved value is
-            written back to the instance (RELEASE_AUDIT M4) so the attributes
+            written back to the instance so the attributes
             never lie about the fitted state.
         n_iterations : int, optional
             Same rule as n_clusters.

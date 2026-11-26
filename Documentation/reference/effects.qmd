@@ -24,6 +24,12 @@ Dot product of a diagonal matrix with a matrix.
 
 - 2D jax array: Dot product of a diagonal matrix with a matrix.
 
+**Notes**
+
+Computed as ``v[:, None] * m`` (row scaling), which is exact for a
+1D ``v`` and a 2D ``m`` and avoids materialising ``jnp.diag(v)``
+(O(N^2) memory and FLOPs), the way Stan implements it.
+
 
 ## `m.effects.nested_varying_effects` {#nested_varying_effects}
 
@@ -71,7 +77,12 @@ This works for balanced and unbalanced nested designs with no extra arguments.
 
 **Returns**
 
-- (varying_intercepts, varying_slopes) arrays, one value per observation.
+- array or tuple: one value per observation. With ``N_vars == 1`` a single
+- array of intercepts is returned; otherwise a tuple
+- ``(varying_intercepts, varying_slopes)``, where ``varying_slopes`` is
+- 1D when ``N_vars == 2`` (single slope) and 2D of shape
+- (n_obs, N_vars - 1) when ``N_vars > 2``. The return arity depends on
+- ``N_vars``; unpack accordingly.
 
 **Examples**
 
@@ -92,7 +103,7 @@ a, b = m.effects.nested_varying_effects(
 )
 
 **2 levels, 4 variables (intercept + 3 slopes) — N_vars > n_levels is valid**
-a, b1, b2, b3 = m.effects.nested_varying_effects(
+a, B = m.effects.nested_varying_effects(  # B has shape (n_obs, 3)
     N_vars=4,
     names=["region", "group"],
     N_groups=[5, 20],
@@ -119,6 +130,31 @@ a, b = m.effects.nested_varying_effects(
         m.dist.exponential(0.5, shape=(2,)),  # group level
     ],
 )
+
+
+## `m.effects.phylo_effect` {#phylo_effect}
+
+```python
+m.effects.phylo_effect(L, sd, name='z_phylo', sample=False)
+```
+
+Phylogenetic random effect, non-centred: ``u = sd * L z`` with ``z ~ Normal(0, 1)``.
+
+``L`` is the Cholesky factor of the phylogenetic covariance matrix, so
+``u ~ MultivariateNormal(0, sd**2 * L L^T)``. Passing a stack of trees
+(shape (T, N, N)) gives one independent effect per tree, which fits the
+model across a posterior sample of phylogenies in a single vectorised run.
+
+| Argument | Type | Description |
+|---|---|---|
+| `L` | jax.Array | Cholesky factor(s), shape (N, N) or (T, N, N). |
+| `sd` | float or jax.Array | Phylogenetic standard deviation; shape (T,) for one value per tree. |
+| `name` | str | Name of the standard-normal site ``z``. Defaults to "z_phylo". |
+| `sample` | bool | Draw values directly instead of defining a model site. |
+
+**Returns**
+
+- jax.Array: Phylogenetic effects, shape (N,) or (T, N).
 
 
 ## `m.effects.random_centered` {#random_centered}
@@ -160,8 +196,12 @@ m.effects.varying_effects(
 
 Models a varying intercept and varying slope for a continuous predictor.
 
-This uses a "centered" parameterization to sample a correlated
-[intercept, slope] pair for each group from a Multivariate Normal distribution.
+This uses a "non-centered" parameterization by default (``centered=False``):
+standard normals are drawn and transformed by the Cholesky factor of the
+group-level covariance, the geometry recommended for NUTS. With
+``centered=True`` the correlated [intercept, slope] pair for each group is
+sampled directly from a Multivariate Normal distribution (centered
+parameterization).
 
 | Argument | Type | Description |
 |---|---|---|
@@ -173,7 +213,7 @@ This uses a "centered" parameterization to sample a correlated
 | `beta_bar` | array or None | Mean for the slope dimensions. Pass jnp.zeros(N_vars) to produce zero-centered random effects. Defaults to None (samples global_beta ~ N(0,1)). |
 | `sd_intercept` | distribution | The hyperprior for the standard deviation of the intercepts. |
 | `sd_beta` | distribution | The hyperprior for the standard deviation of the slopes. |
-| `corr` | distribution | The prior for the correlation matrix. |
+| `corr` | jax.Array or distribution | Caller-supplied correlation structure. With ``centered=False`` it is used as the Cholesky factor ``L_corr`` (lower-triangular, shape (N_vars+1, N_vars+1)); with ``centered=True`` it is used as a full correlation matrix. Defaults to None (an LKJ prior is sampled). |
 | `centered` | bool | Whether to use a centered parameterization. Defaults to False. |
 | `sample` | bool | Whether to sample from the posterior. Defaults to False. |
 
@@ -195,7 +235,9 @@ m.effects.varying_intercept(
 )
 ```
 
-Varying intercepts model using a non-centered parameterization.
+Varying intercepts model using a centered parameterization: the group-level
+intercepts are sampled directly as ``alpha_g ~ Normal(a_bar, sigma)``,
+without reparameterization.
 
 | Argument | Type | Description |
 |---|---|---|
@@ -264,7 +306,7 @@ This uses a "centered" parameterization to sample a correlated
 | `global_slope_mean` | float or distribution | The hyperprior for the mean of the slopes. |
 | `group_name` | str | A descriptive name for the grouping factor. |
 | `group_std` | distribution | Prior for the standard deviations of the intercept and slope. Must have shape (2,). Defaults to Exponential(1). |
-| `L_corr` | distribution | Prior for the Cholesky factor of the 2x2 correlation matrix between the intercept and slope. Defaults to LKJ(2, 2). |
+| `L_corr` | distribution | Prior for the Cholesky factor of the 2x2 correlation matrix between the intercept and slope. Defaults to LKJ(2, 2). It must be the lower-triangular factor L (R = L L^T), not R itself: a concrete array that is not a valid factor raises a ValueError; use ``jnp.linalg.cholesky(R)`` to convert a correlation matrix. |
 
 **Returns**
 

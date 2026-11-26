@@ -162,14 +162,14 @@ class manip():
         
         ### Args:
             - *cols* (str or list): Columns to encode. Use 'all' for all object
-              and categorical columns, e.g. R factors (RELEASE_AUDIT M4)
+              and categorical columns, e.g. R factors
             - *missing* (str): 'zero' (default) -> rows with a missing category get all-zero dummies; 'category' -> an extra `<col>_nan` indicator column (1 where the value is missing) is added, only for columns that actually contain NaN (mirrors index(missing='category')).
             
         ### Returns:
             - *pd.DataFrame*: DataFrame containing the newly created one-hot encoded columns.
             - **Updates on `m`**: appends the one-hot encoded columns in-place to `m.df` (`pd.concat([m.df, OHE], axis=1)`) and records `m.data_modification['OHE']` as the resolved list of encoded columns (with 'all', the columns selected from `m.df`, not the string 'all').
 
-        NaN / missing categories (RELEASE_AUDIT m8): `pd.get_dummies` is called
+        NaN / missing categories: `pd.get_dummies` is called
         with its default `dummy_na=False`, so a row whose category is missing
         gets an **all-zero dummy row** for that variable (no `_<na>` column is
         created). The original column is **kept** in `m.df` next to the new
@@ -235,7 +235,7 @@ class manip():
               (object) and categorical columns, e.g. R factors.
             - *missing* (str): What to do with missing values (NaN/None).
               ``'raise'`` (default) raises ``ValueError``: pandas would code them
-              ``-1``, which JAX indexing reads as the last group (RELEASE_AUDIT C8).
+              ``-1``, which JAX indexing reads as the last group.
               ``'category'`` gives them their own group: code ``K`` (after the
               ``K`` observed levels) and ``m.index_map[col][K] == 'missing'``.
               Raises ``ValueError`` if the column already has a level ``'missing'``.
@@ -246,7 +246,7 @@ class manip():
 
         ### Returns:
             - *pd.DataFrame*: Updated dataframe `m.df` with added `index_<col>` columns.
-            - **Updates on `m`**: adds 0-based integer columns `index_<col>` (`int64`) to `m.df`, replaces `.` and spaces with `_` in the names of the added `index_<col>` columns only (the other columns of `m.df` keep their original names, RELEASE_AUDIT M5), updates `m.index_map[col]` (`{code: category_label}`) for the encoded columns while keeping the entries of earlier `index()` calls (RELEASE_AUDIT m1), and records `m.data_modification['index']` as the resolved list of encoded columns (with 'all', the columns selected from `m.df`, not the string 'all').
+            - **Updates on `m`**: adds 0-based integer columns `index_<col>` (`int64`) to `m.df`, replaces `.` and spaces with `_` in the names of the added `index_<col>` columns only (the other columns of `m.df` keep their original names), updates `m.index_map[col]` (`{code: category_label}`) for the encoded columns while keeping the entries of earlier `index()` calls, and records `m.data_modification['index']` as the resolved list of encoded columns (with 'all', the columns selected from `m.df`, not the string 'all').
         """
         if not hasattr(self, "index_map"):
             # m1: the map is created in __init__ and only updated per column;
@@ -288,7 +288,7 @@ class manip():
             
         ### Returns:
             - *pd.DataFrame*: Standardized dataframe `m.df`.
-            - **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit **sample** standard deviation, `ddof=1` — the module-wide convention shared by `z_score`, RELEASE_AUDIT M2) and records `m.data_modification['scale'] = data`. Raises `ValueError` when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN (RELEASE_AUDIT M1).
+            - **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit **sample** standard deviation, `ddof=1` — the module-wide convention shared by `z_score`) and records `m.data_modification['scale'] = data`. Raises `ValueError` when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN.
         """        
         if isinstance(data, str) and data == 'all':
             data = [c for c in self.df.select_dtypes('number').columns
@@ -323,7 +323,7 @@ class manip():
         """
         Performs Z-score scaling (standardization) on a JAX array.
         (X - mean) / std_dev, with the sample standard deviation (ddof=1),
-        the same convention as scale (RELEASE_AUDIT M2).
+        the same convention as scale.
 
         Args:
             X (jnp.ndarray): The input JAX array (e.g., shape (n_samples, n_features)).
@@ -333,7 +333,7 @@ class manip():
         Returns:
             jnp.ndarray: The scaled array.
 
-        NaN values (RELEASE_AUDIT m7): a NaN used to poison the mean and std
+        NaN values: a NaN used to poison the mean and std
         along the whole axis, turning every row NaN without a word. When the
         input contains NaN, a `UserWarning` names the affected columns (or
         rows, for axis=1) and the statistics are computed over the non-NaN
@@ -426,9 +426,9 @@ class manip():
               `ValueError`.
             
         ### Returns:
-            - *dict*: Dictionary mapping model argument names to JAX arrays (extracted from `m.df`) or static default values. Called automatically by `m.fit()` and `m.svi()` to populate `m.data_on_model` when `m.data_on_model is None`. Raises `KeyError` when a model argument without a default has no column in `m.df`, and `TypeError` when a required column has a dtype absent from the conversion map (e.g. `category`, `datetime64[ns]`, `complex`, `object`): cast it first, e.g. with `m.to_float(['col'])` (RELEASE_AUDIT M6).
+            - *dict*: Dictionary mapping model argument names to JAX arrays (extracted from `m.df`) or static default values. Called automatically by `m.fit()` and `m.svi()` to populate `m.data_on_model` when `m.data_on_model is None`. Raises `KeyError` when a model argument without a default has no column in `m.df`, and `TypeError` when a required column has a dtype absent from the conversion map (e.g. `category`, `datetime64[ns]`, `complex`, `object`): cast it first, e.g. with `m.to_float(['col'])`.
 
-        64-bit JAX dtypes (`float64`, `int64`) are produced only when `jax_enable_x64` is on; with x64 off (the default) such columns are converted to `float32`/`int32` directly, without a silent 32-bit truncation warning (RELEASE_AUDIT M3).
+        64-bit JAX dtypes (`float64`, `int64`) are produced only when `jax_enable_x64` is on; with x64 off (the default) such columns are converted to `float32`/`int32` directly, without a silent 32-bit truncation warning.
         """        
         params = inspect.signature(model).parameters
         args_without_defaults = []

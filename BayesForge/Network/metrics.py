@@ -33,7 +33,7 @@ def _is_concrete(x):
 
 
 def _path_count_dtype():
-    """Accumulator dtype for shortest-path counts (RELEASE_AUDIT Network m1).
+    """Accumulator dtype for shortest-path counts.
 
     Brandes' counting step sums one term per shortest path, so ``sigma`` and
     ``delta`` grow with the number of paths: on dense graphs that count
@@ -378,7 +378,7 @@ class met:
         """
         Compute the shortest path from a source node to all other nodes using Dijkstra's algorithm.
 
-        Semantics (RELEASE_AUDIT Network m5): entries are edge *lengths*
+        Semantics: entries are edge *lengths*
         (distances, larger = farther), not strengths; a neighbour is any entry
         ``> 0``, so zero and negative entries both mean "no edge"; rows are
         read as out-edges, hence an asymmetric matrix is a directed graph.
@@ -651,7 +651,7 @@ class met:
         ``m`` is an adjacency/weight matrix: a 0 entry means "no edge" (as in
         ``geodesic_distance``), positive entries are edge lengths.
 
-        Semantics (RELEASE_AUDIT Network m5): entries are edge *lengths*
+        Semantics: entries are edge *lengths*
         (distances, larger = farther), not strengths; the ``> 0`` mask is
         applied here (0 becomes inf), so no pre-masking is needed; rows are
         out-edges, so an asymmetric matrix is a directed graph. Negative
@@ -750,7 +750,7 @@ class met:
     ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Dijkstra from ``source`` for Brandes' betweenness: order, predecessors, counts.
 
-        Semantics (RELEASE_AUDIT Network m5): edge *presence* comes from
+        Semantics: edge *presence* comes from
         ``adjacency_matrix > 0`` (a tie exists) while the edge *lengths* come
         from the separate ``weight_matrix`` and are read as distances; with
         ``weight_matrix`` equal to the adjacency matrix, strengths are used as
@@ -963,12 +963,12 @@ class met:
             NotImplementedError: If ``k`` is given.
             ValueError: If ``adjacency_matrix`` is not a square 2-D matrix, if
                 ``n_nodes`` disagrees with its shape, or if it is asymmetric
-                while ``directed=False`` (RELEASE_AUDIT Network m1). The
+                while ``directed=False``. The
                 checks run on concrete input only; inside a JIT trace they
                 are skipped.
 
         Note:
-            Path counting (RELEASE_AUDIT Network m1): ``sigma`` and ``delta``
+            Path counting: ``sigma`` and ``delta``
             count shortest paths and grow combinatorially, so on dense graphs
             they exceed float32's range (3.4e38, around N ~ 30-40 in the
             worst case) and the result silently becomes inf/NaN. The

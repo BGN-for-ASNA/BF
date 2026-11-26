@@ -846,7 +846,7 @@ def run_simulations(
         ``JAX_ENABLE_X64`` environment variable, but a ``bf()`` created inside
         ``fn`` applies its own ``float_precision`` (default 64 for numpyro,
         32 for tfp). Pass ``float_precision`` explicitly in ``fn`` to control
-        the precision of the simulations (RELEASE_AUDIT X7).
+        the precision of the simulations.
 
     Chains, workers and cores:
         Chains and simulations compete for the same cores, so ``num_chains``,

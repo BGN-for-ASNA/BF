@@ -392,20 +392,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="WaffleDivorce"><code>m.load.WaffleDivorce</code></h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.load.WaffleDivorce(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the WaffleDivorce dataset.</p>
-<p><strong>Returns</strong> bunch : Bunch Dataset with waffle divorce data</p>
+<p><strong>Returns</strong> bunch : Bunch Observational dataset with 50 rows (one per US state) and 13 columns</p>
 </section>
 <section id="chimpanzees" class="level2">
 <h2 class="anchored" data-anchor-id="chimpanzees"><code>m.load.chimpanzees</code></h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.load.chimpanzees(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the chimpanzees dataset.</p>
 <p>Chimpanzee behavioral experiment data.</p>
+<p>Missing values: the <code>recipient</code> column is NA in 252 of 504 rows (the other half holds the recipient index); drop or encode it before modelling.</p>
 <p><strong>Returns</strong> bunch : Bunch Dataset with chimpanzee behavioral data</p>
 </section>
 <section id="elephants" class="level2">
 <h2 class="anchored" data-anchor-id="elephants"><code>m.load.elephants</code></h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.load.elephants(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the elephants dataset.</p>
-<p><strong>Returns</strong> bunch : Bunch Dataset with elephant data</p>
+<p><strong>Returns</strong> bunch : Bunch Dataset with 41 records and 2 columns: AGE, MATINGS</p>
 </section>
 <section id="howell1" class="level2">
 <h2 class="anchored" data-anchor-id="howell1"><code>m.load.howell1</code></h2>
@@ -454,6 +455,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>m.load.milk(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the milk dataset.</p>
 <p>Primate milk composition data.</p>
+<p>Missing values: <code>neocortex.perc</code> is NA in 12 of 29 rows; <code>clade</code> and <code>species</code> are text columns (<code>frame=False</code> then yields dtype-object data, and modelling <code>neocortex.perc</code> needs dropna or imputation first).</p>
 <p><strong>Returns</strong> bunch : Bunch Dataset with milk composition data for various primate species Features: clade, species, kcal.per.g, perc.fat, perc.protein, perc.lactose, mass, neocortex.perc</p>
 </section>
 <section id="panama_ewa" class="level2">
@@ -461,21 +463,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m.load.panama_ewa(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Panama EWA social learning dataset (Barrett et al.).</p>
 <p>Capuchin monkey foraging data with 7 techniques across 14 days. Columns include technique choice, payoffs, social cues (payoff bias, kin, prestige, cohort, age-of-acquisition), bout index, individual id, and centered age.</p>
+<p>Missing values: the <code>RCI</code> column is NA in 792 of 1441 rows.</p>
 </section>
 <section id="phylo_L_meta" class="level2">
 <h2 class="anchored" data-anchor-id="phylo_L_meta"><code>m.load.phylo_L_meta</code></h2>
 <div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>m.load.phylo_L_meta(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Cholesky factor of the kinship matrix for Meta-analysis.</p>
+<p>The four phylogenetic models share the same tree, so this loader reads the single shared file <code>phylo_L_simple.csv</code>.</p>
 </section>
 <section id="phylo_L_poisson" class="level2">
 <h2 class="anchored" data-anchor-id="phylo_L_poisson"><code>m.load.phylo_L_poisson</code></h2>
 <div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>m.load.phylo_L_poisson(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Cholesky factor of the kinship matrix for the Poisson model.</p>
+<p>The four phylogenetic models share the same tree, so this loader reads the single shared file <code>phylo_L_simple.csv</code>.</p>
 </section>
 <section id="phylo_L_repeated" class="level2">
 <h2 class="anchored" data-anchor-id="phylo_L_repeated"><code>m.load.phylo_L_repeated</code></h2>
 <div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>m.load.phylo_L_repeated(frame<span class="op">=</span><span class="va">True</span>, only_path<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load the Cholesky factor of the kinship matrix for the Repeated measurements model.</p>
+<p>The four phylogenetic models share the same tree, so this loader reads the single shared file <code>phylo_L_simple.csv</code>.</p>
 </section>
 <section id="phylo_L_simple" class="level2">
 <h2 class="anchored" data-anchor-id="phylo_L_simple"><code>m.load.phylo_L_simple</code></h2>

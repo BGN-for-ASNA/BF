@@ -265,7 +265,7 @@ class Neteffect(array_manip):
                 (N_dyads, 2, K) — column 0 is direction i->j, column 1 j->i, one
                 slab per predictor k. A 2-D array is read as an (N_dyads, K)
                 edge list with one coefficient shared by the K columns.
-                Warning (RELEASE_AUDIT m8): m.net2.dyadic_effect reads a 2-D
+                Warning: m.net2.dyadic_effect reads a 2-D
                 input as an (N, N) predictor matrix instead, so the same 2-D
                 array means different things in m.net and m.net2.
             shape (int, optional): Number of dyads, N*(N-1)/2 — used only when

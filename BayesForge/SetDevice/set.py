@@ -32,7 +32,7 @@ def _validate_cores(cores):
     """Validate a ``cores`` argument: a positive integer (bool rejected).
 
     Returns the value as int, or None when cores is None. Shared by
-    setup_device and setup_multi_device (RELEASE_AUDIT m8) so both raise the
+    setup_device and setup_multi_device so both raise the
     same ValueError message.
     """
     if cores is None:
@@ -49,7 +49,7 @@ def _validate_cores(cores):
 
 
 def _validate_gpu_index(gpu_index):
-    """Validate a ``gpu_index`` argument (RELEASE_AUDIT m1).
+    """Validate a ``gpu_index`` argument.
 
     Accepts an int >= 0 (bool rejected) or a comma-separated string of such
     ints, e.g. ``0``, ``"0"`` or ``"0,1"``. Returns the string to put in

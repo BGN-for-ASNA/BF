@@ -10,21 +10,27 @@ Loading and preparing data. `m.df` holds the data frame; `m.data_on_model` the a
 ## `m.OHE` {#OHE}
 
 ```python
-m.OHE(cols='all')
+m.OHE(cols='all', missing='zero')
 ```
 
 **Perform one-hot encoding on specified columns**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `cols` | `str` or `list` | Columns to encode. Use `'all'` for all object-type columns. |
+- *cols* (str or list): Columns to encode. Use 'all' for all object
+  and categorical columns, e.g. R factors
+- *missing* (str): 'zero' (default) -> rows with a missing category get all-zero dummies; 'category' -> an extra `<col>_nan` indicator column (1 where the value is missing) is added, only for columns that actually contain NaN (mirrors index(missing='category')).
 
 **Returns**
 
-- `pd.DataFrame`: DataFrame containing the newly created one-hot encoded columns (with `.` and spaces in column names replaced by `_`).
-- **Updates on `m`**:
-  - `m.df`: appends the newly created one-hot encoded columns in-place (`m.df = pd.concat([m.df, OHE], axis=1)`).
-  - `m.data_modification['OHE']`: records `cols`.
+- *pd.DataFrame*: DataFrame containing the newly created one-hot encoded columns.
+- **Updates on `m`**: appends the one-hot encoded columns in-place to `m.df` (`pd.concat([m.df, OHE], axis=1)`) and records `m.data_modification['OHE']` as the resolved list of encoded columns (with 'all', the columns selected from `m.df`, not the string 'all').
+
+NaN / missing categories: `pd.get_dummies` is called
+with its default `dummy_na=False`, so a row whose category is missing
+gets an **all-zero dummy row** for that variable (no `_<na>` column is
+created). The original column is **kept** in `m.df` next to the new
+dummy columns. This is the default (missing='zero'); pass
+missing='category' to get an explicit indicator column.
 
 ## `m.data` {#data}
 
@@ -33,20 +39,29 @@ m.data(path, **kwargs)
 ```
 
 **Load tabular data.**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `path` | `str`, path-like or data frame | Path to a CSV file, or an in-memory table: a pandas DataFrame, or anything `pandas.DataFrame()` accepts (e.g. a dict of columns). R `data.frame`s passed through `reticulate` arrive as pandas DataFrames, so R users can pass their data directly without writing a file. |
-| `**kwargs` | | Additional arguments for `pd.read_csv` (CSV paths only). |
+- *path* (str, path-like or data frame): Path to a CSV file, or an
+  in-memory table: a pandas DataFrame, or anything pandas.DataFrame()
+  accepts (e.g. a dict of columns). R data.frames passed through
+  reticulate arrive as pandas DataFrames, so R users can pass their
+  data directly without writing a file.
+- * **kwargs*: Additional arguments for pd.read_csv (CSV paths only)
 
 **Returns**
 
-- `pd.DataFrame`: Loaded dataframe (`m.df`).
-- **Updates on `m`**:
-  - `m.df`: stores a copy of the loaded DataFrame.
-  - `m.data_original_path`: stores the CSV path (or `None` when loaded from an in-memory object).
-  - `m.data_args`: stores the `read_csv` keyword arguments (`dict`).
-  - `m.data_modification`: resets to `{}`.
+- *pd.DataFrame*: Loaded dataframe (`m.df`).
+- **Updates on `m`**: sets `m.df` (copy of the loaded table), `m.data_original_path`, `m.data_args`, `m.column_aliases`, and resets `m.data_modification = {}`.
+
+**Column names**
+
+'.' and spaces in column names are replaced by '_' at load
+('kcal.per.g' becomes 'kcal_per_g'), so every column can be the
+name of a model argument. `m.column_aliases` maps each original
+name to its new one, and the methods of `m` (scale, index, OHE,
+to_float, to_int, data_to_model) also accept the original names.
+A message lists the renamed columns. Two names that would
+collide after the replacement raise ValueError.
 
 ## `m.data_to_model` {#data_to_model}
 
@@ -55,39 +70,45 @@ m.data_to_model(cols)
 ```
 
 **Prepare data for model input in JAX format**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `cols` | `list` | List of column names from `m.df` to include in the model data dictionary. |
+- *cols* (list): List of columns to include in model data
 
 **Returns**
 
-- `None` (populates `m.data_on_model` in-place).
-- **Updates on `m`**:
-  - `m.data_on_model`: sets `{col: jnp.array(m.df[col].values)}` for each column in `cols`.
-  - `m.data_modification['data_on_model']`: records `cols`.
+- *None* (populates `m.data_on_model` in-place).
+- **Updates on `m`**: sets `m.data_on_model` to the dictionary `{col: jnp.array(m.df[col])}` and records `m.data_modification['data_on_model'] = cols`.
+
+Raises `ValueError` naming the column when a requested
+name is **duplicated** in `m.df` (e.g. after an `OHE` that re-created the
+original name).
 
 ## `m.index` {#index}
 
 ```python
-m.index(cols='all')
+m.index(cols='all', missing='raise')
 ```
 
 **Create index encoding for categorical columns**
+**Args**
 
-Codes are 0-based and follow the category order: the level order of a pandas `Categorical` or R `factor`, alphabetical for text columns. `m.index_map[col]` maps each code to its level.
+- *cols* (str or list): Columns to encode. Use 'all' for all text
+  (object) and categorical columns, e.g. R factors.
+- *missing* (str): What to do with missing values (NaN/None).
+  ``'raise'`` (default) raises ``ValueError``: pandas would code them
+  ``-1``, which JAX indexing reads as the last group.
+  ``'category'`` gives them their own group: code ``K`` (after the
+  ``K`` observed levels) and ``m.index_map[col][K] == 'missing'``.
+  Raises ``ValueError`` if the column already has a level ``'missing'``.
 
-| Argument | Type | Description |
-|---|---|---|
-| `cols` | `str` or `list` | Columns to encode. Use `'all'` for all text (`object`) and `category` columns (e.g. R factors). |
+Codes are 0-based and follow the category order: the level order of a
+pandas Categorical or R factor, alphabetical for text columns.
+``m.index_map[col]`` maps each code to its level.
 
 **Returns**
 
-- `pd.DataFrame`: The updated DataFrame `m.df` with added `index_<col>` columns.
-- **Updates on `m`**:
-  - `m.df`: adds 0-based integer columns `index_<col>` (`int64`) for each encoded column and replaces `.` and spaces in `m.df.columns` with `_`.
-  - `m.index_map`: dictionary mapping each encoded column name `col` to `{code: category_label}`.
-  - `m.data_modification['index']`: records `cols`.
+- *pd.DataFrame*: Updated dataframe `m.df` with added `index_<col>` columns.
+- **Updates on `m`**: adds 0-based integer columns `index_<col>` (`int64`) to `m.df`, replaces `.` and spaces with `_` in the names of the added `index_<col>` columns only (the other columns of `m.df` keep their original names), updates `m.index_map[col]` (`{code: category_label}`) for the encoded columns while keeping the entries of earlier `index()` calls, and records `m.data_modification['index']` as the resolved list of encoded columns (with 'all', the columns selected from `m.df`, not the string 'all').
 
 ## `m.pd_to_jax` {#pd_to_jax}
 
@@ -96,16 +117,20 @@ m.pd_to_jax(model, bit=None)
 ```
 
 **Convert pandas dataframe to JAX compatible format for a model.**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `model` | `callable` | Model function whose signature determines which columns to extract from `m.df`. |
-| `bit` | `str`, optional | Bit precision for numbers (e.g. `'32'` to force 32-bit types; default `None` preserves `m.df` dtypes). |
+- *model*: JAX model to prepare data for
+- *bit* (str or int, optional): Bit precision to force: '32'/32 forces
+  32-bit dtypes, '64'/64 requests 64-bit dtypes (produced only when
+  jax_enable_x64 is on, otherwise downcast to 32-bit). Default None
+  follows `jax_enable_x64`. Any other value raises
+  `ValueError`.
 
 **Returns**
 
-- `dict`: Dictionary mapping the model's parameter names to JAX arrays (extracted from `m.df`) or static default values.
-- **Updates on `m`**: Does not mutate `m` directly when called standalone, but is called automatically by `m.fit()` and `m.svi()` to populate `m.data_on_model` when `m.data_on_model is None`.
+- *dict*: Dictionary mapping model argument names to JAX arrays (extracted from `m.df`) or static default values. Called automatically by `m.fit()` and `m.svi()` to populate `m.data_on_model` when `m.data_on_model is None`. Raises `KeyError` when a model argument without a default has no column in `m.df`, and `TypeError` when a required column has a dtype absent from the conversion map (e.g. `category`, `datetime64[ns]`, `complex`, `object`): cast it first, e.g. with `m.to_float(['col'])`.
+
+64-bit JAX dtypes (`float64`, `int64`) are produced only when `jax_enable_x64` is on; with x64 off (the default) such columns are converted to `float32`/`int32` directly, without a silent 32-bit truncation warning.
 
 ## `m.scale` {#scale}
 
@@ -114,17 +139,14 @@ m.scale(data='all')
 ```
 
 **Standardize specified columns.**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `data` | `str` or `list` | Columns of `m.df` to standardize (pass a `list` of column names, or `'all'` for all columns). |
+- *data* (str or list): 'all' (default) = every numeric column except the index_* codes; a single name or a list of names.
 
 **Returns**
 
-- `pd.DataFrame`: The standardized DataFrame `m.df`.
-- **Updates on `m`**:
-  - `m.df`: standardizes the specified columns in-place to zero mean and unit standard deviation (`(col - col.mean()) / col.std()`).
-  - `m.data_modification['scale']`: records `data`.
+- *pd.DataFrame*: Standardized dataframe `m.df`.
+- **Updates on `m`**: standardizes the specified columns in-place in `m.df` (zero mean, unit **sample** standard deviation, `ddof=1` — the module-wide convention shared by `z_score`) and records `m.data_modification['scale'] = data`. Raises `ValueError` when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN.
 
 ## `m.to_float` {#to_float}
 
@@ -133,18 +155,15 @@ m.to_float(cols='all', type='float32')
 ```
 
 **Convert specified columns to float type**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `cols` | `str` or `list` | Columns to convert. Use `'all'` for all columns. |
-| `type` | `str` | Float dtype to convert to (default: `'float32'`). |
+- *cols* (str or list): Columns to convert. Use 'all' for all columns
+- *type* (str): Float type to convert to (default: float32)
 
 **Returns**
 
-- `pd.DataFrame`: The converted DataFrame `m.df`.
-- **Updates on `m`**:
-  - `m.df`: casts the specified columns of `m.df` in-place to `type`.
-  - `m.data_modification['float']`: records `cols`.
+- *pd.DataFrame*: Converted dataframe `m.df`.
+- **Updates on `m`**: casts the specified columns of `m.df` in-place to `type` and records `m.data_modification['float'] = cols`.
 
 ## `m.to_int` {#to_int}
 
@@ -153,18 +172,15 @@ m.to_int(cols='all', type='int32')
 ```
 
 **Convert specified columns to integer type**
+**Args**
 
-| Argument | Type | Description |
-|---|---|---|
-| `cols` | `str` or `list` | Columns to convert. Use `'all'` for all columns. |
-| `type` | `str` | Integer dtype to convert to (default: `'int32'`). |
+- *cols* (str or list): Columns to convert. Use 'all' for all columns
+- *type* (str): Integer type to convert to (default: int32)
 
 **Returns**
 
-- `None` (modifies `m.df` in-place).
-- **Updates on `m`**:
-  - `m.df`: casts the specified columns of `m.df` in-place to `type`.
-  - `m.data_modification['int']`: records `cols`.
+- *pd.DataFrame*: converted m.df.
+- **Updates on `m`**: casts the specified columns of `m.df` in-place to `type` and records `m.data_modification['int'] = cols`.
 
 ## `m.z_score` {#z_score}
 
@@ -172,13 +188,22 @@ m.to_int(cols='all', type='int32')
 m.z_score(X, axis=0)
 ```
 
-Performs Z-score scaling (standardization) on a JAX array: `(X - mean) / std_dev`.
+Performs Z-score scaling (standardization) on a JAX array.
+(X - mean) / std_dev, with the sample standard deviation (ddof=1),
+the same convention as scale.
 
 | Argument | Type | Description |
 |---|---|---|
-| `X` | `jnp.ndarray` | The input JAX array (e.g., shape `(n_samples, n_features)`). |
-| `axis` | `int` | The axis along which to calculate mean and std. `axis=0` scales features (columns). |
+| `X` | jnp.ndarray | The input JAX array (e.g., shape (n_samples, n_features)). |
+| `axis` | int | The axis along which to calculate mean and std. axis=0 scales features (columns). |
 
 **Returns**
 
-- `jnp.ndarray`: The scaled array. Does not modify `m.df`.
+- jnp.ndarray: The scaled array.
+
+NaN values: a NaN used to poison the mean and std
+along the whole axis, turning every row NaN without a word. When the
+input contains NaN, a `UserWarning` names the affected columns (or
+rows, for axis=1) and the statistics are computed over the non-NaN
+entries (`nanmean`/`nanstd`); the NaN entries themselves stay NaN.
+

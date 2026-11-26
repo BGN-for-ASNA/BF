@@ -360,308 +360,125 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Loading and preparing data. <code>m.df</code> holds the data frame; <code>m.data_on_model</code> the arrays passed to the model.</p>
 <section id="OHE" class="level2">
 <h2 class="anchored" data-anchor-id="OHE"><code>m.OHE</code></h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>m.OHE(cols<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Perform one-hot encoding on specified columns</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>cols</code></td>
-<td><code>str</code> or <code>list</code></td>
-<td>Columns to encode. Use <code>'all'</code> for all object-type columns.</td>
-</tr>
-</tbody>
-</table>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>m.OHE(cols<span class="op">=</span><span class="st">'all'</span>, missing<span class="op">=</span><span class="st">'zero'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Perform one-hot encoding on specified columns</strong> <strong>Args</strong></p>
+<ul>
+<li><em>cols</em> (str or list): Columns to encode. Use ‘all’ for all object and categorical columns, e.g.&nbsp;R factors</li>
+<li><em>missing</em> (str): ‘zero’ (default) -&gt; rows with a missing category get all-zero dummies; ‘category’ -&gt; an extra <code>&lt;col&gt;_nan</code> indicator column (1 where the value is missing) is added, only for columns that actually contain NaN (mirrors index(missing=‘category’)).</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>pd.DataFrame</code>: DataFrame containing the newly created one-hot encoded columns (with <code>.</code> and spaces in column names replaced by <code>_</code>).</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: appends the newly created one-hot encoded columns in-place (<code>m.df = pd.concat([m.df, OHE], axis=1)</code>).</li>
-<li><code>m.data_modification['OHE']</code>: records <code>cols</code>.</li>
-</ul></li>
+<li><em>pd.DataFrame</em>: DataFrame containing the newly created one-hot encoded columns.</li>
+<li><strong>Updates on <code>m</code></strong>: appends the one-hot encoded columns in-place to <code>m.df</code> (<code>pd.concat([m.df, OHE], axis=1)</code>) and records <code>m.data_modification['OHE']</code> as the resolved list of encoded columns (with ‘all’, the columns selected from <code>m.df</code>, not the string ‘all’).</li>
 </ul>
+<p>NaN / missing categories: <code>pd.get_dummies</code> is called with its default <code>dummy_na=False</code>, so a row whose category is missing gets an <strong>all-zero dummy row</strong> for that variable (no <code>_&lt;na&gt;</code> column is created). The original column is <strong>kept</strong> in <code>m.df</code> next to the new dummy columns. This is the default (missing=‘zero’); pass missing=‘category’ to get an explicit indicator column.</p>
 </section>
 <section id="data" class="level2">
 <h2 class="anchored" data-anchor-id="data"><code>m.data</code></h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>m.data(path, <span class="op">**</span>kwargs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Load tabular data.</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>path</code></td>
-<td><code>str</code>, path-like or data frame</td>
-<td>Path to a CSV file, or an in-memory table: a pandas DataFrame, or anything <code>pandas.DataFrame()</code> accepts (e.g.&nbsp;a dict of columns). R <code>data.frame</code>s passed through <code>reticulate</code> arrive as pandas DataFrames, so R users can pass their data directly without writing a file.</td>
-</tr>
-<tr class="even">
-<td><code>**kwargs</code></td>
-<td></td>
-<td>Additional arguments for <code>pd.read_csv</code> (CSV paths only).</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong></p>
+<p><strong>Load tabular data.</strong> <strong>Args</strong></p>
 <ul>
-<li><code>pd.DataFrame</code>: Loaded dataframe (<code>m.df</code>).</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: stores a copy of the loaded DataFrame.</li>
-<li><code>m.data_original_path</code>: stores the CSV path (or <code>None</code> when loaded from an in-memory object).</li>
-<li><code>m.data_args</code>: stores the <code>read_csv</code> keyword arguments (<code>dict</code>).</li>
-<li><code>m.data_modification</code>: resets to <code>{}</code>.</li>
+<li><em>path</em> (str, path-like or data frame): Path to a CSV file, or an in-memory table: a pandas DataFrame, or anything pandas.DataFrame() accepts (e.g.&nbsp;a dict of columns). R data.frames passed through reticulate arrive as pandas DataFrames, so R users can pass their data directly without writing a file.</li>
+<li><ul>
+<li>**kwargs*: Additional arguments for pd.read_csv (CSV paths only)</li>
 </ul></li>
 </ul>
+<p><strong>Returns</strong></p>
+<ul>
+<li><em>pd.DataFrame</em>: Loaded dataframe (<code>m.df</code>).</li>
+<li><strong>Updates on <code>m</code></strong>: sets <code>m.df</code> (copy of the loaded table), <code>m.data_original_path</code>, <code>m.data_args</code>, <code>m.column_aliases</code>, and resets <code>m.data_modification = {}</code>.</li>
+</ul>
+<p><strong>Column names</strong></p>
+<p>‘.’ and spaces in column names are replaced by ’_’ at load (‘kcal.per.g’ becomes ‘kcal_per_g’), so every column can be the name of a model argument. <code>m.column_aliases</code> maps each original name to its new one, and the methods of <code>m</code> (scale, index, OHE, to_float, to_int, data_to_model) also accept the original names. A message lists the renamed columns. Two names that would collide after the replacement raise ValueError.</p>
 </section>
 <section id="data_to_model" class="level2">
 <h2 class="anchored" data-anchor-id="data_to_model"><code>m.data_to_model</code></h2>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.data_to_model(cols)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Prepare data for model input in JAX format</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>cols</code></td>
-<td><code>list</code></td>
-<td>List of column names from <code>m.df</code> to include in the model data dictionary.</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Prepare data for model input in JAX format</strong> <strong>Args</strong></p>
+<ul>
+<li><em>cols</em> (list): List of columns to include in model data</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>None</code> (populates <code>m.data_on_model</code> in-place).</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.data_on_model</code>: sets <code>{col: jnp.array(m.df[col].values)}</code> for each column in <code>cols</code>.</li>
-<li><code>m.data_modification['data_on_model']</code>: records <code>cols</code>.</li>
-</ul></li>
+<li><em>None</em> (populates <code>m.data_on_model</code> in-place).</li>
+<li><strong>Updates on <code>m</code></strong>: sets <code>m.data_on_model</code> to the dictionary <code>{col: jnp.array(m.df[col])}</code> and records <code>m.data_modification['data_on_model'] = cols</code>.</li>
 </ul>
+<p>Raises <code>ValueError</code> naming the column when a requested name is <strong>duplicated</strong> in <code>m.df</code> (e.g.&nbsp;after an <code>OHE</code> that re-created the original name).</p>
 </section>
 <section id="index" class="level2">
 <h2 class="anchored" data-anchor-id="index"><code>m.index</code></h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.index(cols<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Create index encoding for categorical columns</strong></p>
-<p>Codes are 0-based and follow the category order: the level order of a pandas <code>Categorical</code> or R <code>factor</code>, alphabetical for text columns. <code>m.index_map[col]</code> maps each code to its level.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>cols</code></td>
-<td><code>str</code> or <code>list</code></td>
-<td>Columns to encode. Use <code>'all'</code> for all text (<code>object</code>) and <code>category</code> columns (e.g.&nbsp;R factors).</td>
-</tr>
-</tbody>
-</table>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.index(cols<span class="op">=</span><span class="st">'all'</span>, missing<span class="op">=</span><span class="st">'raise'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Create index encoding for categorical columns</strong> <strong>Args</strong></p>
+<ul>
+<li><em>cols</em> (str or list): Columns to encode. Use ‘all’ for all text (object) and categorical columns, e.g.&nbsp;R factors.</li>
+<li><em>missing</em> (str): What to do with missing values (NaN/None). <code>'raise'</code> (default) raises <code>ValueError</code>: pandas would code them <code>-1</code>, which JAX indexing reads as the last group. <code>'category'</code> gives them their own group: code <code>K</code> (after the <code>K</code> observed levels) and <code>m.index_map[col][K] == 'missing'</code>. Raises <code>ValueError</code> if the column already has a level <code>'missing'</code>.</li>
+</ul>
+<p>Codes are 0-based and follow the category order: the level order of a pandas Categorical or R factor, alphabetical for text columns. <code>m.index_map[col]</code> maps each code to its level.</p>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>pd.DataFrame</code>: The updated DataFrame <code>m.df</code> with added <code>index_&lt;col&gt;</code> columns.</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: adds 0-based integer columns <code>index_&lt;col&gt;</code> (<code>int64</code>) for each encoded column and replaces <code>.</code> and spaces in <code>m.df.columns</code> with <code>_</code>.</li>
-<li><code>m.index_map</code>: dictionary mapping each encoded column name <code>col</code> to <code>{code: category_label}</code>.</li>
-<li><code>m.data_modification['index']</code>: records <code>cols</code>.</li>
-</ul></li>
+<li><em>pd.DataFrame</em>: Updated dataframe <code>m.df</code> with added <code>index_&lt;col&gt;</code> columns.</li>
+<li><strong>Updates on <code>m</code></strong>: adds 0-based integer columns <code>index_&lt;col&gt;</code> (<code>int64</code>) to <code>m.df</code>, replaces <code>.</code> and spaces with <code>_</code> in the names of the added <code>index_&lt;col&gt;</code> columns only (the other columns of <code>m.df</code> keep their original names), updates <code>m.index_map[col]</code> (<code>{code: category_label}</code>) for the encoded columns while keeping the entries of earlier <code>index()</code> calls, and records <code>m.data_modification['index']</code> as the resolved list of encoded columns (with ‘all’, the columns selected from <code>m.df</code>, not the string ‘all’).</li>
 </ul>
 </section>
 <section id="pd_to_jax" class="level2">
 <h2 class="anchored" data-anchor-id="pd_to_jax"><code>m.pd_to_jax</code></h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.pd_to_jax(model, bit<span class="op">=</span><span class="va">None</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert pandas dataframe to JAX compatible format for a model.</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>model</code></td>
-<td><code>callable</code></td>
-<td>Model function whose signature determines which columns to extract from <code>m.df</code>.</td>
-</tr>
-<tr class="even">
-<td><code>bit</code></td>
-<td><code>str</code>, optional</td>
-<td>Bit precision for numbers (e.g.&nbsp;<code>'32'</code> to force 32-bit types; default <code>None</code> preserves <code>m.df</code> dtypes).</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Convert pandas dataframe to JAX compatible format for a model.</strong> <strong>Args</strong></p>
+<ul>
+<li><em>model</em>: JAX model to prepare data for</li>
+<li><em>bit</em> (str or int, optional): Bit precision to force: ‘32’/32 forces 32-bit dtypes, ‘64’/64 requests 64-bit dtypes (produced only when jax_enable_x64 is on, otherwise downcast to 32-bit). Default None follows <code>jax_enable_x64</code>. Any other value raises <code>ValueError</code>.</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>dict</code>: Dictionary mapping the model’s parameter names to JAX arrays (extracted from <code>m.df</code>) or static default values.</li>
-<li><strong>Updates on <code>m</code></strong>: Does not mutate <code>m</code> directly when called standalone, but is called automatically by <code>m.fit()</code> and <code>m.svi()</code> to populate <code>m.data_on_model</code> when <code>m.data_on_model is None</code>.</li>
+<li><em>dict</em>: Dictionary mapping model argument names to JAX arrays (extracted from <code>m.df</code>) or static default values. Called automatically by <code>m.fit()</code> and <code>m.svi()</code> to populate <code>m.data_on_model</code> when <code>m.data_on_model is None</code>. Raises <code>KeyError</code> when a model argument without a default has no column in <code>m.df</code>, and <code>TypeError</code> when a required column has a dtype absent from the conversion map (e.g.&nbsp;<code>category</code>, <code>datetime64[ns]</code>, <code>complex</code>, <code>object</code>): cast it first, e.g.&nbsp;with <code>m.to_float(['col'])</code>.</li>
 </ul>
+<p>64-bit JAX dtypes (<code>float64</code>, <code>int64</code>) are produced only when <code>jax_enable_x64</code> is on; with x64 off (the default) such columns are converted to <code>float32</code>/<code>int32</code> directly, without a silent 32-bit truncation warning.</p>
 </section>
 <section id="scale" class="level2">
 <h2 class="anchored" data-anchor-id="scale"><code>m.scale</code></h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.scale(data<span class="op">=</span><span class="st">'all'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Standardize specified columns.</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>data</code></td>
-<td><code>str</code> or <code>list</code></td>
-<td>Columns of <code>m.df</code> to standardize (pass a <code>list</code> of column names, or <code>'all'</code> for all columns).</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Standardize specified columns.</strong> <strong>Args</strong></p>
+<ul>
+<li><em>data</em> (str or list): ‘all’ (default) = every numeric column except the index_* codes; a single name or a list of names.</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>pd.DataFrame</code>: The standardized DataFrame <code>m.df</code>.</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: standardizes the specified columns in-place to zero mean and unit standard deviation (<code>(col - col.mean()) / col.std()</code>).</li>
-<li><code>m.data_modification['scale']</code>: records <code>data</code>.</li>
-</ul></li>
+<li><em>pd.DataFrame</em>: Standardized dataframe <code>m.df</code>.</li>
+<li><strong>Updates on <code>m</code></strong>: standardizes the specified columns in-place in <code>m.df</code> (zero mean, unit <strong>sample</strong> standard deviation, <code>ddof=1</code> — the module-wide convention shared by <code>z_score</code>) and records <code>m.data_modification['scale'] = data</code>. Raises <code>ValueError</code> when a column has zero or undefined standard deviation (constant column, single row, or NaN values): standardizing it would silently produce NaN.</li>
 </ul>
 </section>
 <section id="to_float" class="level2">
 <h2 class="anchored" data-anchor-id="to_float"><code>m.to_float</code></h2>
 <div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.to_float(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'float32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert specified columns to float type</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>cols</code></td>
-<td><code>str</code> or <code>list</code></td>
-<td>Columns to convert. Use <code>'all'</code> for all columns.</td>
-</tr>
-<tr class="even">
-<td><code>type</code></td>
-<td><code>str</code></td>
-<td>Float dtype to convert to (default: <code>'float32'</code>).</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Convert specified columns to float type</strong> <strong>Args</strong></p>
+<ul>
+<li><em>cols</em> (str or list): Columns to convert. Use ‘all’ for all columns</li>
+<li><em>type</em> (str): Float type to convert to (default: float32)</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>pd.DataFrame</code>: The converted DataFrame <code>m.df</code>.</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: casts the specified columns of <code>m.df</code> in-place to <code>type</code>.</li>
-<li><code>m.data_modification['float']</code>: records <code>cols</code>.</li>
-</ul></li>
+<li><em>pd.DataFrame</em>: Converted dataframe <code>m.df</code>.</li>
+<li><strong>Updates on <code>m</code></strong>: casts the specified columns of <code>m.df</code> in-place to <code>type</code> and records <code>m.data_modification['float'] = cols</code>.</li>
 </ul>
 </section>
 <section id="to_int" class="level2">
 <h2 class="anchored" data-anchor-id="to_int"><code>m.to_int</code></h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.to_int(cols<span class="op">=</span><span class="st">'all'</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'int32'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><strong>Convert specified columns to integer type</strong></p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>cols</code></td>
-<td><code>str</code> or <code>list</code></td>
-<td>Columns to convert. Use <code>'all'</code> for all columns.</td>
-</tr>
-<tr class="even">
-<td><code>type</code></td>
-<td><code>str</code></td>
-<td>Integer dtype to convert to (default: <code>'int32'</code>).</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Convert specified columns to integer type</strong> <strong>Args</strong></p>
+<ul>
+<li><em>cols</em> (str or list): Columns to convert. Use ‘all’ for all columns</li>
+<li><em>type</em> (str): Integer type to convert to (default: int32)</li>
+</ul>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>None</code> (modifies <code>m.df</code> in-place).</li>
-<li><strong>Updates on <code>m</code></strong>:
-<ul>
-<li><code>m.df</code>: casts the specified columns of <code>m.df</code> in-place to <code>type</code>.</li>
-<li><code>m.data_modification['int']</code>: records <code>cols</code>.</li>
-</ul></li>
+<li><em>pd.DataFrame</em>: converted m.df.</li>
+<li><strong>Updates on <code>m</code></strong>: casts the specified columns of <code>m.df</code> in-place to <code>type</code> and records <code>m.data_modification['int'] = cols</code>.</li>
 </ul>
 </section>
 <section id="z_score" class="level2">
 <h2 class="anchored" data-anchor-id="z_score"><code>m.z_score</code></h2>
 <div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.z_score(X, axis<span class="op">=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Performs Z-score scaling (standardization) on a JAX array: <code>(X - mean) / std_dev</code>.</p>
+<p>Performs Z-score scaling (standardization) on a JAX array. (X - mean) / std_dev, with the sample standard deviation (ddof=1), the same convention as scale.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -678,20 +495,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><code>X</code></td>
-<td><code>jnp.ndarray</code></td>
-<td>The input JAX array (e.g., shape <code>(n_samples, n_features)</code>).</td>
+<td>jnp.ndarray</td>
+<td>The input JAX array (e.g., shape (n_samples, n_features)).</td>
 </tr>
 <tr class="even">
 <td><code>axis</code></td>
-<td><code>int</code></td>
-<td>The axis along which to calculate mean and std. <code>axis=0</code> scales features (columns).</td>
+<td>int</td>
+<td>The axis along which to calculate mean and std. axis=0 scales features (columns).</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li><code>jnp.ndarray</code>: The scaled array. Does not modify <code>m.df</code>.</li>
+<li>jnp.ndarray: The scaled array.</li>
 </ul>
+<p>NaN values: a NaN used to poison the mean and std along the whole axis, turning every row NaN without a word. When the input contains NaN, a <code>UserWarning</code> names the affected columns (or rows, for axis=1) and the statistics are computed over the non-NaN entries (<code>nanmean</code>/<code>nanstd</code>); the NaN entries themselves stay NaN.</p>
 
 
 </section>

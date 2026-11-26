@@ -36,7 +36,7 @@ class bnn(activation):
     built, for inspection: each call overwrites them and reads them back only
     within that same call, and no other method reads them later. Two models
     sharing m.bnn therefore do not share weights through these attributes
-    (RELEASE_AUDIT W13).
+.
     """
     def __init__(self, rand_seed = True):
         super().__init__()

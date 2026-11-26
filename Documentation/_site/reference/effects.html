@@ -324,6 +324,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#diag_pre_multiply" id="toc-diag_pre_multiply" class="nav-link active" data-scroll-target="#diag_pre_multiply"><code>m.effects.diag_pre_multiply</code></a></li>
   <li><a href="#nested_varying_effects" id="toc-nested_varying_effects" class="nav-link" data-scroll-target="#nested_varying_effects"><code>m.effects.nested_varying_effects</code></a></li>
+  <li><a href="#phylo_effect" id="toc-phylo_effect" class="nav-link" data-scroll-target="#phylo_effect"><code>m.effects.phylo_effect</code></a></li>
   <li><a href="#random_centered" id="toc-random_centered" class="nav-link" data-scroll-target="#random_centered"><code>m.effects.random_centered</code></a></li>
   <li><a href="#varying_effects" id="toc-varying_effects" class="nav-link" data-scroll-target="#varying_effects"><code>m.effects.varying_effects</code></a></li>
   <li><a href="#varying_intercept" id="toc-varying_intercept" class="nav-link" data-scroll-target="#varying_intercept"><code>m.effects.varying_intercept</code></a></li>
@@ -388,6 +389,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>2D jax array: Dot product of a diagonal matrix with a matrix.</li>
 </ul>
+<p><strong>Notes</strong></p>
+<p>Computed as <code>v[:, None] * m</code> (row scaling), which is exact for a 1D <code>v</code> and a 2D <code>m</code> and avoids materialising <code>jnp.diag(v)</code> (O(N^2) memory and FLOPs), the way Stan implements it.</p>
 </section>
 <section id="nested_varying_effects" class="level2">
 <h2 class="anchored" data-anchor-id="nested_varying_effects"><code>m.effects.nested_varying_effects</code></h2>
@@ -475,18 +478,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p><strong>Returns</strong></p>
 <ul>
-<li>(varying_intercepts, varying_slopes) arrays, one value per observation.</li>
+<li>array or tuple: one value per observation. With <code>N_vars == 1</code> a single</li>
+<li>array of intercepts is returned; otherwise a tuple</li>
+<li><code>(varying_intercepts, varying_slopes)</code>, where <code>varying_slopes</code> is</li>
+<li>1D when <code>N_vars == 2</code> (single slope) and 2D of shape</li>
+<li>(n_obs, N_vars - 1) when <code>N_vars &gt; 2</code>. The return arity depends on</li>
+<li><code>N_vars</code>; unpack accordingly.</li>
 </ul>
 <p><strong>Examples</strong></p>
 <p><strong>2 levels, 2 variables (intercept + 1 slope) — most common case</strong> a, b = m.effects.nested_varying_effects( N_vars=2, names=[“region”, “group”], N_groups=[5, 20], group_ids=[region_id, group_id], )</p>
 <p><strong>3 levels, 2 variables — N_vars unchanged as levels increase</strong> a, b = m.effects.nested_varying_effects( N_vars=2, names=[“country”, “region”, “group”], N_groups=[3, 10, 40], group_ids=[country_id, region_id, group_id], )</p>
-<p><strong>2 levels, 4 variables (intercept + 3 slopes) — N_vars &gt; n_levels is valid</strong> a, b1, b2, b3 = m.effects.nested_varying_effects( N_vars=4, names=[“region”, “group”], N_groups=[5, 20], group_ids=[region_id, group_id], )</p>
+<p><strong>2 levels, 4 variables (intercept + 3 slopes) — N_vars &gt; n_levels is valid</strong> a, B = m.effects.nested_varying_effects( # B has shape (n_obs, 3) N_vars=4, names=[“region”, “group”], N_groups=[5, 20], group_ids=[region_id, group_id], )</p>
 <p><strong>centered parameterization</strong> a, b = m.effects.nested_varying_effects( N_vars=2, names=[“region”, “group”], N_groups=[5, 20], group_ids=[region_id, group_id], centered=True, )</p>
 <p><strong>custom priors per level</strong> a, b = m.effects.nested_varying_effects( N_vars=2, names=[“region”, “group”], N_groups=[5, 20], group_ids=[region_id, group_id], sigma=[ m.dist.exponential(2, shape=(2,)), # region level m.dist.exponential(0.5, shape=(2,)), # group level ], )</p>
 </section>
+<section id="phylo_effect" class="level2">
+<h2 class="anchored" data-anchor-id="phylo_effect"><code>m.effects.phylo_effect</code></h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.effects.phylo_effect(L, sd, name<span class="op">=</span><span class="st">'z_phylo'</span>, sample<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Phylogenetic random effect, non-centred: <code>u = sd * L z</code> with <code>z ~ Normal(0, 1)</code>.</p>
+<p><code>L</code> is the Cholesky factor of the phylogenetic covariance matrix, so <code>u ~ MultivariateNormal(0, sd**2 * L L^T)</code>. Passing a stack of trees (shape (T, N, N)) gives one independent effect per tree, which fits the model across a posterior sample of phylogenies in a single vectorised run.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>L</code></td>
+<td>jax.Array</td>
+<td>Cholesky factor(s), shape (N, N) or (T, N, N).</td>
+</tr>
+<tr class="even">
+<td><code>sd</code></td>
+<td>float or jax.Array</td>
+<td>Phylogenetic standard deviation; shape (T,) for one value per tree.</td>
+</tr>
+<tr class="odd">
+<td><code>name</code></td>
+<td>str</td>
+<td>Name of the standard-normal site <code>z</code>. Defaults to “z_phylo”.</td>
+</tr>
+<tr class="even">
+<td><code>sample</code></td>
+<td>bool</td>
+<td>Draw values directly instead of defining a model site.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns</strong></p>
+<ul>
+<li>jax.Array: Phylogenetic effects, shape (N,) or (T, N).</li>
+</ul>
+</section>
 <section id="random_centered" class="level2">
 <h2 class="anchored" data-anchor-id="random_centered"><code>m.effects.random_centered</code></h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>m.effects.random_centered(sigma, cor_mat, offset_mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.effects.random_centered(sigma, cor_mat, offset_mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Generate the centered matrix of random factors</p>
 <table class="caption-top table">
 <colgroup>
@@ -526,21 +580,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_effects" class="level2">
 <h2 class="anchored" data-anchor-id="varying_effects"><code>m.effects.varying_effects</code></h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_effects(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    N_vars,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    N_group,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    group_id,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'age'</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    alpha_bar<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    beta_bar<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    sd_intercept<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    sd_beta<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    corr<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    centered<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_effects(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    N_vars,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    N_group,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    group_id,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'age'</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    alpha_bar<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    beta_bar<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    sd_intercept<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    sd_beta<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    corr<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    centered<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Models a varying intercept and varying slope for a continuous predictor.</p>
-<p>This uses a “centered” parameterization to sample a correlated [intercept, slope] pair for each group from a Multivariate Normal distribution.</p>
+<p>This uses a “non-centered” parameterization by default (<code>centered=False</code>): standard normals are drawn and transformed by the Cholesky factor of the group-level covariance, the geometry recommended for NUTS. With <code>centered=True</code> the correlated [intercept, slope] pair for each group is sampled directly from a Multivariate Normal distribution (centered parameterization).</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -597,8 +651,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><code>corr</code></td>
-<td>distribution</td>
-<td>The prior for the correlation matrix.</td>
+<td>jax.Array or distribution</td>
+<td>Caller-supplied correlation structure. With <code>centered=False</code> it is used as the Cholesky factor <code>L_corr</code> (lower-triangular, shape (N_vars+1, N_vars+1)); with <code>centered=True</code> it is used as a full correlation matrix. Defaults to None (an LKJ prior is sampled).</td>
 </tr>
 <tr class="even">
 <td><code>centered</code></td>
@@ -619,15 +673,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_intercept" class="level2">
 <h2 class="anchored" data-anchor-id="varying_intercept"><code>m.effects.varying_intercept</code></h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept(</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    group_id,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    a_bar<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Varying intercepts model using a non-centered parameterization.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    group_id,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    a_bar<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Varying intercepts model using a centered parameterization: the group-level intercepts are sampled directly as <code>alpha_g ~ Normal(a_bar, sigma)</code>, without reparameterization.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -671,14 +725,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_intercept_non_centered" class="level2">
 <h2 class="anchored" data-anchor-id="varying_intercept_non_centered"><code>m.effects.varying_intercept_non_centered</code></h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_non_centered(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    group_idx,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    a_bar<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_non_centered(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    group_idx,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    a_bar<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Varying intercepts model using a NON-CENTERED parameterization.</p>
 <table class="caption-top table">
 <colgroup>
@@ -723,16 +777,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_intercept_slope" class="level2">
 <h2 class="anchored" data-anchor-id="varying_intercept_slope"><code>m.effects.varying_intercept_slope</code></h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_slope(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    N_group,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    group,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    global_intercept,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    global_slope,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    group_std<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    L_corr<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_slope(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    N_group,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    group,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    global_intercept,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    global_slope,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    group_std<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    L_corr<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Models a varying intercept and varying slope for a continuous predictor.</p>
 <p>This uses a “centered” parameterization to sample a correlated [intercept, slope] pair for each group from a Multivariate Normal distribution.</p>
 <table class="caption-top table">
@@ -782,7 +836,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>L_corr</code></td>
 <td>distribution</td>
-<td>Prior for the Cholesky factor of the 2x2 correlation matrix between the intercept and slope. Defaults to LKJ(2, 2).</td>
+<td>Prior for the Cholesky factor of the 2x2 correlation matrix between the intercept and slope. Defaults to LKJ(2, 2). It must be the lower-triangular factor L (R = L L^T), not R itself: a concrete array that is not a valid factor raises a ValueError; use <code>jnp.linalg.cholesky(R)</code> to convert a correlation matrix.</td>
 </tr>
 </tbody>
 </table>
@@ -793,16 +847,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_intercept_slope_non_centered" class="level2">
 <h2 class="anchored" data-anchor-id="varying_intercept_slope_non_centered"><code>m.effects.varying_intercept_slope_non_centered</code></h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_slope_non_centered(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    group_idx,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    global_intercept_mean,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    global_slope_mean,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_intercept_slope_non_centered(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    N_groups,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    group_idx,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    global_intercept_mean,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    global_slope_mean,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Models a varying intercept and varying slope using a NON-CENTERED parameterization.</p>
 <table class="caption-top table">
 <colgroup>
@@ -862,16 +916,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_slope" class="level2">
 <h2 class="anchored" data-anchor-id="varying_slope"><code>m.effects.varying_slope</code></h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_slope(</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    category_idx,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    grouping_idx,</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    num_categories,</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    num_groups,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_slope(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    category_idx,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    grouping_idx,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    num_categories,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    num_groups,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Generates hierarchical varying effects using a non-centered parameterization.</p>
 <p>This is a general-purpose component for building hierarchical models. It models a set of related effects (e.g., slopes or intercepts) that vary by a grouping factor. The effects for each group are “pooled” together, meaning the model learns a shared distribution for them, allowing information to be shared among groups.</p>
 <p>This is useful for modeling: - The effect of different treatments (‘categories’) varying across subjects (‘groups’). - The performance of students (‘groups’) across different school subjects (‘categories’). - The changing approval rating (‘category’) of a policy over time in different countries (‘groups’).</p>
@@ -933,16 +987,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="varying_slope_non_centered" class="level2">
 <h2 class="anchored" data-anchor-id="varying_slope_non_centered"><code>m.effects.varying_slope_non_centered</code></h2>
-<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_slope_non_centered(</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    category_idx,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    grouping_idx,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    num_categories,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    num_groups,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>m.effects.varying_slope_non_centered(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    category_idx,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    grouping_idx,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    num_categories,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    num_groups,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    L_Rho<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    sigma<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    group_name<span class="op">=</span><span class="st">'group'</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Generates hierarchical varying effects for CATEGORIES using a non-centered parameterization.</p>
 
 
