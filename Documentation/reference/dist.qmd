@@ -3632,7 +3632,7 @@ Samples from a Logistic distribution.
 The Logistic distribution is a continuous probability distribution defined by two parameters: location and scale. It is often used to model growth processes and is closely related to the normal distribution.Its CDF is the logistic (sigmoid) function, which makes it appealing in modeling probabilities, logistic regression, and various growth models. It resembles the normal distribution in shape (bell‐shaped, symmetric) but has **heavier tails** (i.e. more probability in the extremes) and simpler closed‐form expressions for the CDF.
 
 * **Location parameter**: $\mu \in \mathbb{R}$\ — the center or “mean” of the distribution.
-* **Scale parameter**: $\s > 0$\ — controls the spread (similar role to standard deviation).
+* **Scale parameter**: $s > 0$ — controls the spread (similar role to standard deviation).
 * **Support**: $\ x \in (-\infty, +\infty) $\.
 
 Let (X \sim \mathrm{Logistic}(\mu, s)). Then:
